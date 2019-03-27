@@ -1,0 +1,27 @@
+version: '3.0'
+
+services:
+
+  modelchecker:
+    image: modelchecker
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile
+    volumes:
+      - .:/code
+    working_dir: /code
+    depends_on:
+      - postgis
+    command: bash
+
+  postgis:
+    image: mdillon/postgis
+    environment:
+      - POSTGRES_USER=postgis
+      - POSTGRES_PASSWORD=mysecret
+    volumes:
+      - ./postgres:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
