@@ -27,7 +27,7 @@ def check_unique(session, column):
 
     Null values are ignored.
 
-    :param session:
+    :param session: sqlalchemy.orm.session.Session
     :param column: InstrumentedAttribute
     :return: list of declared models instances of column.class
     """
@@ -45,8 +45,8 @@ def check_not_null(session, column):
     """Return all values that are not null
 
     :param self:
-    :param session:
-    :param column:
+    :param session: sqlalchemy.orm.session.Session
+    :param column: sqlalchemy.Column
     :return:
     """
     q = session.query(column.table).filter(column == None)
@@ -54,17 +54,16 @@ def check_not_null(session, column):
 
 
 def check_valid_type(session, column):
-    """Check values of column are the expected type.
+    """Return all values in column that are not of the column defined type.
 
     Null values are ignored.
 
     Only relevant for sqlite as it supports dynamic typing
     (https://www.sqlite.org/datatype3.html).
 
-    :param session:
-    :param column:
-    :param data_type:
-    :return:
+    :param session: sqlalchemy.orm.session.Session
+    :param column: sqlalchemy.Column
+    :return: list
     """
     if 'sqlite' not in session.bind.dialect.dialect_description:
         return []
@@ -87,6 +86,11 @@ def check_valid_type(session, column):
 
 
 def sqlalchemy_to_sqlite_type(column_type):
+    """Convert the sqlalchemy column type to sqlite data type
+
+    :param column_type: sqlalchemy.column
+    :return: (str)
+    """
     if isinstance(column_type, types.String):
         return 'text'
     elif isinstance(column_type, types.Integer):
