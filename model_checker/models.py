@@ -1,13 +1,14 @@
 from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (
-    Boolean, Column, Integer, String, Float, ForeignKey)
+    Boolean, Column, Integer, String, Float, ForeignKey, Date)
 from sqlalchemy.orm import relationship
 from geoalchemy2.types import Geometry
 
 from .constants import Constants
 
 
-Base = automap_base()
+Base = declarative_base()  # automap_base()
 
 
 def prettify(value, postfix, value_format='%0.2f'):
@@ -30,58 +31,72 @@ class Lateral1d(Base):
 
 class Lateral2D(Base):
     __tablename__ = 'v2_2d_lateral'
+    id = Column(Integer, primary_key=True)
 
 
 class BoundaryConditions2D(Base):
     __tablename__ = 'v2_2d_boundary_conditions'
+    id = Column(Integer, primary_key=True)
 
 
 class AggregationSettings(Base):
     __tablename__ = 'v2_aggregation_settings'
+    id = Column(Integer, primary_key=True)
 
 
 class CalculationPoint(Base):
     __tablename__ = 'v2_calculation_point'
+    id = Column(Integer, primary_key=True)
 
 
 class ConnectedPoint(Base):
     __tablename__ = 'v2_connected_pnt'
+    id = Column(Integer, primary_key=True)
 
 
 class ControlDelta(Base):
     __tablename__ = 'v2_control_delta'
+    id = Column(Integer, primary_key=True)
 
 
 class ControlGroup(Base):
     __tablename__ = 'v2_control_group'
+    id = Column(Integer, primary_key=True)
 
 
 class ControlMeasureGroup(Base):
     __tablename__ = 'v2_control_measure_group'
+    id = Column(Integer, primary_key=True)
 
 
 class ControlMeasureMap(Base):
     __tablename__ = 'v2_control_measure_map'
+    id = Column(Integer, primary_key=True)
 
 
 class ControlMemory(Base):
     __tablename__ = 'v2_control_memory'
+    id = Column(Integer, primary_key=True)
 
 
 class ContrlPID(Base):
     __tablename__ = 'v2_control_pid'
+    id = Column(Integer, primary_key=True)
 
 
 class ControlTable(Base):
     __tablename__ = 'v2_control_table'
+    id = Column(Integer, primary_key=True)
 
 
 class ControlTimed(Base):
     __tablename__ = 'v2_control_timed'
+    id = Column(Integer, primary_key=True)
 
 
 class Control(Base):
     __tablename__ = 'v2_control'
+    id = Column(Integer, primary_key=True)
 
 
 class Interflow(Base):
@@ -100,25 +115,29 @@ class SimpleInfiltration(Base):
 
 class Surface(Base):
     __tablename__ = 'v2_surface'
+    id = Column(Integer, primary_key=True)
 
 
 class SurfaceMap(Base):
     __tablename__ = 'v2_surface_map'
+    id = Column(Integer, primary_key=True)
 
 
 class SurfaceParameter(Base):
     __tablename__ = 'v2_surface_parameters'
+    id = Column(Integer, primary_key=True)
 
 
 class Windshielding(Base):
     __tablename__ = 'v2_windshielding'
+    id = Column(Integer, primary_key=True)
 
 
 class GroundWater(Base):
     __tablename__ = 'v2_groundwater'
     id = Column(Integer, primary_key=True)
-    infiltration_rate_file = Column(String(255), nullable=True)
-    max_infiltration_capacity_file = Column(String(255), nullable=True)
+    # infiltration_rate_file = Column(String(255), nullable=True)
+    # max_infiltration_capacity_file = Column(String(255), nullable=True)
     phreatic_storage_capacity_file = Column(String(255), nullable=True)
     groundwater_hydro_connectivity_file = Column(String(255), nullable=True)
     infiltration_decay_period_file = Column(String(255), nullable=True)
@@ -138,24 +157,48 @@ class GlobalSetting(Base):
     kmax = Column(Integer)
     nr_timesteps = Column(Integer)
     sim_time_step = Column(Float)
+    use_1d_flow = Column(Boolean)
+
+    initial_waterlevel = Column(Float)
+    numerical_settings_id = Column(Integer)
+    dem_obstacle_detection = Column(Boolean)
+    frict_avg = Column(Integer)
+    grid_space = Column(Float)
+    advection_2d = Column(Integer)
+    dist_calc_points = Column(Float)
+    start_date = Column(Date)
+    table_step_size = Column(Float)
+    use_1d_flow = Column(Boolean)
+    use_2d_rain = Column(Integer)
+    kmax = Column(Integer)
+    sim_time_step = Column(Float)
+    frict_coef = Column(Float)
+    timestep_plus = Column(Boolean)
+    flooding_threshold = Column(Float)
+    use_2d_flow = Column(Boolean)
+    advection_1d = Column(Integer)
+    use_0d_inflow = Column(Integer)
+    control_group_id = Column(Integer)
 
 
 class GridRefinement(Base):
     __tablename__ = 'v2_grid_refinement'
+    id = Column(Integer, primary_key=True)
 
 
 class GridRefinementArea(Base):
     __tablename__ = 'v2_grid_refinement_area'
+    id = Column(Integer, primary_key=True)
 
 
 class CrossSectionDefinition(Base):
     __tablename__ = 'v2_cross_section_definition'
 
-    PROFILE_SHAPES = Constants.PROFILE_SHAPES
+    # PROFILE_SHAPES = Constants.PROFILE_SHAPES
 
     id = Column(Integer, primary_key=True)
-    width = Column(Float)
-    height = Column(Float)
+    width = Column(String(255))
+    height = Column(String(255))
     shape = Column(Integer)  # PROFILE_SHAPES
     code = Column(String(100), default='', nullable=False)
 
@@ -217,6 +260,7 @@ class Manhole(Base):
 
 class NumericalSettings(Base):
     __tablename__ = 'v2_numerical_settings'
+    id = Column(Integer, primary_key=True)
 
 
 class BoundaryCondition1D(Base):
@@ -331,13 +375,12 @@ class Pipe(Base):
     friction_value = Column(Float)
     friction_type = Column(Integer)  # FRICTION_TYPE
 
-    profile_num = Column(Integer)  # ??
+    profile_num = Column(Integer)
     sewerage_type = Column(Integer)  # SEWERAGE_TYPES
     calculation_type = Column(Integer)  # CALCULATION_TYPES
     dist_calc_points = Column(Float)
 
     material = Column(Integer)  # MATERIALS
-    pipe_quality = Column(Float)
 
 
 class Culvert(Base):
@@ -392,6 +435,7 @@ class Culvert(Base):
 
 class DemAverageArea(Base):
     __tablename__ = 'v2_dem_average_area'
+    id = Column(Integer, primary_key=True)
 
 
 class Weir(Base):
@@ -481,7 +525,6 @@ class Orifice(Base):
     discharge_coefficient_negative = Column(Float)
 
     sewerage = Column(Boolean, default=False)
-    max_capacity = Column(Float)
 
     @property
     def max_capacity_str(self):
@@ -569,7 +612,6 @@ class ImperviousSurface(Base):
     surface_inclination = Column(String(64), nullable=False)
     surface_class = Column(String(128), nullable=False)
     surface_sub_class = Column(String(128), nullable=True)
-    function_ = Column(String(64), name="function", nullable=True)
 
     zoom_category = Column(Integer)
     nr_of_inhabitants = Column(Float)
@@ -594,8 +636,9 @@ class ImperviousSurfaceMap(Base):
         Integer,
         ForeignKey(ImperviousSurface.__tablename__ + ".id"),
         nullable=True)
-    impervious_surface = relationship(ImperviousSurface,
-                                      back_populates="impervious_surface_maps")
+    impervious_surface = relationship(
+        ImperviousSurface,
+        back_populates="impervious_surface_maps")
 
     connection_node_id = Column(
         Integer,
@@ -605,3 +648,45 @@ class ImperviousSurfaceMap(Base):
                                    back_populates="impervious_surface_map")
 
     percentage = Column(Float)
+
+
+DECLARED_MODELS = [
+    BoundaryCondition1D,
+    BoundaryConditions2D,
+    CalculationPoint,
+    ConnectedPoint,
+    ContrlPID,
+    Control,
+    ControlDelta,
+    ControlGroup,
+    ControlMeasureGroup,
+    ControlMeasureMap,
+    ControlMemory,
+    ControlTable,
+    ControlTimed,
+    CrossSectionDefinition,
+    CrossSectionLocation,
+    DemAverageArea,
+    GlobalSetting,
+    GridRefinement,
+    GridRefinementArea,
+    GroundWater,
+    ImperviousSurface,
+    ImperviousSurfaceMap,
+    Interflow,
+    Lateral1d,
+    Lateral2D,
+    Levee,
+    NumericalSettings,
+    Manhole,
+    Obstacle,
+    Orifice,
+    Pipe,
+    Pumpstation,
+    SimpleInfiltration,
+    Surface,
+    SurfaceMap,
+    SurfaceParameter,
+    Weir,
+    Windshielding,
+]

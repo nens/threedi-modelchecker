@@ -1,8 +1,8 @@
-from sqlalchemy.orm import Query
-from sqlalchemy import func, distinct
+from sqlalchemy import func, distinct, types
+from geoalchemy2.types import Geometry
 
 from model_checker import models
-from model_checker.models import Manhole, ConnectionNode
+from model_checker.models import DECLARED_MODELS
 
 
 def check_foreign_key(session, origin_column, ref_column):
@@ -15,10 +15,7 @@ def check_foreign_key(session, origin_column, ref_column):
     :param ref_column: InstrumentedAttribute
     :return: list of declared models instances of origin_column.class
     """
-    # q = session.query(origin_column.class_).filter(origin_column.notin_(
-    #     session.query(ref_column)
-    # ))
-    q = session.query(origin_column.class_).filter(
+    q = session.query(origin_column.table).filter(
         origin_column.notin_(session.query(ref_column)),
         origin_column != None
     )
@@ -40,8 +37,7 @@ def check_unique(session, column):
         return []
     duplicate_values = session.query(column).group_by(column).having(
         func.count(column) > 1)
-    # get the complete objects
-    q = session.query(column.class_).filter(column.in_(duplicate_values))
+    q = session.query(column.table).filter(column.in_(duplicate_values))
     return q.all()
 
 
@@ -53,8 +49,75 @@ def check_not_null(session, column):
     :param column:
     :return:
     """
-    q = session.query(column.class_).filter(column == None)
+    q = session.query(column.table).filter(column == None)
     return q.all()
+
+
+def check_valid_type(session, column):
+    """Check values of column are the expected type.
+
+    Null values are ignored.
+
+    Only relevant for sqlite as it supports dynamic typing
+    (https://www.sqlite.org/datatype3.html).
+
+    :param session:
+    :param column:
+    :param data_type:
+    :return:
+    """
+    if 'sqlite' not in session.bind.dialect.dialect_description:
+        return []
+
+    q = session.query(
+        func.typeof(column)) \
+        .group_by(func.typeof(column)) \
+        .having(func.typeof(column) != 'null')
+    type_count = q.count()
+    if type_count == 0:
+        return []
+    expected_type = sqlalchemy_to_sqlite_type(column.type)
+    if type_count == 1 and q.first()[0] == expected_type:
+        return []
+    q = session.query(column.table).filter(
+        func.typeof(column) != expected_type,
+        func.typeof(column) != 'null'
+    )
+    return q.all()
+
+
+def sqlalchemy_to_sqlite_type(type):
+    if isinstance(type, types.String):
+        return 'text'
+    elif isinstance(type, types.Integer):
+        return 'integer'
+    elif isinstance(type, types.Float):
+        return 'real'
+    elif isinstance(type, types.Boolean):
+        return 'integer'
+    elif isinstance(type, types.Date):
+        return 'text'
+    elif isinstance(type, Geometry):
+        return 'blob'
+    else:
+        raise TypeError("Unknown type: %s" % type)
+
+
+def get_none_nullable_columns(table):
+    """Return all non-nullable columns of the given table.
+
+    :param table: sqlalchemy.sql.schema.Table
+    :return: list of columns
+    """
+    not_null_columns = []
+    for column in table.columns:
+        if not column.nullable:
+            not_null_columns.append(column)
+    return not_null_columns
+
+
+def get_foreign_key_columns(table):
+    return table.foreign_keys
 
 
 def check_valid_geom():
@@ -78,60 +141,41 @@ def must_be_on_channel(windshielding_table_name):
 
 class ThreediModelChecker:
 
-    def __init__(self, threedi_db):
+    def __init__(self, threedi_db, declared_models=DECLARED_MODELS):
         self.db = threedi_db
+        self.meta = threedi_db.get_metadata()
+        self.declared_models = declared_models
+
+    def check_not_null_columns(self):
+        session = self.db.get_session()
+        results = []
+        columns_to_check = []
+        for decl_model in self.declared_models:
+            columns_to_check += get_none_nullable_columns(decl_model.__table__)
+        for column in columns_to_check:
+            results += check_not_null(session, column)
+        return results
 
     def check_foreign_keys(self):
-        results = []
         session = self.db.get_session()
+        result = []
+        for decl_model in self.declared_models:
+            foreign_keys = get_foreign_key_columns(decl_model.__table__)
+            for fk in foreign_keys:
+                result += check_foreign_key(session, fk.parent, fk.column)
+        return result
 
-        foreign_keys_to_check = [
-            (models.BoundaryCondition1D.connection_node_id, models.ConnectionNode.id),
-            (models.Lateral1d.connection_node_id, models.ConnectionNode.id),
-            (models.AggregationSettings.global_settings_id, models.GlobalSetting.id),
-            (models.Channel.connection_node_start_id, models.ConnectionNode.id),
-            (models.Channel.connection_node_end_id, models.ConnectionNode.id),
-            (models.ConnectedPoint.calculation_pnt_id, models.CalculationPoint.id),
-            (models.ConnectedPoint.levee_id, models.Levee.id),
-            (models.Control.control_group_id, models.ControlGroup.id),
-            (models.Control.measure_group_id, models.ControlMeasureGroup.id),
-            (models.ControlMeasureMap.measure_group_id, models.ControlMeasureGroup.id),
-            (models.CrossSectionLocation.definition_id, models.CrossSectionDefinition.id),
-            (models.CrossSectionLocation.channel_id, models.Channel.id),
-            (models.Culvert.connection_node_start_id, models.ConnectionNode.id),
-            (models.Culvert.connection_node_end_id, models.ConnectionNode.id),
-            (models.Culvert.cross_section_definition_id, models.CrossSectionDefinition.id),
-            (models.GlobalSetting.numerical_settings_id, models.NumericalSettings.id),
-            (models.GlobalSetting.interflow_settings_id, models.Interflow.id),
-            (models.GlobalSetting.control_group_id, models.ControlGroup.id),
-            (models.GlobalSetting.simple_infiltration_settings_id, models.SimpleInfiltration.id),
-            (models.GlobalSetting.groundwater_settings_id, models.GroundWater.id),
-            (models.ImperviousSurfaceMap.impervious_surface_id, models.ImperviousSurface.id),
-            (models.ImperviousSurfaceMap.connection_node_id, models.ConnectionNode.id),
-            (models.Manhole.connection_node_id, models.ConnectionNode.id),
-            (models.Orifice.connection_node_end_id, models.ConnectionNode.id),
-            (models.Orifice.connection_node_start_id, models.ConnectionNode.id),
-            (models.Orifice.cross_section_definition_id, models.CrossSectionDefinition.id),
-            (models.Pipe.connection_node_start_id, models.ConnectionNode.id),
-            (models.Pipe.connection_node_end_id, models.ConnectionNode.id),
-            (models.Pipe.cross_section_definition_id, models.CrossSectionDefinition.id),
-            (models.Pumpstation.connection_node_start_id, models.ConnectionNode.id),
-            (models.Pumpstation.connection_node_end_id, models.ConnectionNode.id),
-            (models.Surface.surface_parameters_id, models.SurfaceParameter.id),
-            (models.SurfaceMap.connection_node_id, models.ConnectionNode.id),
-            (models.Weir.connection_node_start_id, models.ConnectionNode.id),
-            (models.Weir.connection_node_end_id, models.ConnectionNode.id),
-            (models.Weir.cross_section_definition_id, models.CrossSectionDefinition.id),
-            (models.Windshielding.channel_id, models.Channel.id)
-        ]
+    def check_data_types(self):
+        session = self.db.get_session()
+        result = []
+        for decl_model in self.declared_models:
+            for column in decl_model.__table__.columns:
+                r = check_valid_type(session, column)
+                if r:
+                    print(column)
+                result += r
+        return result
 
-        for origin_column, ref_column in foreign_keys_to_check:
-            missing_fk = check_foreign_key(session, origin_column, ref_column)
-            if len(missing_fk) > 0:
-                print("ohoh!")
-            results += missing_fk
-
-        return results
 
 class ModelCheckResult:
 

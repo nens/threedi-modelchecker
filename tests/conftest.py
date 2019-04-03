@@ -6,6 +6,7 @@ from sqlalchemy import orm
 
 from model_checker.models import Base
 from model_checker.threedi_database import ThreediDatabase
+from model_checker.schema_checks import ThreediModelChecker
 
 from tests import Session
 
@@ -56,7 +57,6 @@ def test_make_empty_postgres():
     pass
 
 
-
 @pytest.fixture(
     scope='session',
     params=[('spatialite', sqlite_settings),
@@ -66,12 +66,16 @@ def threedi_db(request):
     db = ThreediDatabase(request.param[1], db_type=request.param[0],
                          echo=False)
     engine = db.get_engine()
-    Base.prepare(engine, reflect=True)
+    # Base.prepare(engine, reflect=True)
 
     # Configure the scoped session
     Session.configure(bind=engine)
 
+    # monkey-patch get_session
+    db.get_session = lambda: Session()
+
     yield db
+    Session.remove()
 
 
 @pytest.fixture
@@ -84,6 +88,10 @@ def session(threedi_db):
     Session.remove()
 
 
+@pytest.fixture
+def modelchecker(threedi_db):
+    mc = ThreediModelChecker(threedi_db)
+    return mc
 
 
 def test_connection(threedi_db):

@@ -17,6 +17,7 @@ from tests import Session
 #         coord_list.append('{} {}'.format(lat, lng))
 #     r = f'SRID={srid};{geom_type}({coord_list})'
 
+
 class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.GlobalSetting
@@ -33,7 +34,7 @@ class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     start_date = datetime.datetime.now()
     table_step_size = 0.05
     use_1d_flow = False
-    use_2d_rain = True
+    use_2d_rain = 1
     kmax = 4
     sim_time_step = 30
     frict_coef = 0.03
@@ -42,6 +43,7 @@ class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     use_2d_flow = True
     advection_1d = 1
     use_0d_inflow = 0
+    control_group_id = 1
 
 
 class ControlGroupFactory(factory.alchemy.SQLAlchemyModelFactory):
