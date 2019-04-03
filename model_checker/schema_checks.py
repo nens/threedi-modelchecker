@@ -86,21 +86,21 @@ def check_valid_type(session, column):
     return q.all()
 
 
-def sqlalchemy_to_sqlite_type(type):
-    if isinstance(type, types.String):
+def sqlalchemy_to_sqlite_type(column_type):
+    if isinstance(column_type, types.String):
         return 'text'
-    elif isinstance(type, types.Integer):
+    elif isinstance(column_type, types.Integer):
         return 'integer'
-    elif isinstance(type, types.Float):
+    elif isinstance(column_type, types.Float):
         return 'real'
-    elif isinstance(type, types.Boolean):
+    elif isinstance(column_type, types.Boolean):
         return 'integer'
-    elif isinstance(type, types.Date):
+    elif isinstance(column_type, types.Date):
         return 'text'
-    elif isinstance(type, Geometry):
+    elif isinstance(column_type, Geometry):
         return 'blob'
     else:
-        raise TypeError("Unknown type: %s" % type)
+        raise TypeError("Unknown type: %s" % column_type)
 
 
 def get_none_nullable_columns(table):
