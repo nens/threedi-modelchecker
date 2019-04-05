@@ -4,7 +4,7 @@ import pytest
 
 from .conftest import data_dir
 from model_checker.threedi_database import ThreediDatabase
-from model_checker.schema_checks import ThreediModelChecker, check_valid_type
+from model_checker.schema_checks import ThreediModelChecker, query_invalid_type
 from model_checker import models
 from model_checker.models import Base
 
@@ -43,6 +43,13 @@ def test_mc_check_not_null(bergermeer_db):
     print(error_columns)
 
 
+def test_get_null_column_errors(bergermeer_db):
+    mc = ThreediModelChecker(bergermeer_db)
+    null_error_columns = mc.get_null_errors()
+    for e in null_error_columns:
+        print(e)
+
+
 def test_mc_check_valid_type(bergermeer_db):
     mc = ThreediModelChecker(bergermeer_db)
     error_columns = mc.check_data_types()
@@ -54,6 +61,13 @@ def test_mc_check_valid_type(bergermeer_db):
 def test_type(bergermeer_db):
     session = bergermeer_db.get_session()
 
-    r = check_valid_type(session, models.Manhole.zoom_category)
+    r = query_invalid_type(session, models.Manhole.zoom_category)
     print(r)
     print('done')
+
+
+def test_parse_model(bergermeer_db):
+    mc = ThreediModelChecker(bergermeer_db)
+    mc.parse_model()
+    print('done')
+

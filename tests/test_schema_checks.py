@@ -3,7 +3,8 @@ import pytest
 
 from model_checker.schema_checks import (
     ThreediModelChecker, query_missing_foreign_key, query_not_unique, query_not_null,
-    query_invalid_type, get_none_nullable_columns, get_foreign_key_columns)
+    query_invalid_type, get_none_nullable_columns, get_unique_columns,
+    get_foreign_key_columns)
 from model_checker import models
 from tests import factories
 
@@ -140,6 +141,13 @@ def test_get_none_nullable_columns():
     assert models.Manhole.id in not_null_columns
     assert models.Manhole.code in not_null_columns
     assert models.Manhole.display_name in not_null_columns
+
+
+def test_get_unique_columns():
+    unique_columns = get_unique_columns(models.Manhole.__table__)
+    assert len(unique_columns) == 2
+    assert models.Manhole.id in unique_columns
+    assert models.Manhole.connection_node_id
 
 
 def test_get_foreign_key_columns():
