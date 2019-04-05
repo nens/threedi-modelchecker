@@ -4,7 +4,7 @@ import pytest
 
 from .conftest import data_dir
 from model_checker.threedi_database import ThreediDatabase
-from model_checker.schema_checks import ThreediModelChecker, query_invalid_type
+from model_checker.model_checks import ThreediModelChecker, query_invalid_type
 from model_checker import models
 from model_checker.models import Base
 
@@ -20,6 +20,44 @@ def bergermeer_db():
         'db_file': bergermeer_file
     }
     db = ThreediDatabase(bergermeer_settings, db_type='spatialite')
+
+    engine = db.get_engine()
+    # Base.prepare(engine, reflect=True)
+
+    # Configure the scoped session
+    Session.configure(bind=engine)
+
+    return db
+
+
+@pytest.fixture
+def fryslan():
+    fryslan_file = 'wf_zw_052.sqlite'
+    fryslan_path = os.path.join(data_dir, fryslan_file)
+    fryslan_settings = {
+        'db_path': fryslan_path,
+        'db_file': fryslan_file
+    }
+    db = ThreediDatabase(fryslan_settings, db_type='spatialite')
+
+    engine = db.get_engine()
+    # Base.prepare(engine, reflect=True)
+
+    # Configure the scoped session
+    Session.configure(bind=engine)
+
+    return db
+
+
+@pytest.fixture
+def heugem():
+    heugem_file = 'heugem_limmel_integraal_midden.sqlite'
+    heugem_path = os.path.join(data_dir, heugem_file)
+    heugem_settings = {
+        'db_path': heugem_path,
+        'db_file': heugem_file
+    }
+    db = ThreediDatabase(heugem_settings, db_type='spatialite')
 
     engine = db.get_engine()
     # Base.prepare(engine, reflect=True)
@@ -71,3 +109,8 @@ def test_parse_model(bergermeer_db):
     mc.parse_model()
     print('done')
 
+
+def test_parse_model_heugem(heugem):
+    mc = ThreediModelChecker(heugem)
+    mc.parse_model()
+    print('done')

@@ -1,10 +1,10 @@
 import factory
 import pytest
 
-from model_checker.schema_checks import (
+from model_checker.model_checks import (
     ThreediModelChecker, query_missing_foreign_key, query_not_unique, query_not_null,
     query_invalid_type, get_none_nullable_columns, get_unique_columns,
-    get_foreign_key_columns)
+    get_foreign_key_columns, get_null_errors)
 from model_checker import models
 from tests import factories
 
@@ -119,7 +119,6 @@ def test_not_null_with_null_value(session):
 
 
 def test_get_not_null_errors(session):
-    from model_checker.schema_checks import get_null_errors
     factories.ConnectionNodeFactory.create_batch(
         5, storage_area=3.0)
     null_node = factories.ConnectionNodeFactory(storage_area=None)

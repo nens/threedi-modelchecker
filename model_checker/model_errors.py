@@ -1,4 +1,4 @@
-class BaseModelError(object):
+class BaseModelError (object):
     """Dataclass to store error information of a model
 
     Base class to group all model errors"""
@@ -9,7 +9,8 @@ class BaseModelError(object):
         self.id = getattr(self.instance, 'id')
 
     def __str__(self):
-        return "Unexpected value '%s' in column '%s' for id %s" % (
+        return "%s: Unexpected value '%s' in column '%s' for id %s" % (
+            type(self).__name__,
             getattr(self.instance, self.column.name),
             self.column,
             self.id
@@ -23,8 +24,9 @@ class MissingForeignKeyError(BaseModelError):
         self.ref_column = ref_column
 
     def __str__(self):
-        return "Missing foreign key in column %s for id %s, expected " \
+        return "%s: Missing foreign key in column %s for id %s, expected " \
                "reference to %s" % (
+                   type(self).__name__,
                    self.column,
                    self.id,
                    self.ref_column
@@ -36,7 +38,8 @@ class NullColumnError(BaseModelError):
         super().__init__(*args, **kwargs)
 
     def __str__(self):
-        return "Unexpected null value in column '%s' for id %s" % (
+        return "%s: Unexpected null value in column '%s' for id %s" % (
+            type(self).__name__,
             self.column,
             self.id)
 
@@ -47,16 +50,25 @@ class InvalidTypeError(BaseModelError):
         self.expected_type = expected_type
 
     def __str__(self):
-        return "Invalid type in column '%s' for id %s, expected type '%s'" % (
-                   self.column,
-                   self.id,
-                   self.expected_type,
-               )
+        return "%s: Invalid type in column '%s' for id %s, expected type '%s'" % (
+            type(self).__name__,
+            self.column,
+            self.id,
+            self.expected_type,
+        )
 
 
 class NotUniqueError(BaseModelError):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def __str__(self):
+        return "%s: Duplicate value '%s' in column '%s' for id %s" % (
+            type(self).__name__,
+            getattr(self.instance, self.column.name),
+            self.column,
+            self.id
+        )
 
 
 def yield_model_errors(klass, instances, column, **kwargs):

@@ -6,7 +6,7 @@ from sqlalchemy import orm
 
 from model_checker.models import Base
 from model_checker.threedi_database import ThreediDatabase
-from model_checker.schema_checks import ThreediModelChecker
+from model_checker.model_checks import ThreediModelChecker
 
 from tests import Session
 
