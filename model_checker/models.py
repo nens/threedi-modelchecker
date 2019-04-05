@@ -1,7 +1,7 @@
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (
-    Boolean, Column, Integer, String, Float, ForeignKey, Date)
+    Boolean, Column, Integer, String, Float, ForeignKey, Date, DateTime)
 from sqlalchemy.orm import relationship
 from geoalchemy2.types import Geometry
 
@@ -658,6 +658,14 @@ class ImperviousSurfaceMap(Base):
                                    back_populates="impervious_surface_map")
 
     percentage = Column(Float)
+
+
+class SouthMigrationHistory(Base):
+    __tablename__ = 'south_migrationhistory'
+    id = Column(Integer, primary_key=True)
+    app_name = Column(String(255))
+    migration = Column(String(255))
+    applied = Column(DateTime)
 
 
 DECLARED_MODELS = [

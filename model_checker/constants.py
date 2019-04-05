@@ -1,3 +1,7 @@
+LATEST_MIGRATION_ID = 173
+LATEST_MIGRATION_NAME = "0171_auto__chg_field_v2aggregationsettings_aggregation_method__del_field_v2"  # noqa
+
+# Old constants
 from builtins import object
 
 

@@ -11,8 +11,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.sql import text
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.automap import automap_base
-from geoalchemy2 import Geometry, Geography
 
 
 Base = declarative_base()
@@ -58,30 +56,11 @@ class ThreediDatabase(object):
                               supported
         """
         self.settings = connection_settings
-        # make sure within the ThreediDatabase object we always use 'sqlite'
-        # as the db_type identifier
         self.db_type = db_type
         self.echo = echo
 
         self._engine = None
-        self._combined_base = None
-        self._base = None
         self._base_metadata = None
-
-    def create_db(self, overwrite=False):
-        if self.db_type == 'spatialite':
-
-            if overwrite and os.path.isfile(self.settings['db_file']):
-                os.remove(self.settings['db_file'])
-
-            drv = ogr.GetDriverByName('SQLite')
-            db = drv.CreateDataSource(self.settings['db_file'],
-                                      ["SPATIALITE=YES"])
-            Base.metadata.bind = self.engine
-            Base.metadata.create_all(self.engine)
-
-            # todo: add settings to improve database creation speed for older
-            # versions of gdal
 
     @property
     def engine(self):
