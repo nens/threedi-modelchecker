@@ -1,11 +1,16 @@
+from itertools import chain
+
 from sqlalchemy import func, distinct, types
 from geoalchemy2.types import Geometry
 
 from model_checker import models
 from model_checker.models import DECLARED_MODELS
+from model_checker import model_errors
+from model_checker.model_errors import (
+    BaseModelError, NullColumnError, yield_model_errors)
 
 
-def check_foreign_key(session, origin_column, ref_column):
+def query_missing_foreign_key(session, origin_column, ref_column):
     """Check all values in origin_column are in ref_column.
 
     Null values are ignored.
@@ -16,13 +21,23 @@ def check_foreign_key(session, origin_column, ref_column):
     :return: list of declared models instances of origin_column.class
     """
     q = session.query(origin_column.table).filter(
-        origin_column.notin_(session.query(ref_column)),
-        origin_column != None
+        origin_column.notin_(session.query(ref_column)), origin_column != None
     )
-    return q.all()
+    return q
 
 
-def check_unique(session, column):
+def get_foreign_key_errors(session, origin_column, ref_column):
+    missing_fk_q = query_missing_foreign_key(session, origin_column,ref_column)
+    errors = yield_model_errors(
+        model_errors.MissingForeignKeyError,
+        missing_fk_q,
+        origin_column,
+        ref_column=ref_column
+    )
+    return errors
+
+
+def query_not_unique(session, column):
     """Return all values in column that are not unique
 
     Null values are ignored.
@@ -31,29 +46,46 @@ def check_unique(session, column):
     :param column: InstrumentedAttribute
     :return: list of declared models instances of column.class
     """
-    distinct_count = session.query(func.count(distinct(column))).scalar()
-    all_count = session.query(func.count(column)).scalar()
-    if distinct_count == all_count:
-        return []
-    duplicate_values = session.query(column).group_by(column).having(
-        func.count(column) > 1)
+    duplicate_values = (
+        session.query(column).group_by(column).having(func.count(column) > 1)
+    )
     q = session.query(column.table).filter(column.in_(duplicate_values))
-    return q.all()
+    return q
 
 
-def check_not_null(session, column):
+def get_not_unique_errors(session, column):
+    not_unique_q = query_not_unique(session, column)
+    errors = yield_model_errors(
+        model_errors.NotUniqueError, not_unique_q, column)
+    return errors
+
+
+def query_not_null(session, column):
     """Return all values that are not null
 
-    :param self:
     :param session: sqlalchemy.orm.session.Session
     :param column: sqlalchemy.Column
-    :return:
+    :return: sqlalchemy.orm.query.Query
     """
     q = session.query(column.table).filter(column == None)
-    return q.all()
+    return q
 
 
-def check_valid_type(session, column):
+def get_null_errors(session, column):
+    """Return an iterator which yields NullColumnError for all values in
+    column which are null.
+
+    :param session:
+    :param column: sqlalchemy.Column
+    :return: iterator
+    """
+    q = query_not_null(session, column)
+    errors = yield_model_errors(
+        NullColumnError, q, column)
+    return errors
+
+
+def query_invalid_type(session, column):
     """Return all values in column that are not of the column defined type.
 
     Null values are ignored.
@@ -65,24 +97,18 @@ def check_valid_type(session, column):
     :param column: sqlalchemy.Column
     :return: list
     """
-    if 'sqlite' not in session.bind.dialect.dialect_description:
+    if "sqlite" not in session.bind.dialect.dialect_description:
         return []
 
-    q = session.query(
-        func.typeof(column)) \
-        .group_by(func.typeof(column)) \
-        .having(func.typeof(column) != 'null')
-    type_count = q.count()
-    if type_count == 0:
-        return []
     expected_type = sqlalchemy_to_sqlite_type(column.type)
-    if type_count == 1 and q.first()[0] == expected_type:
-        return []
     q = session.query(column.table).filter(
-        func.typeof(column) != expected_type,
-        func.typeof(column) != 'null'
+        func.typeof(column) != expected_type, func.typeof(column) != "null"
     )
-    return q.all()
+    return q
+
+
+def get_invalid_type_errors(session, column):
+    pass
 
 
 def sqlalchemy_to_sqlite_type(column_type):
@@ -92,19 +118,19 @@ def sqlalchemy_to_sqlite_type(column_type):
     :return: (str)
     """
     if isinstance(column_type, types.String):
-        return 'text'
-    elif isinstance(column_type, types.Integer):
-        return 'integer'
+        return "text"
     elif isinstance(column_type, types.Float):
-        return 'real'
+        return "real"
+    elif isinstance(column_type, types.Integer):
+        return "integer"
     elif isinstance(column_type, types.Boolean):
-        return 'integer'
+        return "integer"
     elif isinstance(column_type, types.Date):
-        return 'text'
+        return "text"
     elif isinstance(column_type, Geometry):
-        return 'blob'
+        return "blob"
     else:
-        raise TypeError("Unknown type: %s" % column_type)
+        raise TypeError("Unknown column type: %s" % column_type)
 
 
 def get_none_nullable_columns(table):
@@ -144,21 +170,41 @@ def must_be_on_channel(windshielding_table_name):
 
 
 class ThreediModelChecker:
-
     def __init__(self, threedi_db, declared_models=DECLARED_MODELS):
         self.db = threedi_db
-        self.meta = threedi_db.get_metadata()
         self.declared_models = declared_models
+
+    def parse_model(self):
+        null_errors = self.yield_null_errors()
+        foreign_key_erros = self.yield_foreign_key_errors()
+        data_tye_errors = self.yield_data_type_errors()
+        model_errors = chain({null_errors, foreign_key_erros, data_tye_errors})
+        print_errors(model_errors)
+
+    def yield_null_errors(self):
+        """Return an iterator that yields NullColumnError of this model.
+
+        :return: iterator that yields model_errors.NullColumnError
+        """
+        session = self.db.get_session()
+        columns_to_check = []
+        null_column_errors = []
+        for decl_model in self.declared_models:
+            columns_to_check += get_none_nullable_columns(decl_model.__table__)
+        for column in columns_to_check:
+            null_column_errors += get_null_errors(session, column)
+        return chain(null_column_errors)
 
     def check_not_null_columns(self):
         session = self.db.get_session()
-        results = []
+        error_columns = []
         columns_to_check = []
         for decl_model in self.declared_models:
             columns_to_check += get_none_nullable_columns(decl_model.__table__)
         for column in columns_to_check:
-            results += check_not_null(session, column)
-        return results
+            error_columns += query_not_null(session, column)
+
+        return error_columns
 
     def check_foreign_keys(self):
         session = self.db.get_session()
@@ -166,28 +212,27 @@ class ThreediModelChecker:
         for decl_model in self.declared_models:
             foreign_keys = get_foreign_key_columns(decl_model.__table__)
             for fk in foreign_keys:
-                result += check_foreign_key(session, fk.parent, fk.column)
+                result += query_missing_foreign_key(session, fk.parent, fk.column)
         return result
+
+    def yield_foreign_key_errors(self):
+        pass
 
     def check_data_types(self):
         session = self.db.get_session()
         result = []
         for decl_model in self.declared_models:
             for column in decl_model.__table__.columns:
-                r = check_valid_type(session, column)
+                r = query_invalid_type(session, column)
                 if r:
                     print(column)
                 result += r
         return result
 
-
-class ModelCheckResult:
-
-    status_code = None
-    # Resolved/Unresolved
-
-    severity = None
-    # Error/Warning
-
-    def __init__(self):
+    def yield_data_type_errors(self):
         pass
+
+
+def print_errors(errors):
+    for error in errors:
+        print(error)

@@ -666,6 +666,7 @@ DECLARED_MODELS = [
     ControlTimed,
     CrossSectionDefinition,
     CrossSectionLocation,
+    Culvert,
     DemAverageArea,
     GlobalSetting,
     GridRefinement,
