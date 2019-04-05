@@ -108,7 +108,15 @@ def query_invalid_type(session, column):
 
 
 def get_invalid_type_errors(session, column):
-    pass
+    invalid_types_q = query_invalid_type(session, column)
+
+    expected_type = sqlalchemy_to_sqlite_type(column.type)
+    errors = yield_model_errors(
+        model_errors.InvalidTypeError,
+        invalid_types_q,
+        column,
+        expected_type=expected_type)
+    return errors
 
 
 def sqlalchemy_to_sqlite_type(column_type):
@@ -146,6 +154,14 @@ def get_none_nullable_columns(table):
     return not_null_columns
 
 
+def get_unique_columns(table):
+    unique_colums = []
+    for column in table.columns:
+        if column.unique or column.primary_key:
+            unique_colums.append(column)
+    return unique_colums
+
+
 def get_foreign_key_columns(table):
     return table.foreign_keys
 
@@ -177,9 +193,25 @@ class ThreediModelChecker:
     def parse_model(self):
         null_errors = self.yield_null_errors()
         foreign_key_erros = self.yield_foreign_key_errors()
-        data_tye_errors = self.yield_data_type_errors()
-        model_errors = chain({null_errors, foreign_key_erros, data_tye_errors})
-        print_errors(model_errors)
+        not_unique_errors = self.yield_not_unique_errors()
+        data_type_errors = self.yield_data_type_errors()
+        all_errors = chain(
+            null_errors,
+            foreign_key_erros,
+            not_unique_errors,
+            data_type_errors)
+        print_errors(all_errors)
+
+    def check_not_null_columns(self):
+        session = self.db.get_session()
+        error_columns = []
+        columns_to_check = []
+        for decl_model in self.declared_models:
+            columns_to_check += get_none_nullable_columns(decl_model.__table__)
+        for column in columns_to_check:
+            error_columns += query_not_null(session, column)
+
+        return error_columns
 
     def yield_null_errors(self):
         """Return an iterator that yields NullColumnError of this model.
@@ -195,17 +227,6 @@ class ThreediModelChecker:
             null_column_errors += get_null_errors(session, column)
         return chain(null_column_errors)
 
-    def check_not_null_columns(self):
-        session = self.db.get_session()
-        error_columns = []
-        columns_to_check = []
-        for decl_model in self.declared_models:
-            columns_to_check += get_none_nullable_columns(decl_model.__table__)
-        for column in columns_to_check:
-            error_columns += query_not_null(session, column)
-
-        return error_columns
-
     def check_foreign_keys(self):
         session = self.db.get_session()
         result = []
@@ -216,7 +237,23 @@ class ThreediModelChecker:
         return result
 
     def yield_foreign_key_errors(self):
-        pass
+        session = self.db.get_session()
+        foreign_key_errors = []
+        for decl_model in self.declared_models:
+            foreign_keys = get_foreign_key_columns(decl_model.__table__)
+            for fk in foreign_keys:
+                foreign_key_errors += get_foreign_key_errors(
+                    session, fk.parent, fk.column
+                )
+        return chain(foreign_key_errors)
+
+    def yield_not_unique_errors(self):
+        session = self.db.get_session()
+        not_unique_errors = []
+        for decl_model in self.declared_models:
+            for column in get_unique_columns(decl_model.__table__):
+                not_unique_errors += get_not_unique_errors(session, column)
+        return chain(not_unique_errors)
 
     def check_data_types(self):
         session = self.db.get_session()
@@ -230,7 +267,12 @@ class ThreediModelChecker:
         return result
 
     def yield_data_type_errors(self):
-        pass
+        session = self.db.get_session()
+        data_type_errors = []
+        for decl_model in self.declared_models:
+            for column in decl_model.__table__.columns:
+                data_type_errors += get_invalid_type_errors(session, column)
+        return chain(data_type_errors)
 
 
 def print_errors(errors):

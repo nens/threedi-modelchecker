@@ -653,6 +653,7 @@ class ImperviousSurfaceMap(Base):
 DECLARED_MODELS = [
     BoundaryCondition1D,
     BoundaryConditions2D,
+    ConnectionNode,
     CalculationPoint,
     ConnectedPoint,
     ContrlPID,
