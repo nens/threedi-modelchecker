@@ -79,7 +79,7 @@ class ControlMemory(Base):
     id = Column(Integer, primary_key=True)
 
 
-class ContrlPID(Base):
+class ControlPID(Base):
     __tablename__ = 'v2_control_pid'
     id = Column(Integer, primary_key=True)
 
@@ -99,11 +99,21 @@ class Control(Base):
     id = Column(Integer, primary_key=True)
 
 
+class Floodfill(Base):
+    __tablename__ = 'v2_floodfill'
+    id = Column(Integer, primary_key=True)
+
+
 class Interflow(Base):
     __tablename__ = 'v2_interflow'
     id = Column(Integer, primary_key=True)
     porosity_file = Column(String(255), nullable=True)
     hydraulic_conductivity_file = Column(String(255), nullable=True)
+
+
+class PumpedDrainageArea(Base):
+    __tablename__ = 'v2_pumped_drainage_area'
+    id = Column(Integer, primary_key=True)
 
 
 class SimpleInfiltration(Base):
@@ -651,24 +661,27 @@ class ImperviousSurfaceMap(Base):
 
 
 DECLARED_MODELS = [
+    AggregationSettings,
     BoundaryCondition1D,
     BoundaryConditions2D,
-    ConnectionNode,
     CalculationPoint,
+    Channel,
     ConnectedPoint,
-    ContrlPID,
+    ConnectionNode,
     Control,
     ControlDelta,
     ControlGroup,
     ControlMeasureGroup,
     ControlMeasureMap,
     ControlMemory,
+    ControlPID,
     ControlTable,
     ControlTimed,
     CrossSectionDefinition,
     CrossSectionLocation,
     Culvert,
     DemAverageArea,
+    Floodfill,
     GlobalSetting,
     GridRefinement,
     GridRefinementArea,
@@ -679,11 +692,12 @@ DECLARED_MODELS = [
     Lateral1d,
     Lateral2D,
     Levee,
-    NumericalSettings,
     Manhole,
+    NumericalSettings,
     Obstacle,
     Orifice,
     Pipe,
+    PumpedDrainageArea,
     Pumpstation,
     SimpleInfiltration,
     Surface,
