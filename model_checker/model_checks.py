@@ -122,6 +122,8 @@ def get_invalid_type_errors(session, column):
 def sqlalchemy_to_sqlite_type(column_type):
     """Convert the sqlalchemy column type to sqlite data type
 
+    Returns the value similar as the sqlite 'typeof' function.
+
     :param column_type: sqlalchemy.column
     :return: (str)
     """
@@ -133,6 +135,8 @@ def sqlalchemy_to_sqlite_type(column_type):
         return "integer"
     elif isinstance(column_type, types.Boolean):
         return "integer"
+    elif isinstance(column_type, types.Numeric):
+        return "numeric"
     elif isinstance(column_type, types.Date):
         return "text"
     elif isinstance(column_type, Geometry):

@@ -1,7 +1,8 @@
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (
-    Boolean, Column, Integer, String, Float, ForeignKey, Date, DateTime)
+    Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, Numeric,
+    String, Text)
 from sqlalchemy.orm import relationship
 from geoalchemy2.types import Geometry
 
@@ -24,44 +25,68 @@ def prettify(value, postfix, value_format='%0.2f'):
     return '%s %s' % (value_str, postfix)
 
 
-class Lateral1d(Base):
-    __tablename__ = 'v2_1d_lateral'
-    id = Column(Integer, primary_key=True)
-
-
 class Lateral2D(Base):
     __tablename__ = 'v2_2d_lateral'
     id = Column(Integer, primary_key=True)
+
+    type = Column(Integer)
+    the_geom = Column(Geometry(
+        geometry_type='POINT',
+        srid=4326,
+        spatial_index=True)
+    )
+    timeseries = Column(Text)
 
 
 class BoundaryConditions2D(Base):
     __tablename__ = 'v2_2d_boundary_conditions'
     id = Column(Integer, primary_key=True)
 
-
-class AggregationSettings(Base):
-    __tablename__ = 'v2_aggregation_settings'
-    id = Column(Integer, primary_key=True)
+    display_name = Column(String(255), nullable=False)
+    timeseries = Column(Text)
+    boundary_type = Column(Integer)
+    the_geom = Column(Geometry(
+        geometry_type='LINESTRING',
+        srid=4326,
+        spatial_index=True
+    ))
 
 
 class CalculationPoint(Base):
     __tablename__ = 'v2_calculation_point'
     id = Column(Integer, primary_key=True)
 
-
-class ConnectedPoint(Base):
-    __tablename__ = 'v2_connected_pnt'
-    id = Column(Integer, primary_key=True)
+    content_type_id = Column(Integer, nullable=False)
+    user_ref = Column(String(80), nullable=False)
+    calc_type = Column(Integer, nullable=False)
+    the_geom = Column(
+        Geometry(
+            geometry_type='POINT',
+            srid=4326,
+            spatial_index=True
+        ),
+        nullable=False
+    )
 
 
 class ControlDelta(Base):
     __tablename__ = 'v2_control_delta'
     id = Column(Integer, primary_key=True)
+    measure_variable = Column(String(50))
+    measure_delta = Column(String(50))
+    measure_dt = Column(Float)
+    action_type = Column(String(50))
+    action_value = Column(String(50))
+    action_time = Column(Float)
+    target_type = Column(String(100))
+    target_id = Column(Integer)
 
 
 class ControlGroup(Base):
     __tablename__ = 'v2_control_group'
     id = Column(Integer, primary_key=True)
+    name = Column(String(100))
+    description = Column(Text)
 
 
 class ControlMeasureGroup(Base):
@@ -72,70 +97,158 @@ class ControlMeasureGroup(Base):
 class ControlMeasureMap(Base):
     __tablename__ = 'v2_control_measure_map'
     id = Column(Integer, primary_key=True)
+    measure_group_id = Column(
+        Integer,
+        ForeignKey(ControlMeasureGroup.__tablename__ + '.id')
+    )
+    object_type = Column(String(100))
+    object_id = Column(Integer)
+    weight = Column(Numeric)
 
 
 class ControlMemory(Base):
     __tablename__ = 'v2_control_memory'
     id = Column(Integer, primary_key=True)
+    measure_variable = Column(String(50))
+    upper_threshold = Column(Float)
+    lower_threshold = Column(Float)
+    action_type = Column(String(50))
+    action_value = Column(String(50))
+    target_type = Column(String(100))
+    target_id = Column(Integer)
+    is_active = Column(Boolean, nullable=False)
+    is_inverse = Column(Boolean, nullable=False)
 
 
 class ControlPID(Base):
     __tablename__ = 'v2_control_pid'
     id = Column(Integer, primary_key=True)
+    measure_variable = Column(String(50))
+    setpoint = Column(Float)
+    kp = Column(Float)
+    ki = Column(Float)
+    kd = Column(Float)
+    action_type = Column(String(50))
+    target_type = Column(String(100))
+    target_upper_limit = Column(String(50))
+    target_lower_limit = Column(String(50))
 
 
 class ControlTable(Base):
     __tablename__ = 'v2_control_table'
     id = Column(Integer, primary_key=True)
+    action_table = Column(Text)
+    action_type = Column(String(50))
+    measure_variable = Column(String(50))
+    measure_operator = Column(String(2))
+    target_type = Column(String(100))
+    target_id = Column(Integer)
 
 
 class ControlTimed(Base):
     __tablename__ = 'v2_control_timed'
     id = Column(Integer, primary_key=True)
+    action_type = Column(String(50))
+    action_table = Column(Text)
+    target_type = Column(String(100))
+    target_id = Column(Integer)
 
 
 class Control(Base):
     __tablename__ = 'v2_control'
     id = Column(Integer, primary_key=True)
+    control_group_id = Column(
+        Integer,
+        ForeignKey(ControlGroup.__tablename__ + '.id')
+    )
+    measure_group_id = Column(
+        Integer,
+        ForeignKey(ControlMeasureGroup.__tablename__ + '.id')
+    )
+    control_type = Column(String(15))
+    control_id = Column(Integer)
+    start = Column(String(50))
+    end = Column(String(50))
+    measure_frequency = Column(Integer)
 
 
 class Floodfill(Base):
     __tablename__ = 'v2_floodfill'
     id = Column(Integer, primary_key=True)
+    waterlevel = Column(Float)
+    the_geom = Column(
+        Geometry(
+            geometry_type='POINT',
+            srid=4326,
+            spatial_index=True
+        )
+    )
 
 
 class Interflow(Base):
     __tablename__ = 'v2_interflow'
     id = Column(Integer, primary_key=True)
-    porosity_file = Column(String(255), nullable=True)
-    hydraulic_conductivity_file = Column(String(255), nullable=True)
+    interflow_type = Column(Integer, nullable=False)
+    porosity = Column(Float)
+    porosity_file = Column(String(255))
+    porosity_layer_thickness = Column(Float)
+    impervious_layer_elevation = Column(Float)
+    hydraulic_conductivity = Column(Float)
+    hydraulic_conductivity_file = Column(String(255))
+    display_name = Column(String(255))
 
 
 class PumpedDrainageArea(Base):
     __tablename__ = 'v2_pumped_drainage_area'
     id = Column(Integer, primary_key=True)
+    name = Column(String(64), nullable=False)
+    code = Column(String(100), nullable=False)
+    the_geom = Column(
+        Geometry(
+            geometry_type='POLYGON',
+            srid=4326,
+            spatial_index=True
+        ),
+        nullable=False
+    )
 
 
 class SimpleInfiltration(Base):
     __tablename__ = 'v2_simple_infiltration'
     id = Column(Integer, primary_key=True)
-    infiltration_rate_file = Column(String(255), nullable=True)
-    max_infiltration_capacity_file = Column(String(255), nullable=True)
-
-
-class Surface(Base):
-    __tablename__ = 'v2_surface'
-    id = Column(Integer, primary_key=True)
-
-
-class SurfaceMap(Base):
-    __tablename__ = 'v2_surface_map'
-    id = Column(Integer, primary_key=True)
+    infiltration_rate = Column(Float, nullable=False)
+    infiltration_rate_file = Column(String(255))
+    infiltration_surface_option = Column(Integer)
+    max_infiltration_capacity_file = Column(Text)
+    display_name = Column(String(255))
 
 
 class SurfaceParameter(Base):
     __tablename__ = 'v2_surface_parameters'
     id = Column(Integer, primary_key=True)
+
+
+class Surface(Base):
+    __tablename__ = 'v2_surface'
+    id = Column(Integer, primary_key=True)
+    display_name = Column(String(255), nullable=False)
+    code = Column(String(100), nullable=False)
+    zoom_category = Column(Integer)
+    nr_of_inhabitants = Column(Float)
+    dry_weather_flow = Column(Float)
+    function = Column(String(64))
+    area = Column(Float)
+    surface_parameters_id = Column(
+        Integer,
+        ForeignKey(SurfaceParameter.__tablename__ + ".id")
+    )
+    the_geom = Column(
+        Geometry(
+            geometry_type='POLYGON',
+            srid=4326,
+            spatial_index=True
+        )
+    )
 
 
 class Windshielding(Base):
@@ -191,25 +304,61 @@ class GlobalSetting(Base):
     control_group_id = Column(Integer)
 
 
+class AggregationSettings(Base):
+    __tablename__ = 'v2_aggregation_settings'
+    id = Column(Integer, primary_key=True)
+
+    global_settings_id = Column(
+        Integer,
+        ForeignKey(GlobalSetting.__tablename__ + '.id')
+    )
+
+    var_name = Column(String(100), nullable=False)
+    flow_variable = Column(String(100))
+    aggregation_method = Column(String(100), nullable=False)
+    aggregation_in_space = Column(Boolean, nullable=False)
+    timestep = Column(Integer, nullable=False)
+
+
 class GridRefinement(Base):
     __tablename__ = 'v2_grid_refinement'
     id = Column(Integer, primary_key=True)
+
+    display_name = Column(String(255), nullable=False)
+    refinement_level = Column(Integer)
+    the_geom = Column(
+        Geometry(
+            geometry_type='LINESTRING',
+            srid=4326,
+            spatial_index=True
+        )
+    )
+    code = Column(String(100), nullable=False)
 
 
 class GridRefinementArea(Base):
     __tablename__ = 'v2_grid_refinement_area'
     id = Column(Integer, primary_key=True)
 
+    display_name = Column(String(255), nullable=False)
+    refinement_level = Column(Integer)
+    code = Column(String(100), nullable=False)
+    the_geom = Column(
+        Geometry(
+            geometry_type='POLYGON',
+            srid=4326,
+            spatial_index=True
+        )
+    )
+
 
 class CrossSectionDefinition(Base):
     __tablename__ = 'v2_cross_section_definition'
 
-    # PROFILE_SHAPES = Constants.PROFILE_SHAPES
-
     id = Column(Integer, primary_key=True)
     width = Column(String(255))
     height = Column(String(255))
-    shape = Column(Integer)  # PROFILE_SHAPES
+    shape = Column(Integer)
     code = Column(String(100), default='', nullable=False)
 
 
@@ -219,51 +368,68 @@ class ConnectionNode(Base):
     id = Column(Integer, primary_key=True)
     storage_area = Column(Float)
     initial_waterlevel = Column(Float)
-    the_geom = Column(Geometry(geometry_type='POINT',
-                               srid=4326,
-                               spatial_index=True),
-                      nullable=False)
-    the_geom_linestring = Column(Geometry(geometry_type='POINT',
-                                          srid=4326,
-                                          spatial_index=False),
-                                 nullable=True)
-    code = Column(String(100), default='', nullable=True)
-    manhole = relationship("Manhole",
-                           uselist=False,
-                           back_populates="connection_node")
-    boundary_condition = relationship("BoundaryCondition1D",
-                                      uselist=False,
-                                      back_populates="connection_node")
-    impervious_surface_map = relationship("ImperviousSurfaceMap",
-                                          back_populates="connection_node")
+    the_geom = Column(
+        Geometry(
+            geometry_type='POINT',
+            srid=4326,
+            spatial_index=True
+        ),
+        nullable=False)
+    the_geom_linestring = Column(
+        Geometry(
+            geometry_type='LINESTRING',
+            srid=4326,
+            spatial_index=False
+        )
+    )
+    code = Column(String(100), default='', nullable=False)
+
+    manhole = relationship(
+        "Manhole",
+        uselist=False,
+        back_populates="connection_node")
+    boundary_condition = relationship(
+        "BoundaryCondition1D",
+        uselist=False,
+        back_populates="connection_node")
+    impervious_surface_map = relationship(
+        "ImperviousSurfaceMap",
+        back_populates="connection_node")
+
+
+class Lateral1d(Base):
+    __tablename__ = 'v2_1d_lateral'
+    id = Column(Integer, primary_key=True)
+    connection_node_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+        nullable=False
+    )
+    connection_node = relationship(ConnectionNode, back_populates="lateral1d")
+    timeseries = Column(Text)
 
 
 class Manhole(Base):
     __tablename__ = 'v2_manhole'
 
-    MANHOLE_INDICATORS = Constants.MANHOLE_INDICATORS
-    CALCULATION_TYPES = Constants.CALCULATION_TYPES
-    MANHOLE_SHAPES = Constants.MANHOLE_SHAPES
-
     id = Column(Integer, primary_key=True)
+    display_name = Column(String(255), nullable=False)
     code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False, default='')
     zoom_category = Column(Integer)
-
+    shape = Column(String(4))
     width = Column(Float)
-    shape = Column(String(4))  # MANHOLE_SHAPES
     length = Column(Float)
     surface_level = Column(Float)
     bottom_level = Column(Float)
     drain_level = Column(Float)
     sediment_level = Column(Float)
-    manhole_indicator = Column(Integer)  # MANHOLE_INDICATORS
-    calculation_type = Column(Integer)  # CALCULATION_TYPES
+    manhole_indicator = Column(Integer)
+    calculation_type = Column(Integer)
 
     connection_node_id = Column(
         Integer, ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True,
-        unique=True)
+        nullable=True
+    )
     connection_node = relationship(ConnectionNode,
                                    back_populates="manhole")
 
@@ -271,16 +437,36 @@ class Manhole(Base):
 class NumericalSettings(Base):
     __tablename__ = 'v2_numerical_settings'
     id = Column(Integer, primary_key=True)
+    cfl_strictness_factor_1d = Column(Float)
+    cfl_strictness_factor_2d = Column(Float)
+    convergence_cg = Column(Float)
+    convergence_eps = Column(Float)
+    flow_direction_threshold = Column(Float)
+    frict_shallow_water_correction = Column(Integer)
+    general_numerical_threshold = Column(Float)
+    integration_method = Column(Integer)
+    limiter_grad_1d = Column(Integer)
+    limiter_grad_2d = Column(Integer)
+    limiter_slope_crossectional_area_2d = Column(Integer)
+    limiter_slope_friction_2d = Column(Integer)
+    max_nonlin_iterations = Column(Integer)
+    max_degree = Column(Integer, nullable=False)
+    minimum_friction_velocity = Column(Float)
+    minimum_surface_area = Column(Float)
+    precon_cg = Column(Integer)
+    preissmann_slot = Column(Float)
+    pump_implicit_ratio = Column(Float)
+    thin_water_layer_definition = Column(Float)
+    use_of_cg = Column(Integer, nullable=False)
+    use_of_nested_newton = Column(Integer, nullable=False)
 
 
 class BoundaryCondition1D(Base):
     __tablename__ = 'v2_1d_boundary_conditions'
 
-    BOUNDARY_TYPES = Constants.BOUNDARY_TYPES
-
     id = Column(Integer, primary_key=True)
     boundary_type = Column(Integer)
-    timeseries = Column(String)
+    timeseries = Column(Text)
 
     connection_node_id = Column(
         Integer, ForeignKey(ConnectionNode.__tablename__ + ".id"),
@@ -291,250 +477,242 @@ class BoundaryCondition1D(Base):
                                    back_populates="boundary_condition")
 
 
+class SurfaceMap(Base):
+    __tablename__ = 'v2_surface_map'
+    id = Column(Integer, primary_key=True)
+    surface_type = Column(String(40))
+    surface_id = Column(Integer)
+    connection_node_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + '.id'),
+        nullable=False
+    )
+    percentage = Column(Float)
+
+
 class Channel(Base):
     __tablename__ = 'v2_channel'
-
-    CALCULATION_TYPES = Constants.CALCULATION_TYPES
-
     id = Column(Integer, primary_key=True)
+    display_name = Column(String(255), nullable=False)
     code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False, default='')
-    zoom_category = Column(Integer, nullable=True)  # default=2
-
-    calculation_type = Column(Integer, nullable=True)
-    dist_calc_points = Column(Float, nullable=True)
-    the_geom = Column(Geometry(geometry_type='LINESTRING',
-                               srid=4326,
-                               spatial_index=True),
-                      nullable=False)
+    calculation_type = Column(Integer)
+    dist_calc_points = Column(Float)
+    zoom_category = Column(Integer)
+    the_geom = Column(
+        Geometry(
+            geometry_type='LINESTRING',
+            srid=4326,
+            spatial_index=True),
+        nullable=False)
 
     connection_node_start_id = Column(
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id")
+    )
     connection_node_start = relationship(
-        ConnectionNode, foreign_keys=connection_node_start_id)
-
+        ConnectionNode, foreign_keys=connection_node_start_id
+    )
     connection_node_end_id = Column(
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id")
+    )
     connection_node_end = relationship(
-        ConnectionNode, foreign_keys=connection_node_end_id)
-
-    cross_section_locations = relationship("CrossSectionLocation",
-                                           back_populates="channel")
+        ConnectionNode, foreign_keys=connection_node_end_id
+    )
+    cross_section_locations = relationship(
+        "CrossSectionLocation",
+        back_populates="channel"
+    )
 
 
 class CrossSectionLocation(Base):
     __tablename__ = 'v2_cross_section_location'
-
-    FRICTION_TYPE = Constants.FRICTION_TYPES
-
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), default='', nullable=False)
-    channel_id = Column(
-        Integer, ForeignKey("v2_channel.id"),
-        nullable=False)
-    channel = relationship(Channel,
-                           back_populates="cross_section_locations")
-    definition_id = Column(
-        Integer, ForeignKey("v2_cross_section_definition.id"),
-        nullable=True)
-    definition = relationship(CrossSectionDefinition)
+    code = Column(String(100), nullable=False)
     reference_level = Column(Float)
-    friction_type = Column(Integer)  # FRICTION_TYPES
+    friction_type = Column(Integer)
     friction_value = Column(Float)
+    bank_level = Column(Float)
+    the_geom = Column(
+        Geometry(
+            geometry_type='POINT',
+            srid=4326,
+            spatial_index=True
+        )
+    )
+    channel_id = Column(
+        Integer,
+        ForeignKey(Channel.__tablename__ + '.id')
+    )
+    channel = relationship(
+        Channel,
+        back_populates="cross_section_locations"
+    )
+    definition_id = Column(
+        Integer,
+        ForeignKey(CrossSectionDefinition.__tablename__ + '.id')
+    )
+    definition = relationship(CrossSectionDefinition)
 
 
 class Pipe(Base):
-
     __tablename__ = 'v2_pipe'
-
-    CALCULATION_TYPES = Constants.CALCULATION_TYPES
-    SEWERAGE_TYPES = Constants.SEWERAGE_TYPES
-    MATERIALS = Constants.MATERIALS
-
     id = Column(Integer, primary_key=True)
+    display_name = Column(String(255), nullable=False)
     code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False, default='')
-    zoom_category = Column(Integer, nullable=True, default=2)
-
-    connection_node_start_id = Column(
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
-    connection_node_start = relationship(
-        ConnectionNode, foreign_keys=connection_node_start_id)
-
-    connection_node_end_id = Column(
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
-    connection_node_end = relationship(
-        ConnectionNode, foreign_keys=connection_node_end_id)
-
-    original_length = Column(Float)
-
-    # cross section and level
-    cross_section_definition_id = Column(
-        Integer, ForeignKey("v2_cross_section_definition.id"),
-        nullable=True)
-    cross_section_definition = relationship("CrossSectionDefinition")
-
+    profile_num = Column(Integer)
+    sewerage_type = Column(Integer)
+    calculation_type = Column(Integer)
     invert_level_start_point = Column(Float)
     invert_level_end_point = Column(Float)
-
-    # friction
     friction_value = Column(Float)
-    friction_type = Column(Integer)  # FRICTION_TYPE
-
-    profile_num = Column(Integer)
-    sewerage_type = Column(Integer)  # SEWERAGE_TYPES
-    calculation_type = Column(Integer)  # CALCULATION_TYPES
+    friction_type = Column(Integer)
     dist_calc_points = Column(Float)
+    material = Column(Integer)
+    original_length = Column(Float)
+    zoom_category = Column(Integer)
 
-    material = Column(Integer)  # MATERIALS
+    connection_node_start_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+    )
+    connection_node_start = relationship(
+        ConnectionNode, foreign_keys=connection_node_start_id
+    )
+    connection_node_end_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+     )
+    connection_node_end = relationship(
+        ConnectionNode, foreign_keys=connection_node_end_id)
+    cross_section_definition_id = Column(
+        Integer,
+        ForeignKey(CrossSectionDefinition.__tablename__ + '.id'),
+    )
+    cross_section_definition = relationship("CrossSectionDefinition")
 
 
 class Culvert(Base):
-    # todo: check this definition with original
     __tablename__ = 'v2_culvert'
-
-    CALCULATION_TYPES = Constants.CALCULATION_TYPES
-
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), nullable=False)
     display_name = Column(String(255), nullable=False)
-    zoom_category = Column(Integer, nullable=True)  # default=2
-
-    # node relations
-    connection_node_start_id = Column(
-        'connection_node_start_id',
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=False)
-    connection_node_start = relationship(
-        ConnectionNode, foreign_keys=connection_node_start_id)
-
-    connection_node_end_id = Column(
-        'connection_node_end_id',
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=False)
-    connection_node_end = relationship(
-        ConnectionNode, foreign_keys=connection_node_end_id)
-
-    # cross section and level
-    cross_section_definition_id = Column(
-        Integer, ForeignKey("v2_cross_section_definition.id"),
-        nullable=True)
-    cross_section_definition = relationship(CrossSectionDefinition)
-    invert_level_start_point = Column(Float)
-    invert_level_end_point = Column(Float)
-
-    # friction and flow direction
+    code = Column(String(100), nullable=False)
+    calculation_type = Column(Integer)
     friction_value = Column(Float)
     friction_type = Column(Integer)
-    discharge_coefficient_positive = Column(Float)
-    discharge_coefficient_negative = Column(Float)
+    dist_calc_points = Column(Float)
+    zoom_category = Column(Integer)
+    discharge_coefficient_positive = Column(Float, nullable=False)
+    discharge_coefficient_negative = Column(Float, nullable=False)
+    invert_level_start_point = Column(Float)
+    invert_level_end_point = Column(Float)
+    the_geom = Column(
+        Geometry(
+            geometry_type='LINESTRING',
+            srid=4326,
+            spatial_index=True),
+        nullable=False)
 
-    # other attributes
-    calculation_type = Column(Integer)
-    dist_calc_points = Column(Float, nullable=True)
-
-    the_geom = Column(Geometry(geometry_type='LINESTRING',
-                               srid=4326,
-                               spatial_index=True),
-                      nullable=True)
+    connection_node_start_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+    )
+    connection_node_start = relationship(
+        ConnectionNode, foreign_keys=connection_node_start_id
+    )
+    connection_node_end_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+    )
+    connection_node_end = relationship(
+        ConnectionNode, foreign_keys=connection_node_end_id
+    )
+    cross_section_definition_id = Column(
+        Integer,
+        ForeignKey(CrossSectionDefinition.__tablename__ + '.id'),
+    )
+    cross_section_definition = relationship(CrossSectionDefinition)
 
 
 class DemAverageArea(Base):
     __tablename__ = 'v2_dem_average_area'
     id = Column(Integer, primary_key=True)
+    the_geom = Column(
+        Geometry(
+            geometry_type='POLYTONG',
+            srid=4326,
+            spatial_index=True
+        )
+    )
 
 
 class Weir(Base):
     __tablename__ = 'v2_weir'
-
-    CREST_TYPES = Constants.CREST_TYPES
-    FRICTION_TYPES = Constants.FRICTION_TYPES
-
     id = Column(Integer, primary_key=True)
     code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False, default='')
-    zoom_category = Column(Integer, nullable=True, default=2)
-
-    # node relations
-    connection_node_start_id = Column(
-        'connection_node_start_id',
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
-    connection_node_start = relationship(
-        ConnectionNode, foreign_keys=connection_node_start_id)
-
-    connection_node_end_id = Column(
-        'connection_node_end_id',
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
-    connection_node_end = relationship(
-        ConnectionNode, foreign_keys=connection_node_end_id)
-
-    # crest level and cross section
-    crest_type = Column(Integer)  # CREST_TYPE
+    display_name = Column(String(255), nullable=False)
     crest_level = Column(Float)
-
-    cross_section_definition_id = Column(
-        Integer, ForeignKey("v2_cross_section_definition.id"),
-        nullable=True)
-    cross_section_definition = relationship("CrossSectionDefinition")
-
-    # friction and flow direction
+    crest_type = Column(Integer)
     friction_value = Column(Float)
-    friction_type = Column(Integer)  # FRICTION_TYPES
+    friction_type = Column(Integer)
     discharge_coefficient_positive = Column(Float)
     discharge_coefficient_negative = Column(Float)
-
-    sewerage = Column(Boolean)
+    sewerage = Column(Boolean, nullable=False)
     external = Column(Boolean)
+    zoom_category = Column(Integer)
+
+    connection_node_start_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id")
+    )
+    connection_node_start = relationship(
+        ConnectionNode, foreign_keys=connection_node_start_id)
+    connection_node_end_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+    )
+    connection_node_end = relationship(
+        ConnectionNode, foreign_keys=connection_node_end_id)
+    cross_section_definition_id = Column(
+        Integer,
+        ForeignKey(CrossSectionDefinition.__tablename__ + '.id'),
+    )
+    cross_section_definition = relationship("CrossSectionDefinition")
 
 
 class Orifice(Base):
     __tablename__ = 'v2_orifice'
-
-    CREST_TYPES = Constants.CREST_TYPES
-    FRICTION_TYPES = Constants.FRICTION_TYPES
-
     id = Column(Integer, primary_key=True)
     code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False, default='')
-    zoom_category = Column(Integer, nullable=True)  # default=2
-
-    # node relations
-    connection_node_start_id = Column(
-        'connection_node_start_id',
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
-    connection_node_start = relationship(
-        ConnectionNode, foreign_keys=connection_node_start_id)
-
-    connection_node_end_id = Column(
-        'connection_node_end_id',
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
-    connection_node_end = relationship(
-        ConnectionNode, foreign_keys=connection_node_end_id)
-
-    # crest and cross section
-    crest_type = Column(Integer)  # CREST_TYPES
+    display_name = Column(String(255), nullable=False)
+    zoom_category = Column(Integer)
+    crest_type = Column(Integer)
     crest_level = Column(Float)
-
-    cross_section_definition_id = Column(
-        Integer, ForeignKey("v2_cross_section_definition.id"),
-        nullable=True)
-    cross_section_definition = relationship("CrossSectionDefinition")
-
-    # friction and flow direction
     friction_value = Column(Float)
-    friction_type = Column(Integer)  # FRICTION_TYPES
+    friction_type = Column(Integer)
     discharge_coefficient_positive = Column(Float)
     discharge_coefficient_negative = Column(Float)
+    sewerage = Column(Boolean, nullable=False)
 
-    sewerage = Column(Boolean, default=False)
+    connection_node_start_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+    )
+    connection_node_start = relationship(
+        ConnectionNode, foreign_keys=connection_node_start_id
+    )
+    connection_node_end_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id")
+    )
+    connection_node_end = relationship(
+        ConnectionNode, foreign_keys=connection_node_end_id
+    )
+    cross_section_definition_id = Column(
+        Integer,
+        ForeignKey(CrossSectionDefinition.__tablename__ + '.id')
+    )
+    cross_section_definition = relationship("CrossSectionDefinition")
 
     @property
     def max_capacity_str(self):
@@ -546,126 +724,139 @@ class Orifice(Base):
 
 
 class Pumpstation(Base):
-
     __tablename__ = 'v2_pumpstation'
-
     id = Column(Integer, primary_key=True)
     code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False, default='')
-    zoom_category = Column(Integer, nullable=True)
-
-    sewerage = Column(Boolean, default=False)
-    classification = Column(Integer)  # in use?
-    type_ = Column(Integer, nullable=True, default=1, name='type')
-
-    # relation ships
-    connection_node_start_id = Column(
-        'connection_node_start_id',
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
-    connection_node_start = relationship(
-        ConnectionNode, foreign_keys=connection_node_start_id)
-
-    connection_node_end_id = Column(
-        'connection_node_end_id',
-        ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True)
-    connection_node_end = relationship(
-        ConnectionNode, foreign_keys=connection_node_end_id)
-
-    # pump details
+    display_name = Column(String(255), nullable=False)
+    zoom_category = Column(Integer)
+    classification = Column(Integer)
+    sewerage = Column(Boolean, nullable=False)
+    type_ = Column(Integer, name='type')
     start_level = Column(Float)
     lower_stop_level = Column(Float)
     upper_stop_level = Column(Float)
     capacity = Column(Float)
 
+    connection_node_start_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+    )
+    connection_node_start = relationship(
+        ConnectionNode, foreign_keys=connection_node_start_id)
+    connection_node_end_id = Column(
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+    )
+    connection_node_end = relationship(
+        ConnectionNode, foreign_keys=connection_node_end_id)
+
 
 class Obstacle(Base):
     __tablename__ = 'v2_obstacle'
-
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), default='', nullable=False)
-
+    code = Column(String(100), nullable=False)
     crest_level = Column(Float)
-    the_geom = Column(Geometry(geometry_type='LINESTRING',
-                               srid=4326,
-                               spatial_index=True),
-                      nullable=True)
+    the_geom = Column(
+        Geometry(
+            geometry_type='LINESTRING',
+            srid=4326,
+            spatial_index=True),
+    )
 
 
 class Levee(Base):
     __tablename__ = 'v2_levee'
-
-    LEVEE_MATERIALS = Constants.LEVEE_MATERIALS
-
     id = Column(Integer, primary_key=True)
     code = Column(String(100), default='', nullable=False)
-
     crest_level = Column(Float)
-    the_geom = Column(Geometry(geometry_type='LINESTRING',
-                               srid=4326,
-                               spatial_index=True),
-                      nullable=True)
-
+    the_geom = Column(
+        Geometry(
+            geometry_type='LINESTRING',
+            srid=4326,
+            spatial_index=True),
+    )
     material = Column(Integer)
     max_breach_depth = Column(Float)
 
 
-class ImperviousSurface(Base):
-    __tablename__ = 'v2_impervious_surface'
-
+class ConnectedPoint(Base):
+    __tablename__ = 'v2_connected_pnt'
     id = Column(Integer, primary_key=True)
 
-    code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False, default='')
+    calculation_pnt_id = Column(
+        Integer,
+        ForeignKey(CalculationPoint.__tablename__ + '.id'),
+        nullable=False
+    )
+    levee_id = Column(
+        Integer,
+        ForeignKey(Levee.__tablename__ + '.id')
+    )
 
+    exchange_level = Column(Float)
+    the_geom = Column(
+        Geometry(
+            geometry_type='POINT',
+            srid=4326,
+            spatial_index=True
+        ),
+        nullable=False
+    )
+
+
+class ImperviousSurface(Base):
+    __tablename__ = 'v2_impervious_surface'
+    id = Column(Integer, primary_key=True)
+    code = Column(String(100), nullable=False)
+    display_name = Column(String(255), nullable=False)
     surface_inclination = Column(String(64), nullable=False)
     surface_class = Column(String(128), nullable=False)
-    surface_sub_class = Column(String(128), nullable=True)
-
+    surface_sub_class = Column(String(128))
     zoom_category = Column(Integer)
     nr_of_inhabitants = Column(Float)
     area = Column(Float)
     dry_weather_flow = Column(Float)
-
-    the_geom = Column(Geometry(geometry_type="POLYGON",
-                               srid=4326,
-                               spatial_index=True),
-                      nullable=True)
-
-    impervious_surface_maps = relationship("ImperviousSurfaceMap",
-                                           back_populates="impervious_surface")
+    the_geom = Column(
+        Geometry(
+            geometry_type="POLYGON",
+            srid=4326,
+            spatial_index=True
+        )
+    )
+    impervious_surface_maps = relationship(
+        "ImperviousSurfaceMap",
+        back_populates="impervious_surface"
+    )
 
 
 class ImperviousSurfaceMap(Base):
     __tablename__ = 'v2_impervious_surface_map'
-
     id = Column(Integer, primary_key=True)
-
+    percentage = Column(Float)
     impervious_surface_id = Column(
         Integer,
         ForeignKey(ImperviousSurface.__tablename__ + ".id"),
-        nullable=True)
+    )
     impervious_surface = relationship(
         ImperviousSurface,
         back_populates="impervious_surface_maps")
-
     connection_node_id = Column(
         Integer,
         ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=False)
-    connection_node = relationship(ConnectionNode,
-                                   back_populates="impervious_surface_map")
-
-    percentage = Column(Float)
+        nullable=False
+    )
+    connection_node = relationship(
+        ConnectionNode,
+        back_populates="impervious_surface_map"
+    )
 
 
 class SouthMigrationHistory(Base):
     __tablename__ = 'south_migrationhistory'
     id = Column(Integer, primary_key=True)
-    app_name = Column(String(255))
-    migration = Column(String(255))
-    applied = Column(DateTime)
+    app_name = Column(String(255), nullable=False)
+    migration = Column(String(255), nullable=False)
+    applied = Column(DateTime, nullable=False)
 
 
 DECLARED_MODELS = [

@@ -72,12 +72,13 @@ class NotUniqueError(BaseModelError):
 
 
 def yield_model_errors(klass, instances, column, **kwargs):
-    """Helper function to instantiate ModelError with data
+    """Helper function to instantiate ModelError with data from
+    sqlalchemy.orm.query.Query
 
-    :param klass:
-    :param instances:
-    :param column:
-    :param kwargs:
+    :param klass: BaseModelError or subclass
+    :param instances: sqlalchemy.orm.query.Query
+    :param column: sqlalchemy.Column
+    :param kwargs: See klass for specific kwargs.
     :return:
     """
     for instance in instances:
