@@ -3,6 +3,7 @@ from itertools import chain
 from sqlalchemy import func, distinct, types
 from geoalchemy2.types import Geometry
 
+from .schema_checks import ModelSchema
 from model_checker import models
 from model_checker.models import DECLARED_MODELS
 from model_checker import model_errors
@@ -190,9 +191,14 @@ def must_be_on_channel(windshielding_table_name):
 
 
 class ThreediModelChecker:
-    def __init__(self, threedi_db, declared_models=DECLARED_MODELS):
+
+    def __init__(self, threedi_db):
         self.db = threedi_db
-        self.declared_models = declared_models
+        self.schema = ModelSchema(self.db)
+
+    @property
+    def models(self):
+        return self.schema.declared_models
 
     def parse_model(self):
         null_errors = self.yield_null_errors()
@@ -203,19 +209,9 @@ class ThreediModelChecker:
             null_errors,
             foreign_key_erros,
             not_unique_errors,
-            data_type_errors)
+            data_type_errors
+        )
         print_errors(all_errors)
-
-    def check_not_null_columns(self):
-        session = self.db.get_session()
-        error_columns = []
-        columns_to_check = []
-        for decl_model in self.declared_models:
-            columns_to_check += get_none_nullable_columns(decl_model.__table__)
-        for column in columns_to_check:
-            error_columns += query_not_null(session, column)
-
-        return error_columns
 
     def yield_null_errors(self):
         """Return an iterator that yields NullColumnError of this model.
@@ -225,26 +221,17 @@ class ThreediModelChecker:
         session = self.db.get_session()
         columns_to_check = []
         null_column_errors = []
-        for decl_model in self.declared_models:
-            columns_to_check += get_none_nullable_columns(decl_model.__table__)
+        for model in self.models:
+            columns_to_check += get_none_nullable_columns(model.__table__)
         for column in columns_to_check:
             null_column_errors += get_null_errors(session, column)
         return chain(null_column_errors)
 
-    def check_foreign_keys(self):
-        session = self.db.get_session()
-        result = []
-        for decl_model in self.declared_models:
-            foreign_keys = get_foreign_key_columns(decl_model.__table__)
-            for fk in foreign_keys:
-                result += query_missing_foreign_key(session, fk.parent, fk.column)
-        return result
-
     def yield_foreign_key_errors(self):
         session = self.db.get_session()
         foreign_key_errors = []
-        for decl_model in self.declared_models:
-            foreign_keys = get_foreign_key_columns(decl_model.__table__)
+        for model in self.models:
+            foreign_keys = get_foreign_key_columns(model.__table__)
             for fk in foreign_keys:
                 foreign_key_errors += get_foreign_key_errors(
                     session, fk.parent, fk.column
@@ -254,27 +241,16 @@ class ThreediModelChecker:
     def yield_not_unique_errors(self):
         session = self.db.get_session()
         not_unique_errors = []
-        for decl_model in self.declared_models:
-            for column in get_unique_columns(decl_model.__table__):
+        for model in self.models:
+            for column in get_unique_columns(model.__table__):
                 not_unique_errors += get_not_unique_errors(session, column)
         return chain(not_unique_errors)
-
-    def check_data_types(self):
-        session = self.db.get_session()
-        result = []
-        for decl_model in self.declared_models:
-            for column in decl_model.__table__.columns:
-                r = query_invalid_type(session, column)
-                if r:
-                    print(column)
-                result += r
-        return result
 
     def yield_data_type_errors(self):
         session = self.db.get_session()
         data_type_errors = []
-        for decl_model in self.declared_models:
-            for column in decl_model.__table__.columns:
+        for model in self.models:
+            for column in model.__table__.columns:
                 data_type_errors += get_invalid_type_errors(session, column)
         return chain(data_type_errors)
 

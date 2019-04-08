@@ -223,14 +223,22 @@ def test_check_valid_type_boolean(session):
 
 class TestThreediModelChecker(object):
 
-    def test_check_not_null_columns(self, modelchecker):
-        result = modelchecker.check_not_null_columns()
+    def test_not_null_columns_errors(self, modelchecker):
+        result = modelchecker.yield_null_errors()
         print(result)
 
-    def test_check_foreign_keys(self, modelchecker):
-        result = modelchecker.check_foreign_keys()
+    def test_foreign_keys_errors(self, modelchecker):
+        result = modelchecker.yield_foreign_key_errors()
         print(result)
 
-    def test_check_data_types(self, modelchecker):
-        result = modelchecker.check_data_types()
+    def test_data_types_errors(self, modelchecker):
+        result = modelchecker.yield_data_type_errors()
         print(result)
+
+    def test_not_unique_errors(self, modelchecker):
+        result = modelchecker.yield_not_unique_errors()
+        print(result)
+
+    def test_parse_model(self, modelchecker):
+        all_errors = modelchecker.parse_model()
+        print(all_errors)
