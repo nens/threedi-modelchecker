@@ -382,7 +382,7 @@ class ConnectionNode(Base):
             spatial_index=False
         )
     )
-    code = Column(String(100), default='', nullable=False)
+    code = Column(String(100), nullable=False)
 
     manhole = relationship(
         "Manhole",
@@ -405,7 +405,6 @@ class Lateral1d(Base):
         ForeignKey(ConnectionNode.__tablename__ + ".id"),
         nullable=False
     )
-    connection_node = relationship(ConnectionNode, back_populates="lateral1d")
     timeseries = Column(Text)
 
 
@@ -427,11 +426,10 @@ class Manhole(Base):
     calculation_type = Column(Integer)
 
     connection_node_id = Column(
-        Integer, ForeignKey(ConnectionNode.__tablename__ + ".id"),
-        nullable=True
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
     )
-    connection_node = relationship(ConnectionNode,
-                                   back_populates="manhole")
+    connection_node = relationship(ConnectionNode, back_populates="manhole")
 
 
 class NumericalSettings(Base):

@@ -57,6 +57,7 @@ class ConnectionNodeFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.ConnectionNode
         sqlalchemy_session = Session
 
+    code = Faker('name')
     the_geom = 'SRID=28992;POINT(-71.064544 42.28787)'
 
 
@@ -82,4 +83,11 @@ class LeveeFactory(factory.alchemy.SQLAlchemyModelFactory):
     the_geom = "SRID=28992;LINESTRING(-71.160281 42.258729,-71.160837 42.259113,-71.161144 42.25932)"
 
 
+class MigrationHistoryFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SouthMigrationHistory
+        sqlalchemy_session = Session
 
+    app_name = 'my_app'
+    migration = 'migration %s' % factory.Sequence(lambda n: n)
+    applied = datetime.datetime.now()

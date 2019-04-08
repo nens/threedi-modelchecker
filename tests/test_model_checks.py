@@ -126,10 +126,6 @@ def test_get_not_null_errors(session):
     errors = get_null_errors(
         session, models.ConnectionNode.__table__.c.storage_area)
     error_list = list(errors)
-
-    print(error_list[0])
-
-    print('done')
     # assert len(r) == 1
     # assert null_node in r
 
@@ -144,7 +140,7 @@ def test_get_none_nullable_columns():
 
 def test_get_unique_columns():
     unique_columns = get_unique_columns(models.Manhole.__table__)
-    assert len(unique_columns) == 2
+    assert len(unique_columns) == 1
     assert models.Manhole.id in unique_columns
     assert models.Manhole.connection_node_id
 
@@ -174,7 +170,6 @@ def test_run_spatial_function(session):
     from geoalchemy2 import func
     q = session.query(func.ST_AsGeoJSON(models.ConnectionNode.the_geom))
     r = q.first()
-    print(r)
 
 
 def test_check_valid_type(session):
