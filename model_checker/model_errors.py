@@ -72,9 +72,8 @@ class NotUniqueError(BaseModelError):
 
 
 class InvalidGeometry(BaseModelError):
-    def __init__(self, reason, *args, **kwargs):
+    def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.reason = reason
 
     def __str__(self):
         return "%s: Invalid geometry '%s' in column %s for id %s" % (

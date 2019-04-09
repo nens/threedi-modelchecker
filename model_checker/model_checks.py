@@ -237,11 +237,13 @@ class ThreediModelChecker:
         foreign_key_erros = self.yield_foreign_key_errors()
         not_unique_errors = self.yield_not_unique_errors()
         data_type_errors = self.yield_data_type_errors()
+        geometry_errors = self.yield_invalid_geometry_errors()
         all_errors = chain(
             null_errors,
             foreign_key_erros,
             not_unique_errors,
-            data_type_errors
+            data_type_errors,
+            geometry_errors
         )
         print_errors(all_errors)
 
@@ -285,6 +287,14 @@ class ThreediModelChecker:
             for column in model.__table__.columns:
                 data_type_errors += get_invalid_type_errors(session, column)
         return chain(data_type_errors)
+
+    def yield_invalid_geometry_errors(self):
+        session = self.db.get_session()
+        geometry_errors = []
+        for model in self.models:
+            for column in get_geometry_columns(model.__table__):
+                geometry_errors += get_invalid_geometry_errors(session, column)
+        return chain(geometry_errors)
 
 
 def print_errors(errors):
