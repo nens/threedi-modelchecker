@@ -127,7 +127,8 @@ def query_invalid_geometry(session, column):
     :return:
     """
     invalid_geometries = session.query(column.table).filter(
-        geo_func.ST_IsValid(column) != True
+        geo_func.ST_IsValid(column) != True,
+        column != None
     )
     return invalid_geometries
 
