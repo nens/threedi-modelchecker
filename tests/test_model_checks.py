@@ -1,10 +1,12 @@
 import factory
+from geoalchemy2 import Geometry
 import pytest
 
 from model_checker.model_checks import (
-    ThreediModelChecker, query_missing_foreign_key, query_not_unique, query_not_null,
-    query_invalid_type, get_none_nullable_columns, get_unique_columns,
-    get_foreign_key_columns, get_null_errors)
+    ThreediModelChecker, query_missing_foreign_key, query_not_unique,
+    query_not_null, query_invalid_geometry, query_invalid_type,
+    get_none_nullable_columns, get_unique_columns, get_foreign_key_columns,
+    get_null_errors, get_geometry_columns)
 from model_checker import models
 from tests import factories
 
@@ -130,29 +132,6 @@ def test_get_not_null_errors(session):
     # assert null_node in r
 
 
-def test_get_none_nullable_columns():
-    not_null_columns = get_none_nullable_columns(models.Manhole.__table__)
-    assert len(not_null_columns) == 3
-    assert models.Manhole.id in not_null_columns
-    assert models.Manhole.code in not_null_columns
-    assert models.Manhole.display_name in not_null_columns
-
-
-def test_get_unique_columns():
-    unique_columns = get_unique_columns(models.Manhole.__table__)
-    assert len(unique_columns) == 1
-    assert models.Manhole.id in unique_columns
-    assert models.Manhole.connection_node_id
-
-
-def test_get_foreign_key_columns():
-    foreign_key_columns = get_foreign_key_columns(models.Manhole.__table__)
-    assert len(foreign_key_columns) == 1
-    fk = foreign_key_columns.pop()
-    assert models.Manhole.connection_node_id == fk.parent
-    assert models.ConnectionNode.id == fk.column
-
-
 def test_threedi_db_and_factories(threedi_db):
     """Test to ensure that the threedi_db and factories use the same
     session object."""
@@ -219,6 +198,67 @@ def test_check_valid_type_boolean(session):
 
     invalid_type_q = query_invalid_type(session, models.GlobalSetting.use_1d_flow)
     assert invalid_type_q.count() == 0
+
+
+def test_query_invalid_geometry(session):
+    c = factories.ConnectionNodeFactory(
+        the_geom='SRID=28992;POINT(-371.064544 42.28787)'
+    )
+
+    invalid_geom_q = query_invalid_geometry(
+        session, models.ConnectionNode.the_geom
+    )
+    assert invalid_geom_q.count() == 0
+
+
+def test_query_invalid_geometry_with_invalid_geoms(session):
+    if session.bind.name == 'postgresql':
+        pytest.skip('Not sure how to insert invalid types in postgresql')
+
+    inser_invalid_geom_q = """
+    INSERT INTO v2_connection_nodes (id, code, the_geom) 
+    VALUES (2, 'the_code', 'invalid_geom')
+    """
+    session.execute(inser_invalid_geom_q)
+    factories.ConnectionNodeFactory(
+        the_geom='SRID=28992;POINT(-71.064544 42.28787)'
+    )
+
+    invalid_geom_q = query_invalid_geometry(
+        session, models.ConnectionNode.the_geom
+    )
+    assert invalid_geom_q.count() == 1
+
+
+def test_get_none_nullable_columns():
+    not_null_columns = get_none_nullable_columns(models.Manhole.__table__)
+    assert len(not_null_columns) == 3
+    assert models.Manhole.id in not_null_columns
+    assert models.Manhole.code in not_null_columns
+    assert models.Manhole.display_name in not_null_columns
+
+
+def test_get_unique_columns():
+    unique_columns = get_unique_columns(models.Manhole.__table__)
+    assert len(unique_columns) == 1
+    assert models.Manhole.id in unique_columns
+    assert models.Manhole.connection_node_id
+
+
+def test_get_foreign_key_columns():
+    foreign_key_columns = get_foreign_key_columns(models.Manhole.__table__)
+    assert len(foreign_key_columns) == 1
+    fk = foreign_key_columns.pop()
+    assert models.Manhole.connection_node_id == fk.parent
+    assert models.ConnectionNode.id == fk.column
+
+
+def test_get_geometry_columns():
+    geometry_columns = get_geometry_columns(models.ConnectionNode.__table__)
+
+    assert len(geometry_columns) == 2
+    assert models.ConnectionNode.the_geom in geometry_columns
+    assert models.ConnectionNode.the_geom_linestring in geometry_columns
 
 
 class TestThreediModelChecker(object):

@@ -1,7 +1,8 @@
 from itertools import chain
 
-from sqlalchemy import func, distinct, types
+from sqlalchemy import func, types
 from geoalchemy2.types import Geometry
+from geoalchemy2 import functions as geo_func
 
 from .schema_checks import ModelSchema
 from model_checker import models
@@ -110,14 +111,45 @@ def query_invalid_type(session, column):
 
 def get_invalid_type_errors(session, column):
     invalid_types_q = query_invalid_type(session, column)
-
     expected_type = sqlalchemy_to_sqlite_type(column.type)
-    errors = yield_model_errors(
+    invalid_type_errors = yield_model_errors(
         model_errors.InvalidTypeError,
         invalid_types_q,
         column,
         expected_type=expected_type)
-    return errors
+    return invalid_type_errors
+
+
+def query_invalid_geometry(session, column):
+    """Return all rows which have an invalid geometry in column.
+
+    :param column:
+    :return:
+    """
+    invalid_geometries = session.query(column.table).filter(
+        geo_func.ST_IsValid(column) != True
+    )
+    return invalid_geometries
+
+
+def get_invalid_geometry_errors(session, column):
+    """
+
+    :param session:
+    :param column:
+    :return:
+    """
+    invalid_geometry_q = query_invalid_geometry(session, column)
+    invalid_geometry_errors = yield_model_errors(
+        model_errors.InvalidGeometry,
+        invalid_geometry_q,
+        column
+    )
+    return invalid_geometry_errors
+
+
+def query_invalid_timeseries(table):
+    pass
 
 
 def sqlalchemy_to_sqlite_type(column_type):
@@ -171,12 +203,12 @@ def get_foreign_key_columns(table):
     return table.foreign_keys
 
 
-def check_valid_geom():
-    pass
-
-
-def check_timeseries_format():
-    pass
+def get_geometry_columns(table):
+    geometry_columns = []
+    for column in table.columns:
+        if type(column.type) == Geometry:
+            geometry_columns.append(column)
+    return geometry_columns
 
 
 # Constraints only added to the postgis (work) db in

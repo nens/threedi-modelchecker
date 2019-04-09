@@ -71,6 +71,20 @@ class NotUniqueError(BaseModelError):
         )
 
 
+class InvalidGeometry(BaseModelError):
+    def __init__(self, reason, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.reason = reason
+
+    def __str__(self):
+        return "%s: Invalid geometry '%s' in column %s for id %s" % (
+            type(self).__name__,
+            getattr(self.instance, self.column.name),
+            self.column,
+            self.id
+        )
+
+
 def yield_model_errors(klass, instances, column, **kwargs):
     """Helper function to instantiate ModelError with data from
     sqlalchemy.orm.query.Query
