@@ -104,7 +104,8 @@ def query_invalid_type(session, column):
 
     expected_type = sqlalchemy_to_sqlite_type(column.type)
     q = session.query(column.table).filter(
-        func.typeof(column) != expected_type, func.typeof(column) != "null"
+        func.typeof(column) != expected_type,
+        func.typeof(column) != "null"
     )
     return q
 
@@ -122,6 +123,8 @@ def get_invalid_type_errors(session, column):
 
 def query_invalid_geometry(session, column):
     """Return all rows which have an invalid geometry in column.
+
+    Null values are ignored
 
     :param column:
     :return:
@@ -175,6 +178,8 @@ def sqlalchemy_to_sqlite_type(column_type):
         return "text"
     elif isinstance(column_type, Geometry):
         return "blob"
+    elif isinstance(column_type, types.TIMESTAMP):
+        return "text"
     else:
         raise TypeError("Unknown column type: %s" % column_type)
 

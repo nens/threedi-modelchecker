@@ -2,7 +2,7 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (
     Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, Numeric,
-    String, Text)
+    String, Text, TIMESTAMP)
 from sqlalchemy.orm import relationship
 from geoalchemy2.types import Geometry
 
@@ -226,6 +226,13 @@ class SimpleInfiltration(Base):
 class SurfaceParameter(Base):
     __tablename__ = 'v2_surface_parameters'
     id = Column(Integer, primary_key=True)
+    outflow_delay = Column(Float, nullable=False)
+    surface_layer_thickness = Column(Float, nullable=False)
+    infiltration = Column(Boolean, nullable=False)
+    max_infiltration_capacity = Column(Float, nullable=False)
+    min_infiltration_capacity = Column(Float, nullable=False)
+    infiltration_decay_constant = Column(Float, nullable=False)
+    infiltration_recovery_constant = Column(Float, nullable=False)
 
 
 class Surface(Base):
@@ -251,73 +258,31 @@ class Surface(Base):
     )
 
 
-class Windshielding(Base):
-    __tablename__ = 'v2_windshielding'
-    id = Column(Integer, primary_key=True)
-
-
 class GroundWater(Base):
     __tablename__ = 'v2_groundwater'
     id = Column(Integer, primary_key=True)
-    # infiltration_rate_file = Column(String(255), nullable=True)
-    # max_infiltration_capacity_file = Column(String(255), nullable=True)
-    phreatic_storage_capacity_file = Column(String(255), nullable=True)
-    groundwater_hydro_connectivity_file = Column(String(255), nullable=True)
-    infiltration_decay_period_file = Column(String(255), nullable=True)
-    leakage_file = Column(String(255), nullable=True)
-    initial_infiltration_rate_file = Column(String(255), nullable=True)
-    groundwater_impervious_layer_level_file = Column(
-        String(255), nullable=True)
-    equilibrium_infiltration_rate_file = Column(String(255), nullable=True)
 
-
-class GlobalSetting(Base):
-    __tablename__ = 'v2_global_settings'
-    id = Column(Integer, primary_key=True)
-    dem_file = Column(String(255), nullable=True)
-    frict_coef_file = Column(String(255), nullable=True)
-    grid_space = Column(Float)
-    kmax = Column(Integer)
-    nr_timesteps = Column(Integer)
-    sim_time_step = Column(Float)
-    use_1d_flow = Column(Boolean)
-
-    initial_waterlevel = Column(Float)
-    numerical_settings_id = Column(Integer)
-    dem_obstacle_detection = Column(Boolean)
-    frict_avg = Column(Integer)
-    grid_space = Column(Float)
-    advection_2d = Column(Integer)
-    dist_calc_points = Column(Float)
-    start_date = Column(Date)
-    table_step_size = Column(Float)
-    use_1d_flow = Column(Boolean)
-    use_2d_rain = Column(Integer)
-    kmax = Column(Integer)
-    sim_time_step = Column(Float)
-    frict_coef = Column(Float)
-    timestep_plus = Column(Boolean)
-    flooding_threshold = Column(Float)
-    use_2d_flow = Column(Boolean)
-    advection_1d = Column(Integer)
-    use_0d_inflow = Column(Integer)
-    control_group_id = Column(Integer)
-
-
-class AggregationSettings(Base):
-    __tablename__ = 'v2_aggregation_settings'
-    id = Column(Integer, primary_key=True)
-
-    global_settings_id = Column(
-        Integer,
-        ForeignKey(GlobalSetting.__tablename__ + '.id')
-    )
-
-    var_name = Column(String(100), nullable=False)
-    flow_variable = Column(String(100))
-    aggregation_method = Column(String(100), nullable=False)
-    aggregation_in_space = Column(Boolean, nullable=False)
-    timestep = Column(Integer, nullable=False)
+    groundwater_impervious_layer_level = Column(Float)
+    groundwater_impervious_layer_level_file = Column(String(255))
+    groundwater_impervious_layer_level_type = Column(Integer)
+    phreatic_storage_capacity = Column(Float)
+    phreatic_storage_capacity_file = Column(String(255))
+    phreatic_storage_capacity_type = Column(Integer)
+    equilibrium_infiltration_rate = Column(Float)
+    equilibrium_infiltration_rate_file = Column(String(255))
+    equilibrium_infiltration_rate_type = Column(Integer)
+    initial_infiltration_rate = Column(Float)
+    initial_infiltration_rate_file = Column(String(255))
+    initial_infiltration_rate_type = Column(Integer)
+    infiltration_decay_period = Column(Float)
+    infiltration_decay_period_file = Column(String(255))
+    infiltration_decay_period_type = Column(Integer)
+    groundwater_hydro_connectivity = Column(Float)
+    groundwater_hydro_connectivity_file = Column(String(255))
+    groundwater_hydro_connectivity_type = Column(Integer)
+    display_name = Column(String(255))
+    leakage = Column(Float)
+    leakage_file = Column(String(255))
 
 
 class GridRefinement(Base):
@@ -339,7 +304,6 @@ class GridRefinement(Base):
 class GridRefinementArea(Base):
     __tablename__ = 'v2_grid_refinement_area'
     id = Column(Integer, primary_key=True)
-
     display_name = Column(String(255), nullable=False)
     refinement_level = Column(Integer)
     code = Column(String(100), nullable=False)
@@ -354,7 +318,6 @@ class GridRefinementArea(Base):
 
 class CrossSectionDefinition(Base):
     __tablename__ = 'v2_cross_section_definition'
-
     id = Column(Integer, primary_key=True)
     width = Column(String(255))
     height = Column(String(255))
@@ -364,7 +327,6 @@ class CrossSectionDefinition(Base):
 
 class ConnectionNode(Base):
     __tablename__ = 'v2_connection_nodes'
-
     id = Column(Integer, primary_key=True)
     storage_area = Column(Float)
     initial_waterlevel = Column(Float)
@@ -459,6 +421,91 @@ class NumericalSettings(Base):
     use_of_nested_newton = Column(Integer, nullable=False)
 
 
+class GlobalSetting(Base):
+    __tablename__ = 'v2_global_settings'
+    id = Column(Integer, primary_key=True)
+    use_2d_flow = Column(Boolean, nullable=False)
+    use_1d_flow = Column(Boolean, nullable=False)
+    manhole_storage_area = Column(Float)
+    name = Column(String(128))
+    sim_time_step = Column(Float, nullable=False)
+    output_time_step = Column(Float)
+    nr_timesteps = Column(Integer, nullable=False)
+    start_time = Column(TIMESTAMP(timezone=True))
+    start_date = Column(Date, nullable=False)
+    grid_space = Column(Float, nullable=False)
+    dist_calc_points = Column(Float, nullable=False)
+    kmax = Column(Integer, nullable=False)
+    guess_dams = Column(Integer)
+    table_step_size = Column(Float, nullable=False)
+    flooding_threshold = Column(Float, nullable=False)
+    advection_1d = Column(Integer, nullable=False)
+    advection_2d = Column(Integer, nullable=False)
+    dem_file = Column(String(255))
+    frict_type = Column(Integer)
+    frict_coef = Column(Float, nullable=False)
+    frict_coef_file = Column(String(255))
+    water_level_ini_type = Column(Integer)
+    initial_waterlevel = Column(Float, nullable=False)
+    initial_waterlevel_file = Column(String(255))
+    interception_global = Column(Float)
+    interception_file = Column(String(255))
+    dem_obstacle_detection = Column(Boolean, nullable=False)
+    dem_obstacle_height = Column(Float)
+    embedded_cutoff_threshold = Column(Float)
+    epsg_code = Column(Integer)
+    timestep_plus = Column(Boolean, nullable=False)
+    max_angle_1d_advection = Column(Float)
+    minimum_sim_time_step = Column(Float)
+    maximum_sim_time_step = Column(Float)
+    frict_avg = Column(Integer)
+    wind_shielding_file = Column(String(255))
+    use_0d_inflow = Column(Integer, nullable=False)
+    table_step_size_1d = Column(Float)
+    table_step_size_volume_2d = Column(Float)
+    use_2d_rain = Column(Integer, nullable=False)
+    initial_groundwater_level = Column(Float)
+    initial_groundwater_level_file = Column(String(255))
+    initial_groundwater_level_type = Column(Integer)
+
+    numerical_settings_id = Column(
+        Integer,
+        ForeignKey(NumericalSettings.__tablename__ + ".id"),
+        nullable=False)
+    interflow_settings_id = Column(
+        Integer,
+        ForeignKey(Interflow.__tablename__ + ".id")
+    )
+    control_group_id = Column(
+        Integer,
+        ForeignKey(ControlGroup.__tablename__ + ".id")
+    )
+    simple_infiltration_settings_id = Column(
+        Integer,
+        ForeignKey(SimpleInfiltration.__tablename__ + ".id")
+    )
+    groundwater_settings_id = Column(
+        Integer,
+        ForeignKey(GroundWater.__tablename__ + ".id")
+    )
+
+
+class AggregationSettings(Base):
+    __tablename__ = 'v2_aggregation_settings'
+    id = Column(Integer, primary_key=True)
+
+    global_settings_id = Column(
+        Integer,
+        ForeignKey(GlobalSetting.__tablename__ + '.id')
+    )
+
+    var_name = Column(String(100), nullable=False)
+    flow_variable = Column(String(100))
+    aggregation_method = Column(String(100), nullable=False)
+    aggregation_in_space = Column(Boolean, nullable=False)
+    timestep = Column(Integer, nullable=False)
+
+
 class BoundaryCondition1D(Base):
     __tablename__ = 'v2_1d_boundary_conditions'
 
@@ -520,6 +567,30 @@ class Channel(Base):
     cross_section_locations = relationship(
         "CrossSectionLocation",
         back_populates="channel"
+    )
+
+
+class Windshielding(Base):
+    __tablename__ = 'v2_windshielding'
+    id = Column(Integer, primary_key=True)
+    north = Column(Float)
+    northeast = Column(Float)
+    east = Column(Float)
+    southeast = Column(Float)
+    south = Column(Float)
+    southwest = Column(Float)
+    west = Column(Float)
+    northwest = Column(Float)
+    the_geom = Column(
+        Geometry(
+            geometry_type='POINT',
+            srid=4326,
+            spatial_index=True
+        )
+    )
+    channel_id = Column(
+        Integer,
+        ForeignKey(Channel.__tablename__ + ".id")
     )
 
 

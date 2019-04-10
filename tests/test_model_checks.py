@@ -3,10 +3,19 @@ from geoalchemy2 import Geometry
 import pytest
 
 from model_checker.model_checks import (
-    ThreediModelChecker, query_missing_foreign_key, query_not_unique,
-    query_not_null, query_invalid_geometry, query_invalid_type,
-    get_none_nullable_columns, get_unique_columns, get_foreign_key_columns,
-    get_null_errors, get_geometry_columns)
+    ThreediModelChecker,
+    get_foreign_key_columns,
+    get_none_nullable_columns,
+    get_null_errors,
+    get_unique_columns,
+    get_geometry_columns,
+    query_invalid_type,
+    query_invalid_geometry,
+    query_invalid_geometry_types,
+    query_missing_foreign_key,
+    query_not_null,
+    query_not_unique,
+)
 from model_checker import models
 from tests import factories
 
