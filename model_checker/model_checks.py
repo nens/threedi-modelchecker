@@ -152,8 +152,48 @@ def get_invalid_geometry_errors(session, column):
     return invalid_geometry_errors
 
 
+def query_invalid_geometry_types(session, column):
+    """Return all rows which have an unexpected geometry type in column.
+
+    Null values are ignored
+
+    :param session:
+    :param column:
+    :return:
+    """
+    expected_geometry_type = _get_geometry_type(
+        column,
+        dialect=session.bind.dialect.name
+    )
+    invalid_geometry_types_q = session.query(column.table).filter(
+        geo_func.ST_GeometryType(column) != expected_geometry_type,
+        column != None
+    )
+    return invalid_geometry_types_q
+
+
+def get_invalid_geometry_type_errors(session, column):
+    invalid_geometry_types_q = query_invalid_geometry_types(session, column)
+    invalid_geometry_type_errors = yield_model_errors(
+        model_errors.InvalidGeometry,
+        invalid_geometry_types_q,
+        column
+    )
+    return invalid_geometry_type_errors
+
+
 def query_invalid_timeseries(table):
     pass
+
+
+def _get_geometry_type(column, dialect):
+    if dialect == 'sqlite':
+        return column.type.geometry_type
+    elif dialect == 'postgresql':
+        geom_type = column.type.geometry_type.capitalize()
+        return 'ST_%s' % geom_type
+    else:
+        raise TypeError("Unexpected dialect %s" % dialect)
 
 
 def sqlalchemy_to_sqlite_type(column_type):
@@ -254,17 +294,13 @@ class ThreediModelChecker:
         print_errors(all_errors)
 
     def yield_null_errors(self):
-        """Return an iterator that yields NullColumnError of this model.
-
-        :return: iterator that yields model_errors.NullColumnError
-        """
+        """Return an iterator that yields NullColumnError of this model."""
         session = self.db.get_session()
-        columns_to_check = []
         null_column_errors = []
         for model in self.models:
-            columns_to_check += get_none_nullable_columns(model.__table__)
-        for column in columns_to_check:
-            null_column_errors += get_null_errors(session, column)
+            columns_to_check = get_none_nullable_columns(model.__table__)
+            for colum in columns_to_check:
+                null_column_errors += get_null_errors(session, colum)
         return chain(null_column_errors)
 
     def yield_foreign_key_errors(self):
@@ -300,6 +336,9 @@ class ThreediModelChecker:
         for model in self.models:
             for column in get_geometry_columns(model.__table__):
                 geometry_errors += get_invalid_geometry_errors(session, column)
+                geometry_errors += get_invalid_geometry_type_errors(
+                    session, column
+                )
         return chain(geometry_errors)
 
 

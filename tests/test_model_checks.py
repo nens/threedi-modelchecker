@@ -255,6 +255,30 @@ def test_query_invalid_geometry_with_none_geoms(session):
     assert invalid_geom_q.count() == 0
 
 
+def test_query_invalid_geometry_types(session):
+    factories.ConnectionNodeFactory.create_batch(
+        2, the_geom='SRID=28992;POINT(-71.064544 42.28787)'
+    )
+
+    invalid_geometry_types_q = query_invalid_geometry_types(
+        session, models.ConnectionNode.the_geom)
+    assert invalid_geometry_types_q.count() == 0
+
+
+def test_query_invalid_geometry_types_invalid_geom_type(session):
+    if session.bind.name == 'postgresql':
+        pytest.skip('Not sure how to insert invalid geometry types in postgresql')
+    factories.ConnectionNodeFactory(
+        the_geom='SRID=28992;POINT(-71.064544 42.28787)'
+    )
+    invalid_geom_type = factories.ConnectionNodeFactory(
+        the_geom='SRID=28992;LINESTRING(71.0 42.2, 71.3 42.3)'
+    )
+    invalid_geometry_types_q = query_invalid_geometry_types(
+        session, models.ConnectionNode.the_geom)
+    assert invalid_geometry_types_q.count() == 1
+    assert invalid_geometry_types_q.first().id == invalid_geom_type.id
+
 
 def test_get_none_nullable_columns():
     not_null_columns = get_none_nullable_columns(models.Manhole.__table__)
