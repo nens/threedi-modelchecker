@@ -126,7 +126,8 @@ def query_invalid_geometry(session, column):
 
     Null values are ignored
 
-    :param column:
+    :param session: sqlalchemy.orm.session.Session
+    :param column: sqlalchemy.Column
     :return:
     """
     invalid_geometries = session.query(column.table).filter(
@@ -139,8 +140,8 @@ def query_invalid_geometry(session, column):
 def get_invalid_geometry_errors(session, column):
     """
 
-    :param session:
-    :param column:
+    :param session: sqlalchemy.orm.session.Session
+    :param column: sqlalchemy.Column
     :return:
     """
     invalid_geometry_q = query_invalid_geometry(session, column)
@@ -157,8 +158,8 @@ def query_invalid_geometry_types(session, column):
 
     Null values are ignored
 
-    :param session:
-    :param column:
+    :param session: sqlalchemy.orm.session.Session
+    :param column: sqlalchemy.Column
     :return:
     """
     expected_geometry_type = _get_geometry_type(
@@ -180,6 +181,26 @@ def get_invalid_geometry_type_errors(session, column):
         column
     )
     return invalid_geometry_type_errors
+
+
+def query_invalid_enums(session, column):
+    """Return all rows which have an unexpected value in column
+
+    Unexpected values are values not defined by its enum.
+    Null values are ignored
+
+    :param session: sqlalchemy.orm.session.Session
+    :param column: sqlalchemy.Column
+    :return:
+    """
+    invalid_values_q = session.query(column.table).filter(
+        column.notin_(list(column.type.enum_type))
+    )
+    return invalid_values_q
+
+
+def get_invalid_enums_errors(session, column):
+    pass
 
 
 def query_invalid_timeseries(table):
@@ -204,6 +225,9 @@ def sqlalchemy_to_sqlite_type(column_type):
     :param column_type: sqlalchemy.column
     :return: (str)
     """
+    if isinstance(column_type, types.TypeDecorator):
+        column_type = column_type.impl
+
     if isinstance(column_type, types.String):
         return "text"
     elif isinstance(column_type, types.Float):

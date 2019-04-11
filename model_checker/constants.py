@@ -1,5 +1,15 @@
+from enum import Enum
+
 LATEST_MIGRATION_ID = 173
 LATEST_MIGRATION_NAME = "0171_auto__chg_field_v2aggregationsettings_aggregation_method__del_field_v2"  # noqa
+
+
+class BoundaryType(Enum):
+    WATERLEVEL = 1
+    VELOCITY = 2
+    DISCHARGE = 3
+    SOMMERFELD = 5
+
 
 # Old constants
 from builtins import object

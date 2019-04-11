@@ -12,6 +12,7 @@ from model_checker.model_checks import (
     query_invalid_type,
     query_invalid_geometry,
     query_invalid_geometry_types,
+    query_invalid_enums,
     query_missing_foreign_key,
     query_not_null,
     query_not_unique,
@@ -278,6 +279,24 @@ def test_query_invalid_geometry_types_invalid_geom_type(session):
         session, models.ConnectionNode.the_geom)
     assert invalid_geometry_types_q.count() == 1
     assert invalid_geometry_types_q.first().id == invalid_geom_type.id
+
+
+def test_query_invalid_values(session):
+    factories.BoundaryConditions2DFactory()
+
+    invalid_boundaries_q = query_invalid_enums(
+        session, models.BoundaryConditions2D.boundary_type)
+    assert invalid_boundaries_q.count() == 0
+
+
+def test_query_invalid_values_with_invalid_value(session):
+    factories.BoundaryConditions2DFactory()
+    faulty_boundary = factories.BoundaryConditions2DFactory(boundary_type=-1)
+
+    invalid_boundaries_q = query_invalid_enums(
+        session, models.BoundaryConditions2D.boundary_type)
+    assert invalid_boundaries_q.count() == 1
+    assert invalid_boundaries_q.first().id == faulty_boundary.id
 
 
 def test_get_none_nullable_columns():

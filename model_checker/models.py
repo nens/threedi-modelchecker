@@ -1,10 +1,22 @@
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (
-    Boolean, Column, Date, DateTime, Float, ForeignKey, Integer, Numeric,
-    String, Text, TIMESTAMP)
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    TIMESTAMP)
 from sqlalchemy.orm import relationship
 from geoalchemy2.types import Geometry
+
+from .custom_types import IntegerEnum
+from . import constants
 
 
 Base = declarative_base()  # automap_base()
@@ -29,7 +41,7 @@ class BoundaryConditions2D(Base):
 
     display_name = Column(String(255), nullable=False)
     timeseries = Column(Text, nullable=False)
-    boundary_type = Column(Integer, nullable=False)
+    boundary_type = Column(IntegerEnum(constants.BoundaryType), nullable=False)
     the_geom = Column(Geometry(
         geometry_type='LINESTRING',
         srid=4326,
@@ -496,16 +508,18 @@ class BoundaryCondition1D(Base):
     __tablename__ = 'v2_1d_boundary_conditions'
 
     id = Column(Integer, primary_key=True)
-    boundary_type = Column(Integer, nullable=False)
+    boundary_type = Column(IntegerEnum(constants.BoundaryType), nullable=False)
     timeseries = Column(Text, nullable=False)
 
     connection_node_id = Column(
         Integer, ForeignKey(ConnectionNode.__tablename__ + ".id"),
         nullable=False,
         unique=True)
-    connection_node = relationship(ConnectionNode,
-                                   foreign_keys=connection_node_id,
-                                   back_populates="boundary_condition")
+    connection_node = relationship(
+        ConnectionNode,
+        foreign_keys=connection_node_id,
+        back_populates="boundary_condition"
+    )
 
 
 class SurfaceMap(Base):

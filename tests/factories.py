@@ -4,7 +4,7 @@ import factory
 from factory import Faker
 from geoalchemy2 import Geometry
 
-from model_checker import models
+from model_checker import models, constants
 from tests import Session
 
 
@@ -81,6 +81,16 @@ class LeveeFactory(factory.alchemy.SQLAlchemyModelFactory):
     max_breach_depth = 4
     material = 1
     the_geom = "SRID=28992;LINESTRING(-71.160281 42.258729,-71.160837 42.259113,-71.161144 42.25932)"
+
+
+class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.BoundaryConditions2D
+        sqlalchemy_session = Session
+
+    boundary_type = constants.BoundaryType.WATERLEVEL
+    timeseries = '0,-0.5'
+    display_name = Faker('name')
 
 
 class MigrationHistoryFactory(factory.alchemy.SQLAlchemyModelFactory):
