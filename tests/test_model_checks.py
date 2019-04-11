@@ -16,8 +16,9 @@ from model_checker.model_checks import (
     query_missing_foreign_key,
     query_not_null,
     query_not_unique,
+    sqlalchemy_to_sqlite_type,
 )
-from model_checker import models
+from model_checker import constants, custom_types, models
 from tests import factories
 
 
@@ -328,6 +329,11 @@ def test_get_geometry_columns():
     assert len(geometry_columns) == 2
     assert models.ConnectionNode.the_geom in geometry_columns
     assert models.ConnectionNode.the_geom_linestring in geometry_columns
+
+
+def test_sqlalchemy_to_sqlite_type_with_custom_type():
+    customIntegerEnum = custom_types.IntegerEnum(constants.BoundaryType)
+    assert sqlalchemy_to_sqlite_type(customIntegerEnum) == 'integer'
 
 
 class TestThreediModelChecker(object):
