@@ -7,7 +7,7 @@ from geoalchemy2 import functions as geo_func
 from .schema_checks import ModelSchema
 from model_checker import models
 from model_checker.models import DECLARED_MODELS
-from model_checker import model_errors
+from model_checker import model_errors, custom_types, constants
 from model_checker.model_errors import (
     BaseModelError, NullColumnError, yield_model_errors)
 
@@ -200,7 +200,13 @@ def query_invalid_enums(session, column):
 
 
 def get_invalid_enums_errors(session, column):
-    pass
+    invalid_enums_q = query_invalid_enums(session, column)
+    invalid_enum_values_errors = yield_model_errors(
+        model_errors.InvalidValue,
+        invalid_enums_q,
+        column
+    )
+    return invalid_enum_values_errors
 
 
 def query_invalid_timeseries(table):
@@ -281,15 +287,12 @@ def get_geometry_columns(table):
     return geometry_columns
 
 
-# Constraints only added to the postgis (work) db in
-# threedi-tools.sql.database_connections
-# many more...
-def has_two_connection_nodes(table_name):
-    pass
-
-
-def must_be_on_channel(windshielding_table_name):
-    pass
+def get_enum_columns(table):
+    enum_colums = []
+    for column in table.columns:
+        if type(column.type) == custom_types.IntegerEnum:
+            enum_colums.append(column)
+    return enum_colums
 
 
 class ThreediModelChecker:
@@ -308,12 +311,14 @@ class ThreediModelChecker:
         not_unique_errors = self.yield_not_unique_errors()
         data_type_errors = self.yield_data_type_errors()
         geometry_errors = self.yield_invalid_geometry_errors()
+        invalid_enum_values_erros = self.yield_invalid_enum_errors()
         all_errors = chain(
             null_errors,
             foreign_key_erros,
             not_unique_errors,
             data_type_errors,
-            geometry_errors
+            geometry_errors,
+            invalid_enum_values_erros
         )
         print_errors(all_errors)
 
@@ -364,6 +369,15 @@ class ThreediModelChecker:
                     session, column
                 )
         return chain(geometry_errors)
+
+    def yield_invalid_enum_errors(self):
+        session = self.db.get_session()
+        invalid_enum_values_erros = []
+        for model in self.models:
+            for column in get_enum_columns(model.__table__):
+                invalid_enum_values_erros += get_invalid_enums_errors(
+                    session, column)
+        return chain(invalid_enum_values_erros)
 
 
 def print_errors(errors):

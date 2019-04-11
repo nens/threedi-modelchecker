@@ -4,6 +4,7 @@ import pytest
 
 from model_checker.model_checks import (
     ThreediModelChecker,
+    get_enum_columns,
     get_foreign_key_columns,
     get_none_nullable_columns,
     get_null_errors,
@@ -329,6 +330,13 @@ def test_get_geometry_columns():
     assert len(geometry_columns) == 2
     assert models.ConnectionNode.the_geom in geometry_columns
     assert models.ConnectionNode.the_geom_linestring in geometry_columns
+
+
+def test_get_enum_columns():
+    enum_columns = get_enum_columns(models.BoundaryConditions2D.__table__)
+
+    assert len(enum_columns) == 1
+    assert enum_columns[0] == models.BoundaryConditions2D.boundary_type
 
 
 def test_sqlalchemy_to_sqlite_type_with_custom_type():

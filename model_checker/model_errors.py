@@ -84,6 +84,20 @@ class InvalidGeometry(BaseModelError):
         )
 
 
+class InvalidValue(BaseModelError):
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __str__(self):
+        return "%s: Invalid value '%s' in column %s for id %s, expected %s" % (
+            type(self).__name__,
+            getattr(self.instance, self.column.name),
+            self.column,
+            self.id,
+            self.column.type.enum_type
+        )
+
+
 def yield_model_errors(klass, instances, column, **kwargs):
     """Helper function to instantiate ModelError with data from
     sqlalchemy.orm.query.Query
