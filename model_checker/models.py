@@ -722,7 +722,7 @@ class DemAverageArea(Base):
     id = Column(Integer, primary_key=True)
     the_geom = Column(
         Geometry(
-            geometry_type='POLYTONG',
+            geometry_type='POLYGON',
             srid=4326,
             spatial_index=True
         )
