@@ -93,8 +93,11 @@ class SurfaceType(Enum):
 
 
 class InterflowType(Enum):
-    A = 3
-    B = 4
+    NO_INTERLFOW = 0
+    LOCAL_DEEPEST_POINT_SCALED_POROSITY = 1
+    GLOBAL_DEEPEST_POINT_SCALED_POROSITY = 2
+    LOCAL_DEEPEST_POINT_CONSTANT_POROSITY = 3
+    GLOBAL_DEEPEST_POINT_CONSTANT_POROSITY = 4
 
 
 class Material(Enum):

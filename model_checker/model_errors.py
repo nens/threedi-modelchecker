@@ -89,13 +89,14 @@ class InvalidValue(BaseModelError):
         super().__init__(*args, **kwargs)
 
     def __str__(self):
-        return "%s: Invalid value '%s' in column %s for id %s, expected %s" % (
-            type(self).__name__,
-            getattr(self.instance, self.column.name),
-            self.column,
-            self.id,
-            self.column.type.enum_type
-        )
+        return "%s: Invalid value '%s' in column %s for id %s, expected " \
+               "one of the following values: %s" % (
+                   type(self).__name__,
+                   getattr(self.instance, self.column.name),
+                   self.column,
+                   self.id,
+                   list(self.column.type.enum_class)
+               )
 
 
 def yield_model_errors(klass, instances, column, **kwargs):

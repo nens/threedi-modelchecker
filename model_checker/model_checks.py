@@ -186,7 +186,7 @@ def get_invalid_geometry_type_errors(session, column):
 def query_invalid_enums(session, column):
     """Return all rows which have an unexpected value in column
 
-    Unexpected values are values not defined by its enum.
+    Unexpected values are values not defined by its enum_class.
     Null values are ignored
 
     :param session: sqlalchemy.orm.session.Session
@@ -194,7 +194,7 @@ def query_invalid_enums(session, column):
     :return:
     """
     invalid_values_q = session.query(column.table).filter(
-        column.notin_(list(column.type.enum_type))
+        column.notin_(list(column.type.enum_class))
     )
     return invalid_values_q
 
@@ -290,7 +290,7 @@ def get_geometry_columns(table):
 def get_enum_columns(table):
     enum_colums = []
     for column in table.columns:
-        if type(column.type) == custom_types.IntegerEnum:
+        if issubclass(type(column.type), custom_types.IntegerEnum):
             enum_colums.append(column)
     return enum_colums
 

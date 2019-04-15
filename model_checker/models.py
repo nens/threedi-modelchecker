@@ -5,6 +5,7 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
+    Enum,
     Float,
     ForeignKey,
     Integer,
@@ -15,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from geoalchemy2.types import Geometry
 
-from .custom_types import IntegerEnum
+from .custom_types import IntegerEnum, VarcharEnum
 from . import constants
 
 
@@ -498,8 +499,10 @@ class AggregationSettings(Base):
     )
 
     var_name = Column(String(100), nullable=False)
-    flow_variable = Column(String(100), nullable=False)
-    aggregation_method = Column(String(100), nullable=False)
+    flow_variable = Column(
+        VarcharEnum(constants.FlowVariable),
+        nullable=False)
+    aggregation_method = Column(VarcharEnum(constants.AggregationMethod))
     aggregation_in_space = Column(Boolean, nullable=False)
     timestep = Column(Integer, nullable=False)
 
@@ -525,7 +528,7 @@ class BoundaryCondition1D(Base):
 class SurfaceMap(Base):
     __tablename__ = 'v2_surface_map'
     id = Column(Integer, primary_key=True)
-    surface_type = Column(String(40), nullable=False)
+    surface_type = Column(VarcharEnum(constants.SurfaceType), nullable=False)
     surface_id = Column(Integer, nullable=False)
     connection_node_id = Column(
         Integer,
@@ -895,8 +898,14 @@ class ImperviousSurface(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String(100), nullable=False)
     display_name = Column(String(255), nullable=False)
-    surface_inclination = Column(String(64), nullable=False)
-    surface_class = Column(String(128), nullable=False)
+    surface_inclination = Column(
+        VarcharEnum(constants.SurfaceInclinationType),
+        nullable=False
+    )
+    surface_class = Column(
+        VarcharEnum(constants.SurfaceClass),
+        nullable=False
+    )
     surface_sub_class = Column(String(128))
     zoom_category = Column(Integer)
     nr_of_inhabitants = Column(Float)
