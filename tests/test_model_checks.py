@@ -291,6 +291,14 @@ def test_query_invalid_values(session):
     assert invalid_boundaries_q.count() == 0
 
 
+def test_query_invalid_values_with_null_values(session):
+    factories.BoundaryConditions2DFactory(boundary_type=None)
+
+    invalid_boundaries_q = query_invalid_enums(
+        session, models.BoundaryConditions2D.boundary_type)
+    assert invalid_boundaries_q.count() == 0
+
+
 def test_query_invalid_values_with_invalid_value(session):
     factories.BoundaryConditions2DFactory()
     faulty_boundary = factories.BoundaryConditions2DFactory(boundary_type=-1)
@@ -299,6 +307,26 @@ def test_query_invalid_values_with_invalid_value(session):
         session, models.BoundaryConditions2D.boundary_type)
     assert invalid_boundaries_q.count() == 1
     assert invalid_boundaries_q.first().id == faulty_boundary.id
+
+
+def test_query_invalid_values_string_enum(session):
+    factories.AggregationSettingsFactory()
+
+    invalid_boundaries_q = query_invalid_enums(
+        session, models.AggregationSettings.aggregation_method)
+    assert invalid_boundaries_q.count() == 0
+
+
+def test_query_invalid_values_string_enum_with_invalid_value(session):
+    if session.bind.name == 'postgresql':
+        pytest.skip('Not able to add invalid aggregation method due to '
+                    'CHECKED CONSTRAINT')
+    a = factories.AggregationSettingsFactory(aggregation_method='invalid')
+
+    invalid_boundaries_q = query_invalid_enums(
+        session, models.AggregationSettings.aggregation_method)
+    assert invalid_boundaries_q.count() == 1
+    assert invalid_boundaries_q.first().id == a.id
 
 
 def test_get_none_nullable_columns():
@@ -337,6 +365,13 @@ def test_get_enum_columns():
 
     assert len(enum_columns) == 1
     assert enum_columns[0] == models.BoundaryConditions2D.boundary_type
+
+
+def test_get_enum_columns_varcharenum():
+    enum_columns = get_enum_columns(models.AggregationSettings.__table__)
+
+    assert len(enum_columns) == 1
+    assert enum_columns[0] == models.AggregationSettings.aggregation_method
 
 
 def test_sqlalchemy_to_sqlite_type_with_custom_type():

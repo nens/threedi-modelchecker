@@ -93,6 +93,18 @@ class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     display_name = Faker('name')
 
 
+class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.AggregationSettings
+        sqlalchemy_session = Session
+
+    var_name = Faker('name')
+    flow_variable = 'max_timestep'
+    aggregation_method = 'avg'
+    aggregation_in_space = False
+    timestep = 10
+
+
 class MigrationHistoryFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.SouthMigrationHistory
