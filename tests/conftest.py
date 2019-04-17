@@ -42,21 +42,6 @@ def emtpy_spatialite_model(tmpdir):
     return emtpy_model_file
 
 
-@pytest.fixture(scope='module')
-def empty_postgis_model():
-    # connect to a postgres server
-    # create an empty work_db based on pg_dump.
-    # return connection-details (host/port/db-name/user/password)
-    # Should clean up after use...
-    yield {} # settings
-    # teardown
-    pass
-
-
-def test_make_empty_postgres():
-    pass
-
-
 @pytest.fixture(
     scope='session',
     params=[('spatialite', sqlite_settings),
@@ -92,14 +77,3 @@ def session(threedi_db):
 def modelchecker(threedi_db):
     mc = ThreediModelChecker(threedi_db)
     return mc
-
-
-def test_connection(threedi_db):
-    s = threedi_db.get_session()
-    threedi_db.get_engine().connect()
-
-
-def test_query_object(session):
-    from model_checker.models import Levee
-    levee = session.query(Levee).first()
-    print('done')
