@@ -6,7 +6,7 @@ from geoalchemy2 import functions as geo_func
 
 from . import model_errors
 from .model_errors import yield_model_errors
-from .schema_checks import ModelSchema
+from .schema import ModelSchema
 from .threedi_model import models, custom_types
 
 

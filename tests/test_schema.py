@@ -1,5 +1,5 @@
 from . import factories
-from threedi_modelchecker.schema_checks import ModelSchema, constants
+from threedi_modelchecker.schema import ModelSchema, constants
 
 def test_check_latest_migration_missing(threedi_db):
     factories.MigrationHistoryFactory()
