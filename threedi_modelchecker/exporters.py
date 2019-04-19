@@ -19,13 +19,31 @@ def export_to_file(errors, file):
     """
     with open(file, 'x') as f:
         for error in errors:
-            f.write(error)
+            f.write(str(error) + '\n')
 
 
-def summary(errors):
-    """Produces an summary of the found errors
+def summarize_type_errors(errors):
+    """Return an summary of the errors, aggregated on the type of errors
+
+    Count for each type of error is returned.
 
     :param errors: iterator of BaseModelError
     :return: dict
+    """
+    summary = {}
+    total_errors = 0
+    for error in errors:
+        total_errors += 1
+        error_type = type(error).__name__
+        count_error_type = summary.get(error_type, 0) + 1
+        summary[error_type] = count_error_type
+    return summary, total_errors
+
+
+def summarize_column_errors(errors):
+    """Return a summary of the errors, aggregated on columns
+
+    For each column the number of errors are returned. Columns with no errors
+    are not returned.
     """
     pass
