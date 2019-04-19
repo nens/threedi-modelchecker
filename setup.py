@@ -43,7 +43,7 @@ setup(
     extras_require={"test": tests_require},
     entry_points={
         "console_scripts": [
-            "threedi-modelchecker = threedi_modelchecker.scripts:main"
+            "threedi-modelchecker = threedi_modelchecker.scripts:check_model"
         ]
     },
 )

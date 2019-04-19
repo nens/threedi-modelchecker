@@ -2,24 +2,26 @@ import click
 
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_database import ThreediDatabase
+from threedi_modelchecker.exporters import print_errors, export_to_file
 
 
+# TODO: --file option currently does nothing!
 @click.group()
-@click.option('-f', '--file', help='Write output to file, instead of stdout')
-def export(file):
-    click.echo('write to file: %s' % file)
+@click.option('-f', '--file', help='Write errors to file, instead of stdout')
+def check_model(file):
+    """Checks the threedi-model for errors"""
+    click.echo('Parsing threedi-model for any errors')
+    if file:
+        click.echo('Errors will be written to %s' % file)
 
 
-@export.command()
-@click.option('-d', '--database', help='database name to connect to')
-@click.option('-h', '--host', help='database server host')
-@click.option('-p', '--port', default=5432, help='database server port')
-@click.option('-u', '--username', help='database username')
-@click.option('-W', '--password', prompt=True, hide_input=True,
-              confirmation_prompt=True,
-              help='force password prompt (should happen automatically)')
-def check_postgis_model(database, host, port, username, password):
-    """Parse a postgis threedi-model and check its validity"""
+@check_model.command()
+@click.option('-d', '--database', required=True, help='database name to connect to')
+@click.option('-h', '--host', required=True, help='database server host')
+@click.option('-p', '--port', required=True, default=5432, help='database server port')
+@click.option('-u', '--username', required=True, help='database username')
+def postgis(database, host, port, username, password):
+    """Parse a postgis model"""
     postgis_settings = {
         'host': host,
         'port': port,
@@ -34,14 +36,16 @@ def check_postgis_model(database, host, port, username, password):
     )
     mc = ThreediModelChecker(db)
     model_errors = mc.parse_model()
+    print_errors(model_errors)
     print('done')
 
 
-@export.command()
-@click.option('-s', '--sqlite', type=click.Path(exists=True, readable=True),
+@check_model.command()
+@click.option('-s', '--sqlite', required=True,
+              type=click.Path(exists=True, readable=True),
               help='sqlite file')
-def check_sqlite_model(sqlite):
-    """Parse a sqlite threedi-model and check its validity"""
+def sqlite(sqlite):
+    """Parse a sqlite model"""
     sqlite_settings = {
         'db_path': sqlite,
         'db_file': sqlite
@@ -53,8 +57,9 @@ def check_sqlite_model(sqlite):
     )
     mc = ThreediModelChecker(db)
     model_errors = mc.parse_model()
+    print_errors(model_errors)
     print('done')
 
 
 if __name__ == '__main__':
-    exit(check_postgis_model())
+    exit(check_model())
