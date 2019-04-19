@@ -5,11 +5,8 @@ from geoalchemy2.types import Geometry
 from geoalchemy2 import functions as geo_func
 
 from .schema_checks import ModelSchema
-from model_checker import models
-from model_checker.models import DECLARED_MODELS
-from model_checker import model_errors, custom_types, constants
-from model_checker.model_errors import (
-    BaseModelError, NullColumnError, yield_model_errors)
+from . import models, model_errors, custom_types
+from .model_errors import (NullColumnError, yield_model_errors)
 
 
 def query_missing_foreign_key(session, origin_column, ref_column):
@@ -227,6 +224,7 @@ def sqlalchemy_to_sqlite_type(column_type):
     """Convert the sqlalchemy column type to sqlite data type
 
     Returns the value similar as the sqlite 'typeof' function.
+    Raises TypeError if the column type is unknown.
 
     :param column_type: sqlalchemy.column
     :return: (str)
@@ -306,21 +304,25 @@ class ThreediModelChecker:
         return self.schema.declared_models
 
     def parse_model(self):
+        """Return an iterator which yields all errors found in this model.
+
+        :return: generator of BaseModelError
+        """
         null_errors = self.yield_null_errors()
         foreign_key_erros = self.yield_foreign_key_errors()
         not_unique_errors = self.yield_not_unique_errors()
         data_type_errors = self.yield_data_type_errors()
         geometry_errors = self.yield_invalid_geometry_errors()
-        invalid_enum_values_erros = self.yield_invalid_enum_errors()
-        all_errors = chain(
+        invalid_enum_values_errors = self.yield_invalid_enum_errors()
+        model_errors = chain(
             null_errors,
             foreign_key_erros,
             not_unique_errors,
             data_type_errors,
             geometry_errors,
-            invalid_enum_values_erros
+            invalid_enum_values_errors
         )
-        print_errors(all_errors)
+        return model_errors
 
     def yield_null_errors(self):
         """Return an iterator that yields NullColumnError of this model."""
@@ -328,8 +330,8 @@ class ThreediModelChecker:
         null_column_errors = []
         for model in self.models:
             columns_to_check = get_none_nullable_columns(model.__table__)
-            for colum in columns_to_check:
-                null_column_errors += get_null_errors(session, colum)
+            for column in columns_to_check:
+                null_column_errors += get_null_errors(session, column)
         return chain(null_column_errors)
 
     def yield_foreign_key_errors(self):

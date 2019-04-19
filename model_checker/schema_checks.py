@@ -8,6 +8,8 @@ class ModelSchema:
     def __init__(self, threedi_db, declared_models=models.DECLARED_MODELS):
         self.db = threedi_db
         self.declared_models = declared_models
+        if not self.is_latest_migration():
+            print("WARNING: model is not the latest migration!")
 
     def is_latest_migration(self):
         """Return if the database contains the latest migration"""

@@ -370,7 +370,7 @@ def test_get_enum_columns():
 def test_get_enum_columns_varcharenum():
     enum_columns = get_enum_columns(models.AggregationSettings.__table__)
 
-    assert len(enum_columns) == 1
+    assert len(enum_columns) == 2
     assert enum_columns[0] == models.AggregationSettings.aggregation_method
 
 
