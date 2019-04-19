@@ -1,5 +1,5 @@
-from . import models
-from . import constants
+from .threedi_model import models
+from .threedi_model import constants
 
 from sqlalchemy import func
 

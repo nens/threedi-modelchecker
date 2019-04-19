@@ -19,7 +19,7 @@ from threedi_modelchecker.model_checks import (
     query_not_unique,
     sqlalchemy_to_sqlite_type,
 )
-from threedi_modelchecker import constants, custom_types, models
+from threedi_modelchecker.threedi_model import constants, custom_types, models
 from tests import factories
 
 

@@ -4,9 +4,11 @@ from sqlalchemy import func, types
 from geoalchemy2.types import Geometry
 from geoalchemy2 import functions as geo_func
 
+from . import model_errors
+from .model_errors import yield_model_errors
 from .schema_checks import ModelSchema
-from . import models, model_errors, custom_types
-from .model_errors import (NullColumnError, yield_model_errors)
+from .threedi_model import models, custom_types
+
 
 
 def query_missing_foreign_key(session, origin_column, ref_column):
@@ -80,7 +82,7 @@ def get_null_errors(session, column):
     """
     q = query_not_null(session, column)
     errors = yield_model_errors(
-        NullColumnError, q, column)
+        model_errors.NullColumnError, q, column)
     return errors
 
 
