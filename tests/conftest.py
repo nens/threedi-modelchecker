@@ -4,9 +4,9 @@ import shutil
 import pytest
 from sqlalchemy import orm
 
-from model_checker.models import Base
-from model_checker.threedi_database import ThreediDatabase
-from model_checker.model_checks import ThreediModelChecker
+from threedi_modelchecker.models import Base
+from threedi_modelchecker.threedi_database import ThreediDatabase
+from threedi_modelchecker.model_checks import ThreediModelChecker
 
 from tests import Session
 

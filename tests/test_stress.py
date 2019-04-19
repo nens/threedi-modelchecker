@@ -3,10 +3,10 @@ import os
 import pytest
 
 from .conftest import data_dir
-from model_checker.threedi_database import ThreediDatabase
-from model_checker.model_checks import ThreediModelChecker, query_invalid_type
-from model_checker import models
-from model_checker.models import Base
+from threedi_modelchecker.threedi_database import ThreediDatabase
+from threedi_modelchecker.model_checks import ThreediModelChecker, query_invalid_type
+from threedi_modelchecker import models
+from threedi_modelchecker.models import Base
 
 from tests import Session
 

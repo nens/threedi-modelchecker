@@ -2,7 +2,7 @@ import factory
 from geoalchemy2 import Geometry
 import pytest
 
-from model_checker.model_checks import (
+from threedi_modelchecker.model_checks import (
     ThreediModelChecker,
     get_enum_columns,
     get_foreign_key_columns,
@@ -19,7 +19,7 @@ from model_checker.model_checks import (
     query_not_unique,
     sqlalchemy_to_sqlite_type,
 )
-from model_checker import constants, custom_types, models
+from threedi_modelchecker import constants, custom_types, models
 from tests import factories
 
 
@@ -371,7 +371,9 @@ def test_get_enum_columns_varcharenum():
     enum_columns = get_enum_columns(models.AggregationSettings.__table__)
 
     assert len(enum_columns) == 2
-    assert enum_columns[0] == models.AggregationSettings.aggregation_method
+    enum_types = [e.type for e in enum_columns]
+    assert models.AggregationSettings.aggregation_method.type in enum_types
+    assert models.AggregationSettings.flow_variable.type in enum_types
 
 
 def test_sqlalchemy_to_sqlite_type_with_custom_type():

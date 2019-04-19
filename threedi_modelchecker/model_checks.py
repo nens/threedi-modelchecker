@@ -380,8 +380,3 @@ class ThreediModelChecker:
                 invalid_enum_values_erros += get_invalid_enums_errors(
                     session, column)
         return chain(invalid_enum_values_erros)
-
-
-def print_errors(errors):
-    for error in errors:
-        print(error)

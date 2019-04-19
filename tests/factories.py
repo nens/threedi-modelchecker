@@ -4,7 +4,7 @@ import factory
 from factory import Faker
 from geoalchemy2 import Geometry
 
-from model_checker import models, constants
+from threedi_modelchecker import models, constants
 from tests import Session
 
 
