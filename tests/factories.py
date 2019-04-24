@@ -61,6 +61,19 @@ class ConnectionNodeFactory(factory.alchemy.SQLAlchemyModelFactory):
     the_geom = 'SRID=28992;POINT(-71.064544 42.28787)'
 
 
+class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Channel
+        sqlalchemy_session = Session
+
+    display_name = Faker('name')
+    code = 'code'
+    calculation_type = constants.CalculationType.CONNECTED
+    the_geom = "SRID=4326;LINESTRING(1 2,1 3)"
+    connection_node_start = factory.SubFactory(ConnectionNodeFactory)
+    connection_node_end = factory.SubFactory(ConnectionNodeFactory)
+
+
 class ManholeFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Manhole
@@ -92,6 +105,26 @@ class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     timeseries = '0,-0.5'
     display_name = Faker('name')
 
+
+class CrossSectionDefinitionFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.CrossSectionDefinition
+        sqlalchemy_session = Session
+
+    code = 'cross-section code'
+
+
+class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.CrossSectionLocation
+        sqlalchemy_session = Session
+
+    code = 'code'
+    reference_level = 0.0
+    friction_type = constants.FrictionType.CHEZY
+    friction_value = 0.0
+    channel = factory.SubFactory(ChannelFactory)
+    definition = factory.SubFactory(CrossSectionDefinitionFactory)
 
 class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:

@@ -4,6 +4,8 @@ from sqlalchemy import func, types
 from geoalchemy2.types import Geometry
 from geoalchemy2 import functions as geo_func
 
+from threedi_modelchecker.specific_model_checks import \
+    get_invalid_bank_levels_errors, get_invalid_cross_section_shape_errors
 from . import model_errors
 from .model_errors import yield_model_errors
 from .schema import ModelSchema
@@ -316,13 +318,16 @@ class ThreediModelChecker:
         data_type_errors = self.yield_data_type_errors()
         geometry_errors = self.yield_invalid_geometry_errors()
         invalid_enum_values_errors = self.yield_invalid_enum_errors()
+        other_errros = self.yield_other_errors()
+
         model_errors = chain(
             null_errors,
             foreign_key_erros,
             not_unique_errors,
             data_type_errors,
             geometry_errors,
-            invalid_enum_values_errors
+            invalid_enum_values_errors,
+            other_errros
         )
         return model_errors
 
@@ -382,3 +387,9 @@ class ThreediModelChecker:
                 invalid_enum_values_erros += get_invalid_enums_errors(
                     session, column)
         return chain(invalid_enum_values_erros)
+
+    def yield_other_errors(self):
+        session = self.db.get_session()
+        invalid_crs_shape = get_invalid_cross_section_shape_errors(session)
+        invalid_bank_level_errors = get_invalid_bank_levels_errors(session)
+        return chain(chain(invalid_crs_shape), invalid_bank_level_errors)

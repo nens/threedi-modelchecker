@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+from threedi_modelchecker import exporters
 from .conftest import data_dir
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.model_checks import ThreediModelChecker, query_invalid_type
@@ -89,17 +90,21 @@ def grotemarkt():
 
 def test_parse_model(bergermeer_db):
     mc = ThreediModelChecker(bergermeer_db)
-    mc.parse_model()
+    errors = mc.parse_model()
+    exporters.print_errors(errors)
     print('done')
 
 
 def test_parse_model_heugem(heugem):
     mc = ThreediModelChecker(heugem)
-    mc.parse_model()
+    errors = mc.parse_model()
+    summary = exporters.summarize_type_errors(errors)
+    print(summary)
     print('done')
 
 
-def test_parse_model_heugem(grotemarkt):
+def test_parse_model_grotemarkt(grotemarkt):
     mc = ThreediModelChecker(grotemarkt)
-    mc.parse_model()
+    errors = mc.parse_model()
+    exporters.print_errors(errors)
     print('done')

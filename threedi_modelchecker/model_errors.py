@@ -1,4 +1,4 @@
-class BaseModelError (object):
+class BaseModelError (BaseException):
     """Dataclass to store error information of a model
 
     Base class to group all model errors"""
@@ -18,7 +18,6 @@ class BaseModelError (object):
 
 
 class MissingForeignKeyError(BaseModelError):
-
     def __init__(self, ref_column, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ref_column = ref_column
@@ -72,7 +71,7 @@ class NotUniqueError(BaseModelError):
 
 
 class InvalidGeometry(BaseModelError):
-    def __init__(self,*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def __str__(self):
@@ -85,7 +84,7 @@ class InvalidGeometry(BaseModelError):
 
 
 class InvalidValue(BaseModelError):
-    def __init__(self,*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def __str__(self):
@@ -97,6 +96,20 @@ class InvalidValue(BaseModelError):
                    self.id,
                    list(self.column.type.enum_class)
                )
+
+
+class InvalidCrossSectionShape(BaseModelError):
+    def __init__(self, message, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message = message
+
+    def __str__(self):
+        return "%s: Table '%s' for id %s: %s" % (
+            type(self).__name__,
+            self.instance.__table__.name,
+            self.id,
+            self.message
+        )
 
 
 def yield_model_errors(klass, instances, column, **kwargs):
