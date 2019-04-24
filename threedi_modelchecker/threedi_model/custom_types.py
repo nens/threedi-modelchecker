@@ -30,7 +30,7 @@ class IntegerEnum(TypeDecorator):
             return value
 
     def process_result_value(self, value, dialect):
-        if isinstance(value, self.enum_class):
+        if value in self.enums:
             return self.enum_class(value)
         else:
             return value
