@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 def print_errors(errors):
     """Simply prints all errors to stdout
 
@@ -30,14 +33,11 @@ def summarize_type_errors(errors):
     :param errors: iterator of BaseModelError
     :return: dict
     """
-    summary = {}
-    total_errors = 0
-    for error in errors:
-        total_errors += 1
-        error_type = type(error).__name__
-        count_error_type = summary.get(error_type, 0) + 1
-        summary[error_type] = count_error_type
-    return summary, total_errors
+    def _get_error_type(errors):
+        for error in errors:
+            yield type(error).__name__
+    summary = Counter(_get_error_type(errors))
+    return summary, sum(summary.values())
 
 
 def summarize_column_errors(errors):
@@ -46,4 +46,8 @@ def summarize_column_errors(errors):
     For each column the number of errors are returned. Columns with no errors
     are not returned.
     """
-    pass
+    def _get_error_table_column(errors):
+        for error in errors:
+            yield '%s.%s' % (error.column.table.name, error.column.name)
+    summary = Counter(_get_error_table_column(errors))
+    return summary, sum(summary.values())
