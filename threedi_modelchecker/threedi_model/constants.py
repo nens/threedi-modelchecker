@@ -49,6 +49,16 @@ class CalculationType(Enum):
     DOUBLE_CONNECTED = 105
 
 
+class CalculationTypeCulvert(Enum):
+    EMBEDDED_NODE = 0
+    ISOLATED_NODE = 1
+    CONNECTED_NODE = 2
+    EMBEDDED = 100
+    STANDALONE = 101
+    CONNECTED = 102
+    DOUBLE_CONNECTED = 105
+
+
 class CalculationTypeNode(Enum):
     EMBEDDED = 0
     ISOLATED = 1

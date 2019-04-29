@@ -677,7 +677,7 @@ class Culvert(Base):
     id = Column(Integer, primary_key=True)
     display_name = Column(String(255), nullable=False)
     code = Column(String(100), nullable=False)
-    calculation_type = Column(IntegerEnum(constants.CalculationType))
+    calculation_type = Column(IntegerEnum(constants.CalculationTypeCulvert))
     friction_value = Column(Float, nullable=False)
     friction_type = Column(IntegerEnum(constants.FrictionType), nullable=False)
     dist_calc_points = Column(Float)
