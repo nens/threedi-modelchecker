@@ -823,7 +823,7 @@ class Pumpstation(Base):
     type_ = Column(IntegerEnum(constants.PumpType), name='type', nullable=False)
     start_level = Column(Float, nullable=False)
     lower_stop_level = Column(Float, nullable=False)
-    upper_stop_level = Column(Float, nullable=False)
+    upper_stop_level = Column(Float)
     capacity = Column(Float, nullable=False)
 
     connection_node_start_id = Column(

@@ -20,7 +20,7 @@ def export_to_file(errors, file):
     :return: None
     :raise FileExistsError: if the file already exists
     """
-    with open(file, 'x') as f:
+    with open(file, 'w') as f:
         for error in errors:
             f.write(str(error) + '\n')
 

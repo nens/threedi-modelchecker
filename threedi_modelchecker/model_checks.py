@@ -318,7 +318,7 @@ class ThreediModelChecker:
         data_type_errors = self.yield_data_type_errors()
         geometry_errors = self.yield_invalid_geometry_errors()
         invalid_enum_values_errors = self.yield_invalid_enum_errors()
-        other_errros = self.yield_other_errors()
+        other_errors = self.yield_other_errors()
 
         model_errors = chain(
             null_errors,
@@ -327,7 +327,7 @@ class ThreediModelChecker:
             data_type_errors,
             geometry_errors,
             invalid_enum_values_errors,
-            other_errros
+            other_errors
         )
         return model_errors
 

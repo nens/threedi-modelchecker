@@ -28,6 +28,7 @@ class FlowVariable(Enum):
     SIMPLE_INFILTRATION = 'simple_infiltration'
     LEAKAGE = 'leakage'
     INTERCEPTION = 'interception'
+    SURFACE_SOURCE_SINK_DISCHARGE = 'surface_source_sink_discharge'
 
 
 class AggregationMethod(Enum):
