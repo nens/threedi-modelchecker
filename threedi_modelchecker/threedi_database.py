@@ -109,3 +109,13 @@ class ThreediDatabase(object):
 
     def get_session(self):
         return sessionmaker(bind=self.engine)()
+
+    def check_connection(self):
+        """Check if there a connection can be started with the database
+
+        :return: True if a connection can be established, otherwise raises an
+            appropriate error.
+        """
+        session = self.get_session()
+        r = session.execute('select 1')
+        return r.fetchone()
