@@ -140,8 +140,8 @@ def test_get_not_null_errors(session):
     errors = get_null_errors(
         session, models.ConnectionNode.__table__.c.storage_area)
     error_list = list(errors)
-    # assert len(r) == 1
-    # assert null_node in r
+    assert len(error_list) == 1
+    assert null_node.id == error_list[0].id
 
 
 def test_threedi_db_and_factories(threedi_db):
