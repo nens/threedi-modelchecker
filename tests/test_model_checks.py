@@ -6,16 +6,8 @@ from threedi_modelchecker.model_checks import (
     get_enum_columns,
     get_foreign_key_columns,
     get_none_nullable_columns,
-    get_null_errors,
     get_unique_columns,
     get_geometry_columns,
-    query_invalid_type,
-    query_invalid_geometry,
-    query_invalid_geometry_types,
-    query_invalid_enums,
-    query_missing_foreign_key,
-    query_not_null,
-    query_not_unique,
     sqlalchemy_to_sqlite_type,
 )
 from threedi_modelchecker.threedi_model import constants, custom_types, models
@@ -28,7 +20,7 @@ from threedi_modelchecker.checks.base import GeometryTypeCheck
 from threedi_modelchecker.checks.base import EnumCheck
 
 
-def test_check_fk(session):
+def test_fk_check(session):
     factories.ManholeFactory.create_batch(5)
     fk_check = ForeignKeyCheck(
         models.ConnectionNode.id,
@@ -38,7 +30,7 @@ def test_check_fk(session):
     assert len(invalid_rows) == 0
 
 
-def test_check_fk_no_entries(session):
+def test_fk_check_no_entries(session):
     fk_check = ForeignKeyCheck(
         models.ConnectionNode.id,
         models.Manhole.connection_node_id,
@@ -47,7 +39,7 @@ def test_check_fk_no_entries(session):
     assert len(invalid_rows) == 0
 
 
-def test_check_fk_null_fk(session):
+def test_fk_check_null_fk(session):
     conn_node = factories.ConnectionNodeFactory()
     factories.ManholeFactory.create_batch(5, manhole_indicator=conn_node.id)
     factories.ManholeFactory(manhole_indicator=None)
@@ -60,7 +52,7 @@ def test_check_fk_null_fk(session):
     assert len(invalid_rows) == 0
 
 
-def test_check_fk_both_null(session):
+def test_fk_check_both_null(session):
     global_settings = factories.GlobalSettingsFactory(control_group_id=None)
 
     assert session.query(models.GlobalSetting).first().id is not None
@@ -74,7 +66,7 @@ def test_check_fk_both_null(session):
     assert len(invalid_rows) == 0
 
 
-def test_check_fk_missing_fk(session):
+def test_fk_check_missing_fk(session):
     conn_node = factories.ConnectionNodeFactory()
     factories.ManholeFactory.create_batch(5, manhole_indicator=conn_node.id)
     missing_fk = factories.ManholeFactory(manhole_indicator=-1)
@@ -88,7 +80,7 @@ def test_check_fk_missing_fk(session):
     assert invalid_rows[0].id == missing_fk.id
 
 
-def test_check_unique(session):
+def test_unique_check(session):
     factories.ManholeFactory.create_batch(5)
 
     unique_check = UniqueCheck(models.Manhole.code)
@@ -96,7 +88,7 @@ def test_check_unique(session):
     assert len(invalid_rows) == 0
 
 
-def test_check_unique_duplicate_value(session):
+def test_unique_check_duplicate_value(session):
     manholes = factories.ManholeFactory.create_batch(
         5, zoom_category=factory.Sequence(lambda n: n))
     duplicate_manhole = factories.ManholeFactory(
@@ -111,7 +103,7 @@ def test_check_unique_duplicate_value(session):
     assert duplicate_manhole.id in invalid_ids
 
 
-def test_check_unique_null_values(session):
+def test_unique_check_null_values(session):
     factories.ManholeFactory.create_batch(
         5, zoom_category=factory.Sequence(lambda n: n))
     factories.ManholeFactory.create_batch(3, zoom_category=None)
@@ -121,7 +113,7 @@ def test_check_unique_null_values(session):
     assert len(invalid_rows) == 0
 
 
-def test_null(session):
+def test_null_check(session):
     factories.ConnectionNodeFactory.create_batch(
         5, storage_area=3.0)
 
@@ -130,7 +122,7 @@ def test_null(session):
     assert len(invalid_rows) == 0
 
 
-def test_not_null_with_null_value(session):
+def test_null_check_with_null_value(session):
     factories.ConnectionNodeFactory.create_batch(
         5, storage_area=3.0)
     null_node = factories.ConnectionNodeFactory(storage_area=None)
@@ -139,17 +131,6 @@ def test_not_null_with_null_value(session):
     invalid_rows = null_check.get_invalid(session)
     assert len(invalid_rows) == 1
     assert invalid_rows[0].id == null_node.id
-
-
-def test_get_not_null_errors(session):
-    factories.ConnectionNodeFactory.create_batch(
-        5, storage_area=3.0)
-    null_node = factories.ConnectionNodeFactory(storage_area=None)
-
-    null_check = NullCheck(models.ConnectionNode.storage_area)
-    invalid_rows = null_check.get_invalid(session)
-    assert len(invalid_rows) == 1
-    assert null_node.id == invalid_rows[0].id
 
 
 def test_threedi_db_and_factories(threedi_db):
@@ -171,7 +152,7 @@ def test_run_spatial_function(session):
     r = q.first()
 
 
-def test_check_type(session):
+def test_type_check(session):
     if session.bind.name == 'postgresql':
         pytest.skip('type checks not working on postgres')
     factories.ManholeFactory(zoom_category=123)
@@ -183,7 +164,7 @@ def test_check_type(session):
     assert len(invalid_rows) == 0
 
 
-def test_check_type_integer(session):
+def test_type_check_integer(session):
     if session.bind.name == 'postgresql':
         pytest.skip('type checks not working on postgres')
     factories.ManholeFactory(zoom_category=123)
@@ -200,7 +181,7 @@ def test_check_type_integer(session):
     assert m2.id in invalid_ids
 
 
-def test_check_valid_type_varchar(session):
+def test_type_check_varchar(session):
     if session.bind.name == 'postgresql':
         pytest.skip('type checks not working on postgres')
     factories.ManholeFactory(code='abc')
@@ -212,7 +193,7 @@ def test_check_valid_type_varchar(session):
     assert len(invalid_rows) == 0
 
 
-def test_check_valid_type_boolean(session):
+def test_type_check_boolean(session):
     if session.bind.name == 'postgresql':
         pytest.skip('type checks not working on postgres')
     factories.GlobalSettingsFactory(use_1d_flow=True)
@@ -226,7 +207,7 @@ def test_check_valid_type_boolean(session):
     assert len(invalid_rows) == 0
 
 
-def test_query_invalid_geometry(session):
+def test_geometry_check(session):
     c = factories.ConnectionNodeFactory(
         the_geom='SRID=28992;POINT(-371.064544 42.28787)'
     )
@@ -270,7 +251,7 @@ def test_geometry_check_with_none_geoms(session):
     assert len(invalid_rows) == 0
 
 
-def test_geometry_type(session):
+def test_geometry_type_check(session):
     factories.ConnectionNodeFactory.create_batch(
         2, the_geom='SRID=28992;POINT(-71.064544 42.28787)'
     )
@@ -280,7 +261,7 @@ def test_geometry_type(session):
     assert len(invalid_rows) == 0
 
 
-def test_geometry_type_invalid_geom_type(session):
+def test_geometry_type_check_invalid_geom_type(session):
     if session.bind.name == 'postgresql':
         pytest.skip('Not sure how to insert invalid geometry types in postgresql')
     factories.ConnectionNodeFactory(
