@@ -88,23 +88,31 @@ def grotemarkt():
     return db
 
 
-def test_parse_model(bergermeer_db):
+def test_get_errorr_bergermeer(bergermeer_db):
     mc = ThreediModelChecker(bergermeer_db)
-    errors = mc.parse_model()
+    errors = mc.get_model_errors()
     exporters.print_errors(errors)
     print('done')
 
 
-def test_parse_model_heugem(heugem):
+def test_get_errors_heugem(heugem):
     mc = ThreediModelChecker(heugem)
-    errors = mc.parse_model()
-    summary = exporters.summarize_type_errors(errors)
-    print(summary)
+    errors = mc.get_model_errors()
+    exporters.print_errors(errors)
+    # summary = exporters.summarize_column_errors(errors)
+    # print(summary)
     print('done')
 
 
-def test_parse_model_grotemarkt(grotemarkt):
+def test_get_errors_grotemarkt(grotemarkt):
     mc = ThreediModelChecker(grotemarkt)
-    errors = mc.parse_model()
+    errors = mc.get_model_errors()
     exporters.print_errors(errors)
     print('done')
+
+
+def test_get_error_iterator(bergermeer_db):
+    mc = ThreediModelChecker(bergermeer_db)
+    # model_errors = mc.get_model_errors()
+    for error in mc.get_model_error_iterator():
+        print(error)

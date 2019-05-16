@@ -1,7 +1,7 @@
 import pytest
 
 from threedi_modelchecker.model_errors import InvalidCrossSectionShape
-from threedi_modelchecker.specific_model_checks import (
+from threedi_modelchecker.checks.other import (
     query_invalid_bank_levels,
     get_invalid_cross_section_shape_errors,
     CrossSectionShapeValidator)

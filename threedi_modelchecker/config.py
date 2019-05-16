@@ -4,7 +4,22 @@ from .checks.factories import generate_type_checks
 from .checks.factories import generate_geometry_checks
 from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_enum_checks
+from .checks.other import BankLevelCheck
 from .checks.base import  ForeignKeyCheck
+
+
+FOREIGN_KEY_CHECKS = []
+UNIQUE_CHECKS = []
+INVALID_TYPE_CHECKS = []
+INVALID_GEOMETRY_CHECKS = []
+INVALID_GEOMETRY_TYPE_CHECKS = []
+INVALID_ENUM_CHECKS = []
+
+OTHER_CHECKS = [
+    BankLevelCheck()
+]
+
+ALL_CHECKS = []
 
 
 class Config:
@@ -17,6 +32,7 @@ class Config:
         self.models = models
         self.checks = []
         self.generate_checks()
+        self.checks += OTHER_CHECKS
 
     def generate_checks(self):
         FOREIGN_KEY_CHECKS = []
@@ -40,7 +56,3 @@ class Config:
         self.checks += INVALID_GEOMETRY_TYPE_CHECKS
         self.checks += INVALID_ENUM_CHECKS
         return None
-
-
-FOREIGN_KEY_CHECKS = []
-ALL_CHECKS = []

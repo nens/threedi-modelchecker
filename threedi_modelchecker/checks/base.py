@@ -170,23 +170,3 @@ class EnumCheck(BaseCheck):
             self.column.notin_(list(self.column.type.enum_class))
         )
         return invalid_values_q.all()
-
-
-class BankLevelCheck(BaseCheck):
-    def __init__(self):
-        super().__init__(
-            table=models.CrossSectionLocation,
-            column=models.CrossSectionLocation.bank_level
-        )
-
-    def get_invalid(self, session):
-        q = session.query(models.CrossSectionLocation).filter(
-            models.CrossSectionLocation.bank_level == None,
-            models.CrossSectionLocation.channel.has(
-                models.Channel.calculation_type.in_(
-                    [constants.CalculationType.CONNECTED,
-                     constants.CalculationType.DOUBLE_CONNECTED]
-                )
-            ),
-        )
-        return q.all()

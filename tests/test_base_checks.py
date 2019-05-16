@@ -316,7 +316,6 @@ def test_enum_check_string_with_invalid_value(session):
     assert invalid_rows[0].id == a.id
 
 
-
 def test_sqlalchemy_to_sqlite_type_with_custom_type():
     customIntegerEnum = custom_types.IntegerEnum(constants.BoundaryType)
     assert sqlalchemy_to_sqlite_type(customIntegerEnum) == 'integer'
