@@ -13,7 +13,7 @@ from threedi_modelchecker.model_checks import (
 from threedi_modelchecker.threedi_model import constants, custom_types, models
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import UniqueCheck
-from threedi_modelchecker.checks.base import NullCheck
+from threedi_modelchecker.checks.base import NotNullCheck
 from threedi_modelchecker.checks.base import TypeCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
@@ -117,7 +117,7 @@ def test_null_check(session):
     factories.ConnectionNodeFactory.create_batch(
         5, storage_area=3.0)
 
-    null_check = NullCheck(models.ConnectionNode.storage_area)
+    null_check = NotNullCheck(models.ConnectionNode.storage_area)
     invalid_rows = null_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -127,7 +127,7 @@ def test_null_check_with_null_value(session):
         5, storage_area=3.0)
     null_node = factories.ConnectionNodeFactory(storage_area=None)
 
-    null_check = NullCheck(models.ConnectionNode.storage_area)
+    null_check = NotNullCheck(models.ConnectionNode.storage_area)
     invalid_rows = null_check.get_invalid(session)
     assert len(invalid_rows) == 1
     assert invalid_rows[0].id == null_node.id

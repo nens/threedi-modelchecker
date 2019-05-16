@@ -1,4 +1,4 @@
-class BaseModelError (BaseException):
+class BaseModelError(BaseException):
     """Dataclass to store error information of a model
 
     Base class to group all model errors"""

@@ -11,14 +11,21 @@ from ..threedi_model import models
 
 
 class BaseCheck(ABC):
+    """Baseclass for all checks.
+
+    A Check defines a constraint on a specific column and its table.
+    One can validate if the constrain holds using the method `get_invalid()`.
+    This method will return the rows which are invalid.
+    """
     def __init__(self, column):
         self.column = column
         self.table = column.table
 
     @abstractmethod
     def get_invalid(self, session):
-        """Validate check on given session, return any rows which do not hold
-        up to the condition this check is validating.
+        """Return a list of rows (named_tuples) which are invalid.
+
+        What is invalid is defined in the check.
 
         :param session: sqlalchemy.orm.session.Session
         :return: list of named_tuples or empty list if there are no invalid
@@ -28,11 +35,9 @@ class BaseCheck(ABC):
 
 
 class ForeignKeyCheck(BaseCheck):
-    """Check all values in origin_column are in ref_column.
+    """Check all values in `column` are in `reference_column`.
 
-    Null values are ignored.
-
-    """
+    Null values are ignored."""
     def __init__(self, reference_column, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.reference_column = reference_column
@@ -46,6 +51,9 @@ class ForeignKeyCheck(BaseCheck):
 
 
 class UniqueCheck(BaseCheck):
+    """Check all values in `column` are unique
+
+    Null values are ignored."""
     def get_invalid(self, session):
         duplicate_values = (
             session.query(self.column).group_by(self.column).having(
@@ -56,13 +64,17 @@ class UniqueCheck(BaseCheck):
         return q.all()
 
 
-class NullCheck(BaseCheck):
+class NotNullCheck(BaseCheck):
+    """"Check all values in `column` that are not null"""
     def get_invalid(self, session):
         q = session.query(self.column.table).filter(self.column == None)
         return q.all()
 
 
 class TypeCheck(BaseCheck):
+    """Check all values in `column` that are of the column defined type.
+
+    Null values are ignored."""
     def get_invalid(self, session):
         if "sqlite" not in session.bind.dialect.dialect_description:
             return []
@@ -108,6 +120,9 @@ def sqlalchemy_to_sqlite_type(column_type):
 
 
 class GeometryCheck(BaseCheck):
+    """Check all values in `column` are a valid geometry.
+
+    Null values are ignored."""
     def get_invalid(self, session):
         invalid_geometries = session.query(self.column.table).filter(
             geo_func.ST_IsValid(self.column) != True,
@@ -117,6 +132,10 @@ class GeometryCheck(BaseCheck):
 
 
 class GeometryTypeCheck(BaseCheck):
+    """Check all values in `column` are of geometry type in defined in
+    `column`.
+
+    Null values are ignored"""
     def get_invalid(self, session):
         expected_geometry_type = _get_geometry_type(
             self.column,
@@ -140,6 +159,12 @@ def _get_geometry_type(column, dialect):
 
 
 class EnumCheck(BaseCheck):
+    """Check all values in `column` are within the defined Enum values of
+    `column`.
+
+    Unexpected values are values not defined by its enum_class.
+
+    Null values are ignored"""
     def get_invalid(self, session):
         invalid_values_q = session.query(self.column.table).filter(
             self.column.notin_(list(self.column.type.enum_class))

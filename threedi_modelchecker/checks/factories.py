@@ -5,7 +5,7 @@ from .base import EnumCheck
 from .base import GeometryCheck
 from .base import GeometryTypeCheck
 from .base import TypeCheck
-from .base import NullCheck
+from .base import NotNullCheck
 from .base import UniqueCheck
 from ..threedi_model import custom_types
 
@@ -30,7 +30,7 @@ def generate_not_null_checks(table):
     not_null_checks = []
     for column in table.columns:
         if not column.nullable:
-            not_null_checks.append(NullCheck(column))
+            not_null_checks.append(NotNullCheck(column))
     return not_null_checks
 
 
