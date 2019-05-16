@@ -18,12 +18,12 @@ def generate_foreign_key_checks(table):
     return foreign_key_checks
 
 
-def generate_not_unique_checks(table):
-    not_unique_checks = []
+def generate_unique_checks(table):
+    unique_checks = []
     for column in table.columns:
         if column.unique or column.primary_key:
-            not_unique_checks.append(UniqueCheck(column))
-    return not_unique_checks
+            unique_checks.append(UniqueCheck(column))
+    return unique_checks
 
 
 def generate_not_null_checks(table):
@@ -34,14 +34,14 @@ def generate_not_null_checks(table):
     return not_null_checks
 
 
-def generate_invalid_type_checks(table):
-    invalid_data_type_checks = []
+def generate_type_checks(table):
+    data_type_checks = []
     for column in table.columns:
-        invalid_data_type_checks.append(TypeCheck(column))
-    return invalid_data_type_checks
+        data_type_checks.append(TypeCheck(column))
+    return data_type_checks
 
 
-def generate_invalid_geometry_checks(table):
+def generate_geometry_checks(table):
     geometry_checks = []
     for column in table.columns:
         if type(column.type) == Geometry:
@@ -49,18 +49,18 @@ def generate_invalid_geometry_checks(table):
     return geometry_checks
 
 
-def generate_invalid_geometry_type_checks(table):
-    invalid_geometry_type_checks = []
+def generate_geometry_type_checks(table):
+    geometry_type_checks = []
     for column in table.columns:
         if type(column.type) == Geometry:
-            invalid_geometry_type_checks.append(
+            geometry_type_checks.append(
                 GeometryTypeCheck(column))
-    return invalid_geometry_type_checks
+    return geometry_type_checks
 
 
-def generate_invalid_enum_checks(table):
-    invalid_enum_checks = []
+def generate_enum_checks(table):
+    enum_checks = []
     for column in table.columns:
         if issubclass(type(column.type), custom_types.IntegerEnum):
-            invalid_enum_checks.append(EnumCheck(column))
-    return invalid_enum_checks
+            enum_checks.append(EnumCheck(column))
+    return enum_checks

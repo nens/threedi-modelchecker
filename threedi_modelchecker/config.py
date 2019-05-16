@@ -1,9 +1,9 @@
 from .checks.factories import generate_foreign_key_checks
-from .checks.factories import generate_not_unique_checks
-from .checks.factories import generate_invalid_type_checks
-from .checks.factories import generate_invalid_geometry_checks
-from .checks.factories import generate_invalid_geometry_type_checks
-from .checks.factories import generate_invalid_enum_checks
+from .checks.factories import generate_unique_checks
+from .checks.factories import generate_type_checks
+from .checks.factories import generate_geometry_checks
+from .checks.factories import generate_geometry_type_checks
+from .checks.factories import generate_enum_checks
 from .checks.base import  ForeignKeyCheck
 
 
@@ -27,11 +27,11 @@ class Config:
         INVALID_ENUM_CHECKS = []
         for model in self.models:
             FOREIGN_KEY_CHECKS += generate_foreign_key_checks(model.__table__)
-            UNIQUE_CHECKS += generate_not_unique_checks(model.__table__)
-            INVALID_TYPE_CHECKS += generate_invalid_type_checks(model.__table__)
-            INVALID_GEOMETRY_CHECKS += generate_invalid_geometry_checks(model.__table__)
-            INVALID_GEOMETRY_TYPE_CHECKS += generate_invalid_geometry_type_checks(model.__table__)
-            INVALID_ENUM_CHECKS += generate_invalid_enum_checks(model.__table__)
+            UNIQUE_CHECKS += generate_unique_checks(model.__table__)
+            INVALID_TYPE_CHECKS += generate_type_checks(model.__table__)
+            INVALID_GEOMETRY_CHECKS += generate_geometry_checks(model.__table__)
+            INVALID_GEOMETRY_TYPE_CHECKS += generate_geometry_type_checks(model.__table__)
+            INVALID_ENUM_CHECKS += generate_enum_checks(model.__table__)
 
         self.checks += FOREIGN_KEY_CHECKS
         self.checks += UNIQUE_CHECKS

@@ -2,14 +2,6 @@ import factory
 import pytest
 
 from tests import factories
-from threedi_modelchecker.model_checks import (
-    get_enum_columns,
-    get_foreign_key_columns,
-    get_none_nullable_columns,
-    get_unique_columns,
-    get_geometry_columns,
-    sqlalchemy_to_sqlite_type,
-)
 from threedi_modelchecker.threedi_model import constants, custom_types, models
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import UniqueCheck
@@ -18,6 +10,7 @@ from threedi_modelchecker.checks.base import TypeCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
 from threedi_modelchecker.checks.base import EnumCheck
+from threedi_modelchecker.checks.base import sqlalchemy_to_sqlite_type
 
 
 def test_fk_check(session):
@@ -323,76 +316,7 @@ def test_enum_check_string_with_invalid_value(session):
     assert invalid_rows[0].id == a.id
 
 
-def test_get_none_nullable_columns():
-    not_null_columns = get_none_nullable_columns(models.Manhole.__table__)
-    assert len(not_null_columns) == 3
-    assert models.Manhole.id in not_null_columns
-    assert models.Manhole.code in not_null_columns
-    assert models.Manhole.display_name in not_null_columns
-
-
-def test_get_unique_columns():
-    unique_columns = get_unique_columns(models.Manhole.__table__)
-    assert len(unique_columns) == 1
-    assert models.Manhole.id in unique_columns
-    assert models.Manhole.connection_node_id
-
-
-def test_get_foreign_key_columns():
-    foreign_key_columns = get_foreign_key_columns(models.Manhole.__table__)
-    assert len(foreign_key_columns) == 1
-    fk = foreign_key_columns.pop()
-    assert models.Manhole.connection_node_id == fk.parent
-    assert models.ConnectionNode.id == fk.column
-
-
-def test_get_geometry_columns():
-    geometry_columns = get_geometry_columns(models.ConnectionNode.__table__)
-
-    assert len(geometry_columns) == 2
-    assert models.ConnectionNode.the_geom in geometry_columns
-    assert models.ConnectionNode.the_geom_linestring in geometry_columns
-
-
-def test_get_enum_columns():
-    enum_columns = get_enum_columns(models.BoundaryConditions2D.__table__)
-
-    assert len(enum_columns) == 1
-    assert enum_columns[0] == models.BoundaryConditions2D.boundary_type
-
-
-def test_get_enum_columns_varcharenum():
-    enum_columns = get_enum_columns(models.AggregationSettings.__table__)
-
-    assert len(enum_columns) == 2
-    enum_types = [e.type for e in enum_columns]
-    assert models.AggregationSettings.aggregation_method.type in enum_types
-    assert models.AggregationSettings.flow_variable.type in enum_types
-
 
 def test_sqlalchemy_to_sqlite_type_with_custom_type():
     customIntegerEnum = custom_types.IntegerEnum(constants.BoundaryType)
     assert sqlalchemy_to_sqlite_type(customIntegerEnum) == 'integer'
-
-
-class TestThreediModelChecker(object):
-
-    def test_not_null_columns_errors(self, modelchecker):
-        result = modelchecker.yield_null_errors()
-        print(result)
-
-    def test_foreign_keys_errors(self, modelchecker):
-        result = modelchecker.yield_foreign_key_errors()
-        print(result)
-
-    def test_data_types_errors(self, modelchecker):
-        result = modelchecker.yield_data_type_errors()
-        print(result)
-
-    def test_not_unique_errors(self, modelchecker):
-        result = modelchecker.yield_not_unique_errors()
-        print(result)
-
-    def test_parse_model(self, modelchecker):
-        all_errors = modelchecker.parse_model()
-        print(all_errors)

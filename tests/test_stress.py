@@ -5,7 +5,7 @@ import pytest
 from threedi_modelchecker import exporters
 from .conftest import data_dir
 from threedi_modelchecker.threedi_database import ThreediDatabase
-from threedi_modelchecker.model_checks import ThreediModelChecker, query_invalid_type
+from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_model import models
 from threedi_modelchecker.threedi_model.models import Base
 
