@@ -126,6 +126,7 @@ class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     channel = factory.SubFactory(ChannelFactory)
     definition = factory.SubFactory(CrossSectionDefinitionFactory)
 
+
 class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.AggregationSettings
