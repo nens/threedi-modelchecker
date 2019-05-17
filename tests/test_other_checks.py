@@ -1,15 +1,16 @@
 import pytest
 
 from threedi_modelchecker.model_errors import InvalidCrossSectionShape
-from threedi_modelchecker.checks.other import (
-    query_invalid_bank_levels,
-    get_invalid_cross_section_shape_errors,
-    CrossSectionShapeValidator)
+from threedi_modelchecker.checks.other import CrossSectionShapeCheck
+from threedi_modelchecker.checks.other import BankLevelCheck
+from threedi_modelchecker.checks.other import valid_tabulated_shape
+from threedi_modelchecker.checks.patterns import POSITIVE_FLOAT_LIST
+
 from threedi_modelchecker.threedi_model import models, constants
 from . import factories
 
 
-def test_query_invalid_cross_section_location_bank_levels(session):
+def test_check_cross_section_location_bank_levels(session):
     channel = factories.ChannelFactory(
         calculation_type=constants.CalculationType.CONNECTED)
     wrong = factories.CrossSectionLocationFactory(
@@ -26,9 +27,10 @@ def test_query_invalid_cross_section_location_bank_levels(session):
         bank_level=None
     )
 
-    q = query_invalid_bank_levels(session)
-    assert q.count() == 1
-    assert q.first().id == wrong.id
+    bank_level_check = BankLevelCheck()
+    invalid_bank_levels = bank_level_check.get_invalid(session)
+    assert len(invalid_bank_levels) == 1
+    assert invalid_bank_levels[0].id == wrong.id
 
 
 def test_get_invalid_cross_section_shapes(session):
@@ -48,25 +50,28 @@ def test_get_invalid_cross_section_shapes(session):
         shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM
     )
 
-    errors = get_invalid_cross_section_shape_errors(session)
-    assert len(errors) == 0
+    coss_section_check = CrossSectionShapeCheck()
+    invalid_rows = coss_section_check.get_invalid(session)
+    assert len(invalid_rows) == 0
 
 
-def test_CrossSectionShapeValidator_invalid_float():
-    csd = factories.CrossSectionDefinitionFactory(
-        width='1 2',
-        height='a',
-        shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM
-    )
-    with pytest.raises(InvalidCrossSectionShape):
-        CrossSectionShapeValidator.validate(csd)
+def test_valid_tabulated_shape():
+    width = '0 1 2 3'
+    height = '0 1 2 3'
+    assert valid_tabulated_shape(width, height)
 
 
-def test_CrossSectionShapeValidator_invalid_lenths():
-    csd = factories.CrossSectionDefinitionFactory(
-        width='1 2',
-        height='1 2 3',
-        shape=constants.CrossSectionShape.TABULATED_RECTANGLE
-    )
-    with pytest.raises(InvalidCrossSectionShape):
-        CrossSectionShapeValidator.validate(csd)
+def test_valid_tabulated_shape_empty():
+    assert not valid_tabulated_shape('', '')
+
+
+def test_valid_tabulated_shape_unequal_length():
+    width = '1 2'
+    height = '1 2 3'
+    assert not valid_tabulated_shape(width, height)
+
+
+def test_valid_tabulated_shape_invalid_char():
+    width = '1 2'
+    height = '1 a'
+    assert not valid_tabulated_shape(width, height)

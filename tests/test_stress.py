@@ -104,15 +104,19 @@ def test_get_errors_heugem(heugem):
     print('done')
 
 
-def test_get_errors_grotemarkt(grotemarkt):
+def test_get_error_iterator_grotemarkt(grotemarkt):
     mc = ThreediModelChecker(grotemarkt)
-    errors = mc.get_model_errors()
-    exporters.print_errors(errors)
-    print('done')
+    for check, error in mc.get_model_error_iterator():
+        print(check, error)
 
 
-def test_get_error_iterator(bergermeer_db):
+def test_get_error_iterator_heugem(heugem):
+    mc = ThreediModelChecker(heugem)
+    for check, error in mc.get_model_error_iterator():
+        print(check, error)
+
+
+def test_get_error_iterator_bergermeer(bergermeer_db):
     mc = ThreediModelChecker(bergermeer_db)
-    # model_errors = mc.get_model_errors()
-    for error in mc.get_model_error_iterator():
-        print(error)
+    for check, error in mc.get_model_error_iterator():
+        print(check, error)

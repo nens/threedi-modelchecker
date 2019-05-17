@@ -1,9 +1,13 @@
 from .base import BaseCheck
 from ..threedi_model import models
 from ..threedi_model import constants
+from threedi_modelchecker.checks import patterns
 
 
 class BankLevelCheck(BaseCheck):
+    """Check 'CrossSectionLocation.bank_level' is not null if
+    calculation_type is CONNECTED or DOUBLE_CONNECTED.
+    """
     def __init__(self):
         super().__init__(
             column=models.CrossSectionLocation.bank_level
@@ -22,109 +26,94 @@ class BankLevelCheck(BaseCheck):
         return q.all()
 
 
-from threedi_modelchecker.model_errors import InvalidCrossSectionShape
-from ..threedi_model import models, constants
+class CrossSectionShapeCheck(BaseCheck):
+    """Check if all CrossSectionDefinition.shape are valid"""
+    def __init__(self):
+        super().__init__(
+            column=models.CrossSectionDefinition.shape
+        )
+
+    def get_invalid(self, session):
+        cross_section_definitions = session.query(
+            models.CrossSectionDefinition
+        )
+        invalid_cross_section_shapes = []
+
+        for cross_section_definition in cross_section_definitions.all():
+            shape = cross_section_definition.shape
+            width = cross_section_definition.width
+            height = cross_section_definition.height
+            if shape == constants.CrossSectionShape.RECTANGLE:
+                if not valid_rectangle(width, height):
+                    invalid_cross_section_shapes.append(
+                        cross_section_definition)
+            elif shape == constants.CrossSectionShape.CIRCLE:
+                if not valid_circle(width, height):
+                    invalid_cross_section_shapes.append(
+                        cross_section_definition)
+            elif shape == constants.CrossSectionShape.EGG:
+                if not valid_egg(width, height):
+                    invalid_cross_section_shapes.append(
+                        cross_section_definition)
+            if shape == constants.CrossSectionShape.TABULATED_RECTANGLE:
+                if not valid_tabulated_shape(width, height):
+                    invalid_cross_section_shapes.append(
+                        cross_section_definition)
+            elif shape == constants.CrossSectionShape.TABULATED_TRAPEZIUM:
+                if not valid_tabulated_shape(width, height):
+                    invalid_cross_section_shapes.append(
+                        cross_section_definition
+                    )
+        return invalid_cross_section_shapes
 
 
-def query_invalid_bank_levels(session):
-    """Cross_section_location.Bank_level cannot be null if calculation type
-    of the channel is CONNECTED or DOUBLE_CONNECTED"""
-    q = session.query(models.CrossSectionLocation).filter(
-        models.CrossSectionLocation.bank_level == None,
-        models.CrossSectionLocation.channel.has(
-            models.Channel.calculation_type.in_(
-                [constants.CalculationType.CONNECTED,
-                constants.CalculationType.DOUBLE_CONNECTED]
-            )
-        ),
-    )
-    return q
+def valid_rectangle(width, height):
+    width_match = patterns.POSITIVE_FLOAT.fullmatch(width)
+    if height:
+        height_match = patterns.POSITIVE_FLOAT.fullmatch(height)
+    else:
+        height_match = True
+    return width_match and height_match
 
 
-def get_invalid_cross_section_shape_errors(session):
-    q = session.query(models.CrossSectionDefinition)
-    invalid_cross_section_errors = []
-    for cross_section_definition in q.all():
-        try:
-            CrossSectionShapeValidator.validate(cross_section_definition)
-        except InvalidCrossSectionShape as e:
-            invalid_cross_section_errors.append(e)
-    return invalid_cross_section_errors
+def valid_circle(width, height):
+    return patterns.POSITIVE_FLOAT.fullmatch(width)
 
 
+def valid_egg(width, height):
+    width_match = patterns.POSITIVE_FLOAT_LIST.fullmatch(width)
+    height_match = patterns.POSITIVE_FLOAT_LIST.fullmatch(height)
+    if not width_match or not height_match:
+        return False
+    return len(width.split(' ')) == len(height.split(' '))
 
-# TODO: REWRITE TO A BASECHECK
-class CrossSectionShapeValidator:
-    """Class for grouping validation functions of cross section shape"""
 
-    @classmethod
-    def validate(cls, cross_section_definition):
-        """Validate if an threedi-cross-section-definition shape is correct
+def valid_tabulated_shape(width, height):
+    width_match = patterns.POSITIVE_FLOAT_LIST.fullmatch(width)
+    height_match = patterns.POSITIVE_FLOAT_LIST.fullmatch(height)
+    if not width_match or not height_match:
+        return False
+    return len(width.split(' ')) == len(height.split(' '))
 
-        :param cross_section_defintion: models.CrossSectionDefinition
-        :return True if valid
-        :raise InvalidCrossSectionShape
-        """
-        cls.cross_section_definition = cross_section_definition
-        shape = cross_section_definition.shape
-        width = cross_section_definition.width
-        height = cross_section_definition.height
-        if shape == constants.CrossSectionShape.RECTANGLE:
-            cls.validate_rectangle(width, height)
-        elif shape == constants.CrossSectionShape.CIRCLE:
-            cls.validate_circle(width)
-        elif shape == constants.CrossSectionShape.EGG:
-            cls.validate_egg(width, height)
-        elif shape == constants.CrossSectionShape.TABULATED_RECTANGLE:
-            cls.validate_tabulated_shape(width, height)
-        elif shape == constants.CrossSectionShape.TABULATED_TRAPEZIUM:
-            cls.validate_tabulated_shape(width, height)
-        return True
 
-    @classmethod
-    def validate_rectangle(cls, width, height):
-        cls.read_float(width)
-        cls.read_float(height)
+class TimeseriesCheck(BaseCheck):
+    """Check that `column` has the time series pattern: digit,float\n
 
-    @classmethod
-    def validate_circle(cls, width):
-        float(width)
 
-    @classmethod
-    def validate_egg(cls, width, height):
-        heights = height.split(' ')
-        widths = width.split(' ')
-        if len(heights) != len(widths):
-            raise InvalidCrossSectionShape(
-                instance=cls.cross_section_definition,
-                column=cls.cross_section_definition.shape,
-                message="height and width should have equal number of elements"
-            )
-        for h, w in zip(heights, widths):
-            cls.read_float(w)
-            cls.read_float(h)
+    """
+    def get_invalid(self, session):
+        # get the first one to determine the temporal interval
+        temporal_interval = []
+        invalid_timeseries = []
+        timeseries = session.query(self.table).all()
+        for timeserie in timeseries:
+            if not patterns.TIMESERIES.fullmatch(timeserie):
+                invalid_timeseries.append(timeserie)
+            if not temporal_interval:
+                temporal_interval = [time for time, *_ in patterns.SINGLE_TIMESERIES_ENTRY.findall(timeseries)]
+            else:
+                temporal_interval2 = [time for time, *_ in patterns.SINGLE_TIMESERIES_ENTRY.findall(timeseries)]
+                if not temporal_interval == temporal_interval2:
+                    invalid_timeseries.append(timeserie)
 
-    @classmethod
-    def validate_tabulated_shape(cls, width, height):
-        heights = height.split(' ')
-        widths = width.split(' ')
-        if len(heights) != len(widths):
-            raise InvalidCrossSectionShape(
-                instance=cls.cross_section_definition,
-                column=models.CrossSectionDefinition.shape,
-                message="height and width should have equal number of elements"
-            )
-        for h, w in zip(heights, widths):
-            cls.read_float(w)
-            cls.read_float(h)
-
-    @classmethod
-    def read_float(cls, str_):
-        try:
-            return float(str_)
-        except (ValueError, TypeError):
-            raise InvalidCrossSectionShape(
-                instance=cls.cross_section_definition,
-                column=models.CrossSectionDefinition.shape,
-                message="invalid value '%s', should contain a float" % str_
-            )
+        return invalid_timeseries

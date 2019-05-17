@@ -5,6 +5,7 @@ from .checks.factories import generate_geometry_checks
 from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_enum_checks
 from .checks.other import BankLevelCheck
+from .checks.other import CrossSectionShapeCheck
 from .checks.base import  ForeignKeyCheck
 
 
@@ -16,7 +17,8 @@ INVALID_GEOMETRY_TYPE_CHECKS = []
 INVALID_ENUM_CHECKS = []
 
 OTHER_CHECKS = [
-    BankLevelCheck()
+    BankLevelCheck(),
+    # CrossSectionShapeCheck(),
 ]
 
 ALL_CHECKS = []

@@ -27,7 +27,7 @@ class ThreediModelChecker:
             model_errors = check.get_invalid(session)
             if model_errors:
                 for error in model_errors:
-                    yield error
+                    yield check, error
 
     def check_table(self, table):
         pass

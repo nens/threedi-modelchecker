@@ -6,9 +6,6 @@ from geoalchemy2.types import Geometry
 from sqlalchemy import func
 from sqlalchemy import types
 
-from ..threedi_model import constants
-from ..threedi_model import models
-
 
 class BaseCheck(ABC):
     """Baseclass for all checks.
@@ -32,6 +29,13 @@ class BaseCheck(ABC):
             rows
         """
         pass
+
+    def __repr__(self):
+        return "<%s: %s.%s>" % (
+            type(self).__name__,
+            self.table.name,
+            self.column.name
+        )
 
 
 class ForeignKeyCheck(BaseCheck):
