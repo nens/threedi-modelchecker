@@ -1,7 +1,11 @@
 import pytest
 
+from .factories import BoundaryConditions2DFactory
 from threedi_modelchecker.model_errors import InvalidCrossSectionShape
-from threedi_modelchecker.checks.other import CrossSectionShapeCheck
+from threedi_modelchecker.checks.other import (
+    CrossSectionShapeCheck,
+    TimeseriesCheck
+)
 from threedi_modelchecker.checks.other import BankLevelCheck
 from threedi_modelchecker.checks.other import valid_tabulated_shape
 from threedi_modelchecker.checks.patterns import POSITIVE_FLOAT_LIST
@@ -75,3 +79,33 @@ def test_valid_tabulated_shape_invalid_char():
     width = '1 2'
     height = '1 a'
     assert not valid_tabulated_shape(width, height)
+
+
+def test_timeseries_check(session):
+    boundary_condition = BoundaryConditions2DFactory()
+
+    check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 0
+
+
+def test_timeseries_check_multiple(session):
+    boundary_condition = BoundaryConditions2DFactory.create_batch(3)
+
+    check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 0
+
+
+def test_timeseries_check_different_timesteps(session):
+    boundary_condition1 = BoundaryConditions2DFactory(
+        timeseries="0,-0.5\n1,1.4\n2,4.0"
+    )
+    boundary_condition2 = BoundaryConditions2DFactory(
+        timeseries="0,-0.5\n1,1.4\n3,4.0"  # Note the last timestep is 3 instead of 2
+    )
+
+    check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 1
+    assert invalid[0].id == boundary_condition2.id

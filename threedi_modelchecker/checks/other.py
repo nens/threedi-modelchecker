@@ -1,7 +1,9 @@
-from .base import BaseCheck
-from ..threedi_model import models
-from ..threedi_model import constants
+from collections import Counter
+
 from threedi_modelchecker.checks import patterns
+from .base import BaseCheck
+from ..threedi_model import constants
+from ..threedi_model import models
 
 
 class BankLevelCheck(BaseCheck):
@@ -68,29 +70,29 @@ class CrossSectionShapeCheck(BaseCheck):
 
 
 def valid_rectangle(width, height):
-    width_match = patterns.POSITIVE_FLOAT.fullmatch(width)
+    width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
     if height:
-        height_match = patterns.POSITIVE_FLOAT.fullmatch(height)
+        height_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(height)
     else:
         height_match = True
     return width_match and height_match
 
 
 def valid_circle(width, height):
-    return patterns.POSITIVE_FLOAT.fullmatch(width)
+    return patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
 
 
 def valid_egg(width, height):
-    width_match = patterns.POSITIVE_FLOAT_LIST.fullmatch(width)
-    height_match = patterns.POSITIVE_FLOAT_LIST.fullmatch(height)
+    width_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(width)
+    height_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(height)
     if not width_match or not height_match:
         return False
     return len(width.split(' ')) == len(height.split(' '))
 
 
 def valid_tabulated_shape(width, height):
-    width_match = patterns.POSITIVE_FLOAT_LIST.fullmatch(width)
-    height_match = patterns.POSITIVE_FLOAT_LIST.fullmatch(height)
+    width_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(width)
+    height_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(height)
     if not width_match or not height_match:
         return False
     return len(width.split(' ')) == len(height.split(' '))
@@ -99,21 +101,33 @@ def valid_tabulated_shape(width, height):
 class TimeseriesCheck(BaseCheck):
     """Check that `column` has the time series pattern: digit,float\n
 
+    The first digit is the timestep in minutes, the float is a value depending
+    on the type of timeseries.
 
+    Example of a timeserie: 0,-0.5\n59,-0.5\n60,-0.5\n61,-0.5\n9999,-0.5
+
+    All timeseries in the table should contain the same timesteps.
     """
     def get_invalid(self, session):
-        # get the first one to determine the temporal interval
-        temporal_interval = []
         invalid_timeseries = []
-        timeseries = session.query(self.table).all()
-        for timeserie in timeseries:
-            if not patterns.TIMESERIES.fullmatch(timeserie):
-                invalid_timeseries.append(timeserie)
-            if not temporal_interval:
-                temporal_interval = [time for time, *_ in patterns.SINGLE_TIMESERIES_ENTRY.findall(timeseries)]
-            else:
-                temporal_interval2 = [time for time, *_ in patterns.SINGLE_TIMESERIES_ENTRY.findall(timeseries)]
-                if not temporal_interval == temporal_interval2:
-                    invalid_timeseries.append(timeserie)
+        required_timesteps = {}
+        rows = session.query(self.table).all()
+
+        for row in rows:
+            timeserie = row.timeseries
+            if not patterns.TIMESERIES_REGEX.fullmatch(timeserie):
+                invalid_timeseries.append(row)
+                continue
+
+            timesteps = {time for time, *_ in
+                         patterns.TIMESERIE_ENTRY_REGEX.findall(
+                             timeserie)}
+            if not required_timesteps:
+                # Assume the first timeserie defines the required timesteps.
+                # All others should have the same timesteps.
+                required_timesteps = timesteps
+                continue
+            if timesteps != required_timesteps:
+                invalid_timeseries.append(row)
 
         return invalid_timeseries
