@@ -96,6 +96,20 @@ class LeveeFactory(factory.alchemy.SQLAlchemyModelFactory):
     the_geom = "SRID=28992;LINESTRING(-71.160281 42.258729,-71.160837 42.259113,-71.161144 42.25932)"
 
 
+class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Weir
+        sqlalchemy_session = Session
+
+    code = factory.Sequence(lambda n: "Code %d" % n)
+    display_name = 'display_name'
+    crest_level = 1.0
+    crest_type = constants.CrestType.BROAD_CRESTED
+    friction_value = 2.0
+    friction_type = constants.FrictionType.CHEZY
+    sewerage = False
+
+
 class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.BoundaryConditions2D

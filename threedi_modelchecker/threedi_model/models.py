@@ -803,14 +803,6 @@ class Orifice(Base):
     )
     cross_section_definition = relationship("CrossSectionDefinition")
 
-    @property
-    def max_capacity_str(self):
-        if self.max_capacity is None:
-            max_capacity_rep = "-- [m3/s]"
-        else:
-            max_capacity_rep = '%0.1f [m3/s]' % self.max_capacity
-        return max_capacity_rep
-
 
 class Pumpstation(Base):
     __tablename__ = 'v2_pumpstation'

@@ -174,3 +174,26 @@ class EnumCheck(BaseCheck):
             self.column.notin_(list(self.column.type.enum_class))
         )
         return invalid_values_q.all()
+
+
+class RangeCheck(BaseCheck):
+    """Check all values in `column` are within specified bounds
+
+    Null values are ignored."""
+    def __init__(self, lower_limit=None, upper_limit=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lower_limit = lower_limit
+        self.upper_limit = upper_limit
+
+    def get_invalid(self, session):
+        q = session.query(self.table)
+        if self.lower_limit is not None and self.upper_limit is not None:
+            q = q.filter(
+                (self.column < self.lower_limit)
+                | (self.column > self.upper_limit)
+            )
+        elif self.lower_limit is not None:
+            q = q.filter(self.column < self.lower_limit)
+        elif self.upper_limit is not None:
+            q = q.filter(self.column > self.upper_limit)
+        return q.all()

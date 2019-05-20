@@ -5,11 +5,11 @@ from .checks.factories import generate_geometry_checks
 from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_enum_checks
 from .checks.base import  ForeignKeyCheck
+from .checks.base import  RangeCheck
 from .checks.other import BankLevelCheck
 from .checks.other import CrossSectionShapeCheck
 from .checks.other import TimeseriesCheck
 from .threedi_model import models
-
 
 
 FOREIGN_KEY_CHECKS = []
@@ -25,6 +25,36 @@ TIMESERIES_CHECKS = [
     TimeseriesCheck(models.Lateral1d.timeseries),
     TimeseriesCheck(models.Lateral2D.timeseries),
 ]
+
+RANGE_CHECKS = [
+    RangeCheck(column=models.CrossSectionLocation.friction_value, lower_limit=0),
+    RangeCheck(column=models.Culvert.friction_value, lower_limit=0),
+    RangeCheck(column=models.GroundWater.phreatic_storage_capacity, lower_limit=0, upper_limit=1),
+    RangeCheck(column=models.ImperviousSurface.area, lower_limit=0),
+    RangeCheck(column=models.ImperviousSurface.dry_weather_flow, lower_limit=0),
+    RangeCheck(column=models.ImperviousSurfaceMap.percentage, lower_limit=0),
+    RangeCheck(column=models.Interflow.porosity, lower_limit=0, upper_limit=1),
+    RangeCheck(column=models.Interflow.impervious_layer_elevation, lower_limit=0),
+    RangeCheck(column=models.Orifice.discharge_coefficient_negative, lower_limit=0),
+    RangeCheck(column=models.Orifice.discharge_coefficient_positive, lower_limit=0),
+    RangeCheck(column=models.Orifice.friction_value, lower_limit=0),
+    RangeCheck(column=models.Pipe.dist_calc_points, lower_limit=0),
+    RangeCheck(column=models.Pipe.friction_value, lower_limit=0),
+    RangeCheck(column=models.Pumpstation.capacity, lower_limit=0),
+    RangeCheck(column=models.SimpleInfiltration.infiltration_rate, lower_limit=0),
+    RangeCheck(column=models.Surface.nr_of_inhabitants, lower_limit=0),
+    RangeCheck(column=models.Surface.area, lower_limit=0),
+    RangeCheck(column=models.SurfaceMap.percentage, lower_limit=0, upper_limit=100),
+    RangeCheck(column=models.SurfaceParameter.max_infiltration_capacity),
+    RangeCheck(column=models.SurfaceParameter.min_infiltration_capacity),
+    RangeCheck(column=models.SurfaceParameter.infiltration_decay_constant),
+    RangeCheck(column=models.SurfaceParameter.infiltration_recovery_constant),
+    RangeCheck(column=models.Weir.discharge_coefficient_negative, lower_limit=0),
+    RangeCheck(column=models.Weir.discharge_coefficient_negative, lower_limit=0),
+    RangeCheck(column=models.Weir.friction_value, lower_limit=0),
+    RangeCheck(column=models.SurfaceParameter.outflow_delay),
+]
+
 OTHER_CHECKS = [
     BankLevelCheck(),
     # CrossSectionShapeCheck(),
@@ -69,4 +99,5 @@ class Config:
         self.checks += INVALID_ENUM_CHECKS
         self.checks += OTHER_CHECKS
         self.checks += TIMESERIES_CHECKS
+        self.checks += RANGE_CHECKS
         return None

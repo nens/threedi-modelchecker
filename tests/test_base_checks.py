@@ -2,15 +2,16 @@ import factory
 import pytest
 
 from tests import factories
-from threedi_modelchecker.threedi_model import constants, custom_types, models
+from threedi_modelchecker.checks.base import EnumCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
-from threedi_modelchecker.checks.base import UniqueCheck
-from threedi_modelchecker.checks.base import NotNullCheck
-from threedi_modelchecker.checks.base import TypeCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
-from threedi_modelchecker.checks.base import EnumCheck
+from threedi_modelchecker.checks.base import NotNullCheck
+from threedi_modelchecker.checks.base import RangeCheck
+from threedi_modelchecker.checks.base import TypeCheck
+from threedi_modelchecker.checks.base import UniqueCheck
 from threedi_modelchecker.checks.base import sqlalchemy_to_sqlite_type
+from threedi_modelchecker.threedi_model import constants, custom_types, models
 
 
 def test_fk_check(session):
@@ -319,3 +320,22 @@ def test_enum_check_string_with_invalid_value(session):
 def test_sqlalchemy_to_sqlite_type_with_custom_type():
     customIntegerEnum = custom_types.IntegerEnum(constants.BoundaryType)
     assert sqlalchemy_to_sqlite_type(customIntegerEnum) == 'integer'
+
+
+def test_range_check(session):
+    weir = factories.WeirFactory(discharge_coefficient_negative=5)
+
+    range_check = RangeCheck(column=models.Weir.discharge_coefficient_negative,
+                             upper_limit=10, lower_limit=0)
+    invalid = range_check.get_invalid(session)
+    assert len(invalid) == 0
+
+
+def test_range_check_out_of_range(session):
+    weir = factories.WeirFactory(discharge_coefficient_negative=11)
+
+    range_check = RangeCheck(column=models.Weir.discharge_coefficient_negative,
+                             upper_limit=10, lower_limit=0)
+    invalid = range_check.get_invalid(session)
+    assert len(invalid) == 1
+    assert invalid[0].id == weir.id
