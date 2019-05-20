@@ -4,9 +4,12 @@ from .checks.factories import generate_type_checks
 from .checks.factories import generate_geometry_checks
 from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_enum_checks
+from .checks.base import  ForeignKeyCheck
 from .checks.other import BankLevelCheck
 from .checks.other import CrossSectionShapeCheck
-from .checks.base import  ForeignKeyCheck
+from .checks.other import TimeseriesCheck
+from .threedi_model import models
+
 
 
 FOREIGN_KEY_CHECKS = []
@@ -16,10 +19,17 @@ INVALID_GEOMETRY_CHECKS = []
 INVALID_GEOMETRY_TYPE_CHECKS = []
 INVALID_ENUM_CHECKS = []
 
+TIMESERIES_CHECKS = [
+    TimeseriesCheck(models.BoundaryCondition1D.timeseries),
+    TimeseriesCheck(models.BoundaryConditions2D.timeseries),
+    TimeseriesCheck(models.Lateral1d.timeseries),
+    TimeseriesCheck(models.Lateral2D.timeseries),
+]
 OTHER_CHECKS = [
     BankLevelCheck(),
     # CrossSectionShapeCheck(),
 ]
+
 
 ALL_CHECKS = []
 
@@ -34,7 +44,6 @@ class Config:
         self.models = models
         self.checks = []
         self.generate_checks()
-        self.checks += OTHER_CHECKS
 
     def generate_checks(self):
         FOREIGN_KEY_CHECKS = []
@@ -43,6 +52,7 @@ class Config:
         INVALID_GEOMETRY_CHECKS = []
         INVALID_GEOMETRY_TYPE_CHECKS = []
         INVALID_ENUM_CHECKS = []
+        # Call the check factories:
         for model in self.models:
             FOREIGN_KEY_CHECKS += generate_foreign_key_checks(model.__table__)
             UNIQUE_CHECKS += generate_unique_checks(model.__table__)
@@ -57,4 +67,6 @@ class Config:
         self.checks += INVALID_GEOMETRY_CHECKS
         self.checks += INVALID_GEOMETRY_TYPE_CHECKS
         self.checks += INVALID_ENUM_CHECKS
+        self.checks += OTHER_CHECKS
+        self.checks += TIMESERIES_CHECKS
         return None
