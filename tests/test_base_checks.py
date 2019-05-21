@@ -2,7 +2,7 @@ import factory
 import pytest
 
 from tests import factories
-from threedi_modelchecker.checks.base import EnumCheck
+from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
@@ -339,3 +339,67 @@ def test_range_check_out_of_range(session):
     invalid = range_check.get_invalid(session)
     assert len(invalid) == 1
     assert invalid[0].id == weir.id
+
+
+def test_conditional_check_get_applicable(session):
+    conditional_check = ConditionalCheck(
+        criterion=True,
+        check=RangeCheck(
+            column=models.GlobalSetting.id,
+            upper_limit=10
+        )
+    )
+    query = conditional_check.to_check(session)
+
+
+def test_conditional_checks(session):
+    global_settings1 = factories.GlobalSettingsFactory(
+        dem_obstacle_detection=True,
+        dem_obstacle_height=-5
+    )
+    global_settings2 = factories.GlobalSettingsFactory(
+        dem_obstacle_detection=False,
+        dem_obstacle_height=-5
+    )
+
+    range_check = RangeCheck(
+        column=models.GlobalSetting.dem_obstacle_height,
+        lower_limit=0
+    )
+    conditional_range_check = ConditionalCheck(
+        check=range_check,
+        criterion=(models.GlobalSetting.dem_obstacle_detection == True)
+    )
+
+    invalid_conditional = conditional_range_check.get_invalid(session)
+    assert len(invalid_conditional) == 1
+    assert invalid_conditional[0].id == global_settings1.id
+    invalid_no_condition = range_check.get_invalid(session)
+    assert len(invalid_no_condition) == 2
+
+
+def test_conditional_check_advanced(session):
+    connection_node1 = factories.ConnectionNodeFactory(storage_area=-1)
+    connection_node2 = factories.ConnectionNodeFactory(storage_area=-2)
+    connection_node3 = factories.ConnectionNodeFactory(storage_area=3)
+    connection_node4 = factories.ConnectionNodeFactory(storage_area=4)
+    connection_node5 = factories.ConnectionNodeFactory(storage_area=10)
+    manhole = factories.ManholeFactory(
+        connection_node=connection_node2
+    )
+    manhole_good = factories.ManholeFactory(
+            connection_node=connection_node5
+        )
+
+    # If a connection_node is a manhole, then storage_area > 0
+    advanced_check = ConditionalCheck(
+        criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
+        check=RangeCheck(
+            column=models.ConnectionNode.storage_area,
+            lower_limit=0
+        )
+    )
+    invalids = advanced_check.get_invalid(session)
+    assert len(invalids) == 1
+    assert invalids[0].id == connection_node2.id
+    assert invalids[0].storage_area == connection_node2.storage_area

@@ -3,7 +3,7 @@ import re
 
 FLOAT_REGEX = re.compile(r"""
 (
-    [-+]?       # + or minus sign
+    [-+]?       # optional plus or minus sign
     [0-9]*      
     \.?         # floating point separator
     [0-9]+

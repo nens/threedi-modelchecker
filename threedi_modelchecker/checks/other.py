@@ -16,7 +16,7 @@ class BankLevelCheck(BaseCheck):
         )
 
     def get_invalid(self, session):
-        q = session.query(models.CrossSectionLocation).filter(
+        q = session.query(self.table).filter(
             models.CrossSectionLocation.bank_level == None,
             models.CrossSectionLocation.channel.has(
                 models.Channel.calculation_type.in_(
@@ -37,7 +37,7 @@ class CrossSectionShapeCheck(BaseCheck):
 
     def get_invalid(self, session):
         cross_section_definitions = session.query(
-            models.CrossSectionDefinition
+            self.table
         )
         invalid_cross_section_shapes = []
 

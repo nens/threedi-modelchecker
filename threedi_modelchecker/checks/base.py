@@ -31,12 +31,45 @@ class BaseCheck(ABC):
         """
         pass
 
+    def to_check(self, session):
+        """Return a Query object filtering on the rows this check is applied.
+
+        :param session: sqlalchemy.orm.session.Session
+        :return: sqlalchemy.Query
+        """
+        return session.query(self.table)
+
     def __repr__(self):
         return "<%s: %s.%s>" % (
             type(self).__name__,
             self.table.name,
             self.column.name
         )
+
+
+class ConditionalCheck(BaseCheck):
+    """Apply an additional filter `criterion` on the specified `check`
+
+    The `criterion` is any SQL expression object applicable to the WHERE clause
+    of a select statement.
+    """
+    def __init__(self, criterion, check, *args, **kwargs):
+        super().__init__(check.column)
+        self.criterion = criterion
+        self.check = check
+
+    def to_check(self, session):
+        """Return a Query object on which this check is applied"""
+        return session.query(self.check.table).filter(self.criterion)
+
+    def get_invalid(self, session):
+        # TODO: find a more elegant solution for conditional checks
+        check = self.check
+        old_applicable_func = check.to_check  # save old method
+        check.to_check = self.to_check  # patch the applicable
+        result = check.get_invalid(session)
+        check.to_check = old_applicable_func  # reset old method
+        return result
 
 
 class ForeignKeyCheck(BaseCheck):
@@ -48,11 +81,12 @@ class ForeignKeyCheck(BaseCheck):
         self.reference_column = reference_column
 
     def get_invalid(self, session):
-        q = session.query(self.table).filter(
+        q_invalid = self.to_check(session)
+        invalid_foreign_keys_query = q_invalid.filter(
             self.column.notin_(session.query(self.reference_column)),
             self.column != None
         )
-        return q.all()
+        return invalid_foreign_keys_query.all()
 
 
 class UniqueCheck(BaseCheck):
@@ -64,16 +98,18 @@ class UniqueCheck(BaseCheck):
             session.query(self.column).group_by(self.column).having(
                 func.count(self.column) > 1)
         )
-        q = session.query(self.column.table).filter(
+        q_invalid = self.to_check(session)
+        invalid_uniques_query = q_invalid.filter(
             self.column.in_(duplicate_values))
-        return q.all()
+        return invalid_uniques_query.all()
 
 
 class NotNullCheck(BaseCheck):
     """"Check all values in `column` that are not null"""
     def get_invalid(self, session):
-        q = session.query(self.table).filter(self.column == None)
-        return q.all()
+        q_invalid = self.to_check(session)
+        not_null_query = q_invalid.filter(self.column == None)
+        return not_null_query.all()
 
 
 class TypeCheck(BaseCheck):
@@ -85,11 +121,12 @@ class TypeCheck(BaseCheck):
             return []
 
         expected_type = sqlalchemy_to_sqlite_type(self.column.type)
-        q = session.query(self.table).filter(
+        q_invalid = self.to_check(session)
+        invalid_type_query = q_invalid.filter(
             func.typeof(self.column) != expected_type,
             func.typeof(self.column) != "null"
         )
-        return q.all()
+        return invalid_type_query.all()
 
 
 def sqlalchemy_to_sqlite_type(column_type):
@@ -129,7 +166,8 @@ class GeometryCheck(BaseCheck):
 
     Null values are ignored."""
     def get_invalid(self, session):
-        invalid_geometries = session.query(self.table).filter(
+        q_invalid = self.to_check(session)
+        invalid_geometries = q_invalid.filter(
             geo_func.ST_IsValid(self.column) != True,
             self.column != None
         )
@@ -146,7 +184,8 @@ class GeometryTypeCheck(BaseCheck):
             self.column,
             dialect=session.bind.dialect.name
         )
-        invalid_geometry_types_q = session.query(self.table).filter(
+        q_invalid = self.to_check(session)
+        invalid_geometry_types_q = q_invalid.filter(
             geo_func.ST_GeometryType(self.column) != expected_geometry_type,
             self.column != None
         )
@@ -171,7 +210,8 @@ class EnumCheck(BaseCheck):
 
     Null values are ignored"""
     def get_invalid(self, session):
-        invalid_values_q = session.query(self.table).filter(
+        q_invalid = self.to_check(session)
+        invalid_values_q = q_invalid.filter(
             self.column.notin_(list(self.column.type.enum_class))
         )
         return invalid_values_q.all()
@@ -187,14 +227,14 @@ class RangeCheck(BaseCheck):
         self.upper_limit = upper_limit
 
     def get_invalid(self, session):
-        q = session.query(self.table)
+        q_invalid = self.to_check(session)
         if self.lower_limit is not None and self.upper_limit is not None:
-            q = q.filter(
+            q_invalid = q_invalid.filter(
                 (self.column < self.lower_limit)
                 | (self.column > self.upper_limit)
             )
         elif self.lower_limit is not None:
-            q = q.filter(self.column < self.lower_limit)
+            q_invalid = q_invalid.filter(self.column < self.lower_limit)
         elif self.upper_limit is not None:
-            q = q.filter(self.column > self.upper_limit)
-        return q.all()
+            q_invalid = q_invalid.filter(self.column > self.upper_limit)
+        return q_invalid.all()

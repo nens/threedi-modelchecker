@@ -1,13 +1,12 @@
+from .checks.base import ConditionalCheck
+from .checks.base import RangeCheck
+from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
-from .checks.factories import generate_unique_checks
-from .checks.factories import generate_type_checks
 from .checks.factories import generate_geometry_checks
 from .checks.factories import generate_geometry_type_checks
-from .checks.factories import generate_enum_checks
-from .checks.base import  ForeignKeyCheck
-from .checks.base import  RangeCheck
+from .checks.factories import generate_type_checks
+from .checks.factories import generate_unique_checks
 from .checks.other import BankLevelCheck
-from .checks.other import CrossSectionShapeCheck
 from .checks.other import TimeseriesCheck
 from .threedi_model import models
 
@@ -45,19 +44,38 @@ RANGE_CHECKS = [
     RangeCheck(column=models.Surface.nr_of_inhabitants, lower_limit=0),
     RangeCheck(column=models.Surface.area, lower_limit=0),
     RangeCheck(column=models.SurfaceMap.percentage, lower_limit=0, upper_limit=100),
-    RangeCheck(column=models.SurfaceParameter.max_infiltration_capacity),
-    RangeCheck(column=models.SurfaceParameter.min_infiltration_capacity),
-    RangeCheck(column=models.SurfaceParameter.infiltration_decay_constant),
-    RangeCheck(column=models.SurfaceParameter.infiltration_recovery_constant),
+    RangeCheck(column=models.SurfaceParameter.max_infiltration_capacity, lower_limit=0),
+    RangeCheck(column=models.SurfaceParameter.min_infiltration_capacity, lower_limit=0),
+    RangeCheck(column=models.SurfaceParameter.infiltration_decay_constant, lower_limit=0),
+    RangeCheck(column=models.SurfaceParameter.infiltration_recovery_constant, lower_limit=0),
+    RangeCheck(column=models.SurfaceParameter.outflow_delay, lower_limit=0),
     RangeCheck(column=models.Weir.discharge_coefficient_negative, lower_limit=0),
     RangeCheck(column=models.Weir.discharge_coefficient_negative, lower_limit=0),
     RangeCheck(column=models.Weir.friction_value, lower_limit=0),
-    RangeCheck(column=models.SurfaceParameter.outflow_delay),
 ]
 
 OTHER_CHECKS = [
     BankLevelCheck(),
     # CrossSectionShapeCheck(),
+]
+
+CONDITIONAL_CHECKS = [
+    # If a connection_node is a manhole, then storage_area > 0
+    ConditionalCheck(
+        criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
+        check=RangeCheck(
+            column=models.ConnectionNode.storage_area,
+            lower_limit=0
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.GlobalSetting.dem_obstacle_detection == True,
+        check=RangeCheck(
+            column=models.GlobalSetting.dem_obstacle_height,
+            lower_limit=0
+        )
+    ),
+
 ]
 
 
@@ -100,4 +118,5 @@ class Config:
         self.checks += OTHER_CHECKS
         self.checks += TIMESERIES_CHECKS
         self.checks += RANGE_CHECKS
+        self.checks += CONDITIONAL_CHECKS
         return None
