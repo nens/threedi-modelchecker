@@ -37,4 +37,4 @@ class ThreediModelChecker:
 
     def apply(self, check):
         """Applies the check and returns any invalid rows"""
-        pass
+        return check.get_invalid(self.db.get_session())

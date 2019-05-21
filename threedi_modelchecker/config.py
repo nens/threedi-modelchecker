@@ -1,4 +1,5 @@
 from .checks.base import ConditionalCheck
+from .checks.base import NotNullCheck
 from .checks.base import RangeCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
@@ -9,7 +10,6 @@ from .checks.factories import generate_unique_checks
 from .checks.other import BankLevelCheck
 from .checks.other import TimeseriesCheck
 from .threedi_model import models
-
 
 FOREIGN_KEY_CHECKS = []
 UNIQUE_CHECKS = []
@@ -68,6 +68,22 @@ CONDITIONAL_CHECKS = [
             lower_limit=0
         )
     ),
+    ConditionalCheck(
+            criterion=(models.CrossSectionLocation.bank_level != None),
+            check=RangeCheck(
+                column=models.CrossSectionLocation.reference_level,
+                upper_limit=models.CrossSectionLocation.bank_level
+            )
+        ),
+    ConditionalCheck(
+        criterion=(models.GlobalSetting.timestep_plus != None),
+        check=NotNullCheck(
+            column=models.GlobalSetting.maximum_sim_time_step,
+        )
+    ),
+
+
+
     ConditionalCheck(
         criterion=models.GlobalSetting.dem_obstacle_detection == True,
         check=RangeCheck(
