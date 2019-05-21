@@ -19,23 +19,23 @@ POSITIVE_FLOAT_LIST_REGEX = re.compile(r"""
     ({POSITIVE_FLOAT}+)         # positive float
     \s                          # separated by a space
 )* 
-({POSITIVE_FLOAT}+)             # final positive float
+({POSITIVE_FLOAT}+)             # final positive float with no trailing space.
 """.format(POSITIVE_FLOAT=POSITIVE_FLOAT_REGEX.pattern), re.VERBOSE)
 
 
 TIMESERIE_ENTRY_REGEX = re.compile(r"""
-(?P<time>\d+)
-(?P<sep>,)
-(?P<float>[-+]?[0-9]*\.?[0-9]+)
+(\d+)
+(,)
+([-+]?[0-9]*\.?[0-9]+)      # digit,float; for example: 5,-3.09
 """, re.VERBOSE)
 
 
 TIMESERIES_REGEX = re.compile(r"""
 (
-    \d+,{float}     # digit,float for example: 60,-0.5
-    \n
-)*                  # multiple 'digit,float' split over newlines
+    {timeserie_entry}       # digit,float; for example: 60,-0.5
+    \n                      # separated by newlines
+)*
 (
-    \d+,{float}
-){{1}}              # last 'digit,float' has no newline.
-""".format(float=FLOAT_REGEX.pattern), re.VERBOSE)
+    {timeserie_entry}       # last entry does not have a newline.
+){{1}}
+""".format(timeserie_entry=TIMESERIE_ENTRY_REGEX.pattern), re.VERBOSE)
