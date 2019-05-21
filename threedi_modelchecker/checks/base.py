@@ -12,7 +12,7 @@ class BaseCheck(ABC):
 
     A Check defines a constraint on a specific column and its table.
     One can validate if the constrain holds using the method `get_invalid()`.
-    This method will return the rows which are invalid.
+    This method will return a list of rows (as named_tuples) which are invalid.
     """
     def __init__(self, column):
         self.column = column
@@ -22,7 +22,8 @@ class BaseCheck(ABC):
     def get_invalid(self, session):
         """Return a list of rows (named_tuples) which are invalid.
 
-        What is invalid is defined in the check.
+        What is invalid is defined in the check. Returns an empty list if no
+        invalid rows are present.
 
         :param session: sqlalchemy.orm.session.Session
         :return: list of named_tuples or empty list if there are no invalid
@@ -71,7 +72,7 @@ class UniqueCheck(BaseCheck):
 class NotNullCheck(BaseCheck):
     """"Check all values in `column` that are not null"""
     def get_invalid(self, session):
-        q = session.query(self.column.table).filter(self.column == None)
+        q = session.query(self.table).filter(self.column == None)
         return q.all()
 
 
@@ -84,7 +85,7 @@ class TypeCheck(BaseCheck):
             return []
 
         expected_type = sqlalchemy_to_sqlite_type(self.column.type)
-        q = session.query(self.column.table).filter(
+        q = session.query(self.table).filter(
             func.typeof(self.column) != expected_type,
             func.typeof(self.column) != "null"
         )
@@ -128,7 +129,7 @@ class GeometryCheck(BaseCheck):
 
     Null values are ignored."""
     def get_invalid(self, session):
-        invalid_geometries = session.query(self.column.table).filter(
+        invalid_geometries = session.query(self.table).filter(
             geo_func.ST_IsValid(self.column) != True,
             self.column != None
         )
@@ -145,7 +146,7 @@ class GeometryTypeCheck(BaseCheck):
             self.column,
             dialect=session.bind.dialect.name
         )
-        invalid_geometry_types_q = session.query(self.column.table).filter(
+        invalid_geometry_types_q = session.query(self.table).filter(
             geo_func.ST_GeometryType(self.column) != expected_geometry_type,
             self.column != None
         )
@@ -170,7 +171,7 @@ class EnumCheck(BaseCheck):
 
     Null values are ignored"""
     def get_invalid(self, session):
-        invalid_values_q = session.query(self.column.table).filter(
+        invalid_values_q = session.query(self.table).filter(
             self.column.notin_(list(self.column.type.enum_class))
         )
         return invalid_values_q.all()
