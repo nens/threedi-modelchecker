@@ -821,6 +821,7 @@ class Pumpstation(Base):
     connection_node_start_id = Column(
         Integer,
         ForeignKey(ConnectionNode.__tablename__ + ".id"),
+        nullable=False
     )
     connection_node_start = relationship(
         ConnectionNode, foreign_keys=connection_node_start_id)
