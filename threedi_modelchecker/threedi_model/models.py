@@ -1,11 +1,8 @@
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (
     Boolean,
     Column,
     Date,
     DateTime,
-    Enum,
     Float,
     ForeignKey,
     Integer,
@@ -13,12 +10,12 @@ from sqlalchemy import (
     String,
     Text,
     TIMESTAMP)
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from geoalchemy2.types import Geometry
 
 from .custom_types import IntegerEnum, VarcharEnum
 from . import constants
-
 
 Base = declarative_base()  # automap_base()
 
@@ -186,7 +183,8 @@ class Floodfill(Base):
 class Interflow(Base):
     __tablename__ = 'v2_interflow'
     id = Column(Integer, primary_key=True)
-    interflow_type = Column(IntegerEnum(constants.InterflowType), nullable=False)
+    interflow_type = Column(IntegerEnum(constants.InterflowType),
+                            nullable=False)
     porosity = Column(Float)
     porosity_file = Column(String(255))
     porosity_layer_thickness = Column(Float)
@@ -216,7 +214,8 @@ class SimpleInfiltration(Base):
     id = Column(Integer, primary_key=True)
     infiltration_rate = Column(Float, nullable=False)
     infiltration_rate_file = Column(String(255))
-    infiltration_surface_option = Column(IntegerEnum(constants.InfiltrationSurfaceOption))
+    infiltration_surface_option = Column(
+        IntegerEnum(constants.InfiltrationSurfaceOption))
     max_infiltration_capacity_file = Column(Text)
     display_name = Column(String(255), nullable=False)
 
@@ -263,22 +262,28 @@ class GroundWater(Base):
 
     groundwater_impervious_layer_level = Column(Float)
     groundwater_impervious_layer_level_file = Column(String(255))
-    groundwater_impervious_layer_level_type = Column(IntegerEnum(constants.InitializationType))
+    groundwater_impervious_layer_level_type = Column(
+        IntegerEnum(constants.InitializationType))
     phreatic_storage_capacity = Column(Float)
     phreatic_storage_capacity_file = Column(String(255))
-    phreatic_storage_capacity_type = Column(IntegerEnum(constants.InitializationType))
+    phreatic_storage_capacity_type = Column(
+        IntegerEnum(constants.InitializationType))
     equilibrium_infiltration_rate = Column(Float)
     equilibrium_infiltration_rate_file = Column(String(255))
-    equilibrium_infiltration_rate_type = Column(IntegerEnum(constants.InitializationType))
+    equilibrium_infiltration_rate_type = Column(
+        IntegerEnum(constants.InitializationType))
     initial_infiltration_rate = Column(Float)
     initial_infiltration_rate_file = Column(String(255))
-    initial_infiltration_rate_type = Column(IntegerEnum(constants.InitializationType))
+    initial_infiltration_rate_type = Column(
+        IntegerEnum(constants.InitializationType))
     infiltration_decay_period = Column(Float)
     infiltration_decay_period_file = Column(String(255))
-    infiltration_decay_period_type = Column(IntegerEnum(constants.InitializationType))
+    infiltration_decay_period_type = Column(
+        IntegerEnum(constants.InitializationType))
     groundwater_hydro_connectivity = Column(Float)
     groundwater_hydro_connectivity_file = Column(String(255))
-    groundwater_hydro_connectivity_type = Column(IntegerEnum(constants.InitializationType))
+    groundwater_hydro_connectivity_type = Column(
+        IntegerEnum(constants.InitializationType))
     display_name = Column(String(255), nullable=False)
     leakage = Column(Float)
     leakage_file = Column(String(255))
@@ -543,7 +548,8 @@ class Channel(Base):
     id = Column(Integer, primary_key=True)
     display_name = Column(String(255), nullable=False)
     code = Column(String(100), nullable=False)
-    calculation_type = Column(IntegerEnum(constants.CalculationType), nullable=False)
+    calculation_type = Column(IntegerEnum(constants.CalculationType),
+                              nullable=False)
     dist_calc_points = Column(Float)
     zoom_category = Column(Integer)
     the_geom = Column(
@@ -639,7 +645,8 @@ class Pipe(Base):
     code = Column(String(100), nullable=False)
     profile_num = Column(Integer)
     sewerage_type = Column(IntegerEnum(constants.SewerageType))
-    calculation_type = Column(IntegerEnum(constants.InitializationType), nullable=False)
+    calculation_type = Column(IntegerEnum(constants.InitializationType),
+                              nullable=False)
     invert_level_start_point = Column(Float, nullable=False)
     invert_level_end_point = Column(Float, nullable=False)
     friction_value = Column(Float, nullable=False)
@@ -661,7 +668,7 @@ class Pipe(Base):
         Integer,
         ForeignKey(ConnectionNode.__tablename__ + ".id"),
         nullable=False
-     )
+    )
     connection_node_end = relationship(
         ConnectionNode, foreign_keys=connection_node_end_id)
     cross_section_definition_id = Column(
@@ -812,7 +819,8 @@ class Pumpstation(Base):
     zoom_category = Column(Integer)
     classification = Column(Integer)
     sewerage = Column(Boolean, nullable=False)
-    type_ = Column(IntegerEnum(constants.PumpType), name='type', nullable=False)
+    type_ = Column(IntegerEnum(constants.PumpType), name='type',
+                   nullable=False)
     start_level = Column(Float, nullable=False)
     lower_stop_level = Column(Float, nullable=False)
     upper_stop_level = Column(Float)
