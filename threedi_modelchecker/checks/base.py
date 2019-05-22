@@ -64,6 +64,8 @@ class ConditionalCheck(BaseCheck):
 
     def get_invalid(self, session):
         # TODO: find a more elegant solution for conditional checks
+        # now we monkey patch the checks method `to_check` and at the end
+        # reverse the monkey patch.
         check = self.check
         old_applicable_func = check.to_check  # save old method
         check.to_check = self.to_check  # patch the applicable

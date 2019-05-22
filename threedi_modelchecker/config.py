@@ -1,3 +1,5 @@
+from sqlalchemy import or_
+
 from .checks.base import ConditionalCheck
 from .checks.base import NotNullCheck
 from .checks.base import RangeCheck
@@ -10,6 +12,7 @@ from .checks.factories import generate_unique_checks
 from .checks.other import BankLevelCheck
 from .checks.other import TimeseriesCheck
 from .threedi_model import models
+from .threedi_model.models import constants
 
 FOREIGN_KEY_CHECKS = []
 UNIQUE_CHECKS = []
@@ -39,6 +42,12 @@ RANGE_CHECKS = [
     RangeCheck(column=models.Orifice.friction_value, lower_limit=0),
     RangeCheck(column=models.Pipe.dist_calc_points, lower_limit=0),
     RangeCheck(column=models.Pipe.friction_value, lower_limit=0),
+    RangeCheck(column=models.Pumpstation.upper_stop_level, lower_limit=models.Pumpstation.lower_stop_level),
+    RangeCheck(column=models.Pumpstation.upper_stop_level, lower_limit=models.Pumpstation.start_level),
+    RangeCheck(column=models.Pumpstation.lower_stop_level, upper_limit=models.Pumpstation.start_level),
+    RangeCheck(column=models.Pumpstation.lower_stop_level, upper_limit=models.Pumpstation.upper_stop_level),
+    RangeCheck(column=models.Pumpstation.start_level, lower_limit=models.Pumpstation.lower_stop_level),
+    RangeCheck(column=models.Pumpstation.start_level, upper_limit=models.Pumpstation.upper_stop_level),
     RangeCheck(column=models.Pumpstation.capacity, lower_limit=0),
     RangeCheck(column=models.SimpleInfiltration.infiltration_rate, lower_limit=0),
     RangeCheck(column=models.Surface.nr_of_inhabitants, lower_limit=0),
@@ -76,14 +85,38 @@ CONDITIONAL_CHECKS = [
             )
         ),
     ConditionalCheck(
-        criterion=(models.GlobalSetting.timestep_plus != None),
+        criterion=(models.GlobalSetting.timestep_plus == True),
         check=NotNullCheck(
             column=models.GlobalSetting.maximum_sim_time_step,
         )
     ),
-
-
-
+    ConditionalCheck(
+        criterion=or_(
+            models.GlobalSetting.initial_groundwater_level_file != None,
+            models.GlobalSetting.initial_groundwater_level != None
+        ),
+        check=NotNullCheck(
+            column=models.GlobalSetting.initial_groundwater_level_type,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.GlobalSetting.initial_waterlevel_file != None,
+        check=NotNullCheck(
+            column=models.GlobalSetting.water_level_ini_type,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.GlobalSetting.initial_waterlevel_file != None,
+        check=NotNullCheck(
+            column=models.GlobalSetting.water_level_ini_type,
+        )
+    ),
+    # ConditionalCheck(
+    #     criterion=models.GlobalSetting.use_0d_inflow == 1,
+    #     check=NotNullCheck(
+    #         column=models.GlobalSetting., # v2_impervious_surface
+    #     )
+    # ),
     ConditionalCheck(
         criterion=models.GlobalSetting.dem_obstacle_detection == True,
         check=RangeCheck(
@@ -91,6 +124,64 @@ CONDITIONAL_CHECKS = [
             lower_limit=0
         )
     ),
+    ConditionalCheck(
+        criterion=models.GroundWater.equilibrium_infiltration_rate_file != None,
+        check=NotNullCheck(
+            column=models.GroundWater.equilibrium_infiltration_rate_type,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.GroundWater.infiltration_decay_period_file != None,
+        check=NotNullCheck(
+            column=models.GroundWater.infiltration_decay_period_type,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.GroundWater.groundwater_hydro_connectivity_file != None,
+        check=NotNullCheck(
+            column=models.GroundWater.groundwater_hydro_connectivity_type,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.GroundWater.groundwater_impervious_layer_level_file != None,
+        check=NotNullCheck(
+            column=models.GroundWater.groundwater_impervious_layer_level_type,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.GroundWater.initial_infiltration_rate_file != None,
+        check=NotNullCheck(
+            column=models.GroundWater.initial_infiltration_rate_type,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.GroundWater.phreatic_storage_capacity_file != None,
+        check=NotNullCheck(
+            column=models.GroundWater.phreatic_storage_capacity_type,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        check=NotNullCheck(
+            column=models.Interflow.porosity,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.Interflow.interflow_type in [
+            constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
+            constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY,
+        ],
+        check=NotNullCheck(
+            column=models.Interflow.porosity_layer_thickness,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        check=NotNullCheck(
+            column=models.Interflow.impervious_layer_elevation,
+        )
+    ),
+
 
 ]
 

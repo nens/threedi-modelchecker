@@ -449,7 +449,7 @@ class GlobalSetting(Base):
     frict_type = Column(Integer)
     frict_coef = Column(Float, nullable=False)
     frict_coef_file = Column(String(255))
-    water_level_ini_type = Column(Integer)
+    water_level_ini_type = Column(IntegerEnum(constants.InitializationType))
     initial_waterlevel = Column(Float, nullable=False)
     initial_waterlevel_file = Column(String(255))
     interception_global = Column(Float)
@@ -470,7 +470,9 @@ class GlobalSetting(Base):
     use_2d_rain = Column(Integer, nullable=False)
     initial_groundwater_level = Column(Float)
     initial_groundwater_level_file = Column(String(255))
-    initial_groundwater_level_type = Column(Integer)
+    initial_groundwater_level_type = Column(
+        IntegerEnum(constants.InitializationType)
+    )
 
     numerical_settings_id = Column(
         Integer,
