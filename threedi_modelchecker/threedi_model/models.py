@@ -237,7 +237,7 @@ class Surface(Base):
     id = Column(Integer, primary_key=True)
     display_name = Column(String(255), nullable=False)
     code = Column(String(100), nullable=False)
-    zoom_category = Column(Integer)
+    zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     nr_of_inhabitants = Column(Float)
     dry_weather_flow = Column(Float)
     function = Column(String(64))
@@ -380,7 +380,7 @@ class Manhole(Base):
     id = Column(Integer, primary_key=True)
     display_name = Column(String(255), nullable=False)
     code = Column(String(100), nullable=False)
-    zoom_category = Column(Integer)
+    zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     shape = Column(String(4))
     width = Column(Float)
     length = Column(Float)
@@ -553,7 +553,7 @@ class Channel(Base):
     calculation_type = Column(IntegerEnum(constants.CalculationType),
                               nullable=False)
     dist_calc_points = Column(Float)
-    zoom_category = Column(Integer)
+    zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     the_geom = Column(
         Geometry(
             geometry_type='LINESTRING',
@@ -656,7 +656,7 @@ class Pipe(Base):
     dist_calc_points = Column(Float)
     material = Column(Integer)
     original_length = Column(Float)
-    zoom_category = Column(Integer)
+    zoom_category = Column(IntegerEnum(constants.ZoomCategories))
 
     connection_node_start_id = Column(
         Integer,
@@ -690,7 +690,7 @@ class Culvert(Base):
     friction_value = Column(Float, nullable=False)
     friction_type = Column(IntegerEnum(constants.FrictionType), nullable=False)
     dist_calc_points = Column(Float)
-    zoom_category = Column(Integer)
+    zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     discharge_coefficient_positive = Column(Float, nullable=False)
     discharge_coefficient_negative = Column(Float, nullable=False)
     invert_level_start_point = Column(Float)
@@ -751,7 +751,7 @@ class Weir(Base):
     discharge_coefficient_negative = Column(Float)
     sewerage = Column(Boolean, nullable=False)
     external = Column(Boolean)
-    zoom_category = Column(Integer)
+    zoom_category = Column(IntegerEnum(constants.ZoomCategories))
 
     connection_node_start_id = Column(
         Integer,
@@ -780,7 +780,7 @@ class Orifice(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String(100), nullable=False)
     display_name = Column(String(255), nullable=False)
-    zoom_category = Column(Integer)
+    zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     crest_type = Column(IntegerEnum(constants.CrestType), nullable=False)
     crest_level = Column(Float, nullable=False)
     friction_value = Column(Float, nullable=False)
@@ -818,7 +818,7 @@ class Pumpstation(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String(100), nullable=False)
     display_name = Column(String(255), nullable=False)
-    zoom_category = Column(Integer)
+    zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     classification = Column(Integer)
     sewerage = Column(Boolean, nullable=False)
     type_ = Column(IntegerEnum(constants.PumpType), name='type',
@@ -910,7 +910,7 @@ class ImperviousSurface(Base):
         nullable=False
     )
     surface_sub_class = Column(String(128))
-    zoom_category = Column(Integer)
+    zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     nr_of_inhabitants = Column(Float)
     area = Column(Float)
     dry_weather_flow = Column(Float)

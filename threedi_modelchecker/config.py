@@ -1,6 +1,8 @@
+from sqlalchemy import and_
 from sqlalchemy import or_
 
 from .checks.base import ConditionalCheck
+from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
 from .checks.base import RangeCheck
 from .checks.factories import generate_enum_checks
@@ -29,38 +31,144 @@ TIMESERIES_CHECKS = [
 ]
 
 RANGE_CHECKS = [
-    RangeCheck(column=models.CrossSectionLocation.friction_value, lower_limit=0),
-    RangeCheck(column=models.Culvert.friction_value, lower_limit=0),
-    RangeCheck(column=models.GroundWater.phreatic_storage_capacity, lower_limit=0, upper_limit=1),
-    RangeCheck(column=models.ImperviousSurface.area, lower_limit=0),
-    RangeCheck(column=models.ImperviousSurface.dry_weather_flow, lower_limit=0),
-    RangeCheck(column=models.ImperviousSurfaceMap.percentage, lower_limit=0),
-    RangeCheck(column=models.Interflow.porosity, lower_limit=0, upper_limit=1),
-    RangeCheck(column=models.Interflow.impervious_layer_elevation, lower_limit=0),
-    RangeCheck(column=models.Orifice.discharge_coefficient_negative, lower_limit=0),
-    RangeCheck(column=models.Orifice.discharge_coefficient_positive, lower_limit=0),
-    RangeCheck(column=models.Orifice.friction_value, lower_limit=0),
-    RangeCheck(column=models.Pipe.dist_calc_points, lower_limit=0),
-    RangeCheck(column=models.Pipe.friction_value, lower_limit=0),
-    RangeCheck(column=models.Pumpstation.upper_stop_level, lower_limit=models.Pumpstation.lower_stop_level),
-    RangeCheck(column=models.Pumpstation.upper_stop_level, lower_limit=models.Pumpstation.start_level),
-    RangeCheck(column=models.Pumpstation.lower_stop_level, upper_limit=models.Pumpstation.start_level),
-    RangeCheck(column=models.Pumpstation.lower_stop_level, upper_limit=models.Pumpstation.upper_stop_level),
-    RangeCheck(column=models.Pumpstation.start_level, lower_limit=models.Pumpstation.lower_stop_level),
-    RangeCheck(column=models.Pumpstation.start_level, upper_limit=models.Pumpstation.upper_stop_level),
-    RangeCheck(column=models.Pumpstation.capacity, lower_limit=0),
-    RangeCheck(column=models.SimpleInfiltration.infiltration_rate, lower_limit=0),
-    RangeCheck(column=models.Surface.nr_of_inhabitants, lower_limit=0),
-    RangeCheck(column=models.Surface.area, lower_limit=0),
-    RangeCheck(column=models.SurfaceMap.percentage, lower_limit=0, upper_limit=100),
-    RangeCheck(column=models.SurfaceParameter.max_infiltration_capacity, lower_limit=0),
-    RangeCheck(column=models.SurfaceParameter.min_infiltration_capacity, lower_limit=0),
-    RangeCheck(column=models.SurfaceParameter.infiltration_decay_constant, lower_limit=0),
-    RangeCheck(column=models.SurfaceParameter.infiltration_recovery_constant, lower_limit=0),
-    RangeCheck(column=models.SurfaceParameter.outflow_delay, lower_limit=0),
-    RangeCheck(column=models.Weir.discharge_coefficient_negative, lower_limit=0),
-    RangeCheck(column=models.Weir.discharge_coefficient_negative, lower_limit=0),
-    RangeCheck(column=models.Weir.friction_value, lower_limit=0),
+    GeneralCheck(
+        column=models.CrossSectionLocation.friction_value,
+        criterion_valid=models.CrossSectionLocation.friction_value > 0,
+    ),
+    GeneralCheck(
+        column=models.Culvert.friction_value,
+        criterion_valid=models.Culvert.friction_value >= 0,
+    ),
+    GeneralCheck(
+        column=models.GroundWater.phreatic_storage_capacity,
+        criterion_valid=and_(
+            models.GroundWater.phreatic_storage_capacity >= 0,
+            models.GroundWater.phreatic_storage_capacity <= 1
+        ),
+    ),
+    GeneralCheck(
+        column=models.ImperviousSurface.area,
+        criterion_valid=models.ImperviousSurface.area >= 0,
+    ),
+    GeneralCheck(
+        column=models.ImperviousSurface.dry_weather_flow,
+        criterion_valid=models.ImperviousSurface.dry_weather_flow >= 0,
+    ),
+    GeneralCheck(
+        column=models.ImperviousSurfaceMap.percentage,
+        criterion_valid=models.ImperviousSurfaceMap.percentage >= 0,
+    ),
+    GeneralCheck(
+        column=models.Interflow.porosity,
+        criterion_valid=and_(
+            models.Interflow.porosity >= 0,
+            models.Interflow.porosity <= 1,
+        ),
+    ),
+    GeneralCheck(
+        column=models.Interflow.impervious_layer_elevation,
+        criterion_valid=models.Interflow.impervious_layer_elevation >= 0,
+    ),
+    GeneralCheck(
+        column=models.Orifice.discharge_coefficient_negative,
+        criterion_valid=models.Orifice.discharge_coefficient_negative >= 0,
+    ),
+    GeneralCheck(
+        column=models.Orifice.discharge_coefficient_positive,
+        criterion_valid=models.Orifice.discharge_coefficient_positive >= 0,
+    ),
+    GeneralCheck(
+        column=models.Orifice.friction_value,
+        criterion_valid=models.Orifice.friction_value >= 0,
+    ),
+    GeneralCheck(
+        column=models.Pipe.dist_calc_points,
+        criterion_valid=models.Pipe.dist_calc_points > 0,
+    ),
+    GeneralCheck(
+        column=models.Pipe.friction_value,
+        criterion_valid=models.Pipe.friction_value >= 0,
+    ),
+    GeneralCheck(
+        column=models.Pumpstation.upper_stop_level,
+        criterion_valid=and_(
+            models.Pumpstation.upper_stop_level > models.Pumpstation.lower_stop_level,
+            models.Pumpstation.upper_stop_level > models.Pumpstation.start_level,
+        )
+    ),
+    GeneralCheck(
+        column=models.Pumpstation.lower_stop_level,
+        criterion_valid=and_(
+            models.Pumpstation.lower_stop_level < models.Pumpstation.start_level,
+            models.Pumpstation.lower_stop_level < models.Pumpstation.upper_stop_level,
+        )
+    ),
+    GeneralCheck(
+        column=models.Pumpstation.start_level,
+        criterion_valid=and_(
+            models.Pumpstation.start_level > models.Pumpstation.start_level,
+            models.Pumpstation.start_level < models.Pumpstation.upper_stop_level,
+        )
+    ),
+    GeneralCheck(
+        column=models.Pumpstation.capacity,
+        criterion_valid=models.Pumpstation.capacity >= 0,
+    ),
+    GeneralCheck(
+        column=models.SimpleInfiltration.infiltration_rate,
+        criterion_valid=models.SimpleInfiltration.infiltration_rate >= 0,
+    ),
+    GeneralCheck(
+        column=models.Surface.nr_of_inhabitants,
+        criterion_valid=models.Surface.nr_of_inhabitants >= 0,
+    ),
+    GeneralCheck(
+        column=models.Surface.dry_weather_flow,
+        criterion_valid=models.Surface.dry_weather_flow >= 0,
+    ),
+    GeneralCheck(
+        column=models.Surface.area,
+        criterion_valid=models.Surface.area >= 0,
+    ),
+    GeneralCheck(
+        column=models.SurfaceMap.percentage,
+        criterion_valid=and_(
+            models.SurfaceMap.percentage >= 0,
+            models.SurfaceMap.percentage <= 100,
+        ),
+    ),
+    GeneralCheck(
+        column=models.SurfaceParameter.outflow_delay,
+        criterion_valid=models.SurfaceParameter.outflow_delay >= 0,
+    ),
+    GeneralCheck(
+        column=models.SurfaceParameter.max_infiltration_capacity,
+        criterion_valid=models.SurfaceParameter.max_infiltration_capacity >= 0,
+    ),
+    GeneralCheck(
+        column=models.SurfaceParameter.min_infiltration_capacity,
+        criterion_valid=models.SurfaceParameter.min_infiltration_capacity >= 0,
+    ),
+    GeneralCheck(
+        column=models.SurfaceParameter.infiltration_decay_constant,
+        criterion_valid=models.SurfaceParameter.infiltration_decay_constant >= 0,
+    ),
+    GeneralCheck(
+        column=models.SurfaceParameter.infiltration_recovery_constant,
+        criterion_valid=models.SurfaceParameter.infiltration_recovery_constant >= 0,
+    ),
+    GeneralCheck(
+        column=models.Weir.discharge_coefficient_negative,
+        criterion_valid=models.Weir.discharge_coefficient_negative >= 0,
+    ),
+    GeneralCheck(
+        column=models.Weir.discharge_coefficient_positive,
+        criterion_valid=models.Weir.discharge_coefficient_positive >= 0,
+    ),
+    GeneralCheck(
+        column=models.Weir.friction_value,
+        criterion_valid=models.Weir.friction_value >= 0,
+    ),
 ]
 
 OTHER_CHECKS = [
@@ -71,19 +179,20 @@ OTHER_CHECKS = [
 CONDITIONAL_CHECKS = [
     # If a connection_node is a manhole, then storage_area > 0
     ConditionalCheck(
-        criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
+        criterion=(
+                models.ConnectionNode.id == models.Manhole.connection_node_id),
         check=RangeCheck(
             column=models.ConnectionNode.storage_area,
             lower_limit=0
         )
     ),
     ConditionalCheck(
-            criterion=(models.CrossSectionLocation.bank_level != None),
-            check=RangeCheck(
-                column=models.CrossSectionLocation.reference_level,
-                upper_limit=models.CrossSectionLocation.bank_level
-            )
-        ),
+        criterion=(models.CrossSectionLocation.bank_level != None),
+        check=RangeCheck(
+            column=models.CrossSectionLocation.reference_level,
+            upper_limit=models.CrossSectionLocation.bank_level
+        )
+    ),
     ConditionalCheck(
         criterion=(models.GlobalSetting.timestep_plus == True),
         check=NotNullCheck(

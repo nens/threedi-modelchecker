@@ -31,6 +31,20 @@ class BaseCheck(ABC):
         """
         pass
 
+    def get_valid(self, session):
+        """Return a list of rows (named_typles) which are valid.
+
+        :param session: sqlalchemy.orm.session.Session
+        :return: list of named_tuples or empty list if there are no valid rows
+        """
+        all_rows = self.to_check(session)
+        invalid_row_ids = set([row.id for row in self.get_invalid(session)])
+        valid = []
+        for row in all_rows:
+            if row.id not in invalid_row_ids:
+                valid.append(row)
+        return valid
+
     def to_check(self, session):
         """Return a Query object filtering on the rows this check is applied.
 
@@ -45,6 +59,37 @@ class BaseCheck(ABC):
             self.table.name,
             self.column.name
         )
+
+
+class GeneralCheck(BaseCheck):
+    """Check to specify with an SQL expression what's valid/invalid.
+
+    Either specify what is valid with `criterion_valid` or what is invalid
+    with `criterion_invalid`.
+    The criterion should be  a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)
+    with operators being operators being column within `self.table.columns`
+    """
+    def __init__(
+            self,
+            criterion_invalid=None,
+            criterion_valid=None,
+            *args,
+            **kwargs):
+        super().__init__(*args, **kwargs)
+        self.criterion_invalid = criterion_invalid
+        self.criterion_valid = criterion_valid
+
+    def get_invalid(self, session):
+        if self.criterion_invalid is not None:
+            q_invalid = self.to_check(session).filter(self.criterion_invalid)
+            return q_invalid.all()
+        elif self.criterion_valid is not None:
+            q_invalid = self.to_check(session).filter(~self.criterion_valid)
+            return q_invalid.all()
+        else:
+            raise AttributeError(
+                'No valid/invalid criterion has been specified'
+            )
 
 
 class ConditionalCheck(BaseCheck):
@@ -223,7 +268,12 @@ class RangeCheck(BaseCheck):
     """Check all values in `column` are within specified bounds
 
     Null values are ignored."""
-    def __init__(self, lower_limit=None, upper_limit=None, *args, **kwargs):
+    def __init__(
+            self,
+            lower_limit=None,
+            upper_limit=None,
+            *args,
+            **kwargs):
         super().__init__(*args, **kwargs)
         self.lower_limit = lower_limit
         self.upper_limit = upper_limit

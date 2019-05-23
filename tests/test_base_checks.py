@@ -1,8 +1,11 @@
 import factory
 import pytest
+from sqlalchemy import func
+from sqlalchemy.orm import Query
 
 from tests import factories
-from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck
+from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck, \
+    GeneralCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
@@ -403,3 +406,69 @@ def test_conditional_check_advanced(session):
     assert len(invalids) == 1
     assert invalids[0].id == connection_node2.id
     assert invalids[0].storage_area == connection_node2.storage_area
+
+
+def test_get_valid(session):
+    connection_node1 = factories.ConnectionNodeFactory(storage_area=1)
+    connection_node2 = factories.ConnectionNodeFactory(storage_area=2)
+    connection_node3 = factories.ConnectionNodeFactory(storage_area=3)
+
+    range_check = RangeCheck(
+        column=models.ConnectionNode.storage_area,
+        lower_limit=2
+    )
+    to_check = range_check.to_check(session).all()
+    assert len(to_check) == 3
+    invalids = range_check.get_invalid(session)
+    valids = range_check.get_valid(session)
+    assert len(valids) + len(invalids) == 3
+
+
+def test_general_check_range(session):
+    w1 = factories.WeirFactory(friction_value=2)
+    w2 = factories.WeirFactory(friction_value=-1)
+
+    invalid_criterion = models.Weir.friction_value > 0
+    general_range_check = GeneralCheck(
+        column=models.Weir.friction_value,
+        criterion_invalid=invalid_criterion
+    )
+
+    invalid = general_range_check.get_invalid(session)
+    assert len(invalid) == 1
+    assert invalid[0].id == w1.id
+
+
+def test_general_check_valid_criterion_range(session):
+    w1 = factories.WeirFactory(friction_value=2)
+    w2 = factories.WeirFactory(friction_value=-1)
+
+    valid_criterion = models.Weir.friction_value >= 0
+    general_range_check = GeneralCheck(
+        column=models.Weir.friction_value,
+        criterion_valid=valid_criterion
+    )
+
+    invalid = general_range_check.get_invalid(session)
+    assert len(invalid) == 1
+    assert invalid[0].id == w2.id
+
+
+@pytest.mark.skip('Aggregate function not working for general checks')
+def test_general_check_aggregation_function(session):
+    # Aggregation functions need something different!
+
+    w1 = factories.WeirFactory(friction_value=2)
+    w2 = factories.WeirFactory(friction_value=-1)
+
+    invalid_criterion = func.count(models.Weir.friction_value) < 3
+    general_range_check = GeneralCheck(
+        column=models.Weir.friction_value,
+        criterion_invalid=invalid_criterion
+    )
+
+    invalid = general_range_check.get_invalid(session)
+    assert len(invalid) == 2
+    invalid_ids = [row.id for row in invalid]
+    assert w1.id in invalid_ids
+    assert w2.id in invalid_ids

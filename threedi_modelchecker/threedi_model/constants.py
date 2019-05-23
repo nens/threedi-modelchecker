@@ -141,3 +141,11 @@ class InfiltrationSurfaceOption(Enum):
     RAIN = 0
     WHOLE_SURFACE = 1
     WET_SURFACE = 2
+
+
+class ZoomCategories(Enum):
+    SMALLEST = 1
+    SMALL = 2
+    MEDIUM = 3
+    LARGE = 4
+    LARGEST = 5
