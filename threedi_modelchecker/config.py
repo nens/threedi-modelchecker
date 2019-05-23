@@ -172,18 +172,17 @@ RANGE_CHECKS = [
 ]
 
 OTHER_CHECKS = [
-    BankLevelCheck(),
+    BankLevelCheck(),  # TODO: rewrite to a GeneralCheck.
     # CrossSectionShapeCheck(),
 ]
 
 CONDITIONAL_CHECKS = [
-    # If a connection_node is a manhole, then storage_area > 0
     ConditionalCheck(
         criterion=(
                 models.ConnectionNode.id == models.Manhole.connection_node_id),
-        check=RangeCheck(
+        check=GeneralCheck(
             column=models.ConnectionNode.storage_area,
-            lower_limit=0
+            criterion_valid=models.ConnectionNode.storage_area > 0
         )
     ),
     ConditionalCheck(
@@ -288,6 +287,17 @@ CONDITIONAL_CHECKS = [
         criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         check=NotNullCheck(
             column=models.Interflow.impervious_layer_elevation,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.GlobalSetting.dem_file == None,
+        check=GeneralCheck(
+            column=models.Channel.calculation_type,
+            criterion_valid=models.Channel.calculation_type.notin_([
+                constants.CalculationType.EMBEDDED,
+                constants.CalculationType.CONNECTED,
+                constants.CalculationType.DOUBLE_CONNECTED
+            ])
         )
     ),
 

@@ -381,6 +381,35 @@ def test_conditional_checks(session):
     assert len(invalid_no_condition) == 2
 
 
+def test_conditional_check_storage_area(session):
+    # if connection node is a manhole, then the storage area of the
+    # connection_node must be > 0
+    conn_node1_valid = factories.ConnectionNodeFactory(storage_area=5)
+    conn_node2_valid = factories.ConnectionNodeFactory(storage_area=-3)
+    conn_node_manhole_valid = factories.ConnectionNodeFactory(storage_area=4)
+    conn_node_manhole_invalid = factories.ConnectionNodeFactory(storage_area=-5)
+    manhole_valid = factories.ManholeFactory(connection_node=conn_node_manhole_valid)
+    manhole_invalid = factories.ManholeFactory(connection_node=conn_node_manhole_invalid)
+
+    check = ConditionalCheck(
+        criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
+        check=GeneralCheck(
+            column=models.ConnectionNode.storage_area,
+            criterion_valid=models.ConnectionNode.storage_area > 0
+        )
+    )
+    to_check = check.to_check(session)
+    assert to_check.count() == 2
+
+    invalids = check.get_invalid(session)
+    assert len(invalids) == 1
+    assert invalids[0].id == conn_node_manhole_invalid.id
+
+    valids = check.get_valid(session)
+    assert len(valids) == 1
+    assert valids[0].id == conn_node_manhole_valid.id
+
+
 def test_conditional_check_advanced(session):
     connection_node1 = factories.ConnectionNodeFactory(storage_area=-1)
     connection_node2 = factories.ConnectionNodeFactory(storage_area=-2)
