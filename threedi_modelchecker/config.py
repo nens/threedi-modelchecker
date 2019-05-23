@@ -106,7 +106,7 @@ RANGE_CHECKS = [
     GeneralCheck(
         column=models.Pumpstation.start_level,
         criterion_valid=and_(
-            models.Pumpstation.start_level > models.Pumpstation.start_level,
+            models.Pumpstation.start_level > models.Pumpstation.lower_stop_level,
             models.Pumpstation.start_level < models.Pumpstation.upper_stop_level,
         )
     ),
