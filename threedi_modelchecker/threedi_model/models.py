@@ -350,15 +350,13 @@ class ConnectionNode(Base):
     )
     code = Column(String(100), nullable=False)
 
-    manhole = relationship(
+    manholes = relationship(
         "Manhole",
-        uselist=False,
         back_populates="connection_node")
-    boundary_condition = relationship(
+    boundary_conditions = relationship(
         "BoundaryCondition1D",
-        uselist=False,
         back_populates="connection_node")
-    impervious_surface_map = relationship(
+    impervious_surface_maps = relationship(
         "ImperviousSurfaceMap",
         back_populates="connection_node")
 
@@ -394,8 +392,9 @@ class Manhole(Base):
     connection_node_id = Column(
         Integer,
         ForeignKey(ConnectionNode.__tablename__ + ".id"),
+        nullable=False
     )
-    connection_node = relationship(ConnectionNode, back_populates="manhole")
+    connection_node = relationship(ConnectionNode, back_populates="manholes")
 
 
 class NumericalSettings(Base):
@@ -528,7 +527,7 @@ class BoundaryCondition1D(Base):
     connection_node = relationship(
         ConnectionNode,
         foreign_keys=connection_node_id,
-        back_populates="boundary_condition"
+        back_populates="boundary_conditions"
     )
 
 
@@ -827,14 +826,14 @@ class Pumpstation(Base):
     lower_stop_level = Column(Float, nullable=False)
     upper_stop_level = Column(Float)
     capacity = Column(Float, nullable=False)
-
     connection_node_start_id = Column(
         Integer,
         ForeignKey(ConnectionNode.__tablename__ + ".id"),
         nullable=False
     )
     connection_node_start = relationship(
-        ConnectionNode, foreign_keys=connection_node_start_id)
+        "ConnectionNode", foreign_keys=connection_node_start_id,
+    )
     connection_node_end_id = Column(
         Integer,
         ForeignKey(ConnectionNode.__tablename__ + ".id"),
@@ -946,7 +945,7 @@ class ImperviousSurfaceMap(Base):
     )
     connection_node = relationship(
         ConnectionNode,
-        back_populates="impervious_surface_map"
+        back_populates="impervious_surface_maps"
     )
 
 
