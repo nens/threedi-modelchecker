@@ -120,6 +120,30 @@ class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     display_name = Faker('name')
 
 
+class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.BoundaryCondition1D
+        sqlalchemy_session = Session
+
+    boundary_type = constants.BoundaryType.WATERLEVEL
+    timeseries = '0,-0.5'
+    connection_node = factory.SubFactory(ConnectionNodeFactory)
+
+
+class PumpstationFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Pumpstation
+        sqlalchemy_session = Session
+
+    code = 'code'
+    display_name = 'display_name'
+    sewerage = False
+    type_ = constants.PumpType.DELIVERY_SIDE
+    start_level = 1.0
+    lower_stop_level = 0.0
+    capacity = 5.0
+    connection_node_start = factory.SubFactory(ConnectionNodeFactory)
+
 class CrossSectionDefinitionFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.CrossSectionDefinition

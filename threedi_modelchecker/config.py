@@ -174,6 +174,35 @@ RANGE_CHECKS = [
 OTHER_CHECKS = [
     BankLevelCheck(),  # TODO: rewrite to a GeneralCheck.
     # CrossSectionShapeCheck(),
+
+    # 1d boundary conditions cannot be connected to a pumpstation
+    GeneralCheck(
+        column=models.BoundaryCondition1D.connection_node_id,
+        criterion_invalid=or_(
+            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_start_id,
+            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_end_id,
+        )
+    ),
+    # ConnectionNode must be connected to one of the following:
+    # pumpstation, culvert, channel, pipe, weir or orifice
+    GeneralCheck(
+        column=models.ConnectionNode.id,
+        criterion_valid=or_(
+            models.ConnectionNode.id == models.Pumpstation.connection_node_start_id,
+            models.ConnectionNode.id == models.Pumpstation.connection_node_end_id,
+            models.ConnectionNode.id == models.Culvert.connection_node_start_id,
+            models.ConnectionNode.id == models.Culvert.connection_node_end_id,
+            models.ConnectionNode.id == models.Channel.connection_node_start_id,
+            models.ConnectionNode.id == models.Channel.connection_node_end_id,
+            models.ConnectionNode.id == models.Pipe.connection_node_start_id,
+            models.ConnectionNode.id == models.Pipe.connection_node_end_id,
+            models.ConnectionNode.id == models.Weir.connection_node_start_id,
+            models.ConnectionNode.id == models.Weir.connection_node_end_id,
+            models.ConnectionNode.id == models.Orifice.connection_node_start_id,
+            models.ConnectionNode.id == models.Orifice.connection_node_end_id,
+        )
+    )
+
 ]
 
 CONDITIONAL_CHECKS = [

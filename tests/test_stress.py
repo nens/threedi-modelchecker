@@ -20,7 +20,7 @@ def bergermeer_db():
         'db_path': bergermeer_path,
         'db_file': bergermeer_file
     }
-    db = ThreediDatabase(bergermeer_settings, db_type='spatialite')
+    db = ThreediDatabase(bergermeer_settings, db_type='spatialite', echo=False)
 
     engine = db.get_engine()
     # Base.prepare(engine, reflect=True)
@@ -88,6 +88,7 @@ def grotemarkt():
     return db
 
 
+@pytest.mark.skip('takes too long')
 def test_get_errorr_bergermeer(bergermeer_db):
     mc = ThreediModelChecker(bergermeer_db)
     errors = mc.get_model_errors()
@@ -95,6 +96,7 @@ def test_get_errorr_bergermeer(bergermeer_db):
     print('done')
 
 
+@pytest.mark.skip('takes too long')
 def test_get_errors_heugem(heugem):
     mc = ThreediModelChecker(heugem)
     errors = mc.get_model_errors()
@@ -104,19 +106,42 @@ def test_get_errors_heugem(heugem):
     print('done')
 
 
+# @pytest.mark.skip('takes too long')
 def test_get_error_iterator_grotemarkt(grotemarkt):
     mc = ThreediModelChecker(grotemarkt)
     for check, error in mc.get_model_error_iterator():
         print(check, error)
 
 
+# @pytest.mark.skip('takes too long')
 def test_get_error_iterator_heugem(heugem):
     mc = ThreediModelChecker(heugem)
     for check, error in mc.get_model_error_iterator():
         print(check, error)
 
 
+# @pytest.mark.skip('takes too long')
 def test_get_error_iterator_bergermeer(bergermeer_db):
     mc = ThreediModelChecker(bergermeer_db)
     for check, error in mc.get_model_error_iterator():
         print(check, error)
+
+
+def test_relationship(bergermeer_db):
+    from sqlalchemy import or_
+    mc = ThreediModelChecker(bergermeer_db)
+    session = mc.db.get_session()
+
+    # Connection nodes which are manholes
+    q = session.query(models.ConnectionNode).filter(
+        models.ConnectionNode.manhole.has()
+    )
+    # Connection nodes which are manholes or boundary_conditions
+    q = session.query(models.ConnectionNode).filter(
+        ~or_(
+            models.ConnectionNode.manhole.has(),
+            models.ConnectionNode.boundary_condition.has()
+        )
+    )
+
+

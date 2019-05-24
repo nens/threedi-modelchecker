@@ -1,7 +1,7 @@
 import factory
 import pytest
 from sqlalchemy import func
-from sqlalchemy.orm import Query
+from sqlalchemy import or_
 
 from tests import factories
 from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck, \
@@ -353,6 +353,7 @@ def test_conditional_check_get_applicable(session):
         )
     )
     query = conditional_check.to_check(session)
+    # TODO: This tests nothing!!!
 
 
 def test_conditional_checks(session):
@@ -501,3 +502,25 @@ def test_general_check_aggregation_function(session):
     invalid_ids = [row.id for row in invalid]
     assert w1.id in invalid_ids
     assert w2.id in invalid_ids
+
+
+def test_boundary_condition_no_pumpstation(session):
+    # Boundary condition cannot be connected to a pumpstation
+    valid_boundary = factories.BoundaryConditions1DFactory()
+    invalid_boundary = factories.BoundaryConditions1DFactory()
+
+    pump = factories.PumpstationFactory(
+        connection_node_start=invalid_boundary.connection_node
+    )
+    check = GeneralCheck(
+        column=models.BoundaryCondition1D.connection_node_id,
+        criterion_invalid=or_(
+            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_start_id,
+            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_end_id,
+        )
+    )
+
+    invalids = check.get_invalid(session)
+    assert len(invalids) == 1
+    assert invalids[0].id == invalid_boundary.id
+
