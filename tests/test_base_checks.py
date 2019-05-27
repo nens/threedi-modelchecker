@@ -10,7 +10,6 @@ from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
 from threedi_modelchecker.checks.base import NotNullCheck
-from threedi_modelchecker.checks.base import RangeCheck
 from threedi_modelchecker.checks.base import TypeCheck
 from threedi_modelchecker.checks.base import UniqueCheck
 from threedi_modelchecker.checks.base import sqlalchemy_to_sqlite_type
@@ -366,9 +365,9 @@ def test_conditional_checks(session):
         dem_obstacle_height=-5
     )
 
-    range_check = RangeCheck(
+    range_check = GeneralCheck(
         column=models.GlobalSetting.dem_obstacle_height,
-        lower_limit=0
+        criterion_valid=models.GlobalSetting.dem_obstacle_height > 0
     )
     conditional_range_check = ConditionalCheck(
         check=range_check,
@@ -427,9 +426,9 @@ def test_conditional_check_advanced(session):
     # If a connection_node is a manhole, then storage_area > 0
     advanced_check = ConditionalCheck(
         criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
-        check=RangeCheck(
+        check=GeneralCheck(
             column=models.ConnectionNode.storage_area,
-            lower_limit=0
+            criterion_valid=models.ConnectionNode.storage_area > 0
         )
     )
     invalids = advanced_check.get_invalid(session)
@@ -443,9 +442,9 @@ def test_get_valid(session):
     connection_node2 = factories.ConnectionNodeFactory(storage_area=2)
     connection_node3 = factories.ConnectionNodeFactory(storage_area=3)
 
-    range_check = RangeCheck(
+    range_check = GeneralCheck(
         column=models.ConnectionNode.storage_area,
-        lower_limit=2
+        criterion_valid=models.ConnectionNode.storage_area > 2
     )
     to_check = range_check.to_check(session).all()
     assert len(to_check) == 3

@@ -32,7 +32,7 @@ class BaseCheck(ABC):
         pass
 
     def get_valid(self, session):
-        """Return a list of rows (named_typles) which are valid.
+        """Return a list of rows (named_tuples) which are valid.
 
         :param session: sqlalchemy.orm.session.Session
         :return: list of named_tuples or empty list if there are no valid rows

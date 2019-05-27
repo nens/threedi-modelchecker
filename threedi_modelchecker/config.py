@@ -4,7 +4,6 @@ from sqlalchemy import or_
 from .checks.base import ConditionalCheck
 from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
-from .checks.base import RangeCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks
@@ -204,9 +203,9 @@ CONDITIONAL_CHECKS = [
     ),
     ConditionalCheck(
         criterion=(models.CrossSectionLocation.bank_level != None),
-        check=RangeCheck(
+        check=GeneralCheck(
             column=models.CrossSectionLocation.reference_level,
-            upper_limit=models.CrossSectionLocation.bank_level
+            criterion_valid=models.CrossSectionLocation.reference_level < models.CrossSectionLocation.bank_level
         )
     ),
     ConditionalCheck(
@@ -238,9 +237,9 @@ CONDITIONAL_CHECKS = [
     ),
     ConditionalCheck(
         criterion=models.GlobalSetting.dem_obstacle_detection == True,
-        check=RangeCheck(
+        check=GeneralCheck(
             column=models.GlobalSetting.dem_obstacle_height,
-            lower_limit=0
+            criterion_valid=models.GlobalSetting.dem_obstacle_height > 0
         )
     ),
     ConditionalCheck(
