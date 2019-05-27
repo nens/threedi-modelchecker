@@ -13,6 +13,7 @@ from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
 from .checks.other import BankLevelCheck
 from .checks.other import TimeseriesCheck
+from .checks.other import Use0DFlowCheck
 from .threedi_model import models
 from .threedi_model.models import constants
 
@@ -186,23 +187,10 @@ OTHER_CHECKS = [
     # ConnectionNode must be connected to one of the following:
     # pumpstation, culvert, channel, pipe, weir or orifice
     GeneralCheck(
-        column=models.ConnectionNode.id,
-        criterion_valid=or_(
-            models.ConnectionNode.id == models.Pumpstation.connection_node_start_id,
-            models.ConnectionNode.id == models.Pumpstation.connection_node_end_id,
-            models.ConnectionNode.id == models.Culvert.connection_node_start_id,
-            models.ConnectionNode.id == models.Culvert.connection_node_end_id,
-            models.ConnectionNode.id == models.Channel.connection_node_start_id,
-            models.ConnectionNode.id == models.Channel.connection_node_end_id,
-            models.ConnectionNode.id == models.Pipe.connection_node_start_id,
-            models.ConnectionNode.id == models.Pipe.connection_node_end_id,
-            models.ConnectionNode.id == models.Weir.connection_node_start_id,
-            models.ConnectionNode.id == models.Weir.connection_node_end_id,
-            models.ConnectionNode.id == models.Orifice.connection_node_start_id,
-            models.ConnectionNode.id == models.Orifice.connection_node_end_id,
-        )
-    )
-
+        column=models.GlobalSetting.output_time_step,
+        criterion_valid=(models.GlobalSetting.output_time_step % models.GlobalSetting.sim_time_step == 0)
+    ),
+    Use0DFlowCheck()
 ]
 
 CONDITIONAL_CHECKS = [
@@ -248,12 +236,6 @@ CONDITIONAL_CHECKS = [
             column=models.GlobalSetting.water_level_ini_type,
         )
     ),
-    # ConditionalCheck(
-    #     criterion=models.GlobalSetting.use_0d_inflow == 1,
-    #     check=NotNullCheck(
-    #         column=models.GlobalSetting., # v2_impervious_surface
-    #     )
-    # ),
     ConditionalCheck(
         criterion=models.GlobalSetting.dem_obstacle_detection == True,
         check=RangeCheck(
@@ -316,6 +298,16 @@ CONDITIONAL_CHECKS = [
         criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         check=NotNullCheck(
             column=models.Interflow.impervious_layer_elevation,
+        )
+    ),
+    ConditionalCheck(
+        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        check=GeneralCheck(
+            column=models.Interflow.hydraulic_conductivity,
+            criterion_valid=or_(
+                models.Interflow.hydraulic_conductivity != None,
+                models.Interflow.hydraulic_conductivity_file != None,
+            )
         )
     ),
     ConditionalCheck(

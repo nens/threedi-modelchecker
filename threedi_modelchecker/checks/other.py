@@ -1,5 +1,7 @@
 from collections import Counter
 
+from sqlalchemy import func
+
 from threedi_modelchecker.checks import patterns
 from .base import BaseCheck
 from ..threedi_model import constants
@@ -131,3 +133,62 @@ class TimeseriesCheck(BaseCheck):
                 invalid_timeseries.append(row)
 
         return invalid_timeseries
+
+
+class Use0DFlowCheck(BaseCheck):
+    """Check that when use_0d_flow in global settings is configured to 1 or to
+    2, there is at least one impervious surface or surfaces respectively.
+    """
+    def __init__(self):
+        super().__init__(
+            column=models.GlobalSetting.use_0d_inflow
+        )
+
+    def to_check(self, session):
+        """Return a Query object on which this check is applied"""
+        return session.query(models.GlobalSetting).filter(
+            models.GlobalSetting.use_0d_inflow != 0
+        )
+
+    def get_invalid(self, session):
+        surface_count = session.query(func.count(models.Surface.id)).scalar()
+        impervious_surface_count = session.query(
+            func.count(models.ImperviousSurface.id)
+        ).scalar()
+
+        invalid_rows = []
+        for row in self.to_check(session):
+            if row.use_0d_inflow == 1 and impervious_surface_count == 0:
+                invalid_rows.append(row)
+            elif row.use_0d_inflow == 2 and surface_count == 0:
+                invalid_rows.append(row)
+            else:
+                continue
+        return invalid_rows
+
+
+class ConnectionNodes(BaseCheck):
+    """Check that all connection nodes are connected to at least one of the
+    following objects:
+    - Culvert
+    - Channel
+    - Pipe
+    - Orifice
+    - Pumpstation
+    - Weir
+    """
+    def __init__(self):
+        super().__init__(
+            column=models.ConnectionNode.id
+        )
+
+    def get_invalid(self, session):
+        from sqlalchemy import exists
+
+        # session.query(self.table).filter(
+        #     exists().
+        #
+        #     )
+        # )
+
+        pass
