@@ -70,6 +70,9 @@ class CrossSectionShapeCheck(BaseCheck):
                     )
         return invalid_cross_section_shapes
 
+    def description(self):
+        return "Invalid CrossSectionShape"
+
 
 def valid_rectangle(width, height):
     width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
@@ -134,6 +137,9 @@ class TimeseriesCheck(BaseCheck):
 
         return invalid_timeseries
 
+    def description(self):
+        return "Invalid timeseries"
+
 
 class Use0DFlowCheck(BaseCheck):
     """Check that when use_0d_flow in global settings is configured to 1 or to
@@ -165,6 +171,10 @@ class Use0DFlowCheck(BaseCheck):
             else:
                 continue
         return invalid_rows
+
+    def description(self):
+        return "When %s is used, there should exists at least one " \
+               "(impervious) surface." % self.column
 
 
 class ConnectionNodes(BaseCheck):

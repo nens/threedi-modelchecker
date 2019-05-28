@@ -51,3 +51,13 @@ def summarize_column_errors(errors):
             yield '%s.%s' % (error.column.table.name, error.column.name)
     summary = Counter(_get_error_table_column(errors))
     return summary, sum(summary.values())
+
+
+def format_check_results(check, invalid_row):
+    OUTPUT_FORMAT = '{check!r} row: {row_id:d} value: "{row_value!s}" {description!s}'
+    return OUTPUT_FORMAT.format(
+        check=check,
+        row_id=invalid_row.id,
+        row_value=getattr(invalid_row, check.column.name),
+        description=check.description()
+    )

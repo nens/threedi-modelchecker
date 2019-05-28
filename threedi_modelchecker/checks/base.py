@@ -110,9 +110,7 @@ class GeneralCheck(BaseCheck):
             )
         else:
             condition = 'no condition specified'
-        return "Value should hold the following condition %s" % (
-            condition,
-        )
+        return "'%s'" % condition
 
 
 class ConditionalCheck(BaseCheck):
@@ -268,6 +266,9 @@ class GeometryCheck(BaseCheck):
             self.column != None
         )
         return invalid_geometries.all()
+
+    def description(self):
+        return "Value in %s is invalid geometry" % self.column
 
 
 class GeometryTypeCheck(BaseCheck):
