@@ -69,7 +69,7 @@ class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
     display_name = Faker('name')
     code = 'code'
     calculation_type = constants.CalculationType.CONNECTED
-    the_geom = "SRID=4326;LINESTRING(1 2,1 3)"
+    the_geom = "SRID=28992;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
     connection_node_start = factory.SubFactory(ConnectionNodeFactory)
     connection_node_end = factory.SubFactory(ConnectionNodeFactory)
 
@@ -143,6 +143,7 @@ class PumpstationFactory(factory.alchemy.SQLAlchemyModelFactory):
     lower_stop_level = 0.0
     capacity = 5.0
     connection_node_start = factory.SubFactory(ConnectionNodeFactory)
+
 
 class CrossSectionDefinitionFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:

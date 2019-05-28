@@ -324,37 +324,6 @@ def test_sqlalchemy_to_sqlite_type_with_custom_type():
     assert sqlalchemy_to_sqlite_type(customIntegerEnum) == 'integer'
 
 
-def test_range_check(session):
-    weir = factories.WeirFactory(discharge_coefficient_negative=5)
-
-    range_check = RangeCheck(column=models.Weir.discharge_coefficient_negative,
-                             upper_limit=10, lower_limit=0)
-    invalid = range_check.get_invalid(session)
-    assert len(invalid) == 0
-
-
-def test_range_check_out_of_range(session):
-    weir = factories.WeirFactory(discharge_coefficient_negative=11)
-
-    range_check = RangeCheck(column=models.Weir.discharge_coefficient_negative,
-                             upper_limit=10, lower_limit=0)
-    invalid = range_check.get_invalid(session)
-    assert len(invalid) == 1
-    assert invalid[0].id == weir.id
-
-
-def test_conditional_check_get_applicable(session):
-    conditional_check = ConditionalCheck(
-        criterion=True,
-        check=RangeCheck(
-            column=models.GlobalSetting.id,
-            upper_limit=10
-        )
-    )
-    query = conditional_check.to_check(session)
-    # TODO: This tests nothing!!!
-
-
 def test_conditional_checks(session):
     global_settings1 = factories.GlobalSettingsFactory(
         dem_obstacle_detection=True,

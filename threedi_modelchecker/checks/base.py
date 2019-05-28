@@ -8,7 +8,7 @@ from sqlalchemy import types
 
 
 class BaseCheck(ABC):
-    """Baseclass for all checks.
+    """Base class for all checks.
 
     A Check defines a constraint on a specific column and its table.
     One can validate if the constrain holds using the method `get_invalid()`.
@@ -53,6 +53,14 @@ class BaseCheck(ABC):
         """
         return session.query(self.table)
 
+    def description(self):
+        """Return a string explaining why rows are invalid according to this
+        check.
+
+        :return: string
+        """
+        return "Invalid value in column '%s'" % self.column
+
     def __repr__(self):
         return "<%s: %s.%s>" % (
             type(self).__name__,
@@ -91,6 +99,21 @@ class GeneralCheck(BaseCheck):
                 'No valid/invalid criterion has been specified'
             )
 
+    def description(self):
+        if self.criterion_valid is not None:
+            condition = self.criterion_valid.compile(
+                compile_kwargs={"literal_binds": True}
+            )
+        elif self.criterion_invalid is not None:
+            condition = ~self.criterion_invalid.compile(
+                compile_kwargs={"literal_binds": True}
+            )
+        else:
+            condition = 'no condition specified'
+        return "Value should hold the following condition %s" % (
+            condition,
+        )
+
 
 class ConditionalCheck(BaseCheck):
     """Apply an additional filter `criterion` on the specified `check`
@@ -118,6 +141,12 @@ class ConditionalCheck(BaseCheck):
         check.to_check = old_applicable_func  # reset old method
         return result
 
+    def description(self):
+        return "When '%s' holds, then %s" % (
+            self.criterion.compile(compile_kwargs={"literal_binds": True}),
+            self.check.description()
+        )
+
 
 class ForeignKeyCheck(BaseCheck):
     """Check all values in `column` are in `reference_column`.
@@ -135,6 +164,12 @@ class ForeignKeyCheck(BaseCheck):
         )
         return invalid_foreign_keys_query.all()
 
+    def description(self):
+        return "Missing foreign key in column %s, expected reference to %s." % (
+            self.column,
+            self.reference_column,
+        )
+
 
 class UniqueCheck(BaseCheck):
     """Check all values in `column` are unique
@@ -150,6 +185,9 @@ class UniqueCheck(BaseCheck):
             self.column.in_(duplicate_values))
         return invalid_uniques_query.all()
 
+    def description(self):
+        return "Value in %s should to be unique" % self.column
+
 
 class NotNullCheck(BaseCheck):
     """"Check all values in `column` that are not null"""
@@ -158,22 +196,33 @@ class NotNullCheck(BaseCheck):
         not_null_query = q_invalid.filter(self.column == None)
         return not_null_query.all()
 
+    def description(self):
+        return "Value in %s cannot be null" % self.column
+
 
 class TypeCheck(BaseCheck):
     """Check all values in `column` that are of the column defined type.
 
     Null values are ignored."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.expected_type = sqlalchemy_to_sqlite_type(self.column.type)
+
     def get_invalid(self, session):
         if "sqlite" not in session.bind.dialect.dialect_description:
             return []
-
-        expected_type = sqlalchemy_to_sqlite_type(self.column.type)
         q_invalid = self.to_check(session)
         invalid_type_query = q_invalid.filter(
-            func.typeof(self.column) != expected_type,
+            func.typeof(self.column) != self.expected_type,
             func.typeof(self.column) != "null"
         )
         return invalid_type_query.all()
+
+    def description(self):
+        return "Value in %s should to be of type %s" % (
+            self.column,
+            self.expected_type
+        )
 
 
 def sqlalchemy_to_sqlite_type(column_type):
@@ -238,6 +287,10 @@ class GeometryTypeCheck(BaseCheck):
         )
         return invalid_geometry_types_q.all()
 
+    def description(self):
+        return "Value in %s has invalid geometry type, expected geometry " \
+               "type %s" % (self.column, self.column.type.geometry_type)
+
 
 def _get_geometry_type(column, dialect):
     if dialect == 'sqlite':
@@ -263,30 +316,9 @@ class EnumCheck(BaseCheck):
         )
         return invalid_values_q.all()
 
-
-class RangeCheck(BaseCheck):
-    """Check all values in `column` are within specified bounds
-
-    Null values are ignored."""
-    def __init__(
-            self,
-            lower_limit=None,
-            upper_limit=None,
-            *args,
-            **kwargs):
-        super().__init__(*args, **kwargs)
-        self.lower_limit = lower_limit
-        self.upper_limit = upper_limit
-
-    def get_invalid(self, session):
-        q_invalid = self.to_check(session)
-        if self.lower_limit is not None and self.upper_limit is not None:
-            q_invalid = q_invalid.filter(
-                (self.column < self.lower_limit)
-                | (self.column > self.upper_limit)
-            )
-        elif self.lower_limit is not None:
-            q_invalid = q_invalid.filter(self.column < self.lower_limit)
-        elif self.upper_limit is not None:
-            q_invalid = q_invalid.filter(self.column > self.upper_limit)
-        return q_invalid.all()
+    def description(self):
+        return "Value in %s has invalid value, expected one of the " \
+               "following values %s" % (
+                   self.column,
+                   list(self.column.type.enum_class)
+               )

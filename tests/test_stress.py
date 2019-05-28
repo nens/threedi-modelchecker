@@ -124,24 +124,4 @@ def test_get_error_iterator_heugem(heugem):
 def test_get_error_iterator_bergermeer(bergermeer_db):
     mc = ThreediModelChecker(bergermeer_db)
     for check, error in mc.get_model_error_iterator():
-        print(check, error)
-
-
-def test_relationship(bergermeer_db):
-    from sqlalchemy import or_
-    mc = ThreediModelChecker(bergermeer_db)
-    session = mc.db.get_session()
-
-    # Connection nodes which are manholes
-    q = session.query(models.ConnectionNode).filter(
-        models.ConnectionNode.manhole.has()
-    )
-    # Connection nodes which are manholes or boundary_conditions
-    q = session.query(models.ConnectionNode).filter(
-        ~or_(
-            models.ConnectionNode.manhole.has(),
-            models.ConnectionNode.boundary_condition.has()
-        )
-    )
-
-
+        print(format_check_results(check, error))
