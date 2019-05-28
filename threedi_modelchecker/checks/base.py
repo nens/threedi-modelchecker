@@ -5,6 +5,7 @@ from geoalchemy2 import functions as geo_func
 from geoalchemy2.types import Geometry
 from sqlalchemy import func
 from sqlalchemy import types
+from sqlalchemy import not_
 
 
 class BaseCheck(ABC):
@@ -105,7 +106,7 @@ class GeneralCheck(BaseCheck):
                 compile_kwargs={"literal_binds": True}
             )
         elif self.criterion_invalid is not None:
-            condition = ~self.criterion_invalid.compile(
+            condition = not_(self.criterion_invalid).compile(
                 compile_kwargs={"literal_binds": True}
             )
         else:
@@ -223,7 +224,7 @@ class TypeCheck(BaseCheck):
         )
 
 
-def sqlalchemy_to_sqlite_type(column_type):
+def _sqlalchemy_to_sqlite_type(column_type):
     """Convert the sqlalchemy column type to sqlite data type
 
     Returns the value similar as the sqlite 'typeof' function.

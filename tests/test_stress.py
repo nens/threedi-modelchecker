@@ -3,13 +3,12 @@ import os
 import pytest
 
 from threedi_modelchecker import exporters
-from .conftest import data_dir
+from threedi_modelchecker.exporters import format_check_results
+from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_model import models
-from threedi_modelchecker.threedi_model.models import Base
-
-from tests import Session
+from .conftest import data_dir
 
 
 @pytest.fixture

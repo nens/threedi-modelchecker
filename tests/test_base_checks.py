@@ -12,7 +12,7 @@ from threedi_modelchecker.checks.base import GeometryTypeCheck
 from threedi_modelchecker.checks.base import NotNullCheck
 from threedi_modelchecker.checks.base import TypeCheck
 from threedi_modelchecker.checks.base import UniqueCheck
-from threedi_modelchecker.checks.base import sqlalchemy_to_sqlite_type
+from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_type
 from threedi_modelchecker.threedi_model import constants, custom_types, models
 
 
@@ -321,7 +321,7 @@ def test_enum_check_string_with_invalid_value(session):
 
 def test_sqlalchemy_to_sqlite_type_with_custom_type():
     customIntegerEnum = custom_types.IntegerEnum(constants.BoundaryType)
-    assert sqlalchemy_to_sqlite_type(customIntegerEnum) == 'integer'
+    assert _sqlalchemy_to_sqlite_type(customIntegerEnum) == 'integer'
 
 
 def test_conditional_checks(session):
