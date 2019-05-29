@@ -1,5 +1,3 @@
-from collections import Counter
-
 from sqlalchemy import func
 
 from threedi_modelchecker.checks import patterns

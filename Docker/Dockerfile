@@ -1,4 +1,9 @@
-FROM qgis-desktop:3.4.5
+FROM python:3.5
+
+RUN apt-get update \
+    && apt-get install -y \
+        sqlite3 \
+        libsqlite3-mod-spatialite
 
 WORKDIR /code
 

@@ -1,15 +1,10 @@
 # Copied from ThreeDiToolbox
 from builtins import object
-import os
 import copy
 
-import ogr
-import collections
-from qgis.PyQt.QtCore import QSettings
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
-from sqlalchemy.sql import text
 from sqlalchemy.ext.declarative import declarative_base
 
 
