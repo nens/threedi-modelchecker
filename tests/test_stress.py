@@ -2,11 +2,11 @@ import os
 
 import pytest
 
+from tests import Session
 from threedi_modelchecker import exporters
 from threedi_modelchecker.exporters import format_check_results
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_database import ThreediDatabase
-from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_model import models
 from .conftest import data_dir
 
@@ -109,14 +109,14 @@ def test_get_errors_heugem(heugem):
 def test_get_error_iterator_grotemarkt(grotemarkt):
     mc = ThreediModelChecker(grotemarkt)
     for check, error in mc.get_model_error_iterator():
-        print(check, error)
+        print(format_check_results(check, error))
 
 
 # @pytest.mark.skip('takes too long')
 def test_get_error_iterator_heugem(heugem):
     mc = ThreediModelChecker(heugem)
     for check, error in mc.get_model_error_iterator():
-        print(check, error)
+        print(format_check_results(check, error))
 
 
 # @pytest.mark.skip('takes too long')

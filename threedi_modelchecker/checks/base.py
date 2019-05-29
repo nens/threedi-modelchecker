@@ -205,7 +205,7 @@ class TypeCheck(BaseCheck):
     Null values are ignored."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.expected_type = sqlalchemy_to_sqlite_type(self.column.type)
+        self.expected_type = _sqlalchemy_to_sqlite_type(self.column.type)
 
     def get_invalid(self, session):
         if "sqlite" not in session.bind.dialect.dialect_description:

@@ -183,8 +183,6 @@ OTHER_CHECKS = [
             models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_end_id,
         )
     ),
-    # ConnectionNode must be connected to one of the following:
-    # pumpstation, culvert, channel, pipe, weir or orifice
     GeneralCheck(
         column=models.GlobalSetting.output_time_step,
         criterion_valid=(models.GlobalSetting.output_time_step % models.GlobalSetting.sim_time_step == 0)
