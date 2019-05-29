@@ -1,13 +1,9 @@
 import os
-import shutil
 
 import pytest
-from sqlalchemy import orm
 
-from threedi_modelchecker.threedi_model.models import Base
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.model_checks import ThreediModelChecker
-
 from tests import Session
 
 
@@ -32,28 +28,24 @@ postgis_settings = {
 }
 
 
-@pytest.fixture(scope='module')
-def emtpy_spatialite_model(tmpdir):
-    """Creates a temporarily empty-sqlite file with the threedi-model schema
-
-    Returns the file path of the sqlite file."""
-    emtpy_model_file = tmpdir.join('model.sqlite')
-    shutil.copyfile(emtpy_sqlite_file, emtpy_model_file)
-    return emtpy_model_file
-
-
 @pytest.fixture(
     scope='session',
     params=[('spatialite', sqlite_settings),
             ('postgres', postgis_settings)],
     ids=['spatialite', 'postgis'])
 def threedi_db(request):
+    """Fixture which yields a empty 3di database
+
+    Fixture is parameterized to yield two types of databases: a postgis and a
+    spatialite database.
+
+    A global Session object is configured based on database type. This allows
+    the factories to operate on the same session object. See:
+    https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
+    """
     db = ThreediDatabase(request.param[1], db_type=request.param[0],
                          echo=False)
     engine = db.get_engine()
-    # Base.prepare(engine, reflect=True)
-
-    # Configure the scoped session
     Session.configure(bind=engine)
 
     # monkey-patch get_session
@@ -65,6 +57,14 @@ def threedi_db(request):
 
 @pytest.fixture
 def session(threedi_db):
+    """Fixture which yields a session to an empty 3di database.
+
+    At the end of the test, all uncommitted changes are rolled back. Never
+    commit any transactions to the session! This will persist the changes
+    and affect the upcoming tests.
+
+    :return: sqlalchemy.orm.session.Session
+    """
     s = Session()
     yield s
     # Rollback the session => no changes to the database
