@@ -1,7 +1,8 @@
 import factory
 import pytest
+from sqlalchemy import cast
 from sqlalchemy import func
-from sqlalchemy import or_
+from sqlalchemy import Integer
 
 from tests import factories
 from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck, \
@@ -470,3 +471,28 @@ def test_general_check_aggregation_function(session):
     invalid_ids = [row.id for row in invalid]
     assert w1.id in invalid_ids
     assert w2.id in invalid_ids
+
+
+def test_general_check_modulo_operator(session):
+    global_settings_no_remainder = factories.GlobalSettingsFactory(
+        nr_timesteps=120,
+        output_time_step=20,
+    )
+    global_settings_remainder = factories.GlobalSettingsFactory(
+        nr_timesteps=125,
+        output_time_step=20,  # This is a FLOAT
+    )
+    # We cast to Integer because postgis modulo operator expects two of
+    # same type.
+
+    modulo_check = GeneralCheck(
+        column=models.GlobalSetting.nr_timesteps,
+        criterion_valid=
+        models.GlobalSetting.nr_timesteps % cast(
+            models.GlobalSetting.output_time_step, Integer
+        ) == 0
+    )
+
+    invalid = modulo_check.get_invalid(session)
+    assert len(invalid) == 1
+    assert invalid[0].id == global_settings_remainder.id
