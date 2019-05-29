@@ -2,20 +2,9 @@ import datetime
 
 import factory
 from factory import Faker
-from geoalchemy2 import Geometry
 
 from threedi_modelchecker.threedi_model import models, constants
 from tests import Session
-
-
-# def fake_ewkt(srid='28992', geom_type='LINESTRING', coords=2):
-#     from factory.faker import faker
-#     f = faker.Faker()
-#     coord_list = ''
-#     for _ in range(coords):
-#         lat, lng = f.local_latlng(country_code='NL', coords_only=True)
-#         coord_list.append('{} {}'.format(lat, lng))
-#     r = f'SRID={srid};{geom_type}({coord_list})'
 
 
 class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -69,7 +58,7 @@ class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
     display_name = Faker('name')
     code = 'code'
     calculation_type = constants.CalculationType.CONNECTED
-    the_geom = "SRID=28992;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
+    the_geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
     connection_node_start = factory.SubFactory(ConnectionNodeFactory)
     connection_node_end = factory.SubFactory(ConnectionNodeFactory)
 

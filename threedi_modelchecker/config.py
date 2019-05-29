@@ -172,9 +172,8 @@ RANGE_CHECKS = [
 ]
 
 OTHER_CHECKS = [
-    BankLevelCheck(),  # TODO: rewrite to a GeneralCheck.
+    BankLevelCheck(),
     # CrossSectionShapeCheck(),
-
     # 1d boundary conditions cannot be connected to a pumpstation
     GeneralCheck(
         column=models.BoundaryCondition1D.connection_node_id,
@@ -318,8 +317,6 @@ CONDITIONAL_CHECKS = [
             ])
         )
     ),
-
-
 ]
 
 

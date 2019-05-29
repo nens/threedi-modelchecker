@@ -1,19 +1,22 @@
 import pytest
 
 from threedi_modelchecker.checks.other import BankLevelCheck
-from threedi_modelchecker.checks.other import (
-    CrossSectionShapeCheck,
-    TimeseriesCheck,
-)
+from threedi_modelchecker.checks.other import CrossSectionShapeCheck
+from threedi_modelchecker.checks.other import TimeseriesCheck
 from threedi_modelchecker.checks.other import valid_tabulated_shape
 from threedi_modelchecker.threedi_model import models, constants
 from . import factories
 from .factories import BoundaryConditions2DFactory
 
 
-# TODO: Fix ChannelFactory
-@pytest.mark.skip("ChannelFactory is broken")
 def test_check_cross_section_location_bank_levels(session):
+    """Check 'CrossSectionLocation.bank_level' is not null if
+        calculation_type is CONNECTED or DOUBLE_CONNECTED.
+    """
+    if session.bind.name == 'postgresql':
+        pytest.skip('Postgis db has set constraints which make the '
+                    'channelfactory fail. Furthermore, it expects an SRID '
+                    '28992 while spatialite expects 4326.')
     channel = factories.ChannelFactory(
         calculation_type=constants.CalculationType.CONNECTED)
     wrong = factories.CrossSectionLocationFactory(

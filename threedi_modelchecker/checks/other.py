@@ -193,12 +193,4 @@ class ConnectionNodes(BaseCheck):
         )
 
     def get_invalid(self, session):
-        from sqlalchemy import exists
-
-        # session.query(self.table).filter(
-        #     exists().
-        #
-        #     )
-        # )
-
-        pass
+        raise NotImplementedError
