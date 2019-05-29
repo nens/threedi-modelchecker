@@ -17,8 +17,6 @@ sqlite_settings = {
     'db_file': emtpy_sqlite_file
 }
 # postgres
-empty_postgres_file = 'empty.postgres'
-empty_postgres_path = os.path.join(data_dir, empty_postgres_file)
 postgis_settings = {
     'host': 'postgis',
     'port': 5432,
