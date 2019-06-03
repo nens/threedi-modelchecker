@@ -1,7 +1,9 @@
 from enum import Enum
 
 LATEST_MIGRATION_ID = 173
-LATEST_MIGRATION_NAME = "0171_auto__chg_field_v2aggregationsettings_aggregation_method__del_field_v2"  # noqa
+LATEST_MIGRATION_NAME = (
+    "0171_auto__chg_field_v2aggregationsettings_aggregation_method__del_field_v2"
+)  # noqa
 
 
 class BoundaryType(Enum):
@@ -16,30 +18,30 @@ class Later2dType(Enum):
 
 
 class FlowVariable(Enum):
-    DISCHARGE = 'discharge'
-    FLOW_VELOCITY = 'flow_velocity'
-    PUMP_DISCHARGE = 'pump_discharge'
-    RAIN = 'rain'
-    WATERLEVEL = 'waterlevel'
-    WET_CROSS_SECTION = 'wet_cross-section'
-    WET_SURFACE = 'wet_surface'
-    LATERAL_DISCHARGE  = 'lateral_discharge'
-    VOLUM = 'volume'
-    SIMPLE_INFILTRATION = 'simple_infiltration'
-    LEAKAGE = 'leakage'
-    INTERCEPTION = 'interception'
-    SURFACE_SOURCE_SINK_DISCHARGE = 'surface_source_sink_discharge'
+    DISCHARGE = "discharge"
+    FLOW_VELOCITY = "flow_velocity"
+    PUMP_DISCHARGE = "pump_discharge"
+    RAIN = "rain"
+    WATERLEVEL = "waterlevel"
+    WET_CROSS_SECTION = "wet_cross-section"
+    WET_SURFACE = "wet_surface"
+    LATERAL_DISCHARGE = "lateral_discharge"
+    VOLUM = "volume"
+    SIMPLE_INFILTRATION = "simple_infiltration"
+    LEAKAGE = "leakage"
+    INTERCEPTION = "interception"
+    SURFACE_SOURCE_SINK_DISCHARGE = "surface_source_sink_discharge"
 
 
 class AggregationMethod(Enum):
-    AVERAGE = 'avg'
-    MINIMUM = 'min'
-    MAXIMUM = 'max'
-    CUMULATIVE = 'cum'
-    MEDIAN = 'med'
-    CUMULATIVE_NEGATIVE = 'cum_negative'
-    CUMULATIVE_POSITIVE = 'cum_positive'
-    CURRENT = 'current'
+    AVERAGE = "avg"
+    MINIMUM = "min"
+    MAXIMUM = "max"
+    CUMULATIVE = "cum"
+    MEDIAN = "med"
+    CUMULATIVE_NEGATIVE = "cum_negative"
+    CUMULATIVE_POSITIVE = "cum_positive"
+    CURRENT = "current"
 
 
 class CalculationType(Enum):
@@ -85,22 +87,22 @@ class InitializationType(Enum):
 
 
 class SurfaceInclinationType(Enum):
-    VLAK = 'vlak'
-    HELLEND = 'hellend'
-    UITGESTREKT = 'uitgestrekt'
+    VLAK = "vlak"
+    HELLEND = "hellend"
+    UITGESTREKT = "uitgestrekt"
 
 
 class SurfaceClass(Enum):
-    GESLOTEN_VERHARDING = 'gesloten verharding'
-    OPEN_VERHARDING = 'open verharding'
-    HALF_VERHARD = 'half verhard'
-    ONVERHARD = 'onverhard'
-    PAND = 'pand'
+    GESLOTEN_VERHARDING = "gesloten verharding"
+    OPEN_VERHARDING = "open verharding"
+    HALF_VERHARD = "half verhard"
+    ONVERHARD = "onverhard"
+    PAND = "pand"
 
 
 class SurfaceType(Enum):
-    SURFACE = 'v2_surface'
-    IMPERVIOUS_SURFACE = 'v2_impervious_surface'
+    SURFACE = "v2_surface"
+    IMPERVIOUS_SURFACE = "v2_impervious_surface"
 
 
 class InterflowType(Enum):

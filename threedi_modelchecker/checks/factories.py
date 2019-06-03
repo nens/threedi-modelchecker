@@ -13,8 +13,11 @@ from ..threedi_model import custom_types
 def generate_foreign_key_checks(table):
     foreign_key_checks = []
     for fk_column in table.foreign_keys:
-        foreign_key_checks.append(ForeignKeyCheck(
-            reference_column=fk_column.column, column=fk_column.parent))
+        foreign_key_checks.append(
+            ForeignKeyCheck(
+                reference_column=fk_column.column,
+                column=fk_column.parent)
+        )
     return foreign_key_checks
 
 
@@ -53,8 +56,7 @@ def generate_geometry_type_checks(table):
     geometry_type_checks = []
     for column in table.columns:
         if type(column.type) == Geometry:
-            geometry_type_checks.append(
-                GeometryTypeCheck(column))
+            geometry_type_checks.append(GeometryTypeCheck(column))
     return geometry_type_checks
 
 

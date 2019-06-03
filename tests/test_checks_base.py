@@ -5,8 +5,7 @@ from sqlalchemy import func
 from sqlalchemy import Integer
 
 from tests import factories
-from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck, \
-    GeneralCheck
+from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck, GeneralCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
@@ -20,8 +19,7 @@ from threedi_modelchecker.threedi_model import constants, custom_types, models
 def test_fk_check(session):
     factories.ManholeFactory.create_batch(5)
     fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id,
-        models.Manhole.connection_node_id,
+        models.ConnectionNode.id, models.Manhole.connection_node_id
     )
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
@@ -29,8 +27,7 @@ def test_fk_check(session):
 
 def test_fk_check_no_entries(session):
     fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id,
-        models.Manhole.connection_node_id,
+        models.ConnectionNode.id, models.Manhole.connection_node_id
     )
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
@@ -42,8 +39,7 @@ def test_fk_check_null_fk(session):
     factories.ManholeFactory(manhole_indicator=None)
 
     fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id,
-        models.Manhole.manhole_indicator,
+        models.ConnectionNode.id, models.Manhole.manhole_indicator
     )
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
@@ -56,8 +52,7 @@ def test_fk_check_both_null(session):
     assert session.query(models.GlobalSetting.control_group_id).scalar() is None
     assert session.query(models.ControlGroup.id).scalar() is None
     fk_check = ForeignKeyCheck(
-        models.ControlGroup.id,
-        models.GlobalSetting.control_group_id,
+        models.ControlGroup.id, models.GlobalSetting.control_group_id
     )
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
@@ -69,8 +64,7 @@ def test_fk_check_missing_fk(session):
     missing_fk = factories.ManholeFactory(manhole_indicator=-1)
 
     fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id,
-        models.Manhole.manhole_indicator,
+        models.ConnectionNode.id, models.Manhole.manhole_indicator
     )
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 1
@@ -87,9 +81,11 @@ def test_unique_check(session):
 
 def test_unique_check_duplicate_value(session):
     manholes = factories.ManholeFactory.create_batch(
-        5, zoom_category=factory.Sequence(lambda n: n))
+        5, zoom_category=factory.Sequence(lambda n: n)
+    )
     duplicate_manhole = factories.ManholeFactory(
-        zoom_category=manholes[0].zoom_category)
+        zoom_category=manholes[0].zoom_category
+    )
 
     unique_check = UniqueCheck(models.Manhole.zoom_category)
     invalid_rows = unique_check.get_invalid(session)
@@ -102,7 +98,8 @@ def test_unique_check_duplicate_value(session):
 
 def test_unique_check_null_values(session):
     factories.ManholeFactory.create_batch(
-        5, zoom_category=factory.Sequence(lambda n: n))
+        5, zoom_category=factory.Sequence(lambda n: n)
+    )
     factories.ManholeFactory.create_batch(3, zoom_category=None)
 
     unique_check = UniqueCheck(models.ConnectionNode.id)
@@ -111,8 +108,7 @@ def test_unique_check_null_values(session):
 
 
 def test_null_check(session):
-    factories.ConnectionNodeFactory.create_batch(
-        5, storage_area=3.0)
+    factories.ConnectionNodeFactory.create_batch(5, storage_area=3.0)
 
     null_check = NotNullCheck(models.ConnectionNode.storage_area)
     invalid_rows = null_check.get_invalid(session)
@@ -120,8 +116,7 @@ def test_null_check(session):
 
 
 def test_null_check_with_null_value(session):
-    factories.ConnectionNodeFactory.create_batch(
-        5, storage_area=3.0)
+    factories.ConnectionNodeFactory.create_batch(5, storage_area=3.0)
     null_node = factories.ConnectionNodeFactory(storage_area=None)
 
     null_check = NotNullCheck(models.ConnectionNode.storage_area)
@@ -145,13 +140,14 @@ def test_run_spatial_function(session):
      Works on postgis and spatialite"""
     c1 = factories.ConnectionNodeFactory()
     from geoalchemy2 import func
+
     q = session.query(func.ST_AsGeoJSON(models.ConnectionNode.the_geom))
     r = q.first()
 
 
 def test_type_check(session):
-    if session.bind.name == 'postgresql':
-        pytest.skip('type checks not working on postgres')
+    if session.bind.name == "postgresql":
+        pytest.skip("type checks not working on postgres")
     factories.ManholeFactory(zoom_category=123)
     factories.ManholeFactory(zoom_category=456)
 
@@ -162,11 +158,11 @@ def test_type_check(session):
 
 
 def test_type_check_integer(session):
-    if session.bind.name == 'postgresql':
-        pytest.skip('type checks not working on postgres')
+    if session.bind.name == "postgresql":
+        pytest.skip("type checks not working on postgres")
     factories.ManholeFactory(zoom_category=123)
     factories.ManholeFactory(zoom_category=None)
-    m1 = factories.ManholeFactory(zoom_category='abc')
+    m1 = factories.ManholeFactory(zoom_category="abc")
     m2 = factories.ManholeFactory(zoom_category=1.23)
 
     type_check = TypeCheck(models.Manhole.zoom_category)
@@ -179,9 +175,9 @@ def test_type_check_integer(session):
 
 
 def test_type_check_varchar(session):
-    if session.bind.name == 'postgresql':
-        pytest.skip('type checks not working on postgres')
-    factories.ManholeFactory(code='abc')
+    if session.bind.name == "postgresql":
+        pytest.skip("type checks not working on postgres")
+    factories.ManholeFactory(code="abc")
     factories.ManholeFactory(code=123)
 
     type_check = TypeCheck(models.Manhole.code)
@@ -191,8 +187,8 @@ def test_type_check_varchar(session):
 
 
 def test_type_check_boolean(session):
-    if session.bind.name == 'postgresql':
-        pytest.skip('type checks not working on postgres')
+    if session.bind.name == "postgresql":
+        pytest.skip("type checks not working on postgres")
     factories.GlobalSettingsFactory(use_1d_flow=True)
     factories.GlobalSettingsFactory(use_1d_flow=1)
     # factories.GlobalSettingsFactory(use_1d_flow='true')
@@ -206,27 +202,25 @@ def test_type_check_boolean(session):
 
 def test_geometry_check(session):
     c = factories.ConnectionNodeFactory(
-        the_geom='SRID=28992;POINT(-371.064544 42.28787)'
+        the_geom="SRID=28992;POINT(-371.064544 42.28787)"
     )
 
     geometry_check = GeometryCheck(models.ConnectionNode.the_geom)
     invalid_rows = geometry_check.get_invalid(session)
 
-    assert len(invalid_rows ) == 0
+    assert len(invalid_rows) == 0
 
 
 def test_geometry_check_with_invalid_geoms(session):
-    if session.bind.name == 'postgresql':
-        pytest.skip('Not sure how to insert invalid types in postgresql')
+    if session.bind.name == "postgresql":
+        pytest.skip("Not sure how to insert invalid types in postgresql")
 
     inser_invalid_geom_q = """
     INSERT INTO v2_connection_nodes (id, code, the_geom) 
     VALUES (2, 'the_code', 'invalid_geom')
     """
     session.execute(inser_invalid_geom_q)
-    factories.ConnectionNodeFactory(
-        the_geom='SRID=28992;POINT(-71.064544 42.28787)'
-    )
+    factories.ConnectionNodeFactory(the_geom="SRID=28992;POINT(-71.064544 42.28787)")
 
     geometry_check = GeometryCheck(models.ConnectionNode.the_geom)
     invalid_rows = geometry_check.get_invalid(session)
@@ -234,14 +228,12 @@ def test_geometry_check_with_invalid_geoms(session):
 
 
 def test_geometry_check_with_none_geoms(session):
-    if session.bind.name == 'postgresql':
-        pytest.skip('Not sure how to insert invalid types in postgresql')
+    if session.bind.name == "postgresql":
+        pytest.skip("Not sure how to insert invalid types in postgresql")
     factories.ConnectionNodeFactory(
-        the_geom_linestring='SRID=4326;LINESTRING(71.0 42.2, 71.3 42.3)'
+        the_geom_linestring="SRID=4326;LINESTRING(71.0 42.2, 71.3 42.3)"
     )
-    none_geom = factories.ConnectionNodeFactory(
-            the_geom_linestring=None
-    )
+    none_geom = factories.ConnectionNodeFactory(the_geom_linestring=None)
 
     geometry_check = GeometryCheck(models.ConnectionNode.the_geom_linestring)
     invalid_rows = geometry_check.get_invalid(session)
@@ -250,7 +242,7 @@ def test_geometry_check_with_none_geoms(session):
 
 def test_geometry_type_check(session):
     factories.ConnectionNodeFactory.create_batch(
-        2, the_geom='SRID=28992;POINT(-71.064544 42.28787)'
+        2, the_geom="SRID=28992;POINT(-71.064544 42.28787)"
     )
 
     geometry_type_check = GeometryTypeCheck(models.ConnectionNode.the_geom)
@@ -259,13 +251,11 @@ def test_geometry_type_check(session):
 
 
 def test_geometry_type_check_invalid_geom_type(session):
-    if session.bind.name == 'postgresql':
-        pytest.skip('Not sure how to insert invalid geometry types in postgresql')
-    factories.ConnectionNodeFactory(
-        the_geom='SRID=28992;POINT(-71.064544 42.28787)'
-    )
+    if session.bind.name == "postgresql":
+        pytest.skip("Not sure how to insert invalid geometry types in postgresql")
+    factories.ConnectionNodeFactory(the_geom="SRID=28992;POINT(-71.064544 42.28787)")
     invalid_geom_type = factories.ConnectionNodeFactory(
-        the_geom='SRID=28992;LINESTRING(71.0 42.2, 71.3 42.3)'
+        the_geom="SRID=28992;LINESTRING(71.0 42.2, 71.3 42.3)"
     )
 
     geometry_type_check = GeometryTypeCheck(models.ConnectionNode.the_geom)
@@ -279,7 +269,7 @@ def test_enum_check(session):
 
     enum_check = EnumCheck(models.BoundaryConditions2D.boundary_type)
     invalid_rows = enum_check.get_invalid(session)
-    assert len(invalid_rows ) == 0
+    assert len(invalid_rows) == 0
 
 
 def test_enum_check_with_null_values(session):
@@ -309,10 +299,12 @@ def test_enum_check_string_enum(session):
 
 
 def test_enum_check_string_with_invalid_value(session):
-    if session.bind.name == 'postgresql':
-        pytest.skip('Not able to add invalid aggregation method due to '
-                    'CHECKED CONSTRAINT')
-    a = factories.AggregationSettingsFactory(aggregation_method='invalid')
+    if session.bind.name == "postgresql":
+        pytest.skip(
+            "Not able to add invalid aggregation method due to "
+            "CHECKED CONSTRAINT"
+        )
+    a = factories.AggregationSettingsFactory(aggregation_method="invalid")
 
     enum_check = EnumCheck(models.AggregationSettings.aggregation_method)
     invalid_rows = enum_check.get_invalid(session)
@@ -322,26 +314,24 @@ def test_enum_check_string_with_invalid_value(session):
 
 def test_sqlalchemy_to_sqlite_type_with_custom_type():
     customIntegerEnum = custom_types.IntegerEnum(constants.BoundaryType)
-    assert _sqlalchemy_to_sqlite_type(customIntegerEnum) == 'integer'
+    assert _sqlalchemy_to_sqlite_type(customIntegerEnum) == "integer"
 
 
 def test_conditional_checks(session):
     global_settings1 = factories.GlobalSettingsFactory(
-        dem_obstacle_detection=True,
-        dem_obstacle_height=-5
+        dem_obstacle_detection=True, dem_obstacle_height=-5
     )
     global_settings2 = factories.GlobalSettingsFactory(
-        dem_obstacle_detection=False,
-        dem_obstacle_height=-5
+        dem_obstacle_detection=False, dem_obstacle_height=-5
     )
 
     range_check = GeneralCheck(
         column=models.GlobalSetting.dem_obstacle_height,
-        criterion_valid=models.GlobalSetting.dem_obstacle_height > 0
+        criterion_valid=models.GlobalSetting.dem_obstacle_height > 0,
     )
     conditional_range_check = ConditionalCheck(
         check=range_check,
-        criterion=(models.GlobalSetting.dem_obstacle_detection == True)
+        criterion=(models.GlobalSetting.dem_obstacle_detection == True),
     )
 
     invalid_conditional = conditional_range_check.get_invalid(session)
@@ -359,14 +349,16 @@ def test_conditional_check_storage_area(session):
     conn_node_manhole_valid = factories.ConnectionNodeFactory(storage_area=4)
     conn_node_manhole_invalid = factories.ConnectionNodeFactory(storage_area=-5)
     manhole_valid = factories.ManholeFactory(connection_node=conn_node_manhole_valid)
-    manhole_invalid = factories.ManholeFactory(connection_node=conn_node_manhole_invalid)
+    manhole_invalid = factories.ManholeFactory(
+        connection_node=conn_node_manhole_invalid
+    )
 
     check = ConditionalCheck(
         criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
         check=GeneralCheck(
             column=models.ConnectionNode.storage_area,
-            criterion_valid=models.ConnectionNode.storage_area > 0
-        )
+            criterion_valid=models.ConnectionNode.storage_area > 0,
+        ),
     )
     to_check = check.to_check(session)
     assert to_check.count() == 2
@@ -386,20 +378,16 @@ def test_conditional_check_advanced(session):
     connection_node3 = factories.ConnectionNodeFactory(storage_area=3)
     connection_node4 = factories.ConnectionNodeFactory(storage_area=4)
     connection_node5 = factories.ConnectionNodeFactory(storage_area=10)
-    manhole = factories.ManholeFactory(
-        connection_node=connection_node2
-    )
-    manhole_good = factories.ManholeFactory(
-            connection_node=connection_node5
-        )
+    manhole = factories.ManholeFactory(connection_node=connection_node2)
+    manhole_good = factories.ManholeFactory(connection_node=connection_node5)
 
     # If a connection_node is a manhole, then storage_area > 0
     advanced_check = ConditionalCheck(
         criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
         check=GeneralCheck(
             column=models.ConnectionNode.storage_area,
-            criterion_valid=models.ConnectionNode.storage_area > 0
-        )
+            criterion_valid=models.ConnectionNode.storage_area > 0,
+        ),
     )
     invalids = advanced_check.get_invalid(session)
     assert len(invalids) == 1
@@ -414,7 +402,7 @@ def test_get_valid(session):
 
     range_check = GeneralCheck(
         column=models.ConnectionNode.storage_area,
-        criterion_valid=models.ConnectionNode.storage_area > 2
+        criterion_valid=models.ConnectionNode.storage_area > 2,
     )
     to_check = range_check.to_check(session).all()
     assert len(to_check) == 3
@@ -429,8 +417,7 @@ def test_general_check_range(session):
 
     invalid_criterion = models.Weir.friction_value > 0
     general_range_check = GeneralCheck(
-        column=models.Weir.friction_value,
-        criterion_invalid=invalid_criterion
+        column=models.Weir.friction_value, criterion_invalid=invalid_criterion
     )
 
     invalid = general_range_check.get_invalid(session)
@@ -444,8 +431,7 @@ def test_general_check_valid_criterion_range(session):
 
     valid_criterion = models.Weir.friction_value >= 0
     general_range_check = GeneralCheck(
-        column=models.Weir.friction_value,
-        criterion_valid=valid_criterion
+        column=models.Weir.friction_value, criterion_valid=valid_criterion
     )
 
     invalid = general_range_check.get_invalid(session)
@@ -453,7 +439,7 @@ def test_general_check_valid_criterion_range(session):
     assert invalid[0].id == w2.id
 
 
-@pytest.mark.skip('Aggregate function not working for general checks')
+@pytest.mark.skip("Aggregate function not working for general checks")
 def test_general_check_aggregation_function(session):
     # Aggregation functions need something different!
 
@@ -462,8 +448,7 @@ def test_general_check_aggregation_function(session):
 
     invalid_criterion = func.count(models.Weir.friction_value) < 3
     general_range_check = GeneralCheck(
-        column=models.Weir.friction_value,
-        criterion_invalid=invalid_criterion
+        column=models.Weir.friction_value, criterion_invalid=invalid_criterion
     )
 
     invalid = general_range_check.get_invalid(session)
@@ -475,22 +460,19 @@ def test_general_check_aggregation_function(session):
 
 def test_general_check_modulo_operator(session):
     global_settings_no_remainder = factories.GlobalSettingsFactory(
-        nr_timesteps=120,
-        output_time_step=20,
+        nr_timesteps=120, output_time_step=20
     )
     global_settings_remainder = factories.GlobalSettingsFactory(
-        nr_timesteps=125,
-        output_time_step=20,  # This is a FLOAT
+        nr_timesteps=125, output_time_step=20  # This is a FLOAT
     )
     # We cast to Integer because postgis modulo operator expects two of
     # same type.
 
     modulo_check = GeneralCheck(
         column=models.GlobalSetting.nr_timesteps,
-        criterion_valid=
-        models.GlobalSetting.nr_timesteps % cast(
-            models.GlobalSetting.output_time_step, Integer
-        ) == 0
+        criterion_valid=models.GlobalSetting.nr_timesteps
+        % cast(models.GlobalSetting.output_time_step, Integer)
+        == 0,
     )
 
     invalid = modulo_check.get_invalid(session)

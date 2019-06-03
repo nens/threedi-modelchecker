@@ -8,29 +8,26 @@ from tests import Session
 
 
 cur_dir = os.path.dirname(__file__)
-data_dir = os.path.join(cur_dir, 'data')
+data_dir = os.path.join(cur_dir, "data")
 # Sqlite
-emtpy_sqlite_file = 'empty.sqlite'
+emtpy_sqlite_file = "empty.sqlite"
 emtpy_sqlite_path = os.path.join(data_dir, emtpy_sqlite_file)
-sqlite_settings = {
-    'db_path': emtpy_sqlite_path,
-    'db_file': emtpy_sqlite_file
-}
+sqlite_settings = {"db_path": emtpy_sqlite_path, "db_file": emtpy_sqlite_file}
 # postgres
 postgis_settings = {
-    'host': 'postgis',
-    'port': 5432,
-    'database': 'postgis',
-    'username': 'postgis',
-    'password': 'mysecret'
+    "host": "postgis",
+    "port": 5432,
+    "database": "postgis",
+    "username": "postgis",
+    "password": "mysecret",
 }
 
 
 @pytest.fixture(
-    scope='session',
-    params=[('spatialite', sqlite_settings),
-            ('postgres', postgis_settings)],
-    ids=['spatialite', 'postgis'])
+    scope="session",
+    params=[("spatialite", sqlite_settings), ("postgres", postgis_settings)],
+    ids=["spatialite", "postgis"],
+)
 def threedi_db(request):
     """Fixture which yields a empty 3di database
 

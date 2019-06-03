@@ -20,9 +20,9 @@ def export_to_file(errors, file):
     :return: None
     :raise FileExistsError: if the file already exists
     """
-    with open(file, 'w') as f:
+    with open(file, "w") as f:
         for error in errors:
-            f.write(str(error) + '\n')
+            f.write(str(error) + "\n")
 
 
 def summarize_type_errors(errors):
@@ -33,9 +33,11 @@ def summarize_type_errors(errors):
     :param errors: iterator of BaseModelError
     :return: dict
     """
+
     def _get_error_type(errors):
         for error in errors:
             yield type(error).__name__
+
     summary = Counter(_get_error_type(errors))
     return summary, sum(summary.values())
 
@@ -46,9 +48,11 @@ def summarize_column_errors(errors):
     For each column the number of errors are returned. Columns with no errors
     are not returned.
     """
+
     def _get_error_table_column(errors):
         for error in errors:
-            yield '%s.%s' % (error.column.table.name, error.column.name)
+            yield "%s.%s" % (error.column.table.name, error.column.name)
+
     summary = Counter(_get_error_table_column(errors))
     return summary, sum(summary.values())
 
@@ -59,5 +63,5 @@ def format_check_results(check, invalid_row):
         check=check,
         row_id=invalid_row.id,
         row_value=getattr(invalid_row, check.column.name),
-        description=check.description()
+        description=check.description(),
     )

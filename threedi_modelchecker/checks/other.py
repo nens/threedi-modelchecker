@@ -10,18 +10,19 @@ class BankLevelCheck(BaseCheck):
     """Check 'CrossSectionLocation.bank_level' is not null if
     calculation_type is CONNECTED or DOUBLE_CONNECTED.
     """
+
     def __init__(self):
-        super().__init__(
-            column=models.CrossSectionLocation.bank_level
-        )
+        super().__init__(column=models.CrossSectionLocation.bank_level)
 
     def get_invalid(self, session):
         q = session.query(self.table).filter(
             models.CrossSectionLocation.bank_level == None,
             models.CrossSectionLocation.channel.has(
                 models.Channel.calculation_type.in_(
-                    [constants.CalculationType.CONNECTED,
-                     constants.CalculationType.DOUBLE_CONNECTED]
+                    [
+                        constants.CalculationType.CONNECTED,
+                        constants.CalculationType.DOUBLE_CONNECTED,
+                    ]
                 )
             ),
         )
@@ -30,15 +31,12 @@ class BankLevelCheck(BaseCheck):
 
 class CrossSectionShapeCheck(BaseCheck):
     """Check if all CrossSectionDefinition.shape are valid"""
+
     def __init__(self):
-        super().__init__(
-            column=models.CrossSectionDefinition.shape
-        )
+        super().__init__(column=models.CrossSectionDefinition.shape)
 
     def get_invalid(self, session):
-        cross_section_definitions = session.query(
-            self.table
-        )
+        cross_section_definitions = session.query(self.table)
         invalid_cross_section_shapes = []
 
         for cross_section_definition in cross_section_definitions.all():
@@ -47,25 +45,19 @@ class CrossSectionShapeCheck(BaseCheck):
             height = cross_section_definition.height
             if shape == constants.CrossSectionShape.RECTANGLE:
                 if not valid_rectangle(width, height):
-                    invalid_cross_section_shapes.append(
-                        cross_section_definition)
+                    invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.CIRCLE:
                 if not valid_circle(width, height):
-                    invalid_cross_section_shapes.append(
-                        cross_section_definition)
+                    invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.EGG:
                 if not valid_egg(width, height):
-                    invalid_cross_section_shapes.append(
-                        cross_section_definition)
+                    invalid_cross_section_shapes.append(cross_section_definition)
             if shape == constants.CrossSectionShape.TABULATED_RECTANGLE:
                 if not valid_tabulated_shape(width, height):
-                    invalid_cross_section_shapes.append(
-                        cross_section_definition)
+                    invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.TABULATED_TRAPEZIUM:
                 if not valid_tabulated_shape(width, height):
-                    invalid_cross_section_shapes.append(
-                        cross_section_definition
-                    )
+                    invalid_cross_section_shapes.append(cross_section_definition)
         return invalid_cross_section_shapes
 
     def description(self):
@@ -90,7 +82,7 @@ def valid_egg(width, height):
     height_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(height)
     if not width_match or not height_match:
         return False
-    return len(width.split(' ')) == len(height.split(' '))
+    return len(width.split(" ")) == len(height.split(" "))
 
 
 def valid_tabulated_shape(width, height):
@@ -98,7 +90,7 @@ def valid_tabulated_shape(width, height):
     height_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(height)
     if not width_match or not height_match:
         return False
-    return len(width.split(' ')) == len(height.split(' '))
+    return len(width.split(" ")) == len(height.split(" "))
 
 
 class TimeseriesCheck(BaseCheck):
@@ -111,6 +103,7 @@ class TimeseriesCheck(BaseCheck):
 
     All timeseries in the table should contain the same timesteps.
     """
+
     def get_invalid(self, session):
         invalid_timeseries = []
         required_timesteps = {}
@@ -122,9 +115,9 @@ class TimeseriesCheck(BaseCheck):
                 invalid_timeseries.append(row)
                 continue
 
-            timesteps = {time for time, *_ in
-                         patterns.TIMESERIE_ENTRY_REGEX.findall(
-                             timeserie)}
+            timesteps = {
+                time for time, *_ in patterns.TIMESERIE_ENTRY_REGEX.findall(timeserie)
+            }
             if not required_timesteps:
                 # Assume the first timeserie defines the required timesteps.
                 # All others should have the same timesteps.
@@ -143,10 +136,9 @@ class Use0DFlowCheck(BaseCheck):
     """Check that when use_0d_flow in global settings is configured to 1 or to
     2, there is at least one impervious surface or surfaces respectively.
     """
+
     def __init__(self):
-        super().__init__(
-            column=models.GlobalSetting.use_0d_inflow
-        )
+        super().__init__(column=models.GlobalSetting.use_0d_inflow)
 
     def to_check(self, session):
         """Return a Query object on which this check is applied"""
@@ -171,8 +163,10 @@ class Use0DFlowCheck(BaseCheck):
         return invalid_rows
 
     def description(self):
-        return "When %s is used, there should exists at least one " \
-               "(impervious) surface." % self.column
+        return (
+            "When %s is used, there should exists at least one "
+            "(impervious) surface." % self.column
+        )
 
 
 class ConnectionNodes(BaseCheck):
@@ -185,10 +179,9 @@ class ConnectionNodes(BaseCheck):
     - Pumpstation
     - Weir
     """
+
     def __init__(self):
-        super().__init__(
-            column=models.ConnectionNode.id
-        )
+        super().__init__(column=models.ConnectionNode.id)
 
     def get_invalid(self, session):
         raise NotImplementedError

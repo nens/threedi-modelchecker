@@ -13,24 +13,26 @@ def test_check_cross_section_location_bank_levels(session):
     """Check 'CrossSectionLocation.bank_level' is not null if
         calculation_type is CONNECTED or DOUBLE_CONNECTED.
     """
-    if session.bind.name == 'postgresql':
-        pytest.skip('Postgis db has set constraints which make the '
-                    'channelfactory fail. Furthermore, it expects an SRID '
-                    '28992 while spatialite expects 4326.')
+    if session.bind.name == "postgresql":
+        pytest.skip(
+            "Postgis db has set constraints which make the "
+            "channelfactory fail. Furthermore, it expects an SRID "
+            "28992 while spatialite expects 4326."
+        )
     channel = factories.ChannelFactory(
-        calculation_type=constants.CalculationType.CONNECTED)
+        calculation_type=constants.CalculationType.CONNECTED
+    )
     wrong = factories.CrossSectionLocationFactory(
-        channel=channel,
-        bank_level=None
+        channel=channel, bank_level=None
     )
     correct1 = factories.CrossSectionLocationFactory(
-        channel=channel,
-        bank_level=1.0
+        channel=channel, bank_level=1.0
     )
     correct2 = factories.CrossSectionLocationFactory(
         channel=factories.ChannelFactory(
-            calculation_type=constants.CalculationType.EMBEDDED),
-        bank_level=None
+            calculation_type=constants.CalculationType.EMBEDDED
+        ),
+        bank_level=None,
     )
 
     bank_level_check = BankLevelCheck()
@@ -41,18 +43,13 @@ def test_check_cross_section_location_bank_levels(session):
 
 def test_get_invalid_cross_section_shapes(session):
     factories.CrossSectionDefinitionFactory(
-        width='1',
-        height='1',
-        shape=constants.CrossSectionShape.RECTANGLE
+        width="1", height="1", shape=constants.CrossSectionShape.RECTANGLE
     )
     factories.CrossSectionDefinitionFactory(
-        width='1',
-        height=None,
-        shape=constants.CrossSectionShape.CIRCLE
+        width="1", height=None, shape=constants.CrossSectionShape.CIRCLE
     )
     factories.CrossSectionDefinitionFactory(
-        width='1 2',
-        height='1 2',
+        width="1 2", height="1 2",
         shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM
     )
 
@@ -62,24 +59,24 @@ def test_get_invalid_cross_section_shapes(session):
 
 
 def test_valid_tabulated_shape():
-    width = '0 1 2 3'
-    height = '0 1 2 3'
+    width = "0 1 2 3"
+    height = "0 1 2 3"
     assert valid_tabulated_shape(width, height)
 
 
 def test_valid_tabulated_shape_empty():
-    assert not valid_tabulated_shape('', '')
+    assert not valid_tabulated_shape("", "")
 
 
 def test_valid_tabulated_shape_unequal_length():
-    width = '1 2'
-    height = '1 2 3'
+    width = "1 2"
+    height = "1 2 3"
     assert not valid_tabulated_shape(width, height)
 
 
 def test_valid_tabulated_shape_invalid_char():
-    width = '1 2'
-    height = '1 a'
+    width = "1 2"
+    height = "1 a"
     assert not valid_tabulated_shape(width, height)
 
 

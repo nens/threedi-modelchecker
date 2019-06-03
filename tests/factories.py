@@ -46,8 +46,8 @@ class ConnectionNodeFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.ConnectionNode
         sqlalchemy_session = Session
 
-    code = Faker('name')
-    the_geom = 'SRID=28992;POINT(-71.064544 42.28787)'
+    code = Faker("name")
+    the_geom = "SRID=28992;POINT(-71.064544 42.28787)"
 
 
 class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -55,8 +55,8 @@ class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.Channel
         sqlalchemy_session = Session
 
-    display_name = Faker('name')
-    code = 'code'
+    display_name = Faker("name")
+    code = "code"
     calculation_type = constants.CalculationType.CONNECTED
     the_geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
     connection_node_start = factory.SubFactory(ConnectionNodeFactory)
@@ -68,8 +68,8 @@ class ManholeFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.Manhole
         sqlalchemy_session = Session
 
-    code = Faker('name')
-    display_name = Faker('name')
+    code = Faker("name")
+    display_name = Faker("name")
     connection_node = factory.SubFactory(ConnectionNodeFactory)
 
 
@@ -91,7 +91,7 @@ class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     code = factory.Sequence(lambda n: "Code %d" % n)
-    display_name = 'display_name'
+    display_name = "display_name"
     crest_level = 1.0
     crest_type = constants.CrestType.BROAD_CRESTED
     friction_value = 2.0
@@ -105,8 +105,8 @@ class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     boundary_type = constants.BoundaryType.WATERLEVEL
-    timeseries = '0,-0.5'
-    display_name = Faker('name')
+    timeseries = "0,-0.5"
+    display_name = Faker("name")
 
 
 class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -115,7 +115,7 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     boundary_type = constants.BoundaryType.WATERLEVEL
-    timeseries = '0,-0.5'
+    timeseries = "0,-0.5"
     connection_node = factory.SubFactory(ConnectionNodeFactory)
 
 
@@ -124,8 +124,8 @@ class PumpstationFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.Pumpstation
         sqlalchemy_session = Session
 
-    code = 'code'
-    display_name = 'display_name'
+    code = "code"
+    display_name = "display_name"
     sewerage = False
     type_ = constants.PumpType.DELIVERY_SIDE
     start_level = 1.0
@@ -139,7 +139,7 @@ class CrossSectionDefinitionFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.CrossSectionDefinition
         sqlalchemy_session = Session
 
-    code = 'cross-section code'
+    code = "cross-section code"
 
 
 class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -147,7 +147,7 @@ class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.CrossSectionLocation
         sqlalchemy_session = Session
 
-    code = 'code'
+    code = "code"
     reference_level = 0.0
     friction_type = constants.FrictionType.CHEZY
     friction_value = 0.0
@@ -160,9 +160,9 @@ class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.AggregationSettings
         sqlalchemy_session = Session
 
-    var_name = Faker('name')
-    flow_variable = 'max_timestep'
-    aggregation_method = 'avg'
+    var_name = Faker("name")
+    flow_variable = "max_timestep"
+    aggregation_method = "avg"
     aggregation_in_space = False
     timestep = 10
 
@@ -172,6 +172,6 @@ class MigrationHistoryFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.SouthMigrationHistory
         sqlalchemy_session = Session
 
-    app_name = 'my_app'
-    migration = 'migration %s' % factory.Sequence(lambda n: n)
+    app_name = "my_app"
+    migration = "migration %s" % factory.Sequence(lambda n: n)
     applied = datetime.datetime.now()

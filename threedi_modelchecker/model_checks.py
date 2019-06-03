@@ -1,10 +1,8 @@
 from .schema import ModelSchema
-from .threedi_model import models, custom_types
 from .config import Config
 
 
 class ThreediModelChecker:
-
     def __init__(self, threedi_db):
         self.db = threedi_db
         self.schema = ModelSchema(self.db)
