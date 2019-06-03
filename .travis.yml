@@ -7,6 +7,9 @@ services:
 install:
   docker-compose build
 
+before_script:
+  - docker-compose run postgis docker-entrypoint.sh  # initialize the empty 3Di database
+
 script:
   - docker-compose run modelchecker pytest
   - docker-compose run modelchecker flake8
