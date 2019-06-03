@@ -25,10 +25,10 @@ def test_check_cross_section_location_bank_levels(session):
     wrong = factories.CrossSectionLocationFactory(
         channel=channel, bank_level=None
     )
-    correct1 = factories.CrossSectionLocationFactory(
+    factories.CrossSectionLocationFactory(
         channel=channel, bank_level=1.0
     )
-    correct2 = factories.CrossSectionLocationFactory(
+    factories.CrossSectionLocationFactory(
         channel=factories.ChannelFactory(
             calculation_type=constants.CalculationType.EMBEDDED
         ),
@@ -81,7 +81,7 @@ def test_valid_tabulated_shape_invalid_char():
 
 
 def test_timeseries_check(session):
-    boundary_condition = BoundaryConditions2DFactory()
+    BoundaryConditions2DFactory()
 
     check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
     invalid = check.get_invalid(session)
@@ -89,7 +89,7 @@ def test_timeseries_check(session):
 
 
 def test_timeseries_check_multiple(session):
-    boundary_condition = BoundaryConditions2DFactory.create_batch(3)
+    BoundaryConditions2DFactory.create_batch(3)
 
     check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
     invalid = check.get_invalid(session)
@@ -97,7 +97,7 @@ def test_timeseries_check_multiple(session):
 
 
 def test_timeseries_check_different_timesteps(session):
-    boundary_condition1 = BoundaryConditions2DFactory(
+    BoundaryConditions2DFactory(
         timeseries="0,-0.5\n1,1.4\n2,4.0"
     )
     boundary_condition2 = BoundaryConditions2DFactory(

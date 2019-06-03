@@ -76,7 +76,7 @@ class GeneralCheck(BaseCheck):
 
     Either specify what is valid with `criterion_valid` or what is invalid
     with `criterion_invalid`.
-    The criterion should be  a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)
+    The criterion should be  a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)  # noqa
     with operators being operators being column within `self.table.columns`
     """
 
@@ -323,9 +323,9 @@ class EnumCheck(BaseCheck):
 
     def description(self):
         return (
-                "Value in %s has invalid value, expected one of the "
-                "following values %s" % (
-                    self.column,
-                    list(self.column.type.enum_class)
-                )
+            "Value in %s has invalid value, expected one of the "
+            "following values %s" % (
+                self.column,
+                list(self.column.type.enum_class)
+            )
         )

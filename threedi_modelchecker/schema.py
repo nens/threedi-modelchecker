@@ -1,7 +1,7 @@
-from .threedi_model import models
-from .threedi_model import constants
-
 from sqlalchemy import func
+
+from .threedi_model import constants
+from .threedi_model import models
 
 
 class ModelSchema:

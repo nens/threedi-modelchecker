@@ -46,7 +46,7 @@ def test_fk_check_null_fk(session):
 
 
 def test_fk_check_both_null(session):
-    global_settings = factories.GlobalSettingsFactory(control_group_id=None)
+    factories.GlobalSettingsFactory(control_group_id=None)
 
     assert session.query(models.GlobalSetting).first().id is not None
     assert session.query(models.GlobalSetting.control_group_id).scalar() is None
@@ -129,7 +129,7 @@ def test_threedi_db_and_factories(threedi_db):
     """Test to ensure that the threedi_db and factories use the same
     session object."""
     session = threedi_db.get_session()
-    manhole = factories.ManholeFactory()
+    factories.ManholeFactory()
     q = session.query(models.Manhole)
     assert q.count() == 1
 
@@ -138,11 +138,11 @@ def test_run_spatial_function(session):
     """Example how to use spatial functions.
 
      Works on postgis and spatialite"""
-    c1 = factories.ConnectionNodeFactory()
+    factories.ConnectionNodeFactory()
     from geoalchemy2 import func
 
     q = session.query(func.ST_AsGeoJSON(models.ConnectionNode.the_geom))
-    r = q.first()
+    q.first()
 
 
 def test_type_check(session):
@@ -201,7 +201,7 @@ def test_type_check_boolean(session):
 
 
 def test_geometry_check(session):
-    c = factories.ConnectionNodeFactory(
+    factories.ConnectionNodeFactory(
         the_geom="SRID=28992;POINT(-371.064544 42.28787)"
     )
 
@@ -216,7 +216,7 @@ def test_geometry_check_with_invalid_geoms(session):
         pytest.skip("Not sure how to insert invalid types in postgresql")
 
     inser_invalid_geom_q = """
-    INSERT INTO v2_connection_nodes (id, code, the_geom) 
+    INSERT INTO v2_connection_nodes (id, code, the_geom)
     VALUES (2, 'the_code', 'invalid_geom')
     """
     session.execute(inser_invalid_geom_q)
@@ -233,7 +233,7 @@ def test_geometry_check_with_none_geoms(session):
     factories.ConnectionNodeFactory(
         the_geom_linestring="SRID=4326;LINESTRING(71.0 42.2, 71.3 42.3)"
     )
-    none_geom = factories.ConnectionNodeFactory(the_geom_linestring=None)
+    factories.ConnectionNodeFactory(the_geom_linestring=None)
 
     geometry_check = GeometryCheck(models.ConnectionNode.the_geom_linestring)
     invalid_rows = geometry_check.get_invalid(session)
@@ -321,7 +321,7 @@ def test_conditional_checks(session):
     global_settings1 = factories.GlobalSettingsFactory(
         dem_obstacle_detection=True, dem_obstacle_height=-5
     )
-    global_settings2 = factories.GlobalSettingsFactory(
+    factories.GlobalSettingsFactory(
         dem_obstacle_detection=False, dem_obstacle_height=-5
     )
 
@@ -344,12 +344,12 @@ def test_conditional_checks(session):
 def test_conditional_check_storage_area(session):
     # if connection node is a manhole, then the storage area of the
     # connection_node must be > 0
-    conn_node1_valid = factories.ConnectionNodeFactory(storage_area=5)
-    conn_node2_valid = factories.ConnectionNodeFactory(storage_area=-3)
+    factories.ConnectionNodeFactory(storage_area=5)
+    factories.ConnectionNodeFactory(storage_area=-3)
     conn_node_manhole_valid = factories.ConnectionNodeFactory(storage_area=4)
     conn_node_manhole_invalid = factories.ConnectionNodeFactory(storage_area=-5)
-    manhole_valid = factories.ManholeFactory(connection_node=conn_node_manhole_valid)
-    manhole_invalid = factories.ManholeFactory(
+    factories.ManholeFactory(connection_node=conn_node_manhole_valid)
+    factories.ManholeFactory(
         connection_node=conn_node_manhole_invalid
     )
 
@@ -373,13 +373,13 @@ def test_conditional_check_storage_area(session):
 
 
 def test_conditional_check_advanced(session):
-    connection_node1 = factories.ConnectionNodeFactory(storage_area=-1)
+    factories.ConnectionNodeFactory(storage_area=-1)
     connection_node2 = factories.ConnectionNodeFactory(storage_area=-2)
-    connection_node3 = factories.ConnectionNodeFactory(storage_area=3)
-    connection_node4 = factories.ConnectionNodeFactory(storage_area=4)
+    factories.ConnectionNodeFactory(storage_area=3)
+    factories.ConnectionNodeFactory(storage_area=4)
     connection_node5 = factories.ConnectionNodeFactory(storage_area=10)
-    manhole = factories.ManholeFactory(connection_node=connection_node2)
-    manhole_good = factories.ManholeFactory(connection_node=connection_node5)
+    factories.ManholeFactory(connection_node=connection_node2)
+    factories.ManholeFactory(connection_node=connection_node5)
 
     # If a connection_node is a manhole, then storage_area > 0
     advanced_check = ConditionalCheck(
@@ -396,9 +396,9 @@ def test_conditional_check_advanced(session):
 
 
 def test_get_valid(session):
-    connection_node1 = factories.ConnectionNodeFactory(storage_area=1)
-    connection_node2 = factories.ConnectionNodeFactory(storage_area=2)
-    connection_node3 = factories.ConnectionNodeFactory(storage_area=3)
+    factories.ConnectionNodeFactory(storage_area=1)
+    factories.ConnectionNodeFactory(storage_area=2)
+    factories.ConnectionNodeFactory(storage_area=3)
 
     range_check = GeneralCheck(
         column=models.ConnectionNode.storage_area,
@@ -413,7 +413,7 @@ def test_get_valid(session):
 
 def test_general_check_range(session):
     w1 = factories.WeirFactory(friction_value=2)
-    w2 = factories.WeirFactory(friction_value=-1)
+    factories.WeirFactory(friction_value=-1)
 
     invalid_criterion = models.Weir.friction_value > 0
     general_range_check = GeneralCheck(
@@ -426,7 +426,7 @@ def test_general_check_range(session):
 
 
 def test_general_check_valid_criterion_range(session):
-    w1 = factories.WeirFactory(friction_value=2)
+    factories.WeirFactory(friction_value=2)
     w2 = factories.WeirFactory(friction_value=-1)
 
     valid_criterion = models.Weir.friction_value >= 0
@@ -459,7 +459,7 @@ def test_general_check_aggregation_function(session):
 
 
 def test_general_check_modulo_operator(session):
-    global_settings_no_remainder = factories.GlobalSettingsFactory(
+    factories.GlobalSettingsFactory(
         nr_timesteps=120, output_time_step=20
     )
     global_settings_remainder = factories.GlobalSettingsFactory(
@@ -471,8 +471,7 @@ def test_general_check_modulo_operator(session):
     modulo_check = GeneralCheck(
         column=models.GlobalSetting.nr_timesteps,
         criterion_valid=models.GlobalSetting.nr_timesteps
-        % cast(models.GlobalSetting.output_time_step, Integer)
-        == 0,
+        % cast(models.GlobalSetting.output_time_step, Integer) == 0,
     )
 
     invalid = modulo_check.get_invalid(session)

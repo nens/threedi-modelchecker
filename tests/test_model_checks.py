@@ -10,7 +10,7 @@ def model_checker(threedi_db):
 
 
 def test_get_model_errors(model_checker):
-    model_errors = model_checker.get_model_errors()
+    model_checker.get_model_errors()
 
 
 def test_get_model_error_iterator(model_checker):

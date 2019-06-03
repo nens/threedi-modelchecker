@@ -180,14 +180,13 @@ OTHER_CHECKS = [
     GeneralCheck(
         column=models.BoundaryCondition1D.connection_node_id,
         criterion_invalid=or_(
-            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_start_id,
-            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_end_id,
+            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_start_id,  # noqa: E501
+            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_end_id,  # noqa: E501
         )
     ),
     GeneralCheck(
         column=models.GlobalSetting.nr_timesteps,
-        criterion_valid=
-        cast(models.GlobalSetting.output_time_step, Integer)
+        criterion_valid=cast(models.GlobalSetting.output_time_step, Integer)
         % cast(models.GlobalSetting.sim_time_step, Integer) == 0
     ),
     Use0DFlowCheck()
@@ -195,8 +194,7 @@ OTHER_CHECKS = [
 
 CONDITIONAL_CHECKS = [
     ConditionalCheck(
-        criterion=(
-                models.ConnectionNode.id == models.Manhole.connection_node_id),
+        criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
         check=GeneralCheck(
             column=models.ConnectionNode.storage_area,
             criterion_valid=models.ConnectionNode.storage_area > 0
@@ -206,7 +204,8 @@ CONDITIONAL_CHECKS = [
         criterion=(models.CrossSectionLocation.bank_level != None),
         check=GeneralCheck(
             column=models.CrossSectionLocation.reference_level,
-            criterion_valid=models.CrossSectionLocation.reference_level < models.CrossSectionLocation.bank_level
+            criterion_valid=(models.CrossSectionLocation.reference_level
+                             < models.CrossSectionLocation.bank_level)
         )
     ),
     ConditionalCheck(
@@ -280,7 +279,7 @@ CONDITIONAL_CHECKS = [
         )
     ),
     ConditionalCheck(
-        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,  # noqa: E501
         check=NotNullCheck(
             column=models.Interflow.porosity,
         )
@@ -295,13 +294,13 @@ CONDITIONAL_CHECKS = [
         )
     ),
     ConditionalCheck(
-        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,  # noqa: E501
         check=NotNullCheck(
             column=models.Interflow.impervious_layer_elevation,
         )
     ),
     ConditionalCheck(
-        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,  # noqa: E501
         check=GeneralCheck(
             column=models.Interflow.hydraulic_conductivity,
             criterion_valid=or_(
@@ -351,7 +350,7 @@ class Config:
             UNIQUE_CHECKS += generate_unique_checks(model.__table__)
             INVALID_TYPE_CHECKS += generate_type_checks(model.__table__)
             INVALID_GEOMETRY_CHECKS += generate_geometry_checks(model.__table__)
-            INVALID_GEOMETRY_TYPE_CHECKS += generate_geometry_type_checks(model.__table__)
+            INVALID_GEOMETRY_TYPE_CHECKS += generate_geometry_type_checks(model.__table__)  # noqa: E501
             INVALID_ENUM_CHECKS += generate_enum_checks(model.__table__)
 
         self.checks += FOREIGN_KEY_CHECKS
