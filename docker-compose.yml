@@ -20,7 +20,7 @@ services:
       - POSTGRES_USER=postgis
       - POSTGRES_PASSWORD=mysecret
     volumes:
-      - ./postgres:/docker-entrypoint-initdb.d
+      - ./tests/data/postgres:/docker-entrypoint-initdb.d
       - pgdata:/var/lib/postgresql/data
 
 volumes:
