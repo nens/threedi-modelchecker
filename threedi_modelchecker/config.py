@@ -1,8 +1,7 @@
-from sqlalchemy import and_
-from sqlalchemy import or_
-from sqlalchemy import cast
 from sqlalchemy import Integer
-
+from sqlalchemy import and_
+from sqlalchemy import cast
+from sqlalchemy import or_
 
 from .checks.base import ConditionalCheck
 from .checks.base import GeneralCheck
@@ -187,9 +186,9 @@ OTHER_CHECKS = [
     ),
     GeneralCheck(
         column=models.GlobalSetting.nr_timesteps,
-        criterion_valid=models.GlobalSetting.nr_timesteps % cast(
-            models.GlobalSetting.output_time_step, Integer
-        ) == 0
+        criterion_valid=
+        cast(models.GlobalSetting.output_time_step, Integer)
+        % cast(models.GlobalSetting.sim_time_step, Integer) == 0
     ),
     Use0DFlowCheck()
 ]
