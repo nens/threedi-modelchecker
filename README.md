@@ -2,7 +2,7 @@
 
 Threedi-modelchecker is a tool to verify the correctness of a 3Di model.
 The goal is to provide a tool for model builders to quickly check if his/her 
-model is correct and can be run a 3Di simulation. It provides detailed 
+model is correct and can run a 3Di simulation. It provides detailed 
 information about any potential errors in the model.
 
 Threedi-modelchecks works with both spatialite and postgis databases. However, 
