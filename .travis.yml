@@ -1,0 +1,15 @@
+language: generic
+dist: xenial
+
+services:
+  - docker
+
+install:
+  docker-compose build
+
+script:
+  - docker-compose run modelchecker pytest
+  - docker-compose run modelchecker flake8
+
+notifications:
+  email: false
