@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 ===================================================
 
 
-0.1 (unreleased)
+0.1 (2019-06-04)
 ----------------
 
 - Initial project structure.
