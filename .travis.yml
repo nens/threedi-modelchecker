@@ -1,6 +1,5 @@
 language: generic
 dist: xenial
-
 services:
   - docker
 
@@ -10,6 +9,17 @@ install:
 script:
   - docker-compose run modelchecker pytest
   - docker-compose run modelchecker flake8
+
+deploy:
+  provider: pypi
+  user: "nens"
+  password:
+    secure: LongStringThatNeedsToBeSetByReinout
+  # (travis encrypt NENS-PASSWORD --com --add deploy.password)
+  on:
+    tags: true
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
 
 notifications:
   email: false
