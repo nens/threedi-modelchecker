@@ -7,10 +7,6 @@ services:
 install:
   docker-compose build
 
-before_script:
-  - docker --version
-  - docker-compose --version
-
 script:
   - docker-compose run modelchecker pytest
   - docker-compose run modelchecker flake8
