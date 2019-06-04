@@ -8,7 +8,9 @@ install:
   docker-compose build
 
 before_script:
-  - docker-compose up -d # initialize the empty 3Di database
+  - docker --version
+  - docker-compose --version
+  - docker-compose run postgis  # initialize the empty 3Di database
 
 script:
   - docker-compose run modelchecker pytest

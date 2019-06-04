@@ -4844,10 +4844,10 @@ ALTER TABLE ONLY public.v2_surface
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: -
 --
 
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM postgres;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO PUBLIC;
+-- REVOKE ALL ON SCHEMA public FROM PUBLIC;
+-- REVOKE ALL ON SCHEMA public FROM postgis;
+-- GRANT ALL ON SCHEMA public TO postgis;
+-- GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --
