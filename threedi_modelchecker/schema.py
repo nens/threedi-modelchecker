@@ -36,7 +36,8 @@ class ModelSchema:
         :raise MigrationMissingError, MigrationTooHighError, MigrationNameError
         """
         migration_id, migration_name = self._latest_migration()
-        if migration_id < constants.LATEST_MIGRATION_ID:
+        if (migration_id is None
+                or migration_id < constants.LATEST_MIGRATION_ID):
             raise MigrationMissingError
         elif migration_id > constants.LATEST_MIGRATION_ID:
             raise MigrationTooHighError

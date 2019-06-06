@@ -42,3 +42,10 @@ def test_validate_schema_migration_too_high(threedi_db):
     with pytest.raises(errors.MigrationTooHighError):
         schema.validate_schema()
 
+
+def test_validate_schema_no_migrations(threedi_db):
+    schema = ModelSchema(threedi_db)
+    migration_id, migration_name = schema._latest_migration()
+    assert migration_id is None
+    with pytest.raises(errors.MigrationMissingError):
+        schema.validate_schema()
