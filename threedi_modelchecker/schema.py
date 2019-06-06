@@ -20,8 +20,8 @@ class ModelSchema:
         ).scalar()
         latest_migration_name = (
             session.query(models.SouthMigrationHistory.migration)
-                .filter(models.SouthMigrationHistory.id == latest_migration_id)
-                .scalar()
+            .filter(models.SouthMigrationHistory.id == latest_migration_id)
+            .scalar()
         )
         return latest_migration_id, latest_migration_name
 
