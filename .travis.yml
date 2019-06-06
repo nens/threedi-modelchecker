@@ -6,6 +6,10 @@ services:
 install:
   docker-compose build
 
+before_script:
+  # wait 10 seconds for postgis to initialize the database
+  - docker-compose run -d postgis && sleep 10
+
 script:
   - docker-compose run modelchecker pytest
   - docker-compose run modelchecker flake8
