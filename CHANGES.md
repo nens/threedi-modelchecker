@@ -5,7 +5,9 @@ Changelog of threedi-modelchecker
 0.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Renamed some methods of ThreediModelChecker.
+- Added basic to the 3di model schema: checks if the model has the latest migration 
+  applied and raises an error if not.
 
 
 0.1 (2019-06-04)

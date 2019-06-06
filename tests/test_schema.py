@@ -1,19 +1,51 @@
+import pytest
+
 from . import factories
 from threedi_modelchecker.schema import ModelSchema, constants
+from threedi_modelchecker import errors
 
 
-def test_check_latest_migration_missing(threedi_db):
-    factories.MigrationHistoryFactory()
-    schema_checker = ModelSchema(threedi_db)
-    latest = schema_checker.is_latest_migration()
-    assert not latest
-
-
-def test_check_latest_migration_correct(threedi_db):
+def test_get_migration_info(threedi_db):
     factories.MigrationHistoryFactory(
         id=constants.LATEST_MIGRATION_ID,
         migration=constants.LATEST_MIGRATION_NAME
     )
     schema_checker = ModelSchema(threedi_db)
-    latest = schema_checker.is_latest_migration()
-    assert latest
+    migration_id, migration_name = schema_checker._latest_migration()
+    assert migration_id == constants.LATEST_MIGRATION_ID
+    assert migration_name == constants.LATEST_MIGRATION_NAME
+
+
+def test_validate_schema(threedi_db):
+    factories.MigrationHistoryFactory(
+        id=constants.LATEST_MIGRATION_ID,
+        migration=constants.LATEST_MIGRATION_NAME
+    )
+    schema = ModelSchema(threedi_db)
+    assert schema.validate_schema()
+
+
+def test_validate_schema_missing_migration(threedi_db):
+    factories.MigrationHistoryFactory(
+        id=-1
+    )
+    schema = ModelSchema(threedi_db)
+    with pytest.raises(errors.MigrationMissingError):
+        schema.validate_schema()
+
+
+def test_validate_schema_migration_too_high(threedi_db):
+    factories.MigrationHistoryFactory(
+        id=constants.LATEST_MIGRATION_ID + 1
+    )
+    schema = ModelSchema(threedi_db)
+    with pytest.raises(errors.MigrationTooHighError):
+        schema.validate_schema()
+
+
+def test_validate_schema_no_migrations(threedi_db):
+    schema = ModelSchema(threedi_db)
+    migration_id, migration_name = schema._latest_migration()
+    assert migration_id is None
+    with pytest.raises(errors.MigrationMissingError):
+        schema.validate_schema()

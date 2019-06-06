@@ -24,7 +24,7 @@ postgis_settings = {
 
 
 @pytest.fixture(
-    scope="session",
+    scope="function",
     params=[("spatialite", sqlite_settings), ("postgres", postgis_settings)],
     ids=["spatialite", "postgis"],
 )
