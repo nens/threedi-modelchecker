@@ -6,6 +6,7 @@ class ThreediModelChecker:
     def __init__(self, threedi_db):
         self.db = threedi_db
         self.schema = ModelSchema(self.db)
+        self.schema.validate_schema()
         self.config = Config(self.models)
 
     @property
