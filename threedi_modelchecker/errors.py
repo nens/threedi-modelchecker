@@ -11,3 +11,8 @@ class MigrationTooHighError(Exception):
     LATEST_MIGRATION_NAME.
     """
     pass
+
+
+class MigrationNameError(Exception):
+    """Raised when last migration name is unexpected"""
+    pass
