@@ -90,11 +90,37 @@ def valid_egg(width, height):
 
 
 def valid_tabulated_shape(width, height):
-    width_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(width)
-    height_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(height)
-    if not width_match or not height_match:
+    """Return if the tabulated shape is valid.
+
+    Validating that the strings `width` and `height` contain positive floats
+    was previously done using a regex. However, experiments showed that
+    trying to split the string and reading in the floats is much faster.
+
+    :param width: string of widths
+    :param height: string of heights
+    :return: True if the shape if valid
+    """
+    height_string_list = height.split(" ")
+    width_string_list = width.split(" ")
+    if len(height_string_list) != len(width_string_list):
         return False
-    return len(width.split(" ")) == len(height.split(" "))
+    try:
+        first_height = float(height_string_list[0])
+        if first_height != 0:
+            return False
+    except ValueError:
+        return False
+    for h_string, w_string in zip(height_string_list, width_string_list):
+        try:
+            h = float(h_string)
+            w = float(w_string)
+            if h < 0:
+                return False
+            if w < 0:
+                return False
+        except ValueError:
+            return False
+    return True
 
 
 class TimeseriesCheck(BaseCheck):
