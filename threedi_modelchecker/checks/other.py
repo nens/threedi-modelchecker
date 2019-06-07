@@ -51,7 +51,7 @@ class CrossSectionShapeCheck(BaseCheck):
                 if not valid_rectangle(width, height):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.CIRCLE:
-                if not valid_circle(width, height):
+                if not valid_circle(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.EGG:
                 if not valid_egg(width, height):
@@ -70,14 +70,14 @@ class CrossSectionShapeCheck(BaseCheck):
 
 def valid_rectangle(width, height):
     width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
-    if height:
+    if height:  # height is not required
         height_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(height)
     else:
         height_match = True
     return width_match and height_match
 
 
-def valid_circle(width, height):
+def valid_circle(width):
     return patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
 
 
