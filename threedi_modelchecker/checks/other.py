@@ -28,6 +28,10 @@ class BankLevelCheck(BaseCheck):
         )
         return q.all()
 
+    def description(self):
+        return "CrossSectionLoaction.Banklevel cannot be null when calculation_type " \
+               "is CONNECTED or DOUBLE_CONNECTED"
+
 
 class CrossSectionShapeCheck(BaseCheck):
     """Check if all CrossSectionDefinition.shape are valid"""
