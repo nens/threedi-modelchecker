@@ -12,7 +12,7 @@ from .checks.factories import generate_geometry_checks
 from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
-from .checks.other import BankLevelCheck
+from .checks.other import BankLevelCheck, CrossSectionShapeCheck
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
@@ -175,7 +175,7 @@ RANGE_CHECKS = [
 
 OTHER_CHECKS = [
     BankLevelCheck(),
-    # CrossSectionShapeCheck(),
+    CrossSectionShapeCheck(),
     # 1d boundary conditions cannot be connected to a pumpstation
     GeneralCheck(
         column=models.BoundaryCondition1D.connection_node_id,

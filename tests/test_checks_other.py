@@ -49,7 +49,7 @@ def test_get_invalid_cross_section_shapes(session):
         width="1", height=None, shape=constants.CrossSectionShape.CIRCLE
     )
     factories.CrossSectionDefinitionFactory(
-        width="1 2", height="1 2",
+        width="1 2", height="0 2",
         shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM
     )
 
@@ -77,6 +77,19 @@ def test_valid_tabulated_shape_unequal_length():
 def test_valid_tabulated_shape_invalid_char():
     width = "1 2"
     height = "1 a"
+    assert not valid_tabulated_shape(width, height)
+
+
+def test_tabulated_shape_valid123():
+    width = "7 7 0"
+    height = "0 2.25 2.25"
+    assert valid_tabulated_shape(width, height)
+
+
+def test_tabulated_shape_invalid123():
+    width = "0.5106338 0.8793753 1.109911 1.279277 1.409697 1.511286 1.589584 " \
+            "1.647911 1.688341 1.71214 1.72 1.72"
+    height = "0.831 0.749 0.667 0.585 0.503 0.421 0.338 0.256 0.174 0.092 0 0.01"
     assert not valid_tabulated_shape(width, height)
 
 

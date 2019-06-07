@@ -28,6 +28,10 @@ class BankLevelCheck(BaseCheck):
         )
         return q.all()
 
+    def description(self):
+        return "CrossSectionLoaction.Banklevel cannot be null when calculation_type " \
+               "is CONNECTED or DOUBLE_CONNECTED"
+
 
 class CrossSectionShapeCheck(BaseCheck):
     """Check if all CrossSectionDefinition.shape are valid"""
@@ -47,7 +51,7 @@ class CrossSectionShapeCheck(BaseCheck):
                 if not valid_rectangle(width, height):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.CIRCLE:
-                if not valid_circle(width, height):
+                if not valid_circle(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.EGG:
                 if not valid_egg(width, height):
@@ -66,14 +70,14 @@ class CrossSectionShapeCheck(BaseCheck):
 
 def valid_rectangle(width, height):
     width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
-    if height:
+    if height:  # height is not required
         height_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(height)
     else:
         height_match = True
     return width_match and height_match
 
 
-def valid_circle(width, height):
+def valid_circle(width):
     return patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
 
 
@@ -86,11 +90,37 @@ def valid_egg(width, height):
 
 
 def valid_tabulated_shape(width, height):
-    width_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(width)
-    height_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(height)
-    if not width_match or not height_match:
+    """Return if the tabulated shape is valid.
+
+    Validating that the strings `width` and `height` contain positive floats
+    was previously done using a regex. However, experiments showed that
+    trying to split the string and reading in the floats is much faster.
+
+    :param width: string of widths
+    :param height: string of heights
+    :return: True if the shape if valid
+    """
+    height_string_list = height.split(" ")
+    width_string_list = width.split(" ")
+    if len(height_string_list) != len(width_string_list):
         return False
-    return len(width.split(" ")) == len(height.split(" "))
+    try:
+        first_height = float(height_string_list[0])
+        if first_height != 0:
+            return False
+    except ValueError:
+        return False
+    for h_string, w_string in zip(height_string_list, width_string_list):
+        try:
+            h = float(h_string)
+            w = float(w_string)
+            if h < 0:
+                return False
+            if w < 0:
+                return False
+        except ValueError:
+            return False
+    return True
 
 
 class TimeseriesCheck(BaseCheck):
