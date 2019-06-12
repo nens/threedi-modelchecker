@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 ===================================================
 
 
-0.2 (unreleased)
+0.2 (2019-06-12)
 ----------------
 
 - Renamed some methods of ThreediModelChecker.
