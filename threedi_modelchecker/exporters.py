@@ -10,21 +10,6 @@ def print_errors(errors):
         print(error)
 
 
-def export_to_file(errors, file):
-    """Write errors to a new file, separated with newlines.
-
-    File cannot be an already existing file.
-
-    :param errors: iterator of BaseModelError
-    :param file:
-    :return: None
-    :raise FileExistsError: if the file already exists
-    """
-    with open(file, "w") as f:
-        for error in errors:
-            f.write(str(error) + "\n")
-
-
 def summarize_type_errors(errors):
     """Return an summary of the errors, aggregated on the type of errors
 
@@ -57,6 +42,21 @@ def summarize_column_errors(errors):
     return summary, sum(summary.values())
 
 
+def export_to_file(errors, file):
+    """Write errors to a new file, separated with newlines.
+
+    File cannot be an already existing file.
+
+    :param errors: iterator of BaseModelError
+    :param file:
+    :return: None
+    :raise FileExistsError: if the file already exists
+    """
+    with open(file, "w") as f:
+        for error in errors:
+            f.write(str(error) + "\n")
+
+
 def format_check_results(check, invalid_row):
     OUTPUT_FORMAT = '{check!r} row: {row_id:d} value: "{row_value!s}" {description!s}'
     return OUTPUT_FORMAT.format(
@@ -65,3 +65,30 @@ def format_check_results(check, invalid_row):
         row_value=getattr(invalid_row, check.column.name),
         description=check.description(),
     )
+
+
+import csv
+# DOING
+def format_row(check, invalid_row):
+    return (
+        check,
+        check.table,
+        check.column,
+        invalid_row.id,
+        getattr(invalid_row, check.column.name),
+        check.description()
+    )
+
+# DOING
+def format_check_result_csv(check, invalid_row):
+    HEADER = ['check_type', 'table', 'column', 'id', 'value', 'description']
+    OUTPUT_FORMAT = '{check!r} row: {row_id:d} value: "{row_value!s}" {description!s}'
+    row_items = [
+        check,
+        check.table,
+        check.column,
+        invalid_row.id,
+        getattr(invalid_row, check.column.name),
+        check.description()
+    ]
+    pass
