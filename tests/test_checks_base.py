@@ -174,6 +174,24 @@ def test_type_check_integer(session):
     assert m2.id in invalid_ids
 
 
+def test_type_check_float_can_store_integer(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("type checks not working on postgres")
+    factories.ManholeFactory(surface_level=1.3)
+    factories.ManholeFactory(surface_level=None)
+    factories.ManholeFactory(surface_level=1)
+    m1 = factories.ManholeFactory(zoom_category="abc")
+
+    type_check = TypeCheck(models.Manhole.zoom_category)
+    invalid_rows = type_check.get_invalid(session)
+    valid_rows = type_check.get_valid(session)
+
+    assert len(valid_rows) == 3
+    assert len(invalid_rows) == 1
+    invalid_ids = [invalid.id for invalid in invalid_rows]
+    assert m1.id in invalid_ids
+
+
 def test_type_check_varchar(session):
     if session.bind.name == "postgresql":
         pytest.skip("type checks not working on postgres")

@@ -54,7 +54,7 @@ class CrossSectionShapeCheck(BaseCheck):
                 if not valid_circle(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.EGG:
-                if not valid_egg(width, height):
+                if not valid_egg(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
             if shape == constants.CrossSectionShape.TABULATED_RECTANGLE:
                 if not valid_tabulated_shape(width, height):
@@ -69,8 +69,10 @@ class CrossSectionShapeCheck(BaseCheck):
 
 
 def valid_rectangle(width, height):
+    if width is None:  # width is required
+        return False
     width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
-    if height:  # height is not required
+    if height is not None:  # height is not required
         height_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(height)
     else:
         height_match = True
@@ -78,15 +80,19 @@ def valid_rectangle(width, height):
 
 
 def valid_circle(width):
+    if width is None:
+        return False
     return patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
 
 
-def valid_egg(width, height):
-    width_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(width)
-    height_match = patterns.POSITIVE_FLOAT_LIST_REGEX.fullmatch(height)
-    if not width_match or not height_match:
+def valid_egg(width):
+    if width is None:
         return False
-    return len(width.split(" ")) == len(height.split(" "))
+    try:
+        w = float(width)
+    except ValueError:
+        return False
+    return w > 0
 
 
 def valid_tabulated_shape(width, height):
@@ -100,26 +106,34 @@ def valid_tabulated_shape(width, height):
     :param height: string of heights
     :return: True if the shape if valid
     """
+    if width is None or height is None:
+        return False
     height_string_list = height.split(" ")
     width_string_list = width.split(" ")
     if len(height_string_list) != len(width_string_list):
         return False
     try:
+        # first height must be 0
         first_height = float(height_string_list[0])
         if first_height != 0:
             return False
     except ValueError:
         return False
+    previous_height = -1
     for h_string, w_string in zip(height_string_list, width_string_list):
         try:
             h = float(h_string)
             w = float(w_string)
-            if h < 0:
-                return False
-            if w < 0:
-                return False
         except ValueError:
             return False
+        if h < 0:
+            return False
+        if w < 0:
+            return False
+        if h < previous_height:
+            # height must be increasing
+            return False
+        previous_height = h
     return True
 
 
