@@ -1,6 +1,7 @@
 import pytest
 
-from threedi_modelchecker.checks.other import BankLevelCheck
+from threedi_modelchecker.checks.other import BankLevelCheck, valid_egg, \
+    valid_rectangle, valid_circle
 from threedi_modelchecker.checks.other import CrossSectionShapeCheck
 from threedi_modelchecker.checks.other import TimeseriesCheck
 from threedi_modelchecker.checks.other import valid_tabulated_shape
@@ -58,10 +59,72 @@ def test_get_invalid_cross_section_shapes(session):
     assert len(invalid_rows) == 0
 
 
+def test_get_invalid_cross_section_shapes_egg_with_none_height_width(session):
+    factories.CrossSectionDefinitionFactory(
+        width=None, height=None, shape=constants.CrossSectionShape.EGG
+    )
+    cross_section_check = CrossSectionShapeCheck()
+    invalid_rows = cross_section_check.get_invalid(session)
+    assert len(invalid_rows) == 1
+
+
+def test_get_invalid_cross_section_shapes_rectangle_with_null(session):
+    factories.CrossSectionDefinitionFactory(
+        width=None, height=None, shape=constants.CrossSectionShape.RECTANGLE
+    )
+    cross_section_check = CrossSectionShapeCheck()
+    invalid_rows = cross_section_check.get_invalid(session)
+    assert len(invalid_rows) == 1
+
+
+def test_valid_rectangle():
+    assert valid_rectangle(width="1", height="2")
+
+
+def test_valid_rectangle_none_value():
+    assert not valid_rectangle(width=None, height="2")
+
+
+def test_valid_rectangle_negative_value():
+    assert not valid_rectangle(width="-1", height="2")
+
+
+def test_valid_circle():
+    assert valid_circle("3")
+
+
+def test_valid_circle_none_value():
+    assert not valid_circle(None)
+
+
+def test_valid_circle_negative_value():
+    assert not valid_circle("-3")
+
+
+def test_valid_egg_none_value():
+    assert not valid_egg(width=None)
+
+
+def test_valid_egg_negative_value():
+    assert not valid_egg(width="-1")
+
+
+def test_valid_egg_zero_value():
+    assert not valid_egg(width="0")
+
+
+def test_valid_egg_positive_value():
+    assert valid_egg(width="1")
+
+
 def test_valid_tabulated_shape():
     width = "0 1 2 3"
     height = "0 1 2 3"
     assert valid_tabulated_shape(width, height)
+
+
+def test_valid_tabulated_shape_none():
+    assert not valid_tabulated_shape(None, None)
 
 
 def test_valid_tabulated_shape_empty():
@@ -86,10 +149,16 @@ def test_tabulated_shape_valid123():
     assert valid_tabulated_shape(width, height)
 
 
-def test_tabulated_shape_invalid123():
+def test_tabulated_shape_invalid_height_not_start_0():
     width = "0.5106338 0.8793753 1.109911 1.279277 1.409697 1.511286 1.589584 " \
             "1.647911 1.688341 1.71214 1.72 1.72"
     height = "0.831 0.749 0.667 0.585 0.503 0.421 0.338 0.256 0.174 0.092 0 0.01"
+    assert not valid_tabulated_shape(width, height)
+
+
+def test_tabulated_shape_invalid_non_increasing_height():
+    width = "1 2 3"
+    height = "0 2 1"
     assert not valid_tabulated_shape(width, height)
 
 
