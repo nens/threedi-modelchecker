@@ -8,7 +8,9 @@ Changelog of threedi-modelchecker
 - Fixed TypeError with CrossSectionShapeCheck when width/height are `None`.
 - Updated some constraints on CrossSectionShapeCheck:
   - Heights of tabulated shape must be increasing.
-  - Egg only requires a width, which must be greater than 0. 
+  - Egg only requires a width, which must be greater than 0.
+- Added 0 to a valid value for ZoomCategories. Also renamed the ZoomCategories names 
+  to something clear names.
 
 
 0.2 (2019-06-12)
