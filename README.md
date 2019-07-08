@@ -10,7 +10,7 @@ the database should always have the latest 3Di migration: https://docs.3di.lizar
 
 Installation:
 
-    $ pip install threedi-modelchecker
+    pip install threedi-modelchecker
 
 
 Threedi-modelchecker is also integrated into the ThreediToolbox Qgis plugin: https://github.com/nens/ThreeDiToolbox
@@ -22,8 +22,16 @@ server with an empty 3Di database to allow for easy testing.
 
 Build the image:
 
-    # docker-compose build
+    docker-compose build
 
 Run the tests:
 
-    $ docker-compose run modelchecker pytest
+    docker-compose run modelchecker pytest
+
+# Release
+
+Make sure you have [zest.releaser](https://zestreleaser.readthedocs.io/en/latest/) installed. 
+
+    fullrelease
+
+When you create a tag on git, Travis CI automatically creates a new release to [pypi](https://pypi.org/project/threedi-modelchecker/).
