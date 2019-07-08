@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 ===================================================
 
 
-0.3 (unreleased)
+0.3 (2019-07-08)
 ----------------
 
 - Fixed TypeError with CrossSectionShapeCheck when width/height are `None`.
