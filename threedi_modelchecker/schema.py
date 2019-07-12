@@ -39,10 +39,21 @@ class ModelSchema:
         if (migration_id is None
                 or migration_id < constants.LATEST_MIGRATION_ID):
             raise MigrationMissingError
+        # TODO: on 08-07-2019 3Di has been released with the newest migration
+        #  174: '0172_auto__del_v2initialwaterlevel__del_field_v2orifice_max_capacity__del_f'.
+        #  This migrations deletes some fields, which were already not present in the models
+        #  of the threedi-modelchecker. Therefore we can both accept migration 173 and 174.
+        #  Because inpy has not been run over all the existing models during this new release,
+        #  models downloaded via 3id.lizard.net/models still have the migration 173 (unless
+        #  a user has specifically re-run inpy for the model).
         elif migration_id > constants.LATEST_MIGRATION_ID:
-            raise MigrationTooHighError
+            # don't raise warning for now, see comments above.
+            # raise MigrationTooHighError
+            pass
         elif migration_name != constants.LATEST_MIGRATION_NAME:
-            raise MigrationNameError
+            # don't fix on a specific migration name, see comments above.
+            # raise MigrationNameError
+            pass
         return (migration_id == constants.LATEST_MIGRATION_ID
                 and migration_name == constants.LATEST_MIGRATION_NAME)
 
