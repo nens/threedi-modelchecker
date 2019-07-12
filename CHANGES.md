@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Retry release (release of 0.4 is missing changes).
 
 
 0.4 (2019-07-12)
