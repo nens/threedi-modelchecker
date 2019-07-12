@@ -39,8 +39,11 @@ Run the tests:
 Release
 ---------
 
-Make sure you have `zest.releaser<https://zestreleaser.readthedocs.io/en/latest/>` installed.
+Make sure you have zestreleaser_ installed.
 
     fullrelease
 
-When you create a tag on git, Travis CI automatically creates a new release to `pypi<https://pypi.org/project/threedi-modelchecker/>`.
+When you create a tag on git, Travis CI automatically creates a new release to pypi_.
+
+.. _zestreleaser: https://zestreleaser.readthedocs.io/en/latest/
+.. _pypi: https://pypi.org/project/threedi-modelchecker/
