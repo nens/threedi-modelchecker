@@ -34,6 +34,7 @@ def test_validate_schema_missing_migration(threedi_db):
         schema.validate_schema()
 
 
+@pytest.mark.skip("Allow both migration 173 and 174 for now.")
 def test_validate_schema_migration_too_high(threedi_db):
     factories.MigrationHistoryFactory(
         id=constants.LATEST_MIGRATION_ID + 1
