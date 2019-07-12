@@ -12,6 +12,7 @@ Changelog of threedi-modelchecker
 ----------------
 
 - Update to readme.
+- No longer raise a MigrationTooHighError when the migration is larger than expected.
 
 
 0.3 (2019-07-08)
