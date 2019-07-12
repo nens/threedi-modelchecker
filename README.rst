@@ -1,4 +1,11 @@
-# Threedi-modelchecker
+Threedi-modelchecker
+====================
+
+.. image:: https://img.shields.io/pypi/v/threedi-modelchecker.svg
+        :target: https://pypi.org/project/threedi-modelchecker/
+
+.. image:: https://travis-ci.com/nens/threedi-modelchecker.svg?branch=master
+    :target: https://travis-ci.com/nens/threedi-modelchecker
 
 Threedi-modelchecker is a tool to verify the correctness of a 3Di model.
 The goal is to provide a tool for model builders to quickly check if his/her 
@@ -15,7 +22,8 @@ Installation:
 
 Threedi-modelchecker is also integrated into the ThreediToolbox Qgis plugin: https://github.com/nens/ThreeDiToolbox
 
-# Development
+Development
+-----------
 
 A docker image has been created for easy development. It contains an postgis 
 server with an empty 3Di database to allow for easy testing.
@@ -28,7 +36,8 @@ Run the tests:
 
     docker-compose run modelchecker pytest
 
-# Release
+Release
+---------
 
 Make sure you have [zest.releaser](https://zestreleaser.readthedocs.io/en/latest/) installed. 
 
