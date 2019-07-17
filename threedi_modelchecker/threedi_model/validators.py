@@ -1,3 +1,4 @@
+from datetime import datetime, date
 from typing import Optional
 
 from geoalchemy2.types import Geometry
@@ -213,7 +214,6 @@ class GroundWater(BaseModel):
     leakage_file: Optional[constr(max_length=255)]
 
 
-
 class GridRefinement(BaseModel):
     id: int
     display_name: constr(max_length=255)
@@ -299,7 +299,81 @@ class NumericalSettings(BaseModel):
     use_of_nested_newton: int
 
 
+class GlobalSetting(BaseModel):
+    id: int
+    use_2d_flow: bool
+    use_1d_flow: bool
+    manhole_storage_area: Optional[float]
+    name: Optional[constr(max_length=128)]
+    sim_time_step: float
+    output_time_step: Optional[float]
+    nr_timesteps: int
+    start_time: Optional[datetime]
+    start_date: date
+    grid_space: float
+    dist_calc_points: float
+    kmax: int
+    guess_dams: Optional[int]
+    table_step_size: float
+    flooding_threshold: float
+    advection_1d: int
+    advection_2d: int
+    dem_file: Optional[constr(max_length=255)]
+    frict_type: Optional[int]
+    frict_coef: float
+    frict_coef_file: Optional[constr(max_length=255)]
+    water_level_ini_type: Optional[constants.InitializationType]
+    initial_waterlevel: float
+    initial_waterlevel_file: Optional[constr(max_length=255)]
+    interception_global: Optional[float]
+    interception_file: Optional[constr(max_length=255)]
+    dem_obstacle_detection: bool
+    dem_obstacle_height: Optional[float]
+    embedded_cutoff_threshold: Optional[float]
+    epsg_code: Optional[int]
+    timestep_plus: bool
+    max_angle_1d_advection: Optional[float]
+    minimum_sim_time_step: Optional[float]
+    maximum_sim_time_step: Optional[float]
+    frict_avg: Optional[int]
+    wind_shielding_file: Optional[constr(max_length=255)]
+    use_0d_inflow: int
+    table_step_size_1d: Optional[float]
+    table_step_size_volume_2d: Optional[float]
+    use_2d_rain: int
+    initial_groundwater_level: Optional[float]
+    initial_groundwater_level_file: Optional[constr(max_length=255)]
+    initial_groundwater_level_type: Optional[constants.InitializationType]
+    numerical_settings_id: NumericalSettings
+    interflow_settings_id: Interflow
+    control_group_id: ControlGroup
+    simple_infiltration_settings_id: SimpleInfiltration
+    groundwater_settings_id: GroundWater
 
+
+class AggregationSettings(BaseModel):
+    id: int
+    global_settings_id: GlobalSetting
+    var_name: constr(max_length=100)
+    flow_variable: constants.FlowVariable
+    aggregation_method: Optional[constants.AggregationMethod]
+    aggregation_in_space: bool
+    timestep: int
+
+
+class BoundaryCondition1D(BaseModel):
+    id: int
+    boundary_type: constants.BoundaryType
+    timeseries: str
+    connection_node_id: ConnectionNode
+
+
+class SurfaceMap(BaseModel):
+    id: int
+    surface_type: constants.SurfaceType
+    surface_id: int
+    connection_node_id: ConnectionNode
+    percentage: Optional[float]
 
 
 class Channel(BaseModel):
@@ -309,6 +383,7 @@ class Channel(BaseModel):
     calculation_type: constants.CalculationType
     dist_calc_points: Optional[float]
     zoom_category: Optional[constants.ZoomCategories]
+    # the_geom
     connection_node_start: ConnectionNode
     connection_node_end: ConnectionNode
 
@@ -316,12 +391,170 @@ class Channel(BaseModel):
         orm_mode = True
 
 
+class Windshielding(BaseModel):
+    id: int
+    north: Optional[float]
+    northeast: Optional[float]
+    east: Optional[float]
+    southeast: Optional[float]
+    south: Optional[float]
+    southwest: Optional[float]
+    west: Optional[float]
+    northwest: Optional[float]
+    #the_geom
+    channel_id: Channel
+
+
+class CrossSectionLocation(BaseModel):
+    id: int
+    code: constr(max_length=100)
+    reference_level: float
+    friction_type: constants.FrictionType
+    friction_value: float
+    bank_level: Optional[float]
+    #the_geom
+    channel_id: Channel
+    definition_id: CrossSectionDefinition
+
+
+class Pipe(BaseModel):
+    id: int
+    display_name: constr(max_length=255)
+    code: constr(max_length=100)
+    profile_num: Optional[int]
+    sewerage_type: Optional[constants.SewerageType]
+    calculation_type: constants.InitializationType
+    invert_level_start_point: float
+    invert_level_end_point: float
+    friction_value: float
+    friction_type: constants.FrictionType
+    dist_calc_points: Optional[float]
+    material: Optional[int]
+    original_length: Optional[float]
+    zoom_category: Optional[constants.ZoomCategories]
+    connection_node_start_id: ConnectionNode
+    connection_node_end_id: ConnectionNode
+    cross_section_definition_id: CrossSectionDefinition
+
+
+class Culvert(BaseModel):
+    id: int
+    display_name: constr(max_length=255)
+    code: constr(max_length=100)
+    calculation_type: Optional[constants.CalculationTypeCulvert]
+    friction_value: float
+    friction_type: constants.FrictionType
+    dist_calc_points: Optional[float]
+    zoom_category: Optional[constants.ZoomCategories]
+    discharge_coefficient_positive: float
+    discharge_coefficient_negative: float
+    invert_level_start_point: Optional[float]
+    invert_level_end_point: Optional[float]
+    #the_geom
+    connection_node_start_id: ConnectionNode
+    connection_node_end_id: ConnectionNode
+    cross_section_definition_id: CrossSectionDefinition
+
+
+class DemAverageArea(BaseModel):
+    id: int
+    # the_geom
+
+
+class Weir(BaseModel):
+    id: int
+    code: constr(max_length=100)
+    display_name: constr(max_length=255)
+    crest_level: float
+    crest_type: constants.CrestType
+    friction_value: float
+    friction_type: constants.FrictionType
+    discharge_coefficient_positive: float
+    discharge_coefficient_negative: float
+    sewerage: bool
+    external: Optional[float]
+    zoom_category: Optional[constants.ZoomCategories]
+    connection_node_start_id: ConnectionNode
+    connection_node_end_id: ConnectionNode
+    cross_section_definition_id: CrossSectionDefinition
+
+
+class Orifice(BaseModel):
+    id: int
+    code: constr(max_length=100)
+    display_name: constr(max_length=255)
+    zoom_category: Optional[constants.ZoomCategories]
+    crest_type: constants.CrestType
+    crest_level: float
+    friction_value: float
+    friction_type: constants.FrictionType
+    discharge_coefficient_positive: Optional[float]
+    discharge_coefficient_negative: Optional[float]
+    sewerage: bool
+    connection_node_start_id: ConnectionNode
+    connection_node_end_id: ConnectionNode
+    cross_section_definition_id: CrossSectionDefinition
+
+
+class Pumpstation(BaseModel):
+    id: int
+    code: constr(max_length=100)
+    display_name: constr(max_length=255)
+    zoom_category: Optional[constants.ZoomCategories]
+    classification: Optional[int]
+    sewerage: bool
+    type: constants.PumpType
+    start_level: float
+    lower_stop_level: float
+    upper_stop_level: Optional[float]
+    capacity: float
+    connection_node_start_id: ConnectionNode
+    connection_node_end_id: ConnectionNode
+
+
+class Obstacle(BaseModel):
+    id: int
+    code: constr(max_length=100)
+    crest_level: float
+    # the_geom
+
+
 class Levee(BaseModel):
     id: int
     code: constr(max_length=100)
     crest_level: Optional[float]
+    # the_geom
     material: Material
     max_breach_depth:  Optional[float]
 
     class Config:
         orm_mode = True
+
+
+class ConnectedPoint(BaseModel):
+    id: int
+    calculation_pnt_id: CalculationPoint
+    levee_id: Levee
+    exchange_level: Optional[float]
+    # the_geom
+
+
+class ImperviousSurface(BaseModel):
+    id: int
+    code: constr(max_length=100)
+    display_name: constr(max_length=255)
+    surface_inclination: constants.SurfaceInclinationType
+    surface_class: constants.SurfaceClass
+    surface_sub_class: Optional[constr(max_length=128)]
+    zoom_category: Optional[constants.ZoomCategories]
+    nr_of_inhabitants: Optional[float]
+    area: Optional[float]
+    dry_weather_flow: Optional[float]
+    # the_geom
+
+
+class ImperviousSurfaceMap(BaseModel):
+    id: int
+    percentage: float
+    impervious_surface_id: ImperviousSurface
+    connection_node_id: ConnectionNode
