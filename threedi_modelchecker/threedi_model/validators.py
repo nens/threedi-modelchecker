@@ -138,7 +138,7 @@ class Interflow(ORMBaseModel):
     impervious_layer_elevation: Optional[float]
     hydraulic_conductivity: Optional[float]
     hydraulic_conductivity_file: Optional[constr(max_length=255)]
-    display_name: Optional[constr(max_length=255)]
+    display_name: constr(max_length=255)
 
 
 class PumpedDrainageArea(ORMBaseModel):
