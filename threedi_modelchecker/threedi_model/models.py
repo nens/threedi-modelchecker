@@ -87,7 +87,7 @@ class ControlMeasureMap(Base):
     )
     object_type = Column(String(100))
     object_id = Column(Integer)
-    weight = Column(Numeric)
+    weight = Column(Float)
 
 
 class ControlMemory(Base):
