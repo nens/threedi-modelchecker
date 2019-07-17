@@ -9,39 +9,36 @@ from . import constants, models
 from .constants import Material, CalculationType
 
 
-class Lateral2D(BaseModel):
-    id: int
-    type = constants.Later2dType
-    # the_geom
-    timeseries: str
+class ORMBaseModel(BaseModel):
 
     class Config:
         orm_mode = True
 
 
-class BoundaryConditions2D(BaseModel):
+class Lateral2D(ORMBaseModel):
+    id: int
+    type = constants.Later2dType
+    # the_geom
+    timeseries: str
+
+
+class BoundaryConditions2D(ORMBaseModel):
     id: int
     display_name: str
     timeseries: str
     boundary_type: constants.BoundaryType
     # the_geom
 
-    class Config:
-        orm_mode = True
 
-
-class CalculationPoint(BaseModel):
+class CalculationPoint(ORMBaseModel):
     id: int
     content_type_id: int
     user_ref: constr(max_length=80)
     calc_type: int
     # the_geom
 
-    class Config:
-        orm_mode = True
 
-
-class ControlDelta(BaseModel):
+class ControlDelta(ORMBaseModel):
     id: int
     measure_variable: Optional[constr(max_length=50)]
     measure_delta: Optional[constr(max_length=50)]
@@ -52,23 +49,18 @@ class ControlDelta(BaseModel):
     target_type: Optional[constr(max_length=100)]
     target_id: Optional[int]
 
-    class Config:
-        orm_mode = True
 
-class ControlGroup(BaseModel):
+class ControlGroup(ORMBaseModel):
     id: int
     name: Optional[constr(max_length=100)]
     description: Optional[str]
 
-    class Config:
-        orm_mode = True
 
-
-class ControlMeasureGroup(BaseModel):
+class ControlMeasureGroup(ORMBaseModel):
     id: int
 
 
-class ControlMeasureMap(BaseModel):
+class ControlMeasureMap(ORMBaseModel):
     id: int
     measure_group_id: Optional[ControlMeasureGroup]
     object_type: Optional[constr(max_length=100)]
@@ -76,7 +68,7 @@ class ControlMeasureMap(BaseModel):
     weight: Optional[float]
 
 
-class ControlMemory(BaseModel):
+class ControlMemory(ORMBaseModel):
     id: int
     measure_variable: Optional[constr(max_length=50)]
     upper_threshold: Optional[float]
@@ -89,7 +81,7 @@ class ControlMemory(BaseModel):
     is_inverse = bool
 
 
-class ControlPID(BaseModel):
+class ControlPID(ORMBaseModel):
     id: int
     measure_variable: Optional[constr(max_length=50)]
     setpoint: Optional[float]
@@ -102,7 +94,7 @@ class ControlPID(BaseModel):
     target_lower_limit: Optional[constr(max_length=50)]
 
 
-class ControlTable(BaseModel):
+class ControlTable(ORMBaseModel):
     id: int
     action_table: Optional[str]
     action_type: Optional[constr(max_length=50)]
@@ -112,7 +104,7 @@ class ControlTable(BaseModel):
     target_id: Optional[int]
 
 
-class ControlTimed(BaseModel):
+class ControlTimed(ORMBaseModel):
     id: int
     action_type: Optional[constr(max_length=50)]
     action_table: Optional[str]
@@ -120,7 +112,7 @@ class ControlTimed(BaseModel):
     target_id: Optional[int]
 
 
-class Control(BaseModel):
+class Control(ORMBaseModel):
     id: int
     control_group_id: ControlGroup
     measure_group_id: ControlMeasureGroup
@@ -131,13 +123,13 @@ class Control(BaseModel):
     measure_frequency: Optional[int]
 
 
-class Floodfill(BaseModel):
+class Floodfill(ORMBaseModel):
     id: int
     waterlevel: Optional[float]
     # the_geom
 
 
-class Interflow(BaseModel):
+class Interflow(ORMBaseModel):
     id: int
     interflow_type: constants.InterflowType
     porosity: Optional[float]
@@ -149,14 +141,14 @@ class Interflow(BaseModel):
     display_name: Optional[constr(max_length=255)]
 
 
-class PumpedDrainageArea(BaseModel):
+class PumpedDrainageArea(ORMBaseModel):
     id: int
     name: constr(max_length=64)
     code: constr(max_length=100)
     # the_geom
 
 
-class SimpleInfiltration(BaseModel):
+class SimpleInfiltration(ORMBaseModel):
     id: int
     infiltration_rate: float
     infiltration_rate_file: Optional[constr(max_length=255)]
@@ -165,7 +157,7 @@ class SimpleInfiltration(BaseModel):
     display_name: constr(max_length=255)
 
 
-class SurfaceParameter(BaseModel):
+class SurfaceParameter(ORMBaseModel):
     id: int
     outflow_delay: float
     surface_layer_thickness: float
@@ -176,7 +168,7 @@ class SurfaceParameter(BaseModel):
     infiltration_recovery_constant: float
 
 
-class Surface(BaseModel):
+class Surface(ORMBaseModel):
     id: int
     display_name: constr(max_length=255)
     code: constr(max_length=100)
@@ -189,7 +181,7 @@ class Surface(BaseModel):
     # the_geom
 
 
-class GroundWater(BaseModel):
+class GroundWater(ORMBaseModel):
     id: int
     groundwater_impervious_layer_level: Optional[float]
     groundwater_impervious_layer_level_file: Optional[constr(max_length=255)]
@@ -214,7 +206,7 @@ class GroundWater(BaseModel):
     leakage_file: Optional[constr(max_length=255)]
 
 
-class GridRefinement(BaseModel):
+class GridRefinement(ORMBaseModel):
     id: int
     display_name: constr(max_length=255)
     refinement_level: int
@@ -222,7 +214,7 @@ class GridRefinement(BaseModel):
     code: constr(max_length=100)
 
 
-class GridRefinementArea(BaseModel):
+class GridRefinementArea(ORMBaseModel):
     id: int
     display_name: constr(max_length=255)
     refinement_level: int
@@ -230,7 +222,7 @@ class GridRefinementArea(BaseModel):
     # the_geom
 
 
-class CrossSectionDefinition(BaseModel):
+class CrossSectionDefinition(ORMBaseModel):
     id: int
     width: Optional[constr(max_length=255)]
     height: Optional[constr(max_length=255)]
@@ -238,7 +230,7 @@ class CrossSectionDefinition(BaseModel):
     code: constr(max_length=100)
 
 
-class ConnectionNode(BaseModel):
+class ConnectionNode(ORMBaseModel):
     id: int
     storage_area: Optional[float]
     initial_waterlevel: Optional[float]
@@ -246,17 +238,14 @@ class ConnectionNode(BaseModel):
     # the_geom_linestring
     code: constr(max_length=100)
 
-    class Config:
-        orm_mode = True
 
-
-class Lateral1d(BaseModel):
+class Lateral1d(ORMBaseModel):
     id: int
     connection_node_id: ConnectionNode
     timeseries: str
 
 
-class Manhole(BaseModel):
+class Manhole(ORMBaseModel):
     id: int
     display_name: constr(max_length=255)
     code: constr(max_length=100)
@@ -273,7 +262,7 @@ class Manhole(BaseModel):
     connection_node_id: ConnectionNode
 
 
-class NumericalSettings(BaseModel):
+class NumericalSettings(ORMBaseModel):
     id: int
     cfl_strictness_factor_1d: Optional[float]
     cfl_strictness_factor_2d: Optional[float]
@@ -299,7 +288,7 @@ class NumericalSettings(BaseModel):
     use_of_nested_newton: int
 
 
-class GlobalSetting(BaseModel):
+class GlobalSetting(ORMBaseModel):
     id: int
     use_2d_flow: bool
     use_1d_flow: bool
@@ -351,7 +340,7 @@ class GlobalSetting(BaseModel):
     groundwater_settings_id: GroundWater
 
 
-class AggregationSettings(BaseModel):
+class AggregationSettings(ORMBaseModel):
     id: int
     global_settings_id: GlobalSetting
     var_name: constr(max_length=100)
@@ -361,14 +350,14 @@ class AggregationSettings(BaseModel):
     timestep: int
 
 
-class BoundaryCondition1D(BaseModel):
+class BoundaryCondition1D(ORMBaseModel):
     id: int
     boundary_type: constants.BoundaryType
     timeseries: str
     connection_node_id: ConnectionNode
 
 
-class SurfaceMap(BaseModel):
+class SurfaceMap(ORMBaseModel):
     id: int
     surface_type: constants.SurfaceType
     surface_id: int
@@ -376,7 +365,7 @@ class SurfaceMap(BaseModel):
     percentage: Optional[float]
 
 
-class Channel(BaseModel):
+class Channel(ORMBaseModel):
     id: int
     display_name: constr(max_length=255)
     code: constr(max_length=100)
@@ -387,11 +376,8 @@ class Channel(BaseModel):
     connection_node_start: ConnectionNode
     connection_node_end: ConnectionNode
 
-    class Config:
-        orm_mode = True
 
-
-class Windshielding(BaseModel):
+class Windshielding(ORMBaseModel):
     id: int
     north: Optional[float]
     northeast: Optional[float]
@@ -405,7 +391,7 @@ class Windshielding(BaseModel):
     channel_id: Channel
 
 
-class CrossSectionLocation(BaseModel):
+class CrossSectionLocation(ORMBaseModel):
     id: int
     code: constr(max_length=100)
     reference_level: float
@@ -417,7 +403,7 @@ class CrossSectionLocation(BaseModel):
     definition_id: CrossSectionDefinition
 
 
-class Pipe(BaseModel):
+class Pipe(ORMBaseModel):
     id: int
     display_name: constr(max_length=255)
     code: constr(max_length=100)
@@ -437,7 +423,7 @@ class Pipe(BaseModel):
     cross_section_definition_id: CrossSectionDefinition
 
 
-class Culvert(BaseModel):
+class Culvert(ORMBaseModel):
     id: int
     display_name: constr(max_length=255)
     code: constr(max_length=100)
@@ -456,12 +442,12 @@ class Culvert(BaseModel):
     cross_section_definition_id: CrossSectionDefinition
 
 
-class DemAverageArea(BaseModel):
+class DemAverageArea(ORMBaseModel):
     id: int
     # the_geom
 
 
-class Weir(BaseModel):
+class Weir(ORMBaseModel):
     id: int
     code: constr(max_length=100)
     display_name: constr(max_length=255)
@@ -479,7 +465,7 @@ class Weir(BaseModel):
     cross_section_definition_id: CrossSectionDefinition
 
 
-class Orifice(BaseModel):
+class Orifice(ORMBaseModel):
     id: int
     code: constr(max_length=100)
     display_name: constr(max_length=255)
@@ -496,7 +482,7 @@ class Orifice(BaseModel):
     cross_section_definition_id: CrossSectionDefinition
 
 
-class Pumpstation(BaseModel):
+class Pumpstation(ORMBaseModel):
     id: int
     code: constr(max_length=100)
     display_name: constr(max_length=255)
@@ -512,14 +498,14 @@ class Pumpstation(BaseModel):
     connection_node_end_id: ConnectionNode
 
 
-class Obstacle(BaseModel):
+class Obstacle(ORMBaseModel):
     id: int
     code: constr(max_length=100)
     crest_level: float
     # the_geom
 
 
-class Levee(BaseModel):
+class Levee(ORMBaseModel):
     id: int
     code: constr(max_length=100)
     crest_level: Optional[float]
@@ -527,11 +513,8 @@ class Levee(BaseModel):
     material: Material
     max_breach_depth:  Optional[float]
 
-    class Config:
-        orm_mode = True
 
-
-class ConnectedPoint(BaseModel):
+class ConnectedPoint(ORMBaseModel):
     id: int
     calculation_pnt_id: CalculationPoint
     levee_id: Levee
@@ -539,7 +522,7 @@ class ConnectedPoint(BaseModel):
     # the_geom
 
 
-class ImperviousSurface(BaseModel):
+class ImperviousSurface(ORMBaseModel):
     id: int
     code: constr(max_length=100)
     display_name: constr(max_length=255)
@@ -553,7 +536,7 @@ class ImperviousSurface(BaseModel):
     # the_geom
 
 
-class ImperviousSurfaceMap(BaseModel):
+class ImperviousSurfaceMap(ORMBaseModel):
     id: int
     percentage: float
     impervious_surface_id: ImperviousSurface
