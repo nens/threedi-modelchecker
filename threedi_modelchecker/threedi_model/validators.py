@@ -62,7 +62,7 @@ class ControlMeasureGroup(ORMBaseModel):
 
 class ControlMeasureMap(ORMBaseModel):
     id: int
-    measure_group_id: Optional[ControlMeasureGroup]
+    measure_group: Optional[ControlMeasureGroup]
     object_type: Optional[constr(max_length=100)]
     object_id: Optional[int]
     weight: Optional[float]
@@ -114,8 +114,8 @@ class ControlTimed(ORMBaseModel):
 
 class Control(ORMBaseModel):
     id: int
-    control_group_id: ControlGroup
-    measure_group_id: ControlMeasureGroup
+    control_group: Optional[ControlGroup]
+    measure_group: Optional[ControlMeasureGroup]
     control_type: Optional[constr(max_length=15)]
     control_id: Optional[int]
     start: Optional[constr(max_length=50)]
@@ -177,7 +177,7 @@ class Surface(ORMBaseModel):
     dry_weather_flow: Optional[float]
     function: Optional[constr(max_length=64)]
     area: Optional[float]
-    surface_parameters_id = SurfaceParameter
+    surface_parameters = SurfaceParameter
     # the_geom
 
 
@@ -185,22 +185,22 @@ class GroundWater(ORMBaseModel):
     id: int
     groundwater_impervious_layer_level: Optional[float]
     groundwater_impervious_layer_level_file: Optional[constr(max_length=255)]
-    groundwater_impervious_layer_level_type: constants.InitializationType
+    groundwater_impervious_layer_level_type: Optional[constants.InitializationType]
     phreatic_storage_capacity: Optional[float]
     phreatic_storage_capacity_file: Optional[constr(max_length=255)]
-    phreatic_storage_capacity_type: constants.InitializationType
+    phreatic_storage_capacity_type: Optional[constants.InitializationType]
     equilibrium_infiltration_rate: Optional[float]
     equilibrium_infiltration_rate_file: Optional[constr(max_length=255)]
-    equilibrium_infiltration_rate_type: constants.InitializationType
+    equilibrium_infiltration_rate_type: Optional[constants.InitializationType]
     initial_infiltration_rate: Optional[float]
     initial_infiltration_rate_file: Optional[constr(max_length=255)]
-    initial_infiltration_rate_type: constants.InitializationType
+    initial_infiltration_rate_type: Optional[constants.InitializationType]
     infiltration_decay_period: Optional[float]
     infiltration_decay_period_file: Optional[constr(max_length=255)]
-    infiltration_decay_period_type: constants.InitializationType
+    infiltration_decay_period_type: Optional[constants.InitializationType]
     groundwater_hydro_connectivity: Optional[float]
     groundwater_hydro_connectivity_file: Optional[constr(max_length=255)]
-    groundwater_hydro_connectivity_type: constants.InitializationType
+    groundwater_hydro_connectivity_type: Optional[constants.InitializationType]
     display_name: constr(max_length=255)
     leakage: Optional[float]
     leakage_file: Optional[constr(max_length=255)]
@@ -249,7 +249,7 @@ class Manhole(ORMBaseModel):
     id: int
     display_name: constr(max_length=255)
     code: constr(max_length=100)
-    zoom_category: constants.ZoomCategories
+    zoom_category: Optional[constants.ZoomCategories]
     shape: Optional[constr(max_length=4)]
     width: Optional[float]
     length: Optional[float]
@@ -258,8 +258,8 @@ class Manhole(ORMBaseModel):
     drain_level: Optional[float]
     sediment_level: Optional[float]
     manhole_indicator: Optional[int]
-    calculation_type: constants.CalculationTypeNode
-    connection_node_id: ConnectionNode
+    calculation_type: Optional[constants.CalculationTypeNode]
+    connection_node: ConnectionNode
 
 
 class NumericalSettings(ORMBaseModel):
@@ -333,16 +333,16 @@ class GlobalSetting(ORMBaseModel):
     initial_groundwater_level: Optional[float]
     initial_groundwater_level_file: Optional[constr(max_length=255)]
     initial_groundwater_level_type: Optional[constants.InitializationType]
-    numerical_settings_id: NumericalSettings
-    interflow_settings_id: Interflow
-    control_group_id: ControlGroup
-    simple_infiltration_settings_id: SimpleInfiltration
-    groundwater_settings_id: GroundWater
+    numerical_settings: NumericalSettings
+    interflow_settings: Optional[Interflow]
+    control_group: Optional[ControlGroup]
+    simple_infiltration_settings: Optional[SimpleInfiltration]
+    groundwater_settings: Optional[GroundWater]
 
 
 class AggregationSettings(ORMBaseModel):
     id: int
-    global_settings_id: GlobalSetting
+    global_settings: GlobalSetting
     var_name: constr(max_length=100)
     flow_variable: constants.FlowVariable
     aggregation_method: Optional[constants.AggregationMethod]
@@ -354,14 +354,14 @@ class BoundaryCondition1D(ORMBaseModel):
     id: int
     boundary_type: constants.BoundaryType
     timeseries: str
-    connection_node_id: ConnectionNode
+    connection_node: ConnectionNode
 
 
 class SurfaceMap(ORMBaseModel):
     id: int
     surface_type: constants.SurfaceType
     surface_id: int
-    connection_node_id: ConnectionNode
+    connection_node: ConnectionNode
     percentage: Optional[float]
 
 
@@ -388,7 +388,7 @@ class Windshielding(ORMBaseModel):
     west: Optional[float]
     northwest: Optional[float]
     #the_geom
-    channel_id: Channel
+    channel: Channel
 
 
 class CrossSectionLocation(ORMBaseModel):
@@ -399,8 +399,8 @@ class CrossSectionLocation(ORMBaseModel):
     friction_value: float
     bank_level: Optional[float]
     #the_geom
-    channel_id: Channel
-    definition_id: CrossSectionDefinition
+    channel: Channel
+    definition: CrossSectionDefinition
 
 
 class Pipe(ORMBaseModel):
@@ -418,9 +418,9 @@ class Pipe(ORMBaseModel):
     material: Optional[int]
     original_length: Optional[float]
     zoom_category: Optional[constants.ZoomCategories]
-    connection_node_start_id: ConnectionNode
-    connection_node_end_id: ConnectionNode
-    cross_section_definition_id: CrossSectionDefinition
+    connection_node_start: ConnectionNode
+    connection_node_end: ConnectionNode
+    cross_section_definition: CrossSectionDefinition
 
 
 class Culvert(ORMBaseModel):
@@ -437,9 +437,9 @@ class Culvert(ORMBaseModel):
     invert_level_start_point: Optional[float]
     invert_level_end_point: Optional[float]
     #the_geom
-    connection_node_start_id: ConnectionNode
-    connection_node_end_id: ConnectionNode
-    cross_section_definition_id: CrossSectionDefinition
+    connection_node_start: ConnectionNode
+    connection_node_end: ConnectionNode
+    cross_section_definition: CrossSectionDefinition
 
 
 class DemAverageArea(ORMBaseModel):
@@ -460,9 +460,9 @@ class Weir(ORMBaseModel):
     sewerage: bool
     external: Optional[float]
     zoom_category: Optional[constants.ZoomCategories]
-    connection_node_start_id: ConnectionNode
-    connection_node_end_id: ConnectionNode
-    cross_section_definition_id: CrossSectionDefinition
+    connection_node_start: ConnectionNode
+    connection_node_end: ConnectionNode
+    cross_section_definition: CrossSectionDefinition
 
 
 class Orifice(ORMBaseModel):
@@ -477,9 +477,9 @@ class Orifice(ORMBaseModel):
     discharge_coefficient_positive: Optional[float]
     discharge_coefficient_negative: Optional[float]
     sewerage: bool
-    connection_node_start_id: ConnectionNode
-    connection_node_end_id: ConnectionNode
-    cross_section_definition_id: CrossSectionDefinition
+    connection_node_start: ConnectionNode
+    connection_node_end: ConnectionNode
+    cross_section_definition: CrossSectionDefinition
 
 
 class Pumpstation(ORMBaseModel):
@@ -489,13 +489,13 @@ class Pumpstation(ORMBaseModel):
     zoom_category: Optional[constants.ZoomCategories]
     classification: Optional[int]
     sewerage: bool
-    type: constants.PumpType
+    type_: constants.PumpType
     start_level: float
     lower_stop_level: float
     upper_stop_level: Optional[float]
     capacity: float
-    connection_node_start_id: ConnectionNode
-    connection_node_end_id: ConnectionNode
+    connection_node_start: ConnectionNode
+    connection_node_end: Optional[ConnectionNode]
 
 
 class Obstacle(ORMBaseModel):
@@ -516,8 +516,8 @@ class Levee(ORMBaseModel):
 
 class ConnectedPoint(ORMBaseModel):
     id: int
-    calculation_pnt_id: CalculationPoint
-    levee_id: Levee
+    calculation_pnt: CalculationPoint
+    levee: Optional[Levee]
     exchange_level: Optional[float]
     # the_geom
 
@@ -539,5 +539,5 @@ class ImperviousSurface(ORMBaseModel):
 class ImperviousSurfaceMap(ORMBaseModel):
     id: int
     percentage: float
-    impervious_surface_id: ImperviousSurface
-    connection_node_id: ConnectionNode
+    impervious_surface: ImperviousSurface
+    connection_node: ConnectionNode

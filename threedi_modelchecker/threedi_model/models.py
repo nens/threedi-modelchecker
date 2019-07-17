@@ -72,11 +72,16 @@ class ControlGroup(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100))
     description = Column(Text)
+    controls = relationship("Control", back_populates="control_group")
 
 
 class ControlMeasureGroup(Base):
     __tablename__ = "v2_control_measure_group"
     id = Column(Integer, primary_key=True)
+    control_measure_maps = relationship(
+        "ControlMeasureMap",  back_populates="measure_group"
+    )
+    controls = relationship("Control", back_populates="measure_group")
 
 
 class ControlMeasureMap(Base):
@@ -84,6 +89,9 @@ class ControlMeasureMap(Base):
     id = Column(Integer, primary_key=True)
     measure_group_id = Column(
         Integer, ForeignKey(ControlMeasureGroup.__tablename__ + ".id")
+    )
+    measure_group = relationship(
+        ControlMeasureGroup, back_populates="control_measure_maps"
     )
     object_type = Column(String(100))
     object_id = Column(Integer)
@@ -142,8 +150,12 @@ class Control(Base):
     __tablename__ = "v2_control"
     id = Column(Integer, primary_key=True)
     control_group_id = Column(Integer, ForeignKey(ControlGroup.__tablename__ + ".id"))
+    control_group = relationship(ControlGroup, back_populates="controls")
     measure_group_id = Column(
         Integer, ForeignKey(ControlMeasureGroup.__tablename__ + ".id")
+    )
+    measure_group = relationship(
+        ControlMeasureGroup, back_populates="controls"
     )
     control_type = Column(String(15))
     control_id = Column(Integer)
@@ -219,6 +231,7 @@ class Surface(Base):
     surface_parameters_id = Column(
         Integer, ForeignKey(SurfaceParameter.__tablename__ + ".id"), nullable=False
     )
+    surface_parameters = relationship(SurfaceParameter)
     the_geom = Column(Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True))
 
 
@@ -416,14 +429,19 @@ class GlobalSetting(Base):
     numerical_settings_id = Column(
         Integer, ForeignKey(NumericalSettings.__tablename__ + ".id"), nullable=False
     )
+    numerical_settings = relationship(NumericalSettings)
     interflow_settings_id = Column(Integer, ForeignKey(Interflow.__tablename__ + ".id"))
+    interflow_settings = relationship(Interflow)
     control_group_id = Column(Integer, ForeignKey(ControlGroup.__tablename__ + ".id"))
+    control_group = relationship(ControlGroup)
     simple_infiltration_settings_id = Column(
         Integer, ForeignKey(SimpleInfiltration.__tablename__ + ".id")
     )
+    simple_infiltration_settings = relationship(SimpleInfiltration)
     groundwater_settings_id = Column(
         Integer, ForeignKey(GroundWater.__tablename__ + ".id")
     )
+    groundwater_settings = relationship(GroundWater)
 
 
 class AggregationSettings(Base):
@@ -433,6 +451,7 @@ class AggregationSettings(Base):
     global_settings_id = Column(
         Integer, ForeignKey(GlobalSetting.__tablename__ + ".id")
     )
+    global_settings = relationship(GlobalSetting)
 
     var_name = Column(String(100), nullable=False)
     flow_variable = Column(VarcharEnum(constants.FlowVariable), nullable=False)
@@ -469,6 +488,7 @@ class SurfaceMap(Base):
     connection_node_id = Column(
         Integer, ForeignKey(ConnectionNode.__tablename__ + ".id"), nullable=False
     )
+    connection_node = relationship(ConnectionNode)
     percentage = Column(Float)
 
 
@@ -517,6 +537,7 @@ class Windshielding(Base):
     channel_id = Column(
         Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
     )
+    channel = relationship(Channel)
 
 
 class CrossSectionLocation(Base):
@@ -747,7 +768,9 @@ class ConnectedPoint(Base):
     calculation_pnt_id = Column(
         Integer, ForeignKey(CalculationPoint.__tablename__ + ".id"), nullable=False
     )
+    calculation_pnt = relationship(CalculationPoint)
     levee_id = Column(Integer, ForeignKey(Levee.__tablename__ + ".id"))
+    levee = relationship(Levee)
 
     exchange_level = Column(Float)
     the_geom = Column(
