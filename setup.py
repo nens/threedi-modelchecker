@@ -2,7 +2,7 @@ from setuptools import setup
 
 version = '0.6.dev0'
 
-long_description = "\n\n".join([open("README.md").read(), open("CHANGES.md").read()])
+long_description = "\n\n".join([open("README.rst").read(), open("CHANGES.rst").read()])
 
 install_requires = [
     "Click",
