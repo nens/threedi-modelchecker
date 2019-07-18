@@ -10,6 +10,7 @@ from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks
 from .checks.factories import generate_geometry_type_checks
+from .checks.factories import generate_not_null_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
 from .checks.other import BankLevelCheck, CrossSectionShapeCheck
@@ -340,6 +341,7 @@ class Config:
     def generate_checks(self):
         FOREIGN_KEY_CHECKS = []
         UNIQUE_CHECKS = []
+        NOT_NULL_CHECKS = []
         INVALID_TYPE_CHECKS = []
         INVALID_GEOMETRY_CHECKS = []
         INVALID_GEOMETRY_TYPE_CHECKS = []
@@ -348,6 +350,7 @@ class Config:
         for model in self.models:
             FOREIGN_KEY_CHECKS += generate_foreign_key_checks(model.__table__)
             UNIQUE_CHECKS += generate_unique_checks(model.__table__)
+            NOT_NULL_CHECKS += generate_not_null_checks(model.__table__)
             INVALID_TYPE_CHECKS += generate_type_checks(model.__table__)
             INVALID_GEOMETRY_CHECKS += generate_geometry_checks(model.__table__)
             INVALID_GEOMETRY_TYPE_CHECKS += generate_geometry_type_checks(model.__table__)  # noqa: E501
@@ -355,6 +358,7 @@ class Config:
 
         self.checks += FOREIGN_KEY_CHECKS
         self.checks += UNIQUE_CHECKS
+        self.checks += NOT_NULL_CHECKS
         self.checks += INVALID_TYPE_CHECKS
         self.checks += INVALID_GEOMETRY_CHECKS
         self.checks += INVALID_GEOMETRY_TYPE_CHECKS

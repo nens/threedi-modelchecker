@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Added missing NotNullChecks to the config.py
 
 
 0.5 (2019-07-12)
