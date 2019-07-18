@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.7 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix setup.py.
 
 
 0.6 (2019-07-18)
