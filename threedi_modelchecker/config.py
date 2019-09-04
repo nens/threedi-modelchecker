@@ -172,6 +172,22 @@ RANGE_CHECKS = [
         column=models.Weir.friction_value,
         criterion_valid=models.Weir.friction_value >= 0,
     ),
+    GeneralCheck(
+        column=models.Manhole.bottom_level,
+        criterion_valid=models.Manhole.bottom_level >= models.Manhole.surface_level,
+    ),
+    GeneralCheck(
+        column=models.Manhole.bottom_level,
+        criterion_valid=models.Manhole.bottom_level >= models.Manhole.drain_level,
+    ),
+    GeneralCheck(
+        column=models.GlobalSetting.maximum_sim_time_step,
+        criterion_valid=models.GlobalSetting.maximum_sim_time_step >= models.GlobalSetting.sim_time_step,  # noqa: E501
+    ),
+    GeneralCheck(
+        column=models.GlobalSetting.sim_time_step,
+        criterion_valid=models.GlobalSetting.sim_time_step >= models.GlobalSetting.minimum_sim_time_step,  # noqa: E501
+    ),
 ]
 
 OTHER_CHECKS = [
