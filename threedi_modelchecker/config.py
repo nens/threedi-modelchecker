@@ -348,7 +348,8 @@ CONDITIONAL_CHECKS = [
         ).filter(
             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
         ),
-        message="Pumpstation.lower_stop_level should be higher than Manhole.bottom_level"
+        message="Pumpstation.lower_stop_level should be higher than "
+                "Manhole.bottom_level"
     ),
     QueryCheck(
         column=models.Pumpstation.lower_stop_level,
@@ -360,7 +361,8 @@ CONDITIONAL_CHECKS = [
         ).filter(
             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
         ),
-        message="Pumpstation.lower_stop_level should be higher than Manhole.bottom_level"
+        message="Pumpstation.lower_stop_level should be higher than "
+                "Manhole.bottom_level"
     ),
     QueryCheck(
         column=models.Pipe.invert_level_end_point,
@@ -372,7 +374,8 @@ CONDITIONAL_CHECKS = [
         ).filter(
             models.Pipe.invert_level_end_point < models.Manhole.bottom_level,
         ),
-        message="Pipe.invert_level_end_point should be higher or equal than Manhole.bottom_level"
+        message="Pipe.invert_level_end_point should be higher or equal than "
+                "Manhole.bottom_level"
     ),
     QueryCheck(
         column=models.Pipe.invert_level_start_point,
@@ -382,9 +385,10 @@ CONDITIONAL_CHECKS = [
         ).join(
             models.Manhole
         ).filter(
-            models.Pipe.invert_level_start_point < models.Manhole.bottom_level,
+            models.Pipe.invert_level_start_point < models.Manhole.bottom_level,  # noqa: E501
         ),
-        message="Pipe.invert_level_start_point should be higher or equal than Manhole.bottom_level"
+        message="Pipe.invert_level_start_point should be higher or equal than "
+                "Manhole.bottom_level"
     )
 ]
 

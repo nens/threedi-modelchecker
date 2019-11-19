@@ -6,11 +6,13 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Query
 
 from tests import factories
-from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck, GeneralCheck, \
-    QueryCheck
+from threedi_modelchecker.checks.base import ConditionalCheck
+from threedi_modelchecker.checks.base import EnumCheck
+from threedi_modelchecker.checks.base import GeneralCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
+from threedi_modelchecker.checks.base import QueryCheck
 from threedi_modelchecker.checks.base import NotNullCheck
 from threedi_modelchecker.checks.base import TypeCheck
 from threedi_modelchecker.checks.base import UniqueCheck
@@ -424,13 +426,13 @@ def test_conditional_check_joining_criterion_valid(session):
     manhole1 = factories.ManholeFactory(
         connection_node=connection_node1, bottom_level=1.0
     )
-    manhole2 = factories.ManholeFactory(
+    factories.ManholeFactory(
         connection_node=connection_node2, bottom_level=-1.0
     )
-    pumpstation_wrong = factories.PumpstationFactory(
+    factories.PumpstationFactory(
         connection_node_start=connection_node1, lower_stop_level=0.0
     )
-    pumpstation_good = factories.PumpstationFactory(
+    factories.PumpstationFactory(
         connection_node_start=connection_node2, lower_stop_level=2.0
     )
 
@@ -473,7 +475,8 @@ def test_query_check_with_joins(session):
     check = QueryCheck(
         column=models.Manhole.bottom_level,
         invalid=query,
-        message="Pumpstation.lower_stop_level should be higher than Manhole.bottom_level"
+        message="Pumpstation.lower_stop_level should be higher than "
+                "Manhole.bottom_level"
     )
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
@@ -497,7 +500,7 @@ def test_query_check_on_pumpstation(session):
     )
 
     query = Query(models.Pumpstation).join(
-        models.ConnectionNode, models.Pumpstation.connection_node_start_id == models.ConnectionNode.id
+        models.ConnectionNode, models.Pumpstation.connection_node_start_id == models.ConnectionNode.id  # noqa: E501
     ).join(
         models.Manhole, models.Manhole.connection_node_id == models.ConnectionNode.id
     ).filter(
@@ -506,7 +509,8 @@ def test_query_check_on_pumpstation(session):
     check = QueryCheck(
         column=models.Pumpstation.lower_stop_level,
         invalid=query,
-        message="Pumpstation lower_stop_level should be higher than Manhole bottom_level"
+        message="Pumpstation lower_stop_level should be higher than Manhole "
+                "bottom_level"
     )
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
