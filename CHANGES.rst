@@ -5,7 +5,13 @@ Changelog of threedi-modelchecker
 0.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Removed threedigrid from requirements.
+
+- Configured extra checks: Pumpstation.lower_stop_level > Manhole.bottom_level.
+
+- Configured extra checks: Pipe.invert_level >= .Manhole.bottom_level.
+
+- Added additional check type: QueryCheck.
 
 
 0.7 (2019-07-18)
