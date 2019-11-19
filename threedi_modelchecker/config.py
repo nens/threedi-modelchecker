@@ -2,8 +2,9 @@ from sqlalchemy import Integer
 from sqlalchemy import and_
 from sqlalchemy import cast
 from sqlalchemy import or_
+from sqlalchemy.orm import Query
 
-from .checks.base import ConditionalCheck
+from .checks.base import ConditionalCheck, QueryCheck
 from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
 from .checks.factories import generate_enum_checks
@@ -337,6 +338,54 @@ CONDITIONAL_CHECKS = [
             ])
         )
     ),
+    QueryCheck(
+        column=models.Pumpstation.lower_stop_level,
+        invalid=Query(models.Pumpstation).join(
+            models.ConnectionNode,
+            models.Pumpstation.connection_node_start_id == models.ConnectionNode.id
+        ).join(
+            models.Manhole
+        ).filter(
+            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+        ),
+        message="Pumpstation.lower_stop_level should be higher than Manhole.bottom_level"
+    ),
+    QueryCheck(
+        column=models.Pumpstation.lower_stop_level,
+        invalid=Query(models.Pumpstation).join(
+            models.ConnectionNode,
+            models.Pumpstation.connection_node_end_id == models.ConnectionNode.id
+        ).join(
+            models.Manhole
+        ).filter(
+            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+        ),
+        message="Pumpstation.lower_stop_level should be higher than Manhole.bottom_level"
+    ),
+    QueryCheck(
+        column=models.Pipe.invert_level_end_point,
+        invalid=Query(models.Pipe).join(
+            models.ConnectionNode,
+            models.Pipe.connection_node_end_id == models.ConnectionNode.id
+        ).join(
+            models.Manhole
+        ).filter(
+            models.Pipe.invert_level_end_point < models.Manhole.bottom_level,
+        ),
+        message="Pipe.invert_level_end_point should be higher or equal than Manhole.bottom_level"
+    ),
+    QueryCheck(
+        column=models.Pipe.invert_level_start_point,
+        invalid=Query(models.Pipe).join(
+            models.ConnectionNode,
+            models.Pipe.connection_node_start_id == models.ConnectionNode.id
+        ).join(
+            models.Manhole
+        ).filter(
+            models.Pipe.invert_level_start_point < models.Manhole.bottom_level,
+        ),
+        message="Pipe.invert_level_start_point should be higher or equal than Manhole.bottom_level"
+    )
 ]
 
 
