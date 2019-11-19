@@ -1,11 +1,13 @@
 import factory
 import pytest
-from sqlalchemy import cast
+from sqlalchemy import cast, and_
 from sqlalchemy import func
 from sqlalchemy import Integer
+from sqlalchemy.orm import Query
 
 from tests import factories
-from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck, GeneralCheck
+from threedi_modelchecker.checks.base import EnumCheck, ConditionalCheck, GeneralCheck, \
+    QueryCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
@@ -411,6 +413,104 @@ def test_conditional_check_advanced(session):
     assert len(invalids) == 1
     assert invalids[0].id == connection_node2.id
     assert invalids[0].storage_area == connection_node2.storage_area
+
+
+def test_conditional_check_joining_criterion_valid(session):
+    # Joining on criterion valid fails because it takes the complement (negation)
+    # of the joins (instead of only the where statement (joins are in the where
+    # statement)).
+    connection_node1 = factories.ConnectionNodeFactory()
+    connection_node2 = factories.ConnectionNodeFactory()
+    manhole1 = factories.ManholeFactory(
+        connection_node=connection_node1, bottom_level=1.0
+    )
+    manhole2 = factories.ManholeFactory(
+        connection_node=connection_node2, bottom_level=-1.0
+    )
+    pumpstation_wrong = factories.PumpstationFactory(
+        connection_node_start=connection_node1, lower_stop_level=0.0
+    )
+    pumpstation_good = factories.PumpstationFactory(
+        connection_node_start=connection_node2, lower_stop_level=2.0
+    )
+
+    check_lower_stop_level_gt_bottom_level_compliment = GeneralCheck(
+        column=models.Manhole.bottom_level,
+        criterion_valid=and_(
+            models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+            models.Manhole.connection_node_id == models.ConnectionNode.id,
+            models.Pumpstation.lower_stop_level > models.Manhole.bottom_level,
+        ),
+    )
+    invalids = check_lower_stop_level_gt_bottom_level_compliment.get_invalid(session)
+    assert len(invalids) != 1  # Note that 1 is what we actually want!
+    assert invalids[0].id == manhole1.id
+
+
+def test_query_check_with_joins(session):
+    connection_node1 = factories.ConnectionNodeFactory()
+    connection_node2 = factories.ConnectionNodeFactory()
+    factories.ManholeFactory(
+        connection_node=connection_node1, bottom_level=1.0
+    )
+    factories.ManholeFactory(
+        connection_node=connection_node2, bottom_level=-1.0
+    )
+    factories.PumpstationFactory(
+        connection_node_start=connection_node1, lower_stop_level=0.0
+    )
+    factories.PumpstationFactory(
+        connection_node_start=connection_node2, lower_stop_level=2.0
+    )
+
+    query = Query(models.ConnectionNode).join(
+        models.Pumpstation.connection_node_start
+    ).join(
+        models.Manhole, models.ConnectionNode.id == models.Manhole.connection_node_id
+    ).filter(
+        models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+    )
+    check = QueryCheck(
+        column=models.Manhole.bottom_level,
+        invalid=query,
+        message="Pumpstation.lower_stop_level should be higher than Manhole.bottom_level"
+    )
+    invalids = check.get_invalid(session)
+    assert len(invalids) == 1
+    assert invalids[0].id == connection_node1.id
+
+
+def test_query_check_on_pumpstation(session):
+    connection_node1 = factories.ConnectionNodeFactory()
+    connection_node2 = factories.ConnectionNodeFactory()
+    factories.ManholeFactory(
+        connection_node=connection_node1, bottom_level=1.0
+    )
+    factories.ManholeFactory(
+        connection_node=connection_node2, bottom_level=-1.0
+    )
+    pumpstation_wrong = factories.PumpstationFactory(
+        connection_node_start=connection_node1, lower_stop_level=0.0
+    )
+    factories.PumpstationFactory(
+        connection_node_start=connection_node2, lower_stop_level=2.0
+    )
+
+    query = Query(models.Pumpstation).join(
+        models.ConnectionNode, models.Pumpstation.connection_node_start_id == models.ConnectionNode.id
+    ).join(
+        models.Manhole, models.Manhole.connection_node_id == models.ConnectionNode.id
+    ).filter(
+        models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+    )
+    check = QueryCheck(
+        column=models.Pumpstation.lower_stop_level,
+        invalid=query,
+        message="Pumpstation lower_stop_level should be higher than Manhole bottom_level"
+    )
+    invalids = check.get_invalid(session)
+    assert len(invalids) == 1
+    assert invalids[0].id == pumpstation_wrong.id
 
 
 def test_get_valid(session):
