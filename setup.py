@@ -8,7 +8,6 @@ install_requires = [
     "Click",
     "GeoAlchemy2>=0.6",
     "SQLAlchemy>=0.8",
-    "threedigrid",
 ]
 
 tests_require = [
