@@ -5,7 +5,8 @@ Changelog of threedi-modelchecker
 0.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Update to following columns to be non-nullable: Levee.the_geom,
+  Culvert.invert_level_start_point and Culvert.invert_level_end_point.
 
 
 0.7 (2019-07-18)
