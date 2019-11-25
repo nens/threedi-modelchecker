@@ -8,6 +8,14 @@ Changelog of threedi-modelchecker
 - Update to following columns to be non-nullable: Levee.the_geom,
   Culvert.invert_level_start_point and Culvert.invert_level_end_point.
 
+- Removed threedigrid from requirements.
+
+- Configured extra checks: Pumpstation.lower_stop_level > Manhole.bottom_level.
+
+- Configured extra checks: Pipe.invert_level >= .Manhole.bottom_level.
+
+- Added additional check type: QueryCheck.
+
 
 0.7 (2019-07-18)
 ----------------
