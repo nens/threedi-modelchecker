@@ -76,7 +76,7 @@ class GeneralCheck(BaseCheck):
 
     Either specify what is valid with `criterion_valid` or what is invalid
     with `criterion_invalid`.
-    The criterion should be  a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)  # noqa
+    The criterion should be a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)  # noqa
     with operators being operators being column within `self.table.columns`
     """
 
@@ -141,6 +141,25 @@ class ConditionalCheck(BaseCheck):
             self.criterion.compile(compile_kwargs={"literal_binds": True}),
             self.check.description(),
         )
+
+
+class QueryCheck(BaseCheck):
+    """Specify a sqlalchemy.orm.Query object to return invalid instances
+
+    Provides more freedom than the GeneralCheck where you need to specify a
+    sqlalchemy.sql.expression.BinaryExpression. For example, QueryCheck allows joins
+    on multiple tables"""
+
+    def __init__(self, column, invalid, message):
+        super().__init__(column)
+        self.invalid = invalid
+        self.message = message
+
+    def get_invalid(self, session):
+        return list(self.invalid.with_session(session))
+
+    def description(self):
+        return self.message
 
 
 class ForeignKeyCheck(BaseCheck):

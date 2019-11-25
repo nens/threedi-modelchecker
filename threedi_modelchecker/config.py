@@ -2,8 +2,9 @@ from sqlalchemy import Integer
 from sqlalchemy import and_
 from sqlalchemy import cast
 from sqlalchemy import or_
+from sqlalchemy.orm import Query
 
-from .checks.base import ConditionalCheck
+from .checks.base import ConditionalCheck, QueryCheck
 from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
 from .checks.factories import generate_enum_checks
@@ -172,6 +173,22 @@ RANGE_CHECKS = [
         column=models.Weir.friction_value,
         criterion_valid=models.Weir.friction_value >= 0,
     ),
+    GeneralCheck(
+        column=models.Manhole.bottom_level,
+        criterion_valid=models.Manhole.bottom_level >= models.Manhole.surface_level,
+    ),
+    GeneralCheck(
+        column=models.Manhole.bottom_level,
+        criterion_valid=models.Manhole.bottom_level >= models.Manhole.drain_level,
+    ),
+    GeneralCheck(
+        column=models.GlobalSetting.maximum_sim_time_step,
+        criterion_valid=models.GlobalSetting.maximum_sim_time_step >= models.GlobalSetting.sim_time_step,  # noqa: E501
+    ),
+    GeneralCheck(
+        column=models.GlobalSetting.sim_time_step,
+        criterion_valid=models.GlobalSetting.sim_time_step >= models.GlobalSetting.minimum_sim_time_step,  # noqa: E501
+    ),
 ]
 
 OTHER_CHECKS = [
@@ -321,6 +338,58 @@ CONDITIONAL_CHECKS = [
             ])
         )
     ),
+    QueryCheck(
+        column=models.Pumpstation.lower_stop_level,
+        invalid=Query(models.Pumpstation).join(
+            models.ConnectionNode,
+            models.Pumpstation.connection_node_start_id == models.ConnectionNode.id
+        ).join(
+            models.Manhole
+        ).filter(
+            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+        ),
+        message="Pumpstation.lower_stop_level should be higher than "
+                "Manhole.bottom_level"
+    ),
+    QueryCheck(
+        column=models.Pumpstation.lower_stop_level,
+        invalid=Query(models.Pumpstation).join(
+            models.ConnectionNode,
+            models.Pumpstation.connection_node_end_id == models.ConnectionNode.id
+        ).join(
+            models.Manhole
+        ).filter(
+            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+        ),
+        message="Pumpstation.lower_stop_level should be higher than "
+                "Manhole.bottom_level"
+    ),
+    QueryCheck(
+        column=models.Pipe.invert_level_end_point,
+        invalid=Query(models.Pipe).join(
+            models.ConnectionNode,
+            models.Pipe.connection_node_end_id == models.ConnectionNode.id
+        ).join(
+            models.Manhole
+        ).filter(
+            models.Pipe.invert_level_end_point < models.Manhole.bottom_level,
+        ),
+        message="Pipe.invert_level_end_point should be higher or equal than "
+                "Manhole.bottom_level"
+    ),
+    QueryCheck(
+        column=models.Pipe.invert_level_start_point,
+        invalid=Query(models.Pipe).join(
+            models.ConnectionNode,
+            models.Pipe.connection_node_start_id == models.ConnectionNode.id
+        ).join(
+            models.Manhole
+        ).filter(
+            models.Pipe.invert_level_start_point < models.Manhole.bottom_level,  # noqa: E501
+        ),
+        message="Pipe.invert_level_start_point should be higher or equal than "
+                "Manhole.bottom_level"
+    )
 ]
 
 
