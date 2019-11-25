@@ -588,8 +588,8 @@ class Culvert(Base):
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     discharge_coefficient_positive = Column(Float, nullable=False)
     discharge_coefficient_negative = Column(Float, nullable=False)
-    invert_level_start_point = Column(Float)
-    invert_level_end_point = Column(Float)
+    invert_level_start_point = Column(Float, nullable=False)
+    invert_level_end_point = Column(Float, nullable=False)
     the_geom = Column(
         Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
         nullable=False,
@@ -733,7 +733,8 @@ class Levee(Base):
     code = Column(String(100), default="", nullable=False)
     crest_level = Column(Float)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True)
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        nullable=False
     )
     material = Column(IntegerEnum(constants.Material))
     max_breach_depth = Column(Float)
