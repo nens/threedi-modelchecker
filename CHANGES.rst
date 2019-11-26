@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fixed some misconfigured checks, see https://github.com/nens/threedi-modelchecker/issues/10.
 
 
 0.8 (2019-11-26)

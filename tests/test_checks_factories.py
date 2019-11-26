@@ -22,7 +22,7 @@ def test_gen_not_unique_checks():
 
 def test_gen_not_null_checks():
     not_null_checks = generate_not_null_checks(models.Manhole.__table__)
-    assert len(not_null_checks) == 7
+    assert len(not_null_checks) == 5
     not_null_check_columns = [check.column for check in not_null_checks]
     assert models.Manhole.id in not_null_check_columns
     assert models.Manhole.code in not_null_check_columns
