@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.8 (unreleased)
+0.8 (2019-11-26)
 ----------------
 
 - Set language of travis to python and test for python 3.6 and 3.7.
