@@ -367,7 +367,7 @@ CONDITIONAL_CHECKS = [
         ).filter(
             models.Pipe.invert_level_end_point < models.Manhole.bottom_level,
         ),
-        message="Pipe.invert_level_end_point should be higher or equal than "
+        message="Pipe.invert_level_end_point should be higher than or equal to "
                 "Manhole.bottom_level"
     ),
     QueryCheck(
@@ -380,7 +380,7 @@ CONDITIONAL_CHECKS = [
         ).filter(
             models.Pipe.invert_level_start_point < models.Manhole.bottom_level,  # noqa: E501
         ),
-        message="Pipe.invert_level_start_point should be higher or equal than "
+        message="Pipe.invert_level_start_point should be higher than or equal to "
                 "Manhole.bottom_level"
     ),
     QueryCheck(
@@ -389,7 +389,7 @@ CONDITIONAL_CHECKS = [
             models.Manhole.drain_level < models.Manhole.bottom_level,
             models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED
         ),
-        message="Manhole.drain_level >= Manhoole.bottom_level when "
+        message="Manhole.drain_level >= Manhole.bottom_level when "
                 "Manhole.calculation_type is CONNECTED"
     ),
     QueryCheck(
