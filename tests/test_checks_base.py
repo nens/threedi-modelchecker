@@ -599,3 +599,56 @@ def test_general_check_modulo_operator(session):
     invalid = modulo_check.get_invalid(session)
     assert len(invalid) == 1
     assert invalid[0].id == global_settings_remainder.id
+
+
+def test_query_check_manhole_drain_level_calc_type_2(session):
+    # manhole.drain_level can be null, but if manhole.calculation_type == 2 (Connected)
+    # then manhole.drain_level >= manhole.bottom_level
+    factories.ManholeFactory(drain_level=None)
+    factories.ManholeFactory(drain_level=1)
+    m3_error = factories.ManholeFactory(
+        drain_level=None,
+        calculation_type=constants.CalculationTypeNode.CONNECTED
+    )  # drain_level cannot be null when calculation_type is CONNECTED
+    m4_error = factories.ManholeFactory(
+        drain_level=1,
+        bottom_level=2,
+        calculation_type=constants.CalculationTypeNode.CONNECTED
+    )  # bottom_level  >= drain_level when calculation_type is CONNECTED
+    factories.ManholeFactory(
+        drain_level=1,
+        bottom_level=0,
+        calculation_type=constants.CalculationTypeNode.CONNECTED
+    )
+    factories.ManholeFactory(
+        drain_level=None,
+        bottom_level=0,
+        calculation_type=constants.CalculationTypeNode.EMBEDDED
+    )
+
+    query_drn_lvl_st_bttm_lvl = Query(models.Manhole).filter(
+        models.Manhole.drain_level < models.Manhole.bottom_level,
+        models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED
+    )
+    query_invalid_not_null = Query(models.Manhole).filter(
+        models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED,
+        models.Manhole.drain_level == None
+    )
+    check_drn_lvl_gt_bttm_lvl = QueryCheck(
+        column=models.Manhole.bottom_level,
+        invalid=query_drn_lvl_st_bttm_lvl,
+        message="Manhole.drain_level >= Manhoole.bottom_level when "
+                "Manhole.calculation_type is CONNECTED"
+    )
+    check_invalid_not_null = QueryCheck(
+        column=models.Manhole.drain_level,
+        invalid=query_invalid_not_null,
+        message="Manhole.drain_level cannot be null when Manhole.calculation_type is "
+                "CONNECTED"
+    )
+    errors1 = check_drn_lvl_gt_bttm_lvl.get_invalid(session)
+    errors2 = check_invalid_not_null.get_invalid(session)
+    assert len(errors1) == 1
+    assert len(errors2) == 1
+    assert m3_error.id == errors2[0].id
+    assert m4_error.id == errors1[0].id

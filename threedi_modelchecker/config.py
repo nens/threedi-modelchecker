@@ -174,14 +174,6 @@ RANGE_CHECKS = [
         criterion_valid=models.Weir.friction_value >= 0,
     ),
     GeneralCheck(
-        column=models.Manhole.bottom_level,
-        criterion_valid=models.Manhole.bottom_level >= models.Manhole.surface_level,
-    ),
-    GeneralCheck(
-        column=models.Manhole.bottom_level,
-        criterion_valid=models.Manhole.bottom_level >= models.Manhole.drain_level,
-    ),
-    GeneralCheck(
         column=models.GlobalSetting.maximum_sim_time_step,
         criterion_valid=models.GlobalSetting.maximum_sim_time_step >= models.GlobalSetting.sim_time_step,  # noqa: E501
     ),
@@ -209,6 +201,7 @@ OTHER_CHECKS = [
     ),
     Use0DFlowCheck()
 ]
+
 
 CONDITIONAL_CHECKS = [
     ConditionalCheck(
@@ -389,7 +382,34 @@ CONDITIONAL_CHECKS = [
         ),
         message="Pipe.invert_level_start_point should be higher or equal than "
                 "Manhole.bottom_level"
-    )
+    ),
+    QueryCheck(
+        column=models.Manhole.bottom_level,
+        invalid=Query(models.Manhole).filter(
+            models.Manhole.drain_level < models.Manhole.bottom_level,
+            models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED
+        ),
+        message="Manhole.drain_level >= Manhoole.bottom_level when "
+                "Manhole.calculation_type is CONNECTED"
+    ),
+    QueryCheck(
+        column=models.Manhole.drain_level,
+        invalid=Query(models.Manhole).filter(
+            models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED,
+            models.Manhole.drain_level == None
+        ),
+        message="Manhole.drain_level cannot be null when Manhole.calculation_type is "
+                "CONNECTED"
+    ),
+    QueryCheck(
+        column=models.GlobalSetting.maximum_sim_time_step,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.timestep_plus == True,
+            models.GlobalSetting.maximum_sim_time_step == None
+        ),
+        message="GlobalSettings.maximum_sim_time_step cannot be null when "
+                "GlobalSettings.timestep_plus is True."
+    ),
 ]
 
 
