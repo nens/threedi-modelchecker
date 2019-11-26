@@ -220,12 +220,6 @@ CONDITIONAL_CHECKS = [
         )
     ),
     ConditionalCheck(
-        criterion=(models.GlobalSetting.timestep_plus == True),
-        check=NotNullCheck(
-            column=models.GlobalSetting.maximum_sim_time_step,
-        )
-    ),
-    ConditionalCheck(
         criterion=or_(
             models.GlobalSetting.initial_groundwater_level_file != None,
             models.GlobalSetting.initial_groundwater_level != None
