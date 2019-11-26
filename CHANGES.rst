@@ -5,6 +5,8 @@ Changelog of threedi-modelchecker
 0.8 (unreleased)
 ----------------
 
+- Set language of travis to python and test for python 3.6 and 3.7.
+
 - Update to following columns to be non-nullable: Levee.the_geom,
   Culvert.invert_level_start_point and Culvert.invert_level_end_point.
 
