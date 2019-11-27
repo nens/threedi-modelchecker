@@ -5,7 +5,6 @@ from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker import exporters
 
 
-# TODO: --file option currently does nothing!
 @click.group()
 @click.option("-f", "--file", help="Write errors to file, instead of stdout")
 @click.option(
@@ -62,7 +61,7 @@ def sqlite(context, sqlite):
 
 def process(threedi_db, context):
     mc = ThreediModelChecker(threedi_db)
-    model_errors = mc.parse_model()
+    model_errors = mc.errors()
 
     file_output = context.params.get("file")
     summary = context.params.get("sum")
