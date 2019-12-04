@@ -6,10 +6,9 @@ from sqlalchemy import cast
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
-from .checks.base import ConditionalCheck, QueryCheck, ForeignKeyCheck, UniqueCheck, \
+from .checks.base import QueryCheck, ForeignKeyCheck, UniqueCheck, \
     TypeCheck, GeometryCheck, GeometryTypeCheck, EnumCheck, BaseCheck
 from .checks.base import GeneralCheck
-from .checks.base import NotNullCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks
@@ -207,126 +206,170 @@ OTHER_CHECKS: List[BaseCheck] = [
 
 
 CONDITIONAL_CHECKS = [
-    ConditionalCheck(
-        criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
-        check=GeneralCheck(
-            column=models.ConnectionNode.storage_area,
-            criterion_valid=models.ConnectionNode.storage_area > 0
-        )
-    ),
-    ConditionalCheck(
-        criterion=(models.CrossSectionLocation.bank_level != None),
-        check=GeneralCheck(
-            column=models.CrossSectionLocation.reference_level,
-            criterion_valid=(models.CrossSectionLocation.reference_level
-                             < models.CrossSectionLocation.bank_level)
-        )
-    ),
-    ConditionalCheck(
-        criterion=or_(
-            models.GlobalSetting.initial_groundwater_level_file != None,
-            models.GlobalSetting.initial_groundwater_level != None
+    QueryCheck(
+        column=models.ConnectionNode.storage_area,
+        invalid=Query(models.ConnectionNode).join(
+            models.Manhole
+        ).filter(
+            models.ConnectionNode.storage_area <= 0
         ),
-        check=NotNullCheck(
-            column=models.GlobalSetting.initial_groundwater_level_type,
-        )
+        message="The ConnectionNode.storage_area > 0 "
+                "when the ConnectionNode is a Manhole"
     ),
-    ConditionalCheck(
-        criterion=models.GlobalSetting.initial_waterlevel_file != None,
-        check=NotNullCheck(
-            column=models.GlobalSetting.water_level_ini_type,
-        )
+    QueryCheck(
+        column=models.CrossSectionLocation.reference_level,
+        invalid=Query(models.CrossSectionLocation).filter(
+            models.CrossSectionLocation.bank_level != None,
+            models.CrossSectionLocation.reference_level >= models.CrossSectionLocation.bank_level
+        ),
+        message="CrossSectionLocation.reference_level < CrossSectionLocation.bank_level"
+                "when CrossSectionLocation.bank_level is not null"
     ),
-    ConditionalCheck(
-        criterion=models.GlobalSetting.initial_waterlevel_file != None,
-        check=NotNullCheck(
-            column=models.GlobalSetting.water_level_ini_type,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.GlobalSetting.dem_obstacle_detection == True,
-        check=GeneralCheck(
-            column=models.GlobalSetting.dem_obstacle_height,
-            criterion_valid=models.GlobalSetting.dem_obstacle_height > 0
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.GroundWater.equilibrium_infiltration_rate_file != None,
-        check=NotNullCheck(
-            column=models.GroundWater.equilibrium_infiltration_rate_type,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.GroundWater.infiltration_decay_period_file != None,
-        check=NotNullCheck(
-            column=models.GroundWater.infiltration_decay_period_type,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.GroundWater.groundwater_hydro_connectivity_file != None,
-        check=NotNullCheck(
-            column=models.GroundWater.groundwater_hydro_connectivity_type,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.GroundWater.groundwater_impervious_layer_level_file != None,
-        check=NotNullCheck(
-            column=models.GroundWater.groundwater_impervious_layer_level_type,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.GroundWater.initial_infiltration_rate_file != None,
-        check=NotNullCheck(
-            column=models.GroundWater.initial_infiltration_rate_type,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.GroundWater.phreatic_storage_capacity_file != None,
-        check=NotNullCheck(
-            column=models.GroundWater.phreatic_storage_capacity_type,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,  # noqa: E501
-        check=NotNullCheck(
-            column=models.Interflow.porosity,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.Interflow.interflow_type in [
-            constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
-            constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY,
-        ],
-        check=NotNullCheck(
-            column=models.Interflow.porosity_layer_thickness,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,  # noqa: E501
-        check=NotNullCheck(
-            column=models.Interflow.impervious_layer_elevation,
-        )
-    ),
-    ConditionalCheck(
-        criterion=models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,  # noqa: E501
-        check=GeneralCheck(
-            column=models.Interflow.hydraulic_conductivity,
-            criterion_valid=or_(
-                models.Interflow.hydraulic_conductivity != None,
-                models.Interflow.hydraulic_conductivity_file != None,
+    QueryCheck(
+        column=models.GlobalSetting.initial_groundwater_level_type,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.initial_groundwater_level_type == None,
+            or_(
+                models.GlobalSetting.initial_groundwater_level_file != None,
+                models.GlobalSetting.initial_groundwater_level != None
             )
-        )
+        ),
+        message="GlobalSetting.initial_groundwater_level_type cannot be null when "
+                "GlobalSetting.initial_groundwater_level_file is not null or "
+                "GlobalSetting.initial_groundwater_level is not null"
     ),
-    ConditionalCheck(
-        criterion=models.GlobalSetting.dem_file == None,
-        check=GeneralCheck(
-            column=models.Channel.calculation_type,
-            criterion_valid=models.Channel.calculation_type.notin_([
+    QueryCheck(
+        column=models.GlobalSetting.water_level_ini_type,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.water_level_ini_type == None,
+            models.GlobalSetting.initial_waterlevel_file != None
+        ),
+        message="GlobalSetting.water_level_ini_type cannot be null when "
+                "GlobalSetting.initial_waterlevel_file is not null"
+    ),
+    QueryCheck(
+        column=models.GlobalSetting.dem_obstacle_height,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.dem_obstacle_height <= 0,
+            models.GlobalSetting.dem_obstacle_detection == True
+        ),
+        message="GlobalSetting.dem_obstacle_height > 0 when "
+                "GlobalSetting.dem_obstacle_detection == True"
+    ),
+    QueryCheck(
+        column=models.GroundWater.equilibrium_infiltration_rate_type,
+        invalid=Query(models.GroundWater).filter(
+            models.GroundWater.equilibrium_infiltration_rate_type == None,
+            models.GroundWater.equilibrium_infiltration_rate_file != None
+        ),
+        message="GroundWater.equilibrium_infiltration_rate_type cannot be null when "
+                "GroundWater.equilibrium_infiltration_rate_file is not null"
+    ),
+    QueryCheck(
+        column=models.GroundWater.infiltration_decay_period_type,
+        invalid=Query(models.GroundWater).filter(
+            models.GroundWater.infiltration_decay_period_type == None,
+            models.GroundWater.infiltration_decay_period_type != None
+        ),
+        message="GroundWater.infiltration_decay_period_type cannot be null when "
+                "GroundWater.infiltration_decay_period_type is not null"
+    ),
+    QueryCheck(
+        column=models.GroundWater.groundwater_hydro_connectivity_type,
+        invalid=Query(models.GroundWater).filter(
+            models.GroundWater.groundwater_hydro_connectivity_type == None,
+            models.GroundWater.groundwater_hydro_connectivity_file != None
+        ),
+        message="GroundWater.groundwater_hydro_connectivity_type cannot be null when "
+                "GroundWater.groundwater_hydro_connectivity_file is not null"
+    ),
+    QueryCheck(
+        column=models.GroundWater.groundwater_impervious_layer_level_type,
+        invalid=Query(models.GroundWater).filter(
+            models.GroundWater.groundwater_impervious_layer_level_type == None,
+            models.GroundWater.groundwater_impervious_layer_level_file != None
+        ),
+        message="GroundWater.groundwater_impervious_layer_level_type cannot be null "
+                "when GroundWater.groundwater_impervious_layer_level_file is not null"
+    ),
+    QueryCheck(
+        column=models.GroundWater.initial_infiltration_rate_type,
+        invalid=Query(models.GroundWater).filter(
+            models.GroundWater.initial_infiltration_rate_type == None,
+            models.GroundWater.initial_infiltration_rate_file != None
+        ),
+        message="GroundWater.initial_infiltration_rate_type cannot be null when "
+                "GroundWater.initial_infiltration_rate_file is not null"
+    ),
+    QueryCheck(
+        column=models.GroundWater.phreatic_storage_capacity_type,
+        invalid=Query(models.GroundWater).filter(
+            models.GroundWater.initial_infiltration_rate_type == None,
+            models.GroundWater.initial_infiltration_rate_file != None
+        ),
+        message="GroundWater.phreatic_storage_capacity_type cannot be null when "
+                "GroundWater.phreatic_storage_capacity_file is not null"
+    ),
+    QueryCheck(
+        column=models.Interflow.porosity,
+        invalid=Query(models.Interflow).filter(
+            models.Interflow.porosity == None,
+            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW
+        ),
+        message=f"Interflow.porosity cannot be null when "
+                f"Interflow.interflow_type != {constants.InterflowType.NO_INTERLFOW}"
+    ),
+    QueryCheck(
+        column=models.Interflow.porosity_layer_thickness,
+        invalid=Query(models.Interflow).filter(
+            models.Interflow.porosity_layer_thickness == None,
+            models.Interflow.interflow_type in [
+                constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
+                constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY,
+            ]
+        ),
+        message=f"Interflow.porosity_layer_thickness cannot be null when "
+                f"Interflow.interflow_type is "
+                f"{constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY} or "
+                f"{constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY}"
+    ),
+    QueryCheck(
+        column=models.Interflow.impervious_layer_elevation,
+        invalid=Query(models.Interflow).filter(
+            models.Interflow.impervious_layer_elevation == None,
+            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW
+        ),
+        message=f"Interflow.impervious_layer_elevation cannot be null when "
+                f"Interflow.interflow_type is not {constants.InterflowType.NO_INTERLFOW}"
+    ),
+    QueryCheck(
+        column=models.Interflow.hydraulic_conductivity,
+        invalid=Query(models.Interflow).filter(
+            or_(
+                models.Interflow.hydraulic_conductivity == None,
+                models.Interflow.hydraulic_conductivity_file == None,
+            ),
+            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW
+        ),
+        message=f"Interflow.hydraulic_conductivity cannot be null or "
+                f"Interflow.hydraulic_conductivity_file cannot be null when "
+                f"Interflow.interflow_type != {constants.InterflowType.NO_INTERLFOW}"
+    ),
+    QueryCheck(
+        column=models.Channel.calculation_type,
+        invalid=Query(models.Channel).filter(
+            models.Channel.calculation_type.in_([
                 constants.CalculationType.EMBEDDED,
                 constants.CalculationType.CONNECTED,
                 constants.CalculationType.DOUBLE_CONNECTED
-            ])
-        )
+            ]),
+            models.GlobalSetting.dem_file == None
+        ),
+        message=f"Channel.calculation_type cannot be "
+                f"{constants.CalculationType.EMBEDDED} or"
+                f"{constants.CalculationType.CONNECTED} or "
+                f"{constants.CalculationType.DOUBLE_CONNECTED} when "
+                f"GlobalSetting.dem_file is null"
     ),
     QueryCheck(
         column=models.Pumpstation.lower_stop_level,
@@ -405,7 +448,7 @@ CONDITIONAL_CHECKS = [
             models.GlobalSetting.maximum_sim_time_step == None
         ),
         message="GlobalSettings.maximum_sim_time_step cannot be null when "
-                "GlobalSettings.timestep_plus is True."
+                "GlobalSettings.timestep_plus is True"
     ),
 ]
 
