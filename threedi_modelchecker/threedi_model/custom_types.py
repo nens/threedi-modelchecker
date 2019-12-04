@@ -14,9 +14,7 @@ class CustomEnum(TypeDecorator):
     provides the `impl` datatype.
     """
 
-    impl = None
-
-    def __init__(self, enum_class: Enum):
+    def __init__(self, enum_class):
         """
 
         :param enum_class: instance of enum.Enum
