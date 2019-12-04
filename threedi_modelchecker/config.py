@@ -220,7 +220,7 @@ CONDITIONAL_CHECKS = [
         column=models.CrossSectionLocation.reference_level,
         invalid=Query(models.CrossSectionLocation).filter(
             models.CrossSectionLocation.bank_level != None,
-            models.CrossSectionLocation.reference_level >= models.CrossSectionLocation.bank_level
+            models.CrossSectionLocation.reference_level >= models.CrossSectionLocation.bank_level  # noqa: E501
         ),
         message="CrossSectionLocation.reference_level < CrossSectionLocation.bank_level"
                 "when CrossSectionLocation.bank_level is not null"

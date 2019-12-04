@@ -6,7 +6,6 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Query
 
 from tests import factories
-from threedi_modelchecker.checks.base import ConditionalCheck
 from threedi_modelchecker.checks.base import EnumCheck
 from threedi_modelchecker.checks.base import GeneralCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
@@ -347,20 +346,19 @@ def test_conditional_checks(session):
         dem_obstacle_detection=False, dem_obstacle_height=-5
     )
 
-    range_check = GeneralCheck(
+    query = Query(models.GlobalSetting).filter(
+        models.GlobalSetting.dem_obstacle_height <= 0,
+        models.GlobalSetting.dem_obstacle_detection == True
+    )
+    conditional_range_check_to_query_check = QueryCheck(
         column=models.GlobalSetting.dem_obstacle_height,
-        criterion_valid=models.GlobalSetting.dem_obstacle_height > 0,
+        invalid=query,
+        message="GlobalSetting.dem_obstacle_height should be larger than 0 "
+                "when GlobalSetting.dem_obstacle_height is True."
     )
-    conditional_range_check = ConditionalCheck(
-        check=range_check,
-        criterion=(models.GlobalSetting.dem_obstacle_detection == True),
-    )
-
-    invalid_conditional = conditional_range_check.get_invalid(session)
-    assert len(invalid_conditional) == 1
-    assert invalid_conditional[0].id == global_settings1.id
-    invalid_no_condition = range_check.get_invalid(session)
-    assert len(invalid_no_condition) == 2
+    invalids_querycheck = conditional_range_check_to_query_check.get_invalid(session)
+    assert len(invalids_querycheck) == 1
+    assert invalids_querycheck[0].id == global_settings1.id
 
 
 def test_conditional_check_storage_area(session):
@@ -375,46 +373,20 @@ def test_conditional_check_storage_area(session):
         connection_node=conn_node_manhole_invalid
     )
 
-    check = ConditionalCheck(
-        criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
-        check=GeneralCheck(
-            column=models.ConnectionNode.storage_area,
-            criterion_valid=models.ConnectionNode.storage_area > 0,
-        ),
+    query = Query(models.ConnectionNode).join(
+        models.Manhole
+    ).filter(
+        models.ConnectionNode.storage_area <= 0
     )
-    to_check = check.to_check(session)
-    assert to_check.count() == 2
+    query_check = QueryCheck(
+        column=models.ConnectionNode.storage_area,
+        invalid=query,
+        message=""
+    )
 
-    invalids = check.get_invalid(session)
+    invalids = query_check.get_invalid(session)
     assert len(invalids) == 1
     assert invalids[0].id == conn_node_manhole_invalid.id
-
-    valids = check.get_valid(session)
-    assert len(valids) == 1
-    assert valids[0].id == conn_node_manhole_valid.id
-
-
-def test_conditional_check_advanced(session):
-    factories.ConnectionNodeFactory(storage_area=-1)
-    connection_node2 = factories.ConnectionNodeFactory(storage_area=-2)
-    factories.ConnectionNodeFactory(storage_area=3)
-    factories.ConnectionNodeFactory(storage_area=4)
-    connection_node5 = factories.ConnectionNodeFactory(storage_area=10)
-    factories.ManholeFactory(connection_node=connection_node2)
-    factories.ManholeFactory(connection_node=connection_node5)
-
-    # If a connection_node is a manhole, then storage_area > 0
-    advanced_check = ConditionalCheck(
-        criterion=(models.ConnectionNode.id == models.Manhole.connection_node_id),
-        check=GeneralCheck(
-            column=models.ConnectionNode.storage_area,
-            criterion_valid=models.ConnectionNode.storage_area > 0,
-        ),
-    )
-    invalids = advanced_check.get_invalid(session)
-    assert len(invalids) == 1
-    assert invalids[0].id == connection_node2.id
-    assert invalids[0].storage_area == connection_node2.storage_area
 
 
 def test_conditional_check_joining_criterion_valid(session):

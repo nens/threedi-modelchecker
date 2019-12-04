@@ -109,40 +109,6 @@ class GeneralCheck(BaseCheck):
         return "'%s'" % condition
 
 
-class ConditionalCheck(BaseCheck):
-    """Apply an additional filter `criterion` on the specified `check`
-
-    The `criterion` is any SQL expression object applicable to the WHERE clause
-    of a select statement.
-    """
-
-    def __init__(self, criterion, check, *args, **kwargs):
-        super().__init__(check.column)
-        self.criterion = criterion
-        self.check = check
-
-    def to_check(self, session):
-        """Return a Query object on which this check is applied"""
-        return session.query(self.check.table).filter(self.criterion)
-
-    def get_invalid(self, session):
-        # TODO: find a more elegant solution for conditional checks
-        # now we monkey patch the checks method `to_check` and at the end
-        # reverse the monkey patch.
-        check = self.check
-        old_applicable_func = check.to_check  # save old method
-        check.to_check = self.to_check  # patch the applicable
-        result = check.get_invalid(session)
-        check.to_check = old_applicable_func  # reset old method
-        return result
-
-    def description(self):
-        return "When '%s' holds, then %s" % (
-            self.criterion.compile(compile_kwargs={"literal_binds": True}),
-            self.check.description(),
-        )
-
-
 class QueryCheck(BaseCheck):
     """Specify a sqlalchemy.orm.Query object to return invalid instances
 
