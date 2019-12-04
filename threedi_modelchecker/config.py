@@ -340,7 +340,7 @@ CONDITIONAL_CHECKS = [
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW
         ),
         message=f"Interflow.impervious_layer_elevation cannot be null when "
-                f"Interflow.interflow_type is not {constants.InterflowType.NO_INTERLFOW}"
+                f"Interflow.interflow_type is not {constants.InterflowType.NO_INTERLFOW}"  # noqa: E501
     ),
     QueryCheck(
         column=models.Interflow.hydraulic_conductivity,

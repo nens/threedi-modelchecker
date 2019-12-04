@@ -6,6 +6,9 @@ from geoalchemy2.types import Geometry
 from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import types
+from sqlalchemy.orm.session import Session
+
+from typing import List, NamedTuple
 
 
 class BaseCheck(ABC):
@@ -21,7 +24,7 @@ class BaseCheck(ABC):
         self.table = column.table
 
     @abstractmethod
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
         """Return a list of rows (named_tuples) which are invalid.
 
         What is invalid is defined in the check. Returns an empty list if no
@@ -33,7 +36,7 @@ class BaseCheck(ABC):
         """
         pass
 
-    def get_valid(self, session):
+    def get_valid(self, session: Session) -> List[NamedTuple]:
         """Return a list of rows (named_tuples) which are valid.
 
         :param session: sqlalchemy.orm.session.Session
@@ -55,7 +58,7 @@ class BaseCheck(ABC):
         """
         return session.query(self.table)
 
-    def description(self):
+    def description(self) -> str:
         """Return a string explaining why rows are invalid according to this
         check.
 
@@ -63,7 +66,7 @@ class BaseCheck(ABC):
         """
         return "Invalid value in column '%s'" % self.column
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s: %s.%s>" % (
             type(self).__name__,
             self.table.name,
