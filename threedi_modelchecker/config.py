@@ -1,10 +1,13 @@
+from typing import List
+
 from sqlalchemy import Integer
 from sqlalchemy import and_
 from sqlalchemy import cast
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
 
-from .checks.base import ConditionalCheck, QueryCheck
+from .checks.base import ConditionalCheck, QueryCheck, ForeignKeyCheck, UniqueCheck, \
+    TypeCheck, GeometryCheck, GeometryTypeCheck, EnumCheck, BaseCheck
 from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
 from .checks.factories import generate_enum_checks
@@ -20,21 +23,21 @@ from .checks.other import Use0DFlowCheck
 from .threedi_model import models
 from .threedi_model.models import constants
 
-FOREIGN_KEY_CHECKS = []
-UNIQUE_CHECKS = []
-INVALID_TYPE_CHECKS = []
-INVALID_GEOMETRY_CHECKS = []
-INVALID_GEOMETRY_TYPE_CHECKS = []
-INVALID_ENUM_CHECKS = []
+FOREIGN_KEY_CHECKS: List[ForeignKeyCheck] = []
+UNIQUE_CHECKS: List[UniqueCheck] = []
+INVALID_TYPE_CHECKS: List[TypeCheck] = []
+INVALID_GEOMETRY_CHECKS: List[GeometryCheck] = []
+INVALID_GEOMETRY_TYPE_CHECKS: List[GeometryTypeCheck] = []
+INVALID_ENUM_CHECKS: List[EnumCheck] = []
 
-TIMESERIES_CHECKS = [
+TIMESERIES_CHECKS: List[TimeseriesCheck] = [
     TimeseriesCheck(models.BoundaryCondition1D.timeseries),
     TimeseriesCheck(models.BoundaryConditions2D.timeseries),
     TimeseriesCheck(models.Lateral1d.timeseries),
     TimeseriesCheck(models.Lateral2D.timeseries),
 ]
 
-RANGE_CHECKS = [
+RANGE_CHECKS: List[BaseCheck] = [
     GeneralCheck(
         column=models.CrossSectionLocation.friction_value,
         criterion_valid=models.CrossSectionLocation.friction_value > 0,
@@ -183,7 +186,7 @@ RANGE_CHECKS = [
     ),
 ]
 
-OTHER_CHECKS = [
+OTHER_CHECKS: List[BaseCheck] = [
     BankLevelCheck(),
     CrossSectionShapeCheck(),
     # 1d boundary conditions cannot be connected to a pumpstation
@@ -405,9 +408,6 @@ CONDITIONAL_CHECKS = [
                 "GlobalSettings.timestep_plus is True."
     ),
 ]
-
-
-ALL_CHECKS = []
 
 
 class Config:

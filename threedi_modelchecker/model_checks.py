@@ -1,9 +1,13 @@
+from .checks.base import BaseCheck
+from .threedi_database import ThreediDatabase
 from .schema import ModelSchema
 from .config import Config
 
+from typing import Iterator, Tuple, NamedTuple
+
 
 class ThreediModelChecker:
-    def __init__(self, threedi_db):
+    def __init__(self, threedi_db: ThreediDatabase):
         self.db = threedi_db
         self.schema = ModelSchema(self.db)
         self.schema.validate_schema()
@@ -14,7 +18,7 @@ class ThreediModelChecker:
         """Returns a list of declared models"""
         return self.schema.declared_models
 
-    def errors(self):
+    def errors(self) -> Iterator[Tuple[BaseCheck, NamedTuple]]:
         """Iterates and applies checks, returning any failing rows.
 
         :return: Tuple of the applied check and the failing row.
@@ -25,7 +29,7 @@ class ThreediModelChecker:
             for error_row in model_errors:
                 yield check, error_row
 
-    def checks(self):
+    def checks(self) -> Iterator[BaseCheck]:
         """Iterates over all configured checks
 
         :return: implementations of BaseChecks
