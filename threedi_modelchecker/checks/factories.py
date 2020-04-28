@@ -63,6 +63,6 @@ def generate_geometry_type_checks(table):
 def generate_enum_checks(table):
     enum_checks = []
     for column in table.columns:
-        if issubclass(type(column.type), custom_types.IntegerEnum):
+        if issubclass(type(column.type), custom_types.CustomEnum):
             enum_checks.append(EnumCheck(column))
     return enum_checks

@@ -6,6 +6,9 @@ from geoalchemy2.types import Geometry
 from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import types
+from sqlalchemy.orm.session import Session
+
+from typing import List, NamedTuple
 
 
 class BaseCheck(ABC):
@@ -21,7 +24,7 @@ class BaseCheck(ABC):
         self.table = column.table
 
     @abstractmethod
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
         """Return a list of rows (named_tuples) which are invalid.
 
         What is invalid is defined in the check. Returns an empty list if no
@@ -33,7 +36,7 @@ class BaseCheck(ABC):
         """
         pass
 
-    def get_valid(self, session):
+    def get_valid(self, session: Session) -> List[NamedTuple]:
         """Return a list of rows (named_tuples) which are valid.
 
         :param session: sqlalchemy.orm.session.Session
@@ -55,7 +58,7 @@ class BaseCheck(ABC):
         """
         return session.query(self.table)
 
-    def description(self):
+    def description(self) -> str:
         """Return a string explaining why rows are invalid according to this
         check.
 
@@ -63,7 +66,7 @@ class BaseCheck(ABC):
         """
         return "Invalid value in column '%s'" % self.column
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s: %s.%s>" % (
             type(self).__name__,
             self.table.name,
@@ -77,7 +80,7 @@ class GeneralCheck(BaseCheck):
     Either specify what is valid with `criterion_valid` or what is invalid
     with `criterion_invalid`.
     The criterion should be a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)  # noqa
-    with operators being operators being column within `self.table.columns`
+    with operators being within `self.table.columns`
     """
 
     def __init__(self, criterion_invalid=None, criterion_valid=None, *args, **kwargs):
@@ -107,40 +110,6 @@ class GeneralCheck(BaseCheck):
         else:
             condition = "no condition specified"
         return "'%s'" % condition
-
-
-class ConditionalCheck(BaseCheck):
-    """Apply an additional filter `criterion` on the specified `check`
-
-    The `criterion` is any SQL expression object applicable to the WHERE clause
-    of a select statement.
-    """
-
-    def __init__(self, criterion, check, *args, **kwargs):
-        super().__init__(check.column)
-        self.criterion = criterion
-        self.check = check
-
-    def to_check(self, session):
-        """Return a Query object on which this check is applied"""
-        return session.query(self.check.table).filter(self.criterion)
-
-    def get_invalid(self, session):
-        # TODO: find a more elegant solution for conditional checks
-        # now we monkey patch the checks method `to_check` and at the end
-        # reverse the monkey patch.
-        check = self.check
-        old_applicable_func = check.to_check  # save old method
-        check.to_check = self.to_check  # patch the applicable
-        result = check.get_invalid(session)
-        check.to_check = old_applicable_func  # reset old method
-        return result
-
-    def description(self):
-        return "When '%s' holds, then %s" % (
-            self.criterion.compile(compile_kwargs={"literal_binds": True}),
-            self.check.description(),
-        )
 
 
 class QueryCheck(BaseCheck):

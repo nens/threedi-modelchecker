@@ -22,6 +22,27 @@ Installation:
 
 Threedi-modelchecker is also integrated into the ThreediToolbox Qgis plugin: https://github.com/nens/ThreeDiToolbox
 
+
+Example
+-------
+
+The following code sample shows how you can use the modelchecker to run all configured
+checks and print an overview of all discovered errors::
+
+    from threedi_modelchecker.exporters import format_check_results
+    from threedi_modelchecker.model_checks import ThreediModelChecker
+    from threedi_modelchecker.threedi_database import ThreediDatabase
+
+    sqlite_file = "<Path to your sqlite file>"
+    database = ThreediDatabase(
+        connection_settings={"db_path": sqlite_file}, db_type="spatialite"
+    )
+
+    model_checker = ThreediModelChecker(database)
+    for check, error in model_checker.errors():
+        print(format_check_results(check, error))
+
+
 Development
 -----------
 
@@ -37,7 +58,7 @@ Run the tests:
     docker-compose run modelchecker pytest
 
 Release
----------
+-------
 
 Make sure you have zestreleaser_ installed.
 

@@ -698,7 +698,7 @@ class Pumpstation(Base):
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     classification = Column(Integer)
     sewerage = Column(Boolean, nullable=False)
-    type_ = Column(IntegerEnum(constants.PumpType), name="type", nullable=False)
+    type_ = Column(IntegerEnum(constants.PumpType), name="type", nullable=False)  # type: ignore[call-overload] # noqa
     start_level = Column(Float, nullable=False)
     lower_stop_level = Column(Float, nullable=False)
     upper_stop_level = Column(Float)
