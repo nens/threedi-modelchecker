@@ -5,6 +5,12 @@ Changelog of threedi-modelchecker
 0.9 (unreleased)
 ----------------
 
+- Removed `ConditionalCheck` and replaced it with `QueryCheck`.
+
+- Added type-hinting.
+
+- Created `CustomEnum` for `Enum` objects.
+
 - Fixed some misconfigured checks, see https://github.com/nens/threedi-modelchecker/issues/10.
 
 
