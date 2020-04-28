@@ -80,7 +80,7 @@ class GeneralCheck(BaseCheck):
     Either specify what is valid with `criterion_valid` or what is invalid
     with `criterion_invalid`.
     The criterion should be a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)  # noqa
-    with operators being operators being column within `self.table.columns`
+    with operators being within `self.table.columns`
     """
 
     def __init__(self, criterion_invalid=None, criterion_valid=None, *args, **kwargs):
