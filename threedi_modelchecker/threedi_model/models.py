@@ -1,15 +1,12 @@
 from sqlalchemy import (
     Boolean,
     Column,
-    Date,
     DateTime,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
-    TIMESTAMP,
-    Time,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
