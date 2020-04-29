@@ -5,6 +5,9 @@ Changelog of threedi-modelchecker
 0.9 (unreleased)
 ----------------
 
+- Chaned GlobalSettings.start_date and GlobalSetting.start_time into type Text and
+  added two checks to see if the fields are valid datetime and date respectively.
+
 - Configured extra check: use_1d_flow must be set to True when your model has 1d
   elements.
 
