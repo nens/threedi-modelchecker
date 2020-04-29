@@ -662,3 +662,46 @@ def test_global_settings_use_1d_flow_and_no_1d_elements(session):
     )
     errors = check_use_1d_flow_has_1d.get_invalid(session)
     assert len(errors) == 0
+
+
+def test_global_settings_start_time(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Can't insert wrong datatype in postgres")
+    factories.GlobalSettingsFactory(start_time='18:00:00')
+    factories.GlobalSettingsFactory(start_time=None)
+    wrong_start_time = factories.GlobalSettingsFactory(start_time='asdf18:00:00')
+
+    check_start_time = QueryCheck(
+        column=models.GlobalSetting.start_time,
+        invalid=Query(models.GlobalSetting).filter(
+            func.datetime(models.GlobalSetting.start_time) == None,
+            models.GlobalSetting.start_time != None
+        ),
+        message="GlobalSettings.start_time is an invalid, make sure it has the "
+                "following format: 'HH:MM:SS'"
+    )
+
+    errors = check_start_time.get_invalid(session)
+    assert len(errors) == 1
+    assert errors[0].id == wrong_start_time.id
+
+
+def test_global_settings_start_date(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Can't insert wrong datatype in postgres")
+    factories.GlobalSettingsFactory(start_date='1991-08-27')
+    wrong_start_date = factories.GlobalSettingsFactory(start_date='asdf18:00:00')
+
+    check_start_date = QueryCheck(
+        column=models.GlobalSetting.start_date,
+        invalid=Query(models.GlobalSetting).filter(
+            func.date(models.GlobalSetting.start_date) == None,
+            models.GlobalSetting.start_date != None
+        ),
+        message="GlobalSettings.start_date is an invalid, make sure it has the "
+                "following format: 'YYYY-MM-DD'"
+    )
+
+    errors = check_start_date.get_invalid(session)
+    assert len(errors) == 1
+    assert errors[0].id == wrong_start_date.id

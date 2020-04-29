@@ -9,6 +9,7 @@ from sqlalchemy import (
     String,
     Text,
     TIMESTAMP,
+    Time,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -375,8 +376,8 @@ class GlobalSetting(Base):
     sim_time_step = Column(Float, nullable=False)
     output_time_step = Column(Float)
     nr_timesteps = Column(Integer, nullable=False)
-    start_time = Column(TIMESTAMP(timezone=True))
-    start_date = Column(Date, nullable=False)
+    start_time = Column(Text)
+    start_date = Column(Text, nullable=False)
     grid_space = Column(Float, nullable=False)
     dist_calc_points = Column(Float, nullable=False)
     kmax = Column(Integer, nullable=False)

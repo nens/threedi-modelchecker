@@ -219,6 +219,7 @@ def _sqlalchemy_to_sqlite_type(column_type):
 
     Returns the value similar as the sqlite 'typeof' function.
     Raises TypeError if the column type is unknown.
+    See https://www.sqlite.org/datatype3.html
 
     :param column_type: sqlalchemy.column
     :return: (str)

@@ -458,7 +458,25 @@ CONDITIONAL_CHECKS = [
         ),
         message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
                 "elements in the model"
-    )
+    ),
+    QueryCheck(
+        column=models.GlobalSetting.start_time,
+        invalid=Query(models.GlobalSetting).filter(
+            func.datetime(models.GlobalSetting.start_time) == None,
+            models.GlobalSetting.start_time != None
+        ),
+        message="GlobalSettings.start_time is an invalid, make sure it has the "
+                "following format: 'HH:MM:SS'"
+    ),
+    QueryCheck(
+        column=models.GlobalSetting.start_date,
+        invalid=Query(models.GlobalSetting).filter(
+            func.date(models.GlobalSetting.start_date) == None,
+            models.GlobalSetting.start_date != None
+        ),
+        message="GlobalSettings.start_date is an invalid, make sure it has the "
+                "following format: 'YYYY-MM-DD'"
+    ),
 ]
 
 
