@@ -462,7 +462,7 @@ CONDITIONAL_CHECKS = [
     QueryCheck(
         column=models.GlobalSetting.start_time,
         invalid=Query(models.GlobalSetting).filter(
-            func.datetime(models.GlobalSetting.start_time) == None,
+            func.date(models.GlobalSetting.start_time) == None,
             models.GlobalSetting.start_time != None
         ),
         message="GlobalSettings.start_time is an invalid, make sure it has the "
