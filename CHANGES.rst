@@ -5,6 +5,9 @@ Changelog of threedi-modelchecker
 0.9 (unreleased)
 ----------------
 
+- Configured extra check: use_1d_flow must be set to True when your model has 1d
+  elements.
+
 - Removed `ConditionalCheck` and replaced it with `QueryCheck`.
 
 - Added type-hinting.
