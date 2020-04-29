@@ -609,7 +609,7 @@ def test_query_check_manhole_drain_level_calc_type_2(session):
     check_drn_lvl_gt_bttm_lvl = QueryCheck(
         column=models.Manhole.bottom_level,
         invalid=query_drn_lvl_st_bttm_lvl,
-        message="Manhole.drain_level >= Manhoole.bottom_level when "
+        message="Manhole.drain_level >= Manhole.bottom_level when "
                 "Manhole.calculation_type is CONNECTED"
     )
     check_invalid_not_null = QueryCheck(
@@ -624,3 +624,41 @@ def test_query_check_manhole_drain_level_calc_type_2(session):
     assert len(errors2) == 1
     assert m3_error.id == errors2[0].id
     assert m4_error.id == errors1[0].id
+
+
+def test_global_settings_no_use_1d_flow_and_1d_elements(session):
+    factories.GlobalSettingsFactory(use_1d_flow=1)
+    g2 = factories.GlobalSettingsFactory(use_1d_flow=0)
+    factories.ConnectionNodeFactory.create_batch(3)
+
+    query_1d_nodes_and_no_use_1d_flow = Query(models.GlobalSetting).filter(
+        models.GlobalSetting.use_1d_flow == False,
+        Query(func.count(models.ConnectionNode.id) > 0).label("1d_count")
+    )
+    check_use_1d_flow_has_1d = QueryCheck(
+        column=models.GlobalSetting.use_1d_flow,
+        invalid=query_1d_nodes_and_no_use_1d_flow,
+        message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
+                "elements"
+    )
+    errors = check_use_1d_flow_has_1d.get_invalid(session)
+    assert len(errors) == 1
+    assert errors[0].id == g2.id
+
+
+def test_global_settings_use_1d_flow_and_no_1d_elements(session):
+    factories.GlobalSettingsFactory(use_1d_flow=1)
+    factories.GlobalSettingsFactory(use_1d_flow=0)
+
+    query_1d_nodes_and_no_use_1d_flow = Query(models.GlobalSetting).filter(
+        models.GlobalSetting.use_1d_flow == False,
+        Query(func.count(models.ConnectionNode.id) > 0).label("1d_count")
+    )
+    check_use_1d_flow_has_1d = QueryCheck(
+        column=models.GlobalSetting.use_1d_flow,
+        invalid=query_1d_nodes_and_no_use_1d_flow,
+        message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
+                "elements"
+    )
+    errors = check_use_1d_flow_has_1d.get_invalid(session)
+    assert len(errors) == 0

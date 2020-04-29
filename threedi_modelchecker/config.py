@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import Integer
+from sqlalchemy import Integer, func
 from sqlalchemy import and_
 from sqlalchemy import cast
 from sqlalchemy import or_
@@ -450,6 +450,15 @@ CONDITIONAL_CHECKS = [
         message="GlobalSettings.maximum_sim_time_step cannot be null when "
                 "GlobalSettings.timestep_plus is True"
     ),
+    QueryCheck(
+        column=models.GlobalSetting.use_1d_flow,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.use_1d_flow == False,
+            Query(func.count(models.ConnectionNode.id) > 0).label("1d_count")
+        ),
+        message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
+                "elements in the model"
+    )
 ]
 
 
