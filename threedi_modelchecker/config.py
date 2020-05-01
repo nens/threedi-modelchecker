@@ -484,7 +484,7 @@ CONDITIONAL_CHECKS = [
             geo_func.ST_Length(
                 geo_func.ST_Transform(
                     models.Channel.the_geom,
-                    Query(models.GlobalSetting.epsg_code).limit(1)
+                    Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code")
                 )
             ) < 0.05
         ),
@@ -496,7 +496,7 @@ CONDITIONAL_CHECKS = [
             geo_func.ST_Length(
                 geo_func.ST_Transform(
                     models.Culvert.the_geom,
-                    Query(models.GlobalSetting.epsg_code).limit(1)
+                    Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code")
                 )
             ) < 0.05
         ),
