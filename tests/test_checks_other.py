@@ -1,7 +1,7 @@
 import pytest
 
 from threedi_modelchecker.checks.other import BankLevelCheck, valid_egg, \
-    valid_rectangle, valid_circle
+    valid_rectangle, valid_circle, ConnectionNodesLength
 from threedi_modelchecker.checks.other import CrossSectionShapeCheck
 from threedi_modelchecker.checks.other import TimeseriesCheck
 from threedi_modelchecker.checks.other import valid_tabulated_shape
@@ -190,3 +190,103 @@ def test_timeseries_check_different_timesteps(session):
     invalid = check.get_invalid(session)
     assert len(invalid) == 1
     assert invalid[0].id == boundary_condition2.id
+
+
+def test_connection_nodes_length(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres only accepts coords in epsg 4326")
+    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.WeirFactory(
+        connection_node_start=factories.ConnectionNodeFactory(
+            the_geom="SRID=4326;POINT(-0.38222995634060702 -0.13872239147499893)"
+        ),
+        connection_node_end=factories.ConnectionNodeFactory(
+            the_geom="SRID=4326;POINT(-0.3822292515698168 -0.1387223869163263)"
+        )
+    )
+    weir_too_short = factories.WeirFactory(
+        connection_node_start=factories.ConnectionNodeFactory(
+            the_geom="SRID=4326;POINT(-0.38222938832999598 -0.13872236685816669)"
+        ),
+        connection_node_end=factories.ConnectionNodeFactory(
+            the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
+        )
+    )
+
+    check_length = ConnectionNodesLength(
+        column=models.Weir.id,
+        start_node=models.Weir.connection_node_start,
+        end_node=models.Weir.connection_node_end,
+        min_distance=0.05
+    )
+
+    errors = check_length.get_invalid(session)
+    assert len(errors) == 1
+    assert errors[0].id == weir_too_short.id
+
+
+def test_connection_nodes_length_missing_epsg_code(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres only accepts coords in epsg 4326")
+    factories.WeirFactory(
+        connection_node_start=factories.ConnectionNodeFactory(
+            the_geom="SRID=4326;POINT(-0.38222938832999598 -0.13872236685816669)"
+        ),
+        connection_node_end=factories.ConnectionNodeFactory(
+            the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
+        )
+    )
+
+    check_length = ConnectionNodesLength(
+        column=models.Weir.id,
+        start_node=models.Weir.connection_node_start,
+        end_node=models.Weir.connection_node_end,
+        min_distance=0.05
+    )
+
+    errors = check_length.get_invalid(session)
+    assert len(errors) == 0
+
+
+def test_connection_nodes_length_missing_start_node(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres only accepts coords in epsg 4326")
+    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.WeirFactory(
+        connection_node_start=None,
+        connection_node_end=factories.ConnectionNodeFactory(
+            the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
+        )
+    )
+
+    check_length = ConnectionNodesLength(
+        column=models.Weir.id,
+        start_node=models.Weir.connection_node_start,
+        end_node=models.Weir.connection_node_end,
+        min_distance=0.05
+    )
+
+    errors = check_length.get_invalid(session)
+    assert len(errors) == 0
+
+
+def test_connection_nodes_length_missing_end_node(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres only accepts coords in epsg 4326")
+    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.WeirFactory(
+        connection_node_start=factories.ConnectionNodeFactory(
+            the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
+        ),
+        connection_node_end=None
+    )
+
+    check_length = ConnectionNodesLength(
+        column=models.Weir.id,
+        start_node=models.Weir.connection_node_start,
+        end_node=models.Weir.connection_node_end,
+        min_distance=0.05
+    )
+
+    errors = check_length.get_invalid(session)
+    assert len(errors) == 0
