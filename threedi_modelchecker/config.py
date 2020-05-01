@@ -1,5 +1,6 @@
 from typing import List
 
+from geoalchemy2 import functions as geo_func
 from sqlalchemy import Integer, func
 from sqlalchemy import and_
 from sqlalchemy import cast
@@ -477,6 +478,30 @@ CONDITIONAL_CHECKS = [
         message="GlobalSettings.start_date is an invalid, make sure it has the "
                 "following format: 'YYYY-MM-DD'"
     ),
+    QueryCheck(
+        column=models.Channel.id,
+        invalid=Query(models.Channel).filter(
+            geo_func.ST_Length(
+                geo_func.ST_Transform(
+                    models.Channel.the_geom,
+                    Query(models.GlobalSetting.epsg_code).limit(1)
+                )
+            ) < 0.05
+        ),
+        message="Length of the the_geom is too short, should be at least 0.05m"
+    ),
+    QueryCheck(
+        column=models.Culvert.id,
+        invalid=Query(models.Culvert).filter(
+            geo_func.ST_Length(
+                geo_func.ST_Transform(
+                    models.Culvert.the_geom,
+                    Query(models.GlobalSetting.epsg_code).limit(1)
+                )
+            ) < 0.05
+        ),
+        message="Length of the the_geom is too short, should be at least 0.05m"
+    )
 ]
 
 
