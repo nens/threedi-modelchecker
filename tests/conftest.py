@@ -39,7 +39,7 @@ def threedi_db(request):
     https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
     """
     db = ThreediDatabase(
-        request.param[1], db_type=request.param[0],echo=False
+        request.param[1], db_type=request.param[0], echo=False
     )
     engine = db.get_engine()
     Session.configure(bind=engine)

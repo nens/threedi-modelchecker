@@ -275,5 +275,5 @@ class ConnectionNodesLength(BaseCheck):
         return list(q.with_session(session).all())
 
     def description(self) -> str:
-        return f"The distance of start- and end connectionnode of {self.table} is too " \
-               f"short, should be at least {self.min_distance} meters"
+        return f"The distance of start- and end connectionnode of {self.table} is " \
+               f"too short, should be at least {self.min_distance} meters"
