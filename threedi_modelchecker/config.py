@@ -17,7 +17,7 @@ from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_not_null_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
-from .checks.other import BankLevelCheck, CrossSectionShapeCheck
+from .checks.other import BankLevelCheck, CrossSectionShapeCheck, ConnectionNodesLength
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
@@ -501,7 +501,25 @@ CONDITIONAL_CHECKS = [
             ) < 0.05
         ),
         message="Length of the the_geom is too short, should be at least 0.05m"
-    )
+    ),
+    ConnectionNodesLength(
+        column=models.Pipe.id,
+        start_node=models.Pipe.connection_node_start,
+        end_node=models.Pipe.connection_node_end,
+        min_distance=0.05
+    ),
+    ConnectionNodesLength(
+        column=models.Weir.id,
+        start_node=models.Weir.connection_node_start,
+        end_node=models.Weir.connection_node_end,
+        min_distance=0.05
+    ),
+    ConnectionNodesLength(
+        column=models.Orifice.id,
+        start_node=models.Orifice.connection_node_start,
+        end_node=models.Orifice.connection_node_end,
+        min_distance=0.05
+    ),
 ]
 
 
