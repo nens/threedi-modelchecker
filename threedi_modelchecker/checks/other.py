@@ -264,11 +264,11 @@ class ConnectionNodesLength(BaseCheck):
             geo_func.ST_Distance(
                 geo_func.ST_Transform(
                     start_node.the_geom,
-                    Query(models.GlobalSetting.epsg_code).limit(1)
+                    Query(models.GlobalSetting.epsg_code).limit(1).label('epsg_code')
                 ),
                 geo_func.ST_Transform(
                     end_node.the_geom,
-                    Query(models.GlobalSetting.epsg_code).limit(1)
+                    Query(models.GlobalSetting.epsg_code).limit(1).label('epsg_code')
                 )
             ) < self.min_distance
         )
