@@ -570,6 +570,11 @@ class Config:
     def checks(self):
         return Checks(self._checks)
 
+    def overview(self):
+        """Prints an overview of all configured checks"""
+        for check in sorted(self.checks, key=lambda c: c.table.name + c.column.name):
+            print(check.table.name, check.column.name, check.description(), type(check))
+
 
 class Checks:
     def __init__(self, checks, table: str = None, column: str = None):
