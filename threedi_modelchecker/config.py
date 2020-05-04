@@ -600,9 +600,6 @@ class Checks:
     def __delattr__(self, item):
         raise AttributeError("Attribute is Read-Only")
 
-    def __dir__(self) -> Iterable[BaseCheck]:
-        return self
-
     def __len__(self):
         return len(self.checks)
 
