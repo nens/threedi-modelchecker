@@ -1,5 +1,6 @@
 import factory
 import pytest
+from geoalchemy2 import functions as geo_func
 from sqlalchemy import cast, and_
 from sqlalchemy import func
 from sqlalchemy import Integer
@@ -609,7 +610,7 @@ def test_query_check_manhole_drain_level_calc_type_2(session):
     check_drn_lvl_gt_bttm_lvl = QueryCheck(
         column=models.Manhole.bottom_level,
         invalid=query_drn_lvl_st_bttm_lvl,
-        message="Manhole.drain_level >= Manhoole.bottom_level when "
+        message="Manhole.drain_level >= Manhole.bottom_level when "
                 "Manhole.calculation_type is CONNECTED"
     )
     check_invalid_not_null = QueryCheck(
@@ -624,3 +625,185 @@ def test_query_check_manhole_drain_level_calc_type_2(session):
     assert len(errors2) == 1
     assert m3_error.id == errors2[0].id
     assert m4_error.id == errors1[0].id
+
+
+def test_global_settings_no_use_1d_flow_and_1d_elements(session):
+    factories.GlobalSettingsFactory(use_1d_flow=1)
+    g2 = factories.GlobalSettingsFactory(use_1d_flow=0)
+    factories.ConnectionNodeFactory.create_batch(3)
+
+    query_1d_nodes_and_no_use_1d_flow = Query(models.GlobalSetting).filter(
+        models.GlobalSetting.use_1d_flow == False,
+        Query(func.count(models.ConnectionNode.id) > 0).label("1d_count")
+    )
+    check_use_1d_flow_has_1d = QueryCheck(
+        column=models.GlobalSetting.use_1d_flow,
+        invalid=query_1d_nodes_and_no_use_1d_flow,
+        message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
+                "elements"
+    )
+    errors = check_use_1d_flow_has_1d.get_invalid(session)
+    assert len(errors) == 1
+    assert errors[0].id == g2.id
+
+
+def test_global_settings_use_1d_flow_and_no_1d_elements(session):
+    factories.GlobalSettingsFactory(use_1d_flow=1)
+    factories.GlobalSettingsFactory(use_1d_flow=0)
+
+    query_1d_nodes_and_no_use_1d_flow = Query(models.GlobalSetting).filter(
+        models.GlobalSetting.use_1d_flow == False,
+        Query(func.count(models.ConnectionNode.id) > 0).label("1d_count")
+    )
+    check_use_1d_flow_has_1d = QueryCheck(
+        column=models.GlobalSetting.use_1d_flow,
+        invalid=query_1d_nodes_and_no_use_1d_flow,
+        message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
+                "elements"
+    )
+    errors = check_use_1d_flow_has_1d.get_invalid(session)
+    assert len(errors) == 0
+
+
+def test_global_settings_start_time(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Can't insert wrong datatype in postgres")
+    factories.GlobalSettingsFactory(start_time='18:00:00')
+    factories.GlobalSettingsFactory(start_time=None)
+    wrong_start_time = factories.GlobalSettingsFactory(start_time='asdf18:00:00')
+
+    check_start_time = QueryCheck(
+        column=models.GlobalSetting.start_time,
+        invalid=Query(models.GlobalSetting).filter(
+            func.date(models.GlobalSetting.start_time) == None,
+            models.GlobalSetting.start_time != None
+        ),
+        message="GlobalSettings.start_time is an invalid, make sure it has the "
+                "following format: 'HH:MM:SS'"
+    )
+
+    errors = check_start_time.get_invalid(session)
+    assert len(errors) == 1
+    assert errors[0].id == wrong_start_time.id
+
+
+def test_global_settings_start_date(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Can't insert wrong datatype in postgres")
+    factories.GlobalSettingsFactory(start_date='1991-08-27')
+    wrong_start_date = factories.GlobalSettingsFactory(start_date='asdf18:00:00')
+
+    check_start_date = QueryCheck(
+        column=models.GlobalSetting.start_date,
+        invalid=Query(models.GlobalSetting).filter(
+            func.date(models.GlobalSetting.start_date) == None,
+            models.GlobalSetting.start_date != None
+        ),
+        message="GlobalSettings.start_date is an invalid, make sure it has the "
+                "following format: 'YYYY-MM-DD'"
+    )
+
+    errors = check_start_date.get_invalid(session)
+    assert len(errors) == 1
+    assert errors[0].id == wrong_start_date.id
+
+
+def test_length_geom_linestring_in_28992(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres already has a constrain that checks on the length")
+    # around 0.109m
+    factories.ChannelFactory(
+        the_geom="SRID=28992;LINESTRING("
+                 "122829.98048471771471668 473589.68720115750329569, "
+                 "122830.00490918199648149 473589.68720115750329569, "
+                 "122829.95687440223991871 473589.70983449439518154, "
+                 "122829.9793449093849631 473589.68850379559444264)"
+    )
+    # around 0.001m
+    channel_too_short = factories.ChannelFactory(
+        the_geom="SRID=28992;LINESTRING("
+                 "122829.98185859377554152 473589.69248294795397669, "
+                 "122829.98260150455462281 473589.69248294795397669)",
+    )
+
+    check_length_linestring = QueryCheck(
+        column=models.Channel.the_geom,
+        invalid=Query(models.Channel).filter(
+            geo_func.ST_Length(models.Channel.the_geom) < 0.05
+        ),
+        message="Length of the v2_channel is too short, should be at least 0.05m"
+    )
+
+    errors = check_length_linestring.get_invalid(session)
+    assert len(errors) == 1
+    assert errors[0].id == channel_too_short.id
+
+
+def test_length_geom_linestring_in_4326(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres already has a constrain that checks on the length")
+    factories.GlobalSettingsFactory(epsg_code=28992)
+    channel_too_short = factories.ChannelFactory(
+        the_geom="SRID=4326;LINESTRING("
+                 "-0.38222938832999598 -0.13872236685816669, "
+                 "-0.38222930900909202 -0.13872236685816669)",
+    )
+    factories.ChannelFactory(
+        the_geom="SRID=4326;LINESTRING("
+                 "-0.38222938468305784 -0.13872235682908687, "
+                 "-0.38222931083256106 -0.13872235591735235, "
+                 "-0.38222930992082654 -0.13872207236791409, "
+                 "-0.38222940929989008 -0.13872235591735235)",
+    )
+
+    q = Query(models.Channel).filter(
+        geo_func.ST_Length(
+            geo_func.ST_Transform(
+                models.Channel.the_geom,
+                Query(models.GlobalSetting.epsg_code).limit(1)
+            )
+        ) < 0.05
+    )
+    check_length_linestring = QueryCheck(
+        column=models.Channel.the_geom,
+        invalid=q,
+        message="Length of the v2_channel is too short, should be at least 0.05m"
+    )
+
+    errors = check_length_linestring.get_invalid(session)
+    assert len(errors) == 1
+    assert errors[0].id == channel_too_short.id
+
+
+def test_length_geom_linestring_missing_epsg_from_global_settings(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres already has a constrain that checks on the length")
+    factories.ChannelFactory(
+        the_geom="SRID=4326;LINESTRING("
+                 "-0.38222938832999598 -0.13872236685816669, "
+                 "-0.38222930900909202 -0.13872236685816669)",
+    )
+    factories.ChannelFactory(
+        the_geom="SRID=4326;LINESTRING("
+                 "-0.38222938468305784 -0.13872235682908687, "
+                 "-0.38222931083256106 -0.13872235591735235, "
+                 "-0.38222930992082654 -0.13872207236791409, "
+                 "-0.38222940929989008 -0.13872235591735235)",
+    )
+
+    q = Query(models.Channel).filter(
+        geo_func.ST_Length(
+            geo_func.ST_Transform(
+                models.Channel.the_geom,
+                Query(models.GlobalSetting.epsg_code).limit(1)
+            )
+        ) < 0.05
+    )
+    check_length_linestring = QueryCheck(
+        column=models.Channel.the_geom,
+        invalid=q,
+        message="Length of the v2_channel is too short, should be at least 0.05m"
+    )
+
+    errors = check_length_linestring.get_invalid(session)
+    assert len(errors) == 0

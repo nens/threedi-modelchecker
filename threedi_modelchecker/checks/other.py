@@ -1,4 +1,6 @@
+from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
+from sqlalchemy.orm import aliased, Query
 
 from threedi_modelchecker.checks import patterns
 from .base import BaseCheck
@@ -229,3 +231,49 @@ class ConnectionNodes(BaseCheck):
 
     def get_invalid(self, session):
         raise NotImplementedError
+
+
+class ConnectionNodesLength(BaseCheck):
+    """Check that the distance between `start_node` and `end_node` is at least
+    `min_distance`. The coords will be transformed into (the first entry) of
+    GlobalSettings.epsg_code. The `min_distance` will be interpreted as these units.
+    For example epsg:28992 will be in meters while epsg:4326 is in degrees."""
+
+    def __init__(self, start_node, end_node, min_distance: float, *args, **kwargs):
+        """
+
+        :param start_node: column name of the start node
+        :param end_node: column name of the end node
+        :param min_distance: minimum required distance between start and end node
+        """
+        super().__init__(*args, **kwargs)
+        self.start_node = start_node
+        self.end_node = end_node
+        self.min_distance = min_distance
+
+    def get_invalid(self, session):
+        start_node = aliased(models.ConnectionNode)
+        end_node = aliased(models.ConnectionNode)
+        q = Query(
+            self.table
+        ).join(
+            start_node, self.start_node
+        ).join(
+            end_node, self.end_node
+        ).filter(
+            geo_func.ST_Distance(
+                geo_func.ST_Transform(
+                    start_node.the_geom,
+                    Query(models.GlobalSetting.epsg_code).limit(1).label('epsg_code')
+                ),
+                geo_func.ST_Transform(
+                    end_node.the_geom,
+                    Query(models.GlobalSetting.epsg_code).limit(1).label('epsg_code')
+                )
+            ) < self.min_distance
+        )
+        return list(q.with_session(session).all())
+
+    def description(self) -> str:
+        return f"The distance of start- and end connectionnode of {self.table} is " \
+               f"too short, should be at least {self.min_distance} meters"

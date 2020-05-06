@@ -38,8 +38,9 @@ def threedi_db(request):
     the factories to operate on the same session object. See:
     https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
     """
-    db = ThreediDatabase(request.param[1], db_type=request.param[0],
-                         echo=False)
+    db = ThreediDatabase(
+        request.param[1], db_type=request.param[0], echo=False
+    )
     engine = db.get_engine()
     Session.configure(bind=engine)
 

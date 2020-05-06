@@ -1,6 +1,7 @@
 from typing import List
 
-from sqlalchemy import Integer
+from geoalchemy2 import functions as geo_func
+from sqlalchemy import Integer, func
 from sqlalchemy import and_
 from sqlalchemy import cast
 from sqlalchemy import or_
@@ -16,7 +17,7 @@ from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_not_null_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
-from .checks.other import BankLevelCheck, CrossSectionShapeCheck
+from .checks.other import BankLevelCheck, CrossSectionShapeCheck, ConnectionNodesLength
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
@@ -449,6 +450,75 @@ CONDITIONAL_CHECKS = [
         ),
         message="GlobalSettings.maximum_sim_time_step cannot be null when "
                 "GlobalSettings.timestep_plus is True"
+    ),
+    QueryCheck(
+        column=models.GlobalSetting.use_1d_flow,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.use_1d_flow == False,
+            Query(func.count(models.ConnectionNode.id) > 0).label("1d_count")
+        ),
+        message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
+                "elements in the model"
+    ),
+    QueryCheck(
+        column=models.GlobalSetting.start_time,
+        invalid=Query(models.GlobalSetting).filter(
+            func.date(models.GlobalSetting.start_time) == None,
+            models.GlobalSetting.start_time != None
+        ),
+        message="GlobalSettings.start_time is an invalid, make sure it has the "
+                "following format: 'HH:MM:SS'"
+    ),
+    QueryCheck(
+        column=models.GlobalSetting.start_date,
+        invalid=Query(models.GlobalSetting).filter(
+            func.date(models.GlobalSetting.start_date) == None,
+            models.GlobalSetting.start_date != None
+        ),
+        message="GlobalSettings.start_date is an invalid, make sure it has the "
+                "following format: 'YYYY-MM-DD'"
+    ),
+    QueryCheck(
+        column=models.Channel.id,
+        invalid=Query(models.Channel).filter(
+            geo_func.ST_Length(
+                geo_func.ST_Transform(
+                    models.Channel.the_geom,
+                    Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code")
+                )
+            ) < 0.05
+        ),
+        message="Length of the the_geom is too short, should be at least 0.05m"
+    ),
+    QueryCheck(
+        column=models.Culvert.id,
+        invalid=Query(models.Culvert).filter(
+            geo_func.ST_Length(
+                geo_func.ST_Transform(
+                    models.Culvert.the_geom,
+                    Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code")
+                )
+            ) < 0.05
+        ),
+        message="Length of the the_geom is too short, should be at least 0.05m"
+    ),
+    ConnectionNodesLength(
+        column=models.Pipe.id,
+        start_node=models.Pipe.connection_node_start,
+        end_node=models.Pipe.connection_node_end,
+        min_distance=0.05
+    ),
+    ConnectionNodesLength(
+        column=models.Weir.id,
+        start_node=models.Weir.connection_node_start,
+        end_node=models.Weir.connection_node_end,
+        min_distance=0.05
+    ),
+    ConnectionNodesLength(
+        column=models.Orifice.id,
+        start_node=models.Orifice.connection_node_start,
+        end_node=models.Orifice.connection_node_end,
+        min_distance=0.05
     ),
 ]
 
