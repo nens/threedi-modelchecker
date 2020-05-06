@@ -5,6 +5,12 @@ Changelog of threedi-modelchecker
 0.9 (unreleased)
 ----------------
 
+- Added `ConnectionNodesLength` check to check the length between a start- and end node
+  is above a certain threshold. Configured this check for pipes, weirs and orifices.
+
+- Configured checks to see if the length of a linestring geometry is larger than 0.05m
+  for culverts and channels.
+
 - Chaned GlobalSettings.start_date and GlobalSetting.start_time into type Text and
   added two checks to see if the fields are valid datetime and date respectively.
 
