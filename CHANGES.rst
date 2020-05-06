@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.9 (unreleased)
+0.10 (unreleased)
 ----------------
 
 - Added `ConnectionNodesLength` check to check the length between a start- and end node
