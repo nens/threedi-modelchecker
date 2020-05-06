@@ -2,8 +2,8 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.10 (unreleased)
-----------------
+0.10 (2020-05-06)
+-----------------
 
 - Added `ConnectionNodesLength` check to check the length between a start- and end node
   is above a certain threshold. Configured this check for pipes, weirs and orifices.
