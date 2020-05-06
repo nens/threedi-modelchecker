@@ -23,6 +23,10 @@ Changelog of threedi-modelchecker
 
 - Created `CustomEnum` for `Enum` objects.
 
+
+0.9 (2019-11-27)
+----------------
+
 - Fixed some misconfigured checks, see https://github.com/nens/threedi-modelchecker/issues/10.
 
 
