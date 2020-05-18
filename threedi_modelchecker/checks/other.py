@@ -255,7 +255,7 @@ class ConnectionNodesLength(BaseCheck):
         start_node = aliased(models.ConnectionNode)
         end_node = aliased(models.ConnectionNode)
         q = Query(
-            self.table
+            self.column.class_
         ).join(
             start_node, self.start_node
         ).join(
