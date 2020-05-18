@@ -2,10 +2,10 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.11 (unreleased)
+0.10.1 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Bugfix: made the `ConnectionNodesLength` backwards compatible with sqlalchemy 1.1.
 
 
 0.10 (2020-05-06)
