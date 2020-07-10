@@ -123,6 +123,14 @@ class CrestType(Enum):
     SHORT_CRESTED = 4
 
 
+class PipeCalculationType(Enum):
+    EMBEDDED = 0
+    ISOLATED = 1
+    CONNECTED = 2
+    BROAD_CRESTED = 3
+    SHORT_CRESTED = 4
+
+
 class SewerageType(Enum):
     MIXED = 0
     RAIN_WATER = 1

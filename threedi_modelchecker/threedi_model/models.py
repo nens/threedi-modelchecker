@@ -544,7 +544,7 @@ class Pipe(Base):
     code = Column(String(100), nullable=False)
     profile_num = Column(Integer)
     sewerage_type = Column(IntegerEnum(constants.SewerageType))
-    calculation_type = Column(IntegerEnum(constants.InitializationType), nullable=False)
+    calculation_type = Column(IntegerEnum(constants.PipeCalculationType), nullable=False)
     invert_level_start_point = Column(Float, nullable=False)
     invert_level_end_point = Column(Float, nullable=False)
     friction_value = Column(Float, nullable=False)
