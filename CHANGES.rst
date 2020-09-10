@@ -7,6 +7,9 @@ Changelog of threedi-modelchecker
 
 - Changed Pipe.calculation_type to include broad- and shortcrest.
 
+- Bugfix: Pumpstation.lower_stop_level should be higher than
+  models.Manhole.bottom_level.
+
 
 0.10.1 (2020-05-18)
 -------------------
