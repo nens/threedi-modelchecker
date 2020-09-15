@@ -2,8 +2,8 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.11 (unreleased)
------------------
+0.10.2 (2020-09-15)
+-------------------
 
 - Changed Pipe.calculation_type to include broad- and shortcrest.
 
