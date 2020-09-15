@@ -380,7 +380,7 @@ CONDITIONAL_CHECKS = [
         ).join(
             models.Manhole
         ).filter(
-            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+            models.Pumpstation.lower_stop_level >= models.Manhole.bottom_level,
         ),
         message="Pumpstation.lower_stop_level should be higher than "
                 "Manhole.bottom_level"
@@ -393,7 +393,7 @@ CONDITIONAL_CHECKS = [
         ).join(
             models.Manhole
         ).filter(
-            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+            models.Pumpstation.lower_stop_level >= models.Manhole.bottom_level,
         ),
         message="Pumpstation.lower_stop_level should be higher than "
                 "Manhole.bottom_level"
