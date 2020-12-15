@@ -6,12 +6,17 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
+from typing import Any
+from typing import Dict
+from sqlalchemy.engine.base import Engine
+from sqlalchemy.pool.base import _ConnectionRecord
+from sqlite3 import Connection
 
 
 Base = declarative_base()
 
 
-def load_spatialite(con, connection_record):
+def load_spatialite(con: Connection, connection_record: _ConnectionRecord) -> None:
     """Load spatialite extension as described in
     https://geoalchemy-2.readthedocs.io/en/latest/spatialite_tutorial.html"""
     import sqlite3
@@ -42,7 +47,7 @@ def load_spatialite(con, connection_record):
 
 
 class ThreediDatabase(object):
-    def __init__(self, connection_settings, db_type="spatialite", echo=False):
+    def __init__(self, connection_settings: Dict[str, Any], db_type: str = "spatialite", echo: bool = False) -> None:
         """
 
         :param connection_settings:
@@ -60,7 +65,7 @@ class ThreediDatabase(object):
     def engine(self):
         return self.get_engine()
 
-    def get_engine(self, get_seperate_engine=False):
+    def get_engine(self, get_seperate_engine: bool = False) -> Engine:
 
         if self._engine is None or get_seperate_engine:
             if self.db_type == "spatialite":

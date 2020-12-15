@@ -4,6 +4,8 @@ from .schema import ModelSchema
 from .config import Config
 
 from typing import Iterator, Tuple, NamedTuple
+from sqlalchemy.ext.declarative.api import DeclarativeMeta
+from typing import List
 
 
 class ThreediModelChecker:
@@ -14,7 +16,7 @@ class ThreediModelChecker:
         self.config = Config(self.models)
 
     @property
-    def models(self):
+    def models(self) -> List[DeclarativeMeta]:
         """Returns a list of declared models"""
         return self.schema.declared_models
 

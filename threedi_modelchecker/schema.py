@@ -5,14 +5,19 @@ from .threedi_model import models
 from .errors import MigrationMissingError
 from .errors import MigrationTooHighError  # noqa
 from .errors import MigrationNameError  # noqa
+from sqlalchemy.ext.declarative.api import DeclarativeMeta
+from threedi_modelchecker.threedi_database import ThreediDatabase
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 
 class ModelSchema:
-    def __init__(self, threedi_db, declared_models=models.DECLARED_MODELS):
+    def __init__(self, threedi_db: ThreediDatabase, declared_models: List[DeclarativeMeta] = models.DECLARED_MODELS) -> None:
         self.db = threedi_db
         self.declared_models = declared_models
 
-    def _latest_migration(self):
+    def _latest_migration(self) -> Tuple[Optional[int], Optional[str]]:
         """Returns a tuple with latest migration id and name"""
         session = self.db.get_session()
         latest_migration_id = session.query(
@@ -25,7 +30,7 @@ class ModelSchema:
         )
         return latest_migration_id, latest_migration_name
 
-    def validate_schema(self):
+    def validate_schema(self) -> bool:
         """Very basic validation of 3Di schema.
 
         Check that the database has the latest migration applied. If the

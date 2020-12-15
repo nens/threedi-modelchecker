@@ -6,6 +6,14 @@ from threedi_modelchecker.checks import patterns
 from .base import BaseCheck
 from ..threedi_model import constants
 from ..threedi_model import models
+from sqlalchemy.orm.session import Session
+from sqlalchemy.util._collections import result
+from typing import List
+from sqlalchemy.orm.query import Query
+from threedi_modelchecker.threedi_model.models import Weir
+from re import Match
+from typing import Optional
+from typing import Union
 
 
 class BankLevelCheck(BaseCheck):
@@ -13,10 +21,10 @@ class BankLevelCheck(BaseCheck):
     calculation_type is CONNECTED or DOUBLE_CONNECTED.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(column=models.CrossSectionLocation.bank_level)
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         q = session.query(self.table).filter(
             models.CrossSectionLocation.bank_level == None,
             models.CrossSectionLocation.channel.has(
@@ -38,10 +46,10 @@ class BankLevelCheck(BaseCheck):
 class CrossSectionShapeCheck(BaseCheck):
     """Check if all CrossSectionDefinition.shape are valid"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(column=models.CrossSectionDefinition.shape)
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         cross_section_definitions = session.query(self.table)
         invalid_cross_section_shapes = []
 
@@ -70,7 +78,7 @@ class CrossSectionShapeCheck(BaseCheck):
         return "Invalid CrossSectionShape"
 
 
-def valid_rectangle(width, height):
+def valid_rectangle(width: Optional[str], height: Optional[str]) -> Union[None, bool, Match]:
     if width is None:  # width is required
         return False
     width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
@@ -81,13 +89,13 @@ def valid_rectangle(width, height):
     return width_match and height_match
 
 
-def valid_circle(width):
+def valid_circle(width: Optional[str]) -> Union[None, bool, Match]:
     if width is None:
         return False
     return patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
 
 
-def valid_egg(width):
+def valid_egg(width: Optional[str]) -> bool:
     if width is None:
         return False
     try:
@@ -97,7 +105,7 @@ def valid_egg(width):
     return w > 0
 
 
-def valid_tabulated_shape(width, height):
+def valid_tabulated_shape(width: Optional[str], height: Optional[str]) -> bool:
     """Return if the tabulated shape is valid.
 
     Validating that the strings `width` and `height` contain positive floats
@@ -150,7 +158,7 @@ class TimeseriesCheck(BaseCheck):
     All timeseries in the table should contain the same timesteps.
     """
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         invalid_timeseries = []
         required_timesteps = {}
         rows = session.query(self.table).all()
@@ -186,13 +194,13 @@ class Use0DFlowCheck(BaseCheck):
     def __init__(self):
         super().__init__(column=models.GlobalSetting.use_0d_inflow)
 
-    def to_check(self, session):
+    def to_check(self, session: Session) -> Query:
         """Return a Query object on which this check is applied"""
         return session.query(models.GlobalSetting).filter(
             models.GlobalSetting.use_0d_inflow != 0
         )
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List:
         surface_count = session.query(func.count(models.Surface.id)).scalar()
         impervious_surface_count = session.query(
             func.count(models.ImperviousSurface.id)
@@ -251,7 +259,7 @@ class ConnectionNodesLength(BaseCheck):
         self.end_node = end_node
         self.min_distance = min_distance
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[Weir]:
         start_node = aliased(models.ConnectionNode)
         end_node = aliased(models.ConnectionNode)
         q = Query(

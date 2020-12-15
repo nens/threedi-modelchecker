@@ -1,4 +1,9 @@
 from sqlalchemy.types import TypeDecorator, Integer, VARCHAR
+from enum import EnumMeta
+from sqlalchemy.dialects.postgresql.psycopg2 import PGDialect_psycopg2
+from sqlalchemy.dialects.sqlite.pysqlite import SQLiteDialect_pysqlite
+from typing import Any
+from typing import Union
 
 
 class CustomEnum(TypeDecorator):
@@ -12,7 +17,7 @@ class CustomEnum(TypeDecorator):
     provides the `impl` datatype.
     """
 
-    def __init__(self, enum_class):
+    def __init__(self, enum_class: EnumMeta) -> None:
         """
 
         :param enum_class: instance of enum.Enum
@@ -21,13 +26,13 @@ class CustomEnum(TypeDecorator):
         self.enum_class = enum_class
         self.enums = [e.value for e in enum_class]
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value: Any, dialect: Union[PGDialect_psycopg2, SQLiteDialect_pysqlite]) -> Union[None, int, str]:
         if isinstance(value, self.enum_class):
             return value.value
         else:
             return value
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value: Union[None, float, str], dialect: Union[PGDialect_psycopg2, SQLiteDialect_pysqlite]) -> Any:
         if value in self.enums:
             return self.enum_class(value)
         else:

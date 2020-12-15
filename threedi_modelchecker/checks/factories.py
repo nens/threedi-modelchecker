@@ -8,9 +8,18 @@ from .base import TypeCheck
 from .base import NotNullCheck
 from .base import UniqueCheck
 from ..threedi_model import custom_types
+from sqlalchemy.sql.schema import Table
+from threedi_modelchecker.checks.base import ForeignKeyCheck
+from typing import List
+from threedi_modelchecker.checks.base import UniqueCheck
+from threedi_modelchecker.checks.base import NotNullCheck
+from threedi_modelchecker.checks.base import TypeCheck
+from threedi_modelchecker.checks.base import GeometryCheck
+from threedi_modelchecker.checks.base import GeometryTypeCheck
+from threedi_modelchecker.checks.base import EnumCheck
 
 
-def generate_foreign_key_checks(table):
+def generate_foreign_key_checks(table: Table) -> List[ForeignKeyCheck]:
     foreign_key_checks = []
     for fk_column in table.foreign_keys:
         foreign_key_checks.append(
@@ -21,7 +30,7 @@ def generate_foreign_key_checks(table):
     return foreign_key_checks
 
 
-def generate_unique_checks(table):
+def generate_unique_checks(table: Table) -> List[UniqueCheck]:
     unique_checks = []
     for column in table.columns:
         if column.unique or column.primary_key:
@@ -29,7 +38,7 @@ def generate_unique_checks(table):
     return unique_checks
 
 
-def generate_not_null_checks(table):
+def generate_not_null_checks(table: Table) -> List[NotNullCheck]:
     not_null_checks = []
     for column in table.columns:
         if not column.nullable:
@@ -37,14 +46,14 @@ def generate_not_null_checks(table):
     return not_null_checks
 
 
-def generate_type_checks(table):
+def generate_type_checks(table: Table) -> List[TypeCheck]:
     data_type_checks = []
     for column in table.columns:
         data_type_checks.append(TypeCheck(column))
     return data_type_checks
 
 
-def generate_geometry_checks(table):
+def generate_geometry_checks(table: Table) -> List[GeometryCheck]:
     geometry_checks = []
     for column in table.columns:
         if type(column.type) == Geometry:
@@ -52,7 +61,7 @@ def generate_geometry_checks(table):
     return geometry_checks
 
 
-def generate_geometry_type_checks(table):
+def generate_geometry_type_checks(table: Table) -> List[GeometryTypeCheck]:
     geometry_type_checks = []
     for column in table.columns:
         if type(column.type) == Geometry:
@@ -60,7 +69,7 @@ def generate_geometry_type_checks(table):
     return geometry_type_checks
 
 
-def generate_enum_checks(table):
+def generate_enum_checks(table: Table) -> List[EnumCheck]:
     enum_checks = []
     for column in table.columns:
         if issubclass(type(column.type), custom_types.CustomEnum):

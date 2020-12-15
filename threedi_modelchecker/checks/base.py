@@ -9,6 +9,15 @@ from sqlalchemy import types
 from sqlalchemy.orm.session import Session
 
 from typing import List, NamedTuple
+from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.sql.schema import Column
+from typing import Union
+from sqlalchemy.orm.query import Query
+from sqlalchemy.sql.elements import BinaryExpression
+from sqlalchemy.sql.elements import BooleanClauseList
+from typing import Any
+from typing import Optional
+from sqlalchemy.util._collections import result
 
 
 class BaseCheck(ABC):
@@ -19,7 +28,7 @@ class BaseCheck(ABC):
     This method will return a list of rows (as named_tuples) which are invalid.
     """
 
-    def __init__(self, column):
+    def __init__(self, column: Union[InstrumentedAttribute, Column]) -> None:
         self.column = column
         self.table = column.table
 
@@ -50,7 +59,7 @@ class BaseCheck(ABC):
                 valid.append(row)
         return valid
 
-    def to_check(self, session):
+    def to_check(self, session: Session) -> Query:
         """Return a Query object filtering on the rows this check is applied.
 
         :param session: sqlalchemy.orm.session.Session
@@ -83,12 +92,12 @@ class GeneralCheck(BaseCheck):
     with operators being within `self.table.columns`
     """
 
-    def __init__(self, criterion_invalid=None, criterion_valid=None, *args, **kwargs):
+    def __init__(self, criterion_invalid: Optional[BinaryExpression] = None, criterion_valid: Union[None, BinaryExpression, BooleanClauseList] = None, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.criterion_invalid = criterion_invalid
         self.criterion_valid = criterion_valid
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         if self.criterion_invalid is not None:
             q_invalid = self.to_check(session).filter(self.criterion_invalid)
             return q_invalid.all()
@@ -119,12 +128,12 @@ class QueryCheck(BaseCheck):
     sqlalchemy.sql.expression.BinaryExpression. For example, QueryCheck allows joins
     on multiple tables"""
 
-    def __init__(self, column, invalid, message):
+    def __init__(self, column: InstrumentedAttribute, invalid: Query, message: str) -> None:
         super().__init__(column)
         self.invalid = invalid
         self.message = message
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> Any:
         return list(self.invalid.with_session(session))
 
     def description(self):
@@ -136,11 +145,11 @@ class ForeignKeyCheck(BaseCheck):
 
     Null values are ignored."""
 
-    def __init__(self, reference_column, *args, **kwargs):
+    def __init__(self, reference_column: Union[InstrumentedAttribute, Column], *args: InstrumentedAttribute, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.reference_column = reference_column
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         q_invalid = self.to_check(session)
         invalid_foreign_keys_query = q_invalid.filter(
             self.column.notin_(session.query(self.reference_column)),
@@ -160,7 +169,7 @@ class UniqueCheck(BaseCheck):
 
     Null values are ignored."""
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         duplicate_values = (
             session.query(self.column)
             .group_by(self.column)
@@ -179,7 +188,7 @@ class UniqueCheck(BaseCheck):
 class NotNullCheck(BaseCheck):
     """"Check all values in `column` that are not null"""
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         q_invalid = self.to_check(session)
         not_null_query = q_invalid.filter(self.column == None)
         return not_null_query.all()
@@ -193,11 +202,11 @@ class TypeCheck(BaseCheck):
 
     Null values are ignored."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.expected_type = _sqlalchemy_to_sqlite_type(self.column.type)
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         if "sqlite" not in session.bind.dialect.dialect_description:
             return []
         q_invalid = self.to_check(session)
@@ -214,7 +223,7 @@ class TypeCheck(BaseCheck):
         )
 
 
-def _sqlalchemy_to_sqlite_type(column_type):
+def _sqlalchemy_to_sqlite_type(column_type: Any) -> str:
     """Convert the sqlalchemy column type to sqlite data type
 
     Returns the value similar as the sqlite 'typeof' function.
@@ -252,7 +261,7 @@ class GeometryCheck(BaseCheck):
 
     Null values are ignored."""
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         q_invalid = self.to_check(session)
         invalid_geometries = q_invalid.filter(
             geo_func.ST_IsValid(self.column) != True, self.column != None
@@ -269,7 +278,7 @@ class GeometryTypeCheck(BaseCheck):
 
     Null values are ignored"""
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         expected_geometry_type = _get_geometry_type(
             self.column, dialect=session.bind.dialect.name
         )
@@ -285,7 +294,7 @@ class GeometryTypeCheck(BaseCheck):
                "type %s" % (self.column, self.column.type.geometry_type)
 
 
-def _get_geometry_type(column, dialect):
+def _get_geometry_type(column: Union[InstrumentedAttribute, Column], dialect: str) -> str:
     if dialect == "sqlite":
         return column.type.geometry_type
     elif dialect == "postgresql":
@@ -303,7 +312,7 @@ class EnumCheck(BaseCheck):
 
     Null values are ignored"""
 
-    def get_invalid(self, session):
+    def get_invalid(self, session: Session) -> List[result]:
         q_invalid = self.to_check(session)
         invalid_values_q = q_invalid.filter(
             self.column.notin_(list(self.column.type.enum_class))
