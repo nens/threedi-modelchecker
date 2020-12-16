@@ -542,7 +542,26 @@ CONDITIONAL_CHECKS = [
         ),
         message="ConnectionNode should be connected to either a manhole, pipe, "
                 "channel, culvert, weir, pumpstation or orifice"
-    )
+    ),
+    QueryCheck(
+        column=models.Pipe.id,
+        invalid=Query(models.Pipe).join(
+            models.ConnectionNode,
+            models.Pipe.connection_node_start_id == models.ConnectionNode.id
+        ).filter(
+            models.Pipe.calculation_type == constants.PipeCalculationType.ISOLATED,
+            models.ConnectionNode.storage_area.is_(None)
+        ).union(
+            Query(models.Pipe).join(
+                models.ConnectionNode,
+                models.Pipe.connection_node_end_id == models.ConnectionNode.id
+            ).filter(
+                models.Pipe.calculation_type == constants.PipeCalculationType.ISOLATED,
+                models.ConnectionNode.storage_area.is_(None)
+            )
+        ),
+        message="Storage area of a isolated pipe cannot be null"
+    ),
 ]
 
 
