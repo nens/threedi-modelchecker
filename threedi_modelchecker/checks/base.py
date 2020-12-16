@@ -125,7 +125,7 @@ class QueryCheck(BaseCheck):
         self.message = message
 
     def get_invalid(self, session):
-        return list(self.invalid.with_session(session))
+        return self.invalid.with_session(session).all()
 
     def description(self):
         return self.message
