@@ -562,6 +562,34 @@ CONDITIONAL_CHECKS = [
         ),
         message="Storage area of a isolated pipe cannot be null"
     ),
+    QueryCheck(
+        column=models.NumericalSettings.convergence_eps,
+        invalid=Query(models.NumericalSettings).filter(
+            models.NumericalSettings.convergence_eps <= 0
+        ),
+        message="NumericalSettings.convergence_eps must be larger than 0"
+    ),
+    QueryCheck(
+        column=models.NumericalSettings.convergence_cg,
+        invalid=Query(models.NumericalSettings).filter(
+            models.NumericalSettings.convergence_cg <= 0
+        ),
+        message="NumericalSettings.convergence_cg must be larger than 0"
+    ),
+    QueryCheck(
+        column=models.NumericalSettings.general_numerical_threshold,
+        invalid=Query(models.NumericalSettings).filter(
+            models.NumericalSettings.general_numerical_threshold <= 0
+        ),
+        message="NumericalSettings.general_numerical_threshold must be larger than 0"
+    ),
+    QueryCheck(
+        column=models.NumericalSettings.flow_direction_threshold,
+        invalid=Query(models.NumericalSettings).filter(
+            models.NumericalSettings.flow_direction_threshold <= 0
+        ),
+        message="NumericalSettings.flow_direction_threshold must be larger than 0"
+    ),
 ]
 
 
