@@ -17,7 +17,7 @@ from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_not_null_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
-from .checks.other import BankLevelCheck, CrossSectionShapeCheck, ConnectionNodesLength
+from .checks.other import BankLevelCheck, CrossSectionShapeCheck, ConnectionNodesLength, OpenChannelsWithNestedNewton
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
@@ -202,7 +202,8 @@ OTHER_CHECKS: List[BaseCheck] = [
         criterion_valid=cast(models.GlobalSetting.output_time_step, Integer)
         % cast(models.GlobalSetting.sim_time_step, Integer) == 0
     ),
-    Use0DFlowCheck()
+    Use0DFlowCheck(),
+    OpenChannelsWithNestedNewton(),
 ]
 
 
@@ -589,6 +590,22 @@ CONDITIONAL_CHECKS = [
             models.NumericalSettings.flow_direction_threshold <= 0
         ),
         message="NumericalSettings.flow_direction_threshold must be larger than 0"
+    ),
+    QueryCheck(
+        column=models.NumericalSettings.use_of_nested_newton,
+        invalid=Query(models.NumericalSettings).filter(
+            models.NumericalSettings.use_of_nested_newton == 0,
+            or_(
+                Query(func.count(models.Pipe.id) > 0),
+                Query(func.count(models.Culvert.id) > 0),
+                Query(func.count(models.Orifice.id > 0))
+            )
+        ),
+        message="NumericalSettings.use_of_nested_newton is turned off, this in "
+                "combination with pipes, culverts or orifices in the model can cause "
+                "instabilities in the simulation. Please reconsider turning on "
+                "NumericalSettings.use_of_nested_newton or removing the pipes, culverts "
+                "and/or orifices."
     ),
 ]
 
