@@ -520,6 +520,29 @@ CONDITIONAL_CHECKS = [
         end_node=models.Orifice.connection_node_end,
         min_distance=0.05
     ),
+    QueryCheck(
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode).filter(
+            models.ConnectionNode.id.notin_(
+                Query(models.Manhole.connection_node_id).union_all(
+                    Query(models.Pipe.connection_node_start_id),
+                    Query(models.Pipe.connection_node_end_id),
+                    Query(models.Channel.connection_node_start_id),
+                    Query(models.Channel.connection_node_end_id),
+                    Query(models.Culvert.connection_node_start_id),
+                    Query(models.Culvert.connection_node_end_id),
+                    Query(models.Weir.connection_node_start_id),
+                    Query(models.Weir.connection_node_end_id),
+                    Query(models.Pumpstation.connection_node_start_id),
+                    Query(models.Pumpstation.connection_node_end_id),
+                    Query(models.Orifice.connection_node_start_id),
+                    Query(models.Orifice.connection_node_end_id)
+                )
+            )
+        ),
+        message="ConnectionNode should be connected to either a manhole, pipe, "
+                "channel, culvert, weir, pumpstation or orifice"
+    )
 ]
 
 
