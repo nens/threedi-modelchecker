@@ -316,7 +316,9 @@ class OpenChannelsWithNestedNewton(BaseCheck):
 
         # Tabulated cross-section definitions are open when the last element of 'width'
         # is zero
-        open_definitions = Query([models.Channel, models.CrossSectionLocation, models.CrossSectionDefinition]).join(
+        open_definitions = Query(
+            [models.Channel, models.CrossSectionLocation, models.CrossSectionDefinition]
+        ).join(
             models.CrossSectionLocation,
             models.Channel.cross_section_locations
         ).join(
