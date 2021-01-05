@@ -177,7 +177,6 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     use_of_nested_newton = 0
 
 
-
 class MigrationHistoryFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.SouthMigrationHistory
