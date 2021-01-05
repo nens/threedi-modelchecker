@@ -167,6 +167,16 @@ class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     timestep = 10
 
 
+class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.NumericalSettings
+        sqlalchemy_session = Session
+
+    max_degree = 1
+    use_of_cg = 0
+    use_of_nested_newton = 0
+
+
 class MigrationHistoryFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.SouthMigrationHistory

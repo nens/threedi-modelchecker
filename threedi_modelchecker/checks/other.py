@@ -1,6 +1,8 @@
+from typing import List, NamedTuple
+
 from geoalchemy2 import functions as geo_func
-from sqlalchemy import func
-from sqlalchemy.orm import aliased, Query
+from sqlalchemy import func, or_
+from sqlalchemy.orm import aliased, Query, Session
 
 from threedi_modelchecker.checks import patterns
 from .base import BaseCheck
@@ -277,3 +279,76 @@ class ConnectionNodesLength(BaseCheck):
     def description(self) -> str:
         return f"The distance of start- and end connectionnode of {self.table} is " \
                f"too short, should be at least {self.min_distance} meters"
+
+
+class OpenChannelsWithNestedNewton(BaseCheck):
+    """Checks whether the model has any open cross-section in use when the
+    NumericalSettings.use_of_nested_newton is turned off.
+
+    See https://github.com/nens/threeditoolbox/issues/522
+    """
+
+    def __init__(self):
+        super().__init__(column=models.Channel.id)
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalid_channels = []
+
+        # Circle and egg cross-section definitions are always open:
+        circle_egg_definitions = Query(models.Channel).join(
+            models.CrossSectionLocation,
+            models.Channel.cross_section_locations
+        ).join(
+            models.CrossSectionDefinition,
+            models.CrossSectionLocation.definition
+        ).filter(
+            models.NumericalSettings.use_of_nested_newton == 0,
+            or_(
+                models.CrossSectionDefinition.shape.in_(
+                    [
+                        constants.CrossSectionShape.CIRCLE,
+                        constants.CrossSectionShape.EGG
+                    ]
+                )
+            )
+        )
+        invalid_channels += circle_egg_definitions.with_session(session).all()
+
+        # Tabulated cross-section definitions are open when the last element of 'width'
+        # is zero
+        open_definitions = Query(
+            [models.Channel, models.CrossSectionLocation, models.CrossSectionDefinition]
+        ).join(
+            models.CrossSectionLocation,
+            models.Channel.cross_section_locations
+        ).join(
+            models.CrossSectionDefinition,
+            models.CrossSectionLocation.definition
+        ).filter(
+            models.NumericalSettings.use_of_nested_newton == 0,
+            models.CrossSectionDefinition.shape.in_(
+                [
+                    constants.CrossSectionShape.TABULATED_RECTANGLE,
+                    constants.CrossSectionShape.TABULATED_TRAPEZIUM
+                ]
+            )
+        )
+        for channel, _, definition in open_definitions.with_session(session).all():
+            try:
+                if definition.width.split(' ')[-1] in ('0', '0.', '0.0'):
+                    # Open channel
+                    invalid_channels.append(channel)
+            except Exception:
+                # Many things can go wrong, I won't bother with trying to catch all
+                # possible exceptions
+                pass
+        return invalid_channels
+
+    def description(self) -> str:
+        return (
+            "Channel in the model with an open cross-section-definition while also "
+            "having the NumericalSettings.use_of_nested_newton turned off can be a "
+            "cause of instabilities in the simulation. Please turn on the "
+            "NumericalSettings.use_of_nested_newton on or make the Channel a "
+            "closed definition."
+        )
