@@ -596,16 +596,16 @@ CONDITIONAL_CHECKS = [
         invalid=Query(models.NumericalSettings).filter(
             models.NumericalSettings.use_of_nested_newton == 0,
             or_(
-                Query(func.count(models.Pipe.id) > 0),
-                Query(func.count(models.Culvert.id) > 0),
-                Query(func.count(models.Orifice.id > 0))
+                Query(func.count(models.Pipe.id) > 0).label("pipes"),
+                Query(func.count(models.Culvert.id) > 0).label("culverts"),
+                Query(func.count(models.Orifice.id) > 0).label("orifices")
             )
         ),
         message="NumericalSettings.use_of_nested_newton is turned off, this in "
                 "combination with pipes, culverts or orifices in the model can cause "
                 "instabilities in the simulation. Please reconsider turning on "
                 "NumericalSettings.use_of_nested_newton or removing the pipes, culverts "
-                "and/or orifices."
+                "and orifices."
     ),
 ]
 
