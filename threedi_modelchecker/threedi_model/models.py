@@ -23,7 +23,10 @@ class Lateral2D(Base):
     id = Column(Integer, primary_key=True)
 
     type = Column(IntegerEnum(constants.Later2dType), nullable=False)
-    the_geom = Column(Geometry(geometry_type="POINT", srid=4326, spatial_index=True))
+    the_geom = Column(
+        Geometry(geometry_type="POINT", srid=4326, spatial_index=True),
+        nullable=False
+    )
     timeseries = Column(Text, nullable=False)
 
 
@@ -35,7 +38,8 @@ class BoundaryConditions2D(Base):
     timeseries = Column(Text, nullable=False)
     boundary_type = Column(IntegerEnum(constants.BoundaryType), nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True)
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        nullable=False
     )
 
 
@@ -216,7 +220,10 @@ class Surface(Base):
     surface_parameters_id = Column(
         Integer, ForeignKey(SurfaceParameter.__tablename__ + ".id"), nullable=False
     )
-    the_geom = Column(Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True))
+    the_geom = Column(
+        Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True),
+        nullable=False
+    )
 
 
 class GroundWater(Base):
@@ -259,7 +266,8 @@ class GridRefinement(Base):
     display_name = Column(String(255), nullable=False)
     refinement_level = Column(Integer, nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True)
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        nullable=False
     )
     code = Column(String(100), nullable=False)
 
@@ -288,7 +296,8 @@ class ConnectionNode(Base):
     storage_area = Column(Float)
     initial_waterlevel = Column(Float)
     the_geom = Column(
-        Geometry(geometry_type="POINT", srid=4326, spatial_index=True), nullable=False
+        Geometry(geometry_type="POINT", srid=4326, spatial_index=True),
+        nullable=False
     )
     the_geom_linestring = Column(
         Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=False)
@@ -524,7 +533,10 @@ class CrossSectionLocation(Base):
     friction_type = Column(IntegerEnum(constants.FrictionType), nullable=False)
     friction_value = Column(Float, nullable=False)
     bank_level = Column(Float)
-    the_geom = Column(Geometry(geometry_type="POINT", srid=4326, spatial_index=True))
+    the_geom = Column(
+        Geometry(geometry_type="POINT", srid=4326, spatial_index=True),
+        nullable=False
+    )
     channel_id = Column(
         Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
     )
@@ -698,7 +710,12 @@ class Pumpstation(Base):
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     classification = Column(Integer)
     sewerage = Column(Boolean, nullable=False)
-    type_ = Column(IntegerEnum(constants.PumpType), name="type", nullable=False)  # type: ignore[call-overload] # noqa
+    type_ = Column(
+        IntegerEnum(constants.PumpType),
+        name="type",
+        key="type_",
+        nullable=False
+    )  # type: ignore[call-overload] # noqa
     start_level = Column(Float, nullable=False)
     lower_stop_level = Column(Float, nullable=False)
     upper_stop_level = Column(Float)
@@ -723,7 +740,8 @@ class Obstacle(Base):
     code = Column(String(100), nullable=False)
     crest_level = Column(Float, nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True)
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        nullable=False
     )
 
 
@@ -769,7 +787,10 @@ class ImperviousSurface(Base):
     nr_of_inhabitants = Column(Float)
     area = Column(Float)
     dry_weather_flow = Column(Float)
-    the_geom = Column(Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True))
+    the_geom = Column(
+        Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True),
+        nullable=False
+    )
     impervious_surface_maps = relationship(
         "ImperviousSurfaceMap", back_populates="impervious_surface"
     )
