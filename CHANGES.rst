@@ -5,7 +5,15 @@ Changelog of threedi-modelchecker
 0.11 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Set the geometry of the following tables as required: impervious_surface, obstacle,
+  cross_section_location, connection_nodes, grid_refinement, surface,
+  2d_boundary_conditions and 2d_lateral.
+- Add check for open cross-section when NumericalSettings.use_of_nested_newton is
+  turned off.
+- Add checks to ensure some of the fields in numericalSettings are larger than 0.
+- Add check to ensure an isolated pipe always has a storage area.
+- Add check to see if a connection_node is connected to an artifact
+  (pipe/channel/culvert/weir/pumpstation/orifice).
 
 
 0.10.2 (2020-09-15)
