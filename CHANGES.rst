@@ -5,6 +5,8 @@ Changelog of threedi-modelchecker
 0.11 (unreleased)
 -----------------
 
+- Add check `ConnectionNodesDistance` which ensure all connection_nodes have a minimum
+  distance between each other.
 - Set the geometry of the following tables as required: impervious_surface, obstacle,
   cross_section_location, connection_nodes, grid_refinement, surface,
   2d_boundary_conditions and 2d_lateral.
