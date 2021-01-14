@@ -303,9 +303,9 @@ class ConnectionNodesDistance(BaseCheck):
         if session.bind.name == "postgresql":
             return []
 
-        check_spatial_index = "SELECT CheckSpatialIndex('v2_connection_nodes', 'the_geom')"
+        check_spatial_index = "SELECT CheckSpatialIndex('v2_connection_nodes', 'the_geom')"  # noqa
         if not session.connection().execute(check_spatial_index).scalar():
-            recover_spatial_index = "SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')"
+            recover_spatial_index = "SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')"  # noqa
             session.connection().execute(recover_spatial_index).scalar()
 
         query = text(
