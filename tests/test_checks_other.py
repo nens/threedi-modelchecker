@@ -1,7 +1,10 @@
 import pytest
+from sqlalchemy.orm import Query, aliased
+from geoalchemy2 import functions as geo_func
 
 from threedi_modelchecker.checks.other import BankLevelCheck, valid_egg, \
-    valid_rectangle, valid_circle, ConnectionNodesLength, OpenChannelsWithNestedNewton
+    valid_rectangle, valid_circle, ConnectionNodesLength, \
+    OpenChannelsWithNestedNewton, ConnectionNodesDistance
 from threedi_modelchecker.checks.other import CrossSectionShapeCheck
 from threedi_modelchecker.checks.other import TimeseriesCheck
 from threedi_modelchecker.checks.other import valid_tabulated_shape
@@ -333,3 +336,36 @@ def test_open_channels_with_nested_newton(session):
 
     errors = check.get_invalid(session)
     assert len(errors) == 2
+
+
+def test_node_distance(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Check only applicable to spatialite")
+    con1_too_close = factories.ConnectionNodeFactory(
+        the_geom="SRID=4326;POINT(4.728282 52.64579283592512)"
+    )
+    con2_too_close = factories.ConnectionNodeFactory(
+        the_geom="SRID=4326;POINT(4.72828 52.64579283592512)"
+    )
+    # Good distance
+    factories.ConnectionNodeFactory(
+        the_geom="SRID=4326;POINT(4.726838755789598 52.64514133594995)"
+    )
+
+    # sanity check to see the distances between the nodes
+    node_a = aliased(models.ConnectionNode)
+    node_b = aliased(models.ConnectionNode)
+    distances_query = Query(
+        geo_func.ST_Distance(
+            node_a.the_geom, node_b.the_geom, 1
+        )
+    ).filter(node_a.id != node_b.id)
+    # Shows the distances between all 3 nodes: node 1 and 2 are too close
+    distances_query.with_session(session).all()
+
+    check = ConnectionNodesDistance(minimum_distance=10)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 2
+    invalid_ids = [i.id for i in invalid]
+    assert con1_too_close.id in invalid_ids
+    assert con2_too_close.id in invalid_ids

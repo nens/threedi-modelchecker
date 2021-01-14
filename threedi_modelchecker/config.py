@@ -18,7 +18,7 @@ from .checks.factories import generate_not_null_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
 from .checks.other import BankLevelCheck, CrossSectionShapeCheck, \
-    ConnectionNodesLength, OpenChannelsWithNestedNewton
+    ConnectionNodesLength, OpenChannelsWithNestedNewton, ConnectionNodesDistance
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
@@ -205,6 +205,7 @@ OTHER_CHECKS: List[BaseCheck] = [
     ),
     Use0DFlowCheck(),
     OpenChannelsWithNestedNewton(),
+    ConnectionNodesDistance(minimum_distance=0.01),
 ]
 
 

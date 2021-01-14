@@ -1,7 +1,7 @@
 from typing import List, NamedTuple
 
 from geoalchemy2 import functions as geo_func
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, text
 from sqlalchemy.orm import aliased, Query, Session
 
 from threedi_modelchecker.checks import patterns
@@ -279,6 +279,58 @@ class ConnectionNodesLength(BaseCheck):
     def description(self) -> str:
         return f"The distance of start- and end connectionnode of {self.table} is " \
                f"too short, should be at least {self.min_distance} meters"
+
+
+class ConnectionNodesDistance(BaseCheck):
+    """Check that the distance between CONNECTED connection nodes is above a certain
+    threshold
+    """
+
+    def __init__(self, minimum_distance: float, *args, **kwargs):
+        """
+        :param minimum_distance: threshold distance in meters
+        """
+        super().__init__(column=models.ConnectionNode.id, *args, **kwargs)
+        self.minimum_distance = minimum_distance
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        """
+        The query makes use of the SpatialIndex so we won't have to calculate the
+        distance between all connection nodes.
+
+        The query only works on a spatialite and therefore skips postgres.
+        """
+        if session.bind.name == "postgresql":
+            return []
+
+        check_spatial_index = "SELECT CheckSpatialIndex('v2_connection_nodes', 'the_geom')"  # noqa
+        if not session.connection().execute(check_spatial_index).scalar():
+            recover_spatial_index = "SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')"  # noqa
+            session.connection().execute(recover_spatial_index).scalar()
+
+        query = text(
+            """SELECT *
+               FROM v2_connection_nodes AS cn1, v2_connection_nodes AS cn2
+               WHERE
+                   distance(cn1.the_geom, cn2.the_geom, 1) < :min_distance
+                   AND cn1.ROWID != cn2.ROWID
+                   AND cn2.ROWID IN (
+                     SELECT ROWID
+                     FROM SpatialIndex
+                     WHERE (
+                       f_table_name = "v2_connection_nodes"
+                       AND search_frame = Buffer(cn1.the_geom, 0.0005)));
+            """
+        )
+        results = session.connection().execute(
+            query, min_distance=self.minimum_distance
+        ).fetchall()
+
+        return results
+
+    def description(self) -> str:
+        return f"The connection_node is within {self.minimum_distance} meters of " \
+               f"another connection_node."
 
 
 class OpenChannelsWithNestedNewton(BaseCheck):
