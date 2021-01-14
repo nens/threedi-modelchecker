@@ -3,8 +3,8 @@ from sqlalchemy.orm import Query, aliased
 from geoalchemy2 import functions as geo_func
 
 from threedi_modelchecker.checks.other import BankLevelCheck, valid_egg, \
-    valid_rectangle, valid_circle, ConnectionNodesLength, OpenChannelsWithNestedNewton, \
-    ConnectionNodesDistance
+    valid_rectangle, valid_circle, ConnectionNodesLength, \
+    OpenChannelsWithNestedNewton, ConnectionNodesDistance
 from threedi_modelchecker.checks.other import CrossSectionShapeCheck
 from threedi_modelchecker.checks.other import TimeseriesCheck
 from threedi_modelchecker.checks.other import valid_tabulated_shape
@@ -347,7 +347,8 @@ def test_node_distance(session):
     con2_too_close = factories.ConnectionNodeFactory(
         the_geom="SRID=4326;POINT(4.72828 52.64579283592512)"
     )
-    con3_good_distance = factories.ConnectionNodeFactory(
+    # Good distance
+    factories.ConnectionNodeFactory(
         the_geom="SRID=4326;POINT(4.726838755789598 52.64514133594995)"
     )
 
@@ -359,7 +360,8 @@ def test_node_distance(session):
             node_a.the_geom, node_b.the_geom, 1
         )
     ).filter(node_a.id != node_b.id)
-    distances = distances_query.with_session(session).all()
+    # Shows the distances between all 3 nodes: node 1 and 2 are too close
+    distances_query.with_session(session).all()
 
     check = ConnectionNodesDistance(minimum_distance=10)
     invalid = check.get_invalid(session)
