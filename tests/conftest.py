@@ -7,14 +7,10 @@ from threedi_modelchecker.model_checks import ThreediModelChecker
 from tests import Session
 
 
-cur_dir = os.path.dirname(__file__)
-data_dir = os.path.join(cur_dir, "data")
-# Sqlite
-emtpy_sqlite_file = "empty.sqlite"
-emtpy_sqlite_path = os.path.join(data_dir, emtpy_sqlite_file)
-sqlite_settings = {"db_path": emtpy_sqlite_path, "db_file": emtpy_sqlite_file}
-# postgres
-postgis_settings = {
+CURRENT_DIR = os.path.dirname(__file__)
+DATA_DIR = os.path.join(CURRENT_DIR, "data")
+EMPTY_SQLITE_PATH = os.path.join(DATA_DIR, "empty.sqlite")
+POSTGIS_SETTINGS = {
     "host": "postgis",
     "port": 5432,
     "database": "postgis",
@@ -25,7 +21,7 @@ postgis_settings = {
 
 @pytest.fixture(
     scope="function",
-    params=[("spatialite", sqlite_settings), ("postgres", postgis_settings)],
+    params=[("spatialite", EMPTY_SQLITE_PATH), ("postgres", POSTGIS_SETTINGS)],
     ids=["spatialite", "postgis"],
 )
 def threedi_db(request):
@@ -39,7 +35,7 @@ def threedi_db(request):
     https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
     """
     if request.param[0] == 'spatialite':
-        db = ThreediDatabase.spatialite(request.param[1]['db_path'])
+        db = ThreediDatabase.spatialite(request.param[1])
     else:
         db = ThreediDatabase.postgis(**request.param[1])
 
