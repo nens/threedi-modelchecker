@@ -163,9 +163,7 @@ class TimeseriesCheck(BaseCheck):
                 invalid_timeseries.append(row)
                 continue
 
-            timesteps = {
-                time for time, *_ in patterns.TIMESERIE_ENTRY_REGEX.findall(timeserie)
-            }
+            timesteps = {time for time, *_ in patterns.TIMESERIE_ENTRY_REGEX.findall(timeserie)}
             if not required_timesteps:
                 # Assume the first timeserie defines the required timesteps.
                 # All others should have the same timesteps.

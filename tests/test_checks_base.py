@@ -188,9 +188,7 @@ def test_type_check_float_can_store_integer(session):
 
     type_check = TypeCheck(models.Manhole.zoom_category)
     invalid_rows = type_check.get_invalid(session)
-    valid_rows = type_check.get_valid(session)
 
-    assert len(valid_rows) == 3
     assert len(invalid_rows) == 1
     invalid_ids = [invalid.id for invalid in invalid_rows]
     assert m1.id in invalid_ids
@@ -213,9 +211,6 @@ def test_type_check_boolean(session):
         pytest.skip("type checks not working on postgres")
     factories.GlobalSettingsFactory(use_1d_flow=True)
     factories.GlobalSettingsFactory(use_1d_flow=1)
-    # factories.GlobalSettingsFactory(use_1d_flow='true')
-    # factories.GlobalSettingsFactory(use_1d_flow='1')
-    # factories.GlobalSettingsFactory(use_1d_flow=1.0)
 
     type_check = TypeCheck(models.GlobalSetting.use_1d_flow)
     invalid_rows = type_check.get_invalid(session)

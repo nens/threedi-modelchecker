@@ -36,20 +36,6 @@ class BaseCheck(ABC):
         """
         pass
 
-    def get_valid(self, session: Session) -> List[NamedTuple]:
-        """Return a list of rows (named_tuples) which are valid.
-
-        :param session: sqlalchemy.orm.session.Session
-        :return: list of named_tuples or empty list if there are no valid rows
-        """
-        all_rows = self.to_check(session)
-        invalid_row_ids = set([row.id for row in self.get_invalid(session)])
-        valid = []
-        for row in all_rows:
-            if row.id not in invalid_row_ids:
-                valid.append(row)
-        return valid
-
     def to_check(self, session):
         """Return a Query object filtering on the rows this check is applied.
 
@@ -87,6 +73,20 @@ class GeneralCheck(BaseCheck):
         super().__init__(*args, **kwargs)
         self.criterion_invalid = criterion_invalid
         self.criterion_valid = criterion_valid
+
+    def get_valid(self, session: Session) -> List[NamedTuple]:
+        """Return a list of rows (named_tuples) which are valid.
+
+        :param session: sqlalchemy.orm.session.Session
+        :return: list of named_tuples or empty list if there are no valid rows
+        """
+        all_rows = self.to_check(session)
+        invalid_row_ids = set([row.id for row in self.get_invalid(session)])
+        valid = []
+        for row in all_rows:
+            if row.id not in invalid_row_ids:
+                valid.append(row)
+        return valid
 
     def get_invalid(self, session):
         if self.criterion_invalid is not None:
