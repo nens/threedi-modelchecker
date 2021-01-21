@@ -38,14 +38,15 @@ def threedi_db(request):
     the factories to operate on the same session object. See:
     https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
     """
-    db = ThreediDatabase(
-        request.param[1], db_type=request.param[0], echo=False
-    )
-    engine = db.get_engine()
-    Session.configure(bind=engine)
+    if request.param[0] == 'spatialite':
+        db = ThreediDatabase.spatialite(request.param[1]['db_path'])
+    else:
+        db = ThreediDatabase.postgis(**request.param[1])
+
+    Session.configure(bind=db.engine)
 
     # monkey-patch get_session
-    db.get_session = lambda: Session()
+    db.session = lambda: Session()
 
     yield db
     Session.remove()

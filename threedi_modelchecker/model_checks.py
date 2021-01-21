@@ -23,7 +23,7 @@ class ThreediModelChecker:
 
         :return: Tuple of the applied check and the failing row.
         """
-        session = self.db.get_session()
+        session = self.db.session()
         for check in self.checks():
             model_errors = check.get_invalid(session)
             for error_row in model_errors:

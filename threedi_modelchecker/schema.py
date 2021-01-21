@@ -14,7 +14,7 @@ class ModelSchema:
 
     def _latest_migration(self):
         """Returns a tuple with latest migration id and name"""
-        session = self.db.get_session()
+        session = self.db.session()
         latest_migration_id = session.query(
             func.max(models.SouthMigrationHistory.id)
         ).scalar()
