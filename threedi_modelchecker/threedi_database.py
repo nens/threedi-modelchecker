@@ -1,7 +1,10 @@
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, Connection
+from sqlalchemy.sql import select, func
 from sqlalchemy.event import listen
+
+from threedi_modelchecker.threedi_model.models import Base
 
 
 def load_spatialite(con, connection_record):
@@ -57,5 +60,13 @@ class ThreediDatabase:
     def session(self, **kwargs) -> Session:
         return sessionmaker(bind=self.engine, **kwargs)()
 
-    def check_connection(self):
+    def create_schema(self):
+        """Create all tables required for a 3di model"""
+        if self.engine.dialect.name == 'sqlite':
+            conn = self.engine.connect()
+            conn.execute(select([func.InitSpatialMetaData()]))
+        Base.metadata.create_all(self.engine)
+
+    def check_connection(self) -> Connection:
+        """Try to connect to the databse and return a Connection an success"""
         return self.engine.connect()

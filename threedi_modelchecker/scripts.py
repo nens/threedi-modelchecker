@@ -28,15 +28,12 @@ def check_model(ctx, file, sum):
 @click.pass_context
 def postgis(context, database, host, port, username, password):
     """Parse a postgis model"""
-    postgis_settings = {
-        "host": host,
-        "port": port,
-        "database": database,
-        "username": username,
-        "password": password,
-    }
-    db = ThreediDatabase(
-        connection_settings=postgis_settings, db_type="postgres", echo=False
+    db = ThreediDatabase.postgis(
+        host=host,
+        port=port,
+        database=database,
+        username=username,
+        password=password
     )
     process(db, context.parent)
 
@@ -52,10 +49,7 @@ def postgis(context, database, host, port, username, password):
 @click.pass_context
 def sqlite(context, sqlite):
     """Parse a sqlite model"""
-    sqlite_settings = {"db_path": sqlite, "db_file": sqlite}
-    db = ThreediDatabase(
-        connection_settings=sqlite_settings, db_type="spatialite", echo=False
-    )
+    db = ThreediDatabase.spatialite(sqlite)
     process(db, context.parent)
 
 

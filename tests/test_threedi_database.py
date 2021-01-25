@@ -1,4 +1,8 @@
+import pytest
+from psycopg2._psycopg import OperationalError
+
 from tests import factories
+from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.threedi_model import models
 
 
@@ -20,3 +24,19 @@ def test_run_spatial_function(session):
 
     q = session.query(func.ST_AsGeoJSON(models.ConnectionNode.the_geom))
     q.first()
+
+
+def test_threedi_db_check_connection(threedi_db):
+    assert threedi_db.check_connection()
+
+
+def test_threedi_db_check_invalid_postgis_connection():
+    db = ThreediDatabase.postgis(host='a', port=1, database='b', username='c', password='d')
+    with pytest.raises(OperationalError):
+        db.check_connection()
+
+
+def test_threedi_db_create_schema():
+    db = ThreediDatabase.spatialite(":memory:")
+    db.create_schema()
+    assert db.engine.table_names() is not None
