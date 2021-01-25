@@ -24,7 +24,7 @@ class Lateral2D(Base):
 
     type = Column(IntegerEnum(constants.Later2dType), nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="POINT", srid=4326, spatial_index=True),
+        Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
         nullable=False
     )
     timeseries = Column(Text, nullable=False)
@@ -38,7 +38,7 @@ class BoundaryConditions2D(Base):
     timeseries = Column(Text, nullable=False)
     boundary_type = Column(IntegerEnum(constants.BoundaryType), nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True),
         nullable=False
     )
 
@@ -51,7 +51,8 @@ class CalculationPoint(Base):
     user_ref = Column(String(80), nullable=False)
     calc_type = Column(Integer, nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="POINT", srid=4326, spatial_index=True), nullable=False
+        Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
+        nullable=False
     )
 
 
@@ -157,7 +158,7 @@ class Floodfill(Base):
     __tablename__ = "v2_floodfill"
     id = Column(Integer, primary_key=True)
     waterlevel = Column(Float)
-    the_geom = Column(Geometry(geometry_type="POINT", srid=4326, spatial_index=True))
+    the_geom = Column(Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True))
 
 
 class Interflow(Base):
@@ -179,7 +180,8 @@ class PumpedDrainageArea(Base):
     name = Column(String(64), nullable=False)
     code = Column(String(100), nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True), nullable=False
+        Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True, management=True),
+        nullable=False
     )
 
 
@@ -221,7 +223,7 @@ class Surface(Base):
         Integer, ForeignKey(SurfaceParameter.__tablename__ + ".id"), nullable=False
     )
     the_geom = Column(
-        Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True),
+        Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True, management=True),
         nullable=False
     )
 
@@ -266,7 +268,7 @@ class GridRefinement(Base):
     display_name = Column(String(255), nullable=False)
     refinement_level = Column(Integer, nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True),
         nullable=False
     )
     code = Column(String(100), nullable=False)
@@ -278,7 +280,7 @@ class GridRefinementArea(Base):
     display_name = Column(String(255), nullable=False)
     refinement_level = Column(Integer, nullable=False)
     code = Column(String(100), nullable=False)
-    the_geom = Column(Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True))
+    the_geom = Column(Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True, management=True))
 
 
 class CrossSectionDefinition(Base):
@@ -296,11 +298,11 @@ class ConnectionNode(Base):
     storage_area = Column(Float)
     initial_waterlevel = Column(Float)
     the_geom = Column(
-        Geometry(geometry_type="POINT", srid=4326, spatial_index=True),
+        Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
         nullable=False
     )
     the_geom_linestring = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=False)
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=False, management=True)
     )
     code = Column(String(100), nullable=False)
 
@@ -487,7 +489,7 @@ class Channel(Base):
     dist_calc_points = Column(Float)
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True),
         nullable=False,
     )
 
@@ -519,7 +521,7 @@ class Windshielding(Base):
     southwest = Column(Float)
     west = Column(Float)
     northwest = Column(Float)
-    the_geom = Column(Geometry(geometry_type="POINT", srid=4326, spatial_index=True))
+    the_geom = Column(Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True))
     channel_id = Column(
         Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
     )
@@ -534,7 +536,7 @@ class CrossSectionLocation(Base):
     friction_value = Column(Float, nullable=False)
     bank_level = Column(Float)
     the_geom = Column(
-        Geometry(geometry_type="POINT", srid=4326, spatial_index=True),
+        Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
         nullable=False
     )
     channel_id = Column(
@@ -603,7 +605,7 @@ class Culvert(Base):
     invert_level_start_point = Column(Float, nullable=False)
     invert_level_end_point = Column(Float, nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True),
         nullable=False,
     )
 
@@ -630,7 +632,7 @@ class Culvert(Base):
 class DemAverageArea(Base):
     __tablename__ = "v2_dem_average_area"
     id = Column(Integer, primary_key=True)
-    the_geom = Column(Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True))
+    the_geom = Column(Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True, management=True))
 
 
 class Weir(Base):
@@ -740,7 +742,7 @@ class Obstacle(Base):
     code = Column(String(100), nullable=False)
     crest_level = Column(Float, nullable=False)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True),
         nullable=False
     )
 
@@ -751,7 +753,7 @@ class Levee(Base):
     code = Column(String(100), default="", nullable=False)
     crest_level = Column(Float)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
+        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True),
         nullable=False
     )
     material = Column(IntegerEnum(constants.Material))
@@ -769,7 +771,8 @@ class ConnectedPoint(Base):
 
     exchange_level = Column(Float)
     the_geom = Column(
-        Geometry(geometry_type="POINT", srid=4326, spatial_index=True), nullable=False
+        Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
+        nullable=False
     )
 
 
@@ -788,7 +791,7 @@ class ImperviousSurface(Base):
     area = Column(Float)
     dry_weather_flow = Column(Float)
     the_geom = Column(
-        Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True),
+        Geometry(geometry_type="POLYGON", srid=4326, spatial_index=True, management=True),
         nullable=False
     )
     impervious_surface_maps = relationship(
