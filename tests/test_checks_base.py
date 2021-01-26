@@ -431,29 +431,30 @@ def test_query_check_with_joins(session):
     factories.ManholeFactory(
         connection_node=connection_node2, bottom_level=-1.0
     )
-    factories.PumpstationFactory(
+    pump1 = factories.PumpstationFactory(
         connection_node_start=connection_node1, lower_stop_level=0.0
     )
     factories.PumpstationFactory(
         connection_node_start=connection_node2, lower_stop_level=2.0
     )
 
-    query = Query(models.ConnectionNode).join(
-        models.Pumpstation.connection_node_start
+    query = Query(models.Pumpstation).join(
+        models.ConnectionNode,
+        models.Pumpstation.connection_node_start_id == models.ConnectionNode.id
     ).join(
-        models.Manhole, models.ConnectionNode.id == models.Manhole.connection_node_id
+        models.Manhole
     ).filter(
         models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
     )
     check = QueryCheck(
-        column=models.Manhole.bottom_level,
+        column=models.Pumpstation.lower_stop_level,
         invalid=query,
         message="Pumpstation.lower_stop_level should be higher than "
                 "Manhole.bottom_level"
     )
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
-    assert invalids[0].id == connection_node1.id
+    assert invalids[0].id == pump1.id
 
 
 def test_query_check_on_pumpstation(session):
