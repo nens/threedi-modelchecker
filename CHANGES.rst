@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.11 (unreleased)
+0.11 (2021-01-26)
 -----------------
 
 - Add check `ConnectionNodesDistance` which ensure all connection_nodes have a minimum
