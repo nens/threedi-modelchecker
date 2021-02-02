@@ -1,6 +1,3 @@
-import pytest
-from psycopg2._psycopg import OperationalError
-
 from tests import factories
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.threedi_model import models
@@ -28,12 +25,6 @@ def test_run_spatial_function(session):
 
 def test_threedi_db_check_connection(threedi_db):
     assert threedi_db.check_connection()
-
-
-def test_threedi_db_check_invalid_postgis_connection():
-    db = ThreediDatabase.postgis(host='a', port=1, database='b', username='c', password='d')
-    with pytest.raises(OperationalError):
-        db.check_connection()
 
 
 def test_threedi_db_create_schema():
