@@ -1,10 +1,13 @@
+from datetime import datetime
+
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, Connection
 from sqlalchemy.sql import select, func
 from sqlalchemy.event import listen
 
-from threedi_modelchecker.threedi_model.models import Base
+from threedi_modelchecker.threedi_model import constants
+from threedi_modelchecker.threedi_model.models import Base, SouthMigrationHistory
 
 
 def load_spatialite(con, connection_record):
@@ -66,6 +69,16 @@ class ThreediDatabase:
             conn = self.engine.connect()
             conn.execute(select([func.InitSpatialMetaData()]))
         Base.metadata.create_all(self.engine)
+
+        migration = SouthMigrationHistory(
+            id=constants.LATEST_MIGRATION_ID,
+            app_name='threedi_tools',
+            migration=constants.LATEST_MIGRATION_NAME,
+            applied=datetime.now()
+        )
+        session = self.session()
+        session.add(migration)
+        session.commit()
 
     def check_connection(self) -> Connection:
         """Try to connect to the databse and return a Connection an success"""
