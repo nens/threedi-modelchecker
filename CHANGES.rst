@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.12 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added ThreediDatabase.session_scope context manager.
 
 
 0.11 (2021-01-26)
