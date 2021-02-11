@@ -39,7 +39,7 @@ setup(
     zip_safe=False,
     install_requires=install_requires,
     tests_require=tests_require,
-    extras_require={"test": tests_require},
+    extras_require={"test": tests_require, "postgis": ["psycopg2"]},
     python_requires='>=3.6',
     entry_points={
         "console_scripts": [
