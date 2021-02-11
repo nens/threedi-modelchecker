@@ -108,7 +108,7 @@ class ThreediDatabase(object):
 
         It is probably necessary to call ``session.commit``, ``session.rollback``
         and/or ``session.close``.
-        
+
         See also:
           https://docs.sqlalchemy.org/en/13/orm/session_basics.html
         """
@@ -122,7 +122,7 @@ class ThreediDatabase(object):
         try:
             yield session
             session.commit()
-        except:
+        except Exception:
             session.rollback()
             raise
         finally:
