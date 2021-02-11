@@ -51,8 +51,7 @@ jobs:
       
       - name: Install psql, sqlite3 and spatialite
         run: |
-          sudo apt update
-          sudo apt install --yes --no-install-recommends postgresql-client sqlite3 libsqlite3-mod-spatialite
+          sudo apt-get install --yes --no-install-recommends postgresql-client sqlite3 libsqlite3-mod-spatialite
       
       - name: Load test postgis database
         shell: bash
@@ -65,7 +64,7 @@ jobs:
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
-          pip install sqlalchemy==${{ matrix.sqlalchemy }} geoalchemy2==${{ matrix.geoalchemy2 }} .[test,postgis]
+          pip install sqlalchemy==${{ matrix.sqlalchemy }} geoalchemy2==${{ matrix.geoalchemy2 }} .[test,postgis] flake8
           pip list
 
       - name: Run tests
