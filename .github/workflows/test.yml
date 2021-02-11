@@ -32,17 +32,19 @@ jobs:
             sqlalchemy: "1.*"
             geoalchemy2: "0.*"
 
+    services:
+      postgis:
+        image: mdillon/postgis
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_HOST: postgis
+          POSTGRES_USER: postgis
+          POSTGRES_PASSWORD: mysecret
+        options: "-v ${{ github.workspace }}/tests/data/postgres:/docker-entrypoint-initdb.d"
 
     steps:
       - uses: actions/checkout@v2
-
-      - name: Set up PostGIS
-        uses: huaxk/postgis-action@v1
-        with:
-          postgresql version: 'latest'
-          postgresql password: 'mysecret'
-          postgresql user: 'postgis'
-          postgresql db: 'postgis'
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v2
