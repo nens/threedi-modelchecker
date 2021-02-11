@@ -40,6 +40,7 @@ setup(
     install_requires=install_requires,
     tests_require=tests_require,
     extras_require={"test": tests_require},
+    python_requires='>=3.6',
     entry_points={
         "console_scripts": [
             "threedi-modelchecker = threedi_modelchecker.scripts:check_model"
