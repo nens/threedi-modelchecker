@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
-          pip install sqlalchemy==${{ matrix.sqlalchemy }} geoalchemy2==${{ matrix.geoalchemy2 }} .[test]
+          pip install sqlalchemy==${{ matrix.sqlalchemy }} geoalchemy2==${{ matrix.geoalchemy2 }} .[test,postgis]
           pip list
 
       - name: Run tests
