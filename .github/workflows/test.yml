@@ -38,7 +38,6 @@ jobs:
         ports:
           - 5432:5432
         env:
-          POSTGRES_HOST: postgis
           POSTGRES_USER: postgis
           POSTGRES_PASSWORD: mysecret
 

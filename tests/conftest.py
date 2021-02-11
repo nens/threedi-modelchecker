@@ -15,7 +15,7 @@ emtpy_sqlite_path = os.path.join(data_dir, emtpy_sqlite_file)
 sqlite_settings = {"db_path": emtpy_sqlite_path, "db_file": emtpy_sqlite_file}
 # postgres
 postgis_settings = {
-    "host": "postgis",
+    "host": "localhost",
     "port": 5432,
     "database": "postgis",
     "username": "postgis",
