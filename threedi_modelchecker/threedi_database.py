@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
 
+from contextlib import contextmanager
 
 Base = declarative_base()
 
@@ -102,8 +103,30 @@ class ThreediDatabase(object):
                 self._base_metadata = copy.deepcopy(Base.metadata)
             return self._base_metadata
 
-    def get_session(self):
-        return sessionmaker(bind=self.engine)()
+    def get_session(self, **kwargs):
+        """Get a SQLAlchemy session for optimal control.
+
+        It is probably necessary to call ``session.commit``, ``session.rollback``
+        and/or ``session.close``.
+
+        See also:
+          https://docs.sqlalchemy.org/en/13/orm/session_basics.html
+        """
+        return sessionmaker(bind=self.engine)(**kwargs)
+
+    @contextmanager
+    def session_scope(self, **kwargs):
+        """Get a session to execute a single transaction in a "with as" block.
+        """
+        session = self.get_session(**kwargs)
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        finally:
+            session.close()
 
     def check_connection(self):
         """Check if there a connection can be started with the database
