@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
-          pip install pytest numpy==${{ matrix.numpy }} sqlalchemy==${{ matrix.sqlalchemy }} geoalchemy2==${{ matrix.geoalchemy2 }}
+          pip install pytest sqlalchemy==${{ matrix.sqlalchemy }} geoalchemy2==${{ matrix.geoalchemy2 }}
           pip list
 
       - name: Run tests
