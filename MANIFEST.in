@@ -1,5 +1,7 @@
 # Include docs in the root.
 include *.md
+include *.rst
+include LICENSE
 # Include everything in our project directory.
 graft threedi_modelchecker
 # Exclude byte-compiled code
