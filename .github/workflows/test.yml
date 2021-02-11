@@ -41,7 +41,6 @@ jobs:
           POSTGRES_HOST: postgis
           POSTGRES_USER: postgis
           POSTGRES_PASSWORD: mysecret
-        options: "-v ${{ github.workspace }}/tests/data/postgres:/docker-entrypoint-initdb.d"
 
     steps:
       - uses: actions/checkout@v2
@@ -51,8 +50,17 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       
-      - name: Install sqlite3 and spatialite libraries
-        run: sudo apt-get install sqlite3 libsqlite3-mod-spatialite
+      - name: Install psql, sqlite3 and spatialite
+        run: |
+          sudo apt update
+          sudo apt install --yes --no-install-recommends postgresql-client sqlite3 libsqlite3-mod-spatialite
+      
+      - name: Load test postgis database
+        shell: bash
+        run: | 
+          psql -h localhost -d postgis -U postgis -w  < tests/data/postgres/emtpy_postgres.sql
+        env:
+          PGPASSWORD: mysecret
 
       - name: Install python dependencies
         shell: bash
