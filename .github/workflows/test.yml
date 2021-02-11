@@ -17,7 +17,7 @@ jobs:
         include:
           # 2017
           - python: 3.6
-            sqlalchemy: "1.1.*"
+            sqlalchemy: "1.2.*"
             geoalchemy2: "0.6.*"
           # 2018
           - python: 3.7
