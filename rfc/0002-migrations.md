@@ -38,8 +38,8 @@ Can list differences between the current schematisation and database:
 ]
 ```
 
-Supports a method for the developer to autogenerate migrations based on a schematisation
-and a database file:
+Supports a method for the developer to autogenerate migrations based on a new
+schematisation and a database that is up-to-date with the latest migration:
 
 ```
 alembic revision --autogenerate -m "Added account table"
@@ -105,14 +105,14 @@ always match the state of the schema in ``threedi_modelchecker/threedi_model``.
 
 ### Creating a revision
 
-This should create an empty file based on the ``script.py.mako``::
+This creates an empty file based on the ``script.py.mako``::
 
 ```
 alembic revision -m "create account table"
 ```
 
-This should create a candidate revision file based on a database that is
-in the previous revision state::
+This creates a candidate revision file based on a change in the schema
+definition and a database that is in the latest revision state::
 
 ```
 alembic revision -m --autogenerate "create account table"
@@ -122,6 +122,15 @@ The file contains an ``upgrade`` and ``downgrade`` functions. These should be
 written/validated by hand by the developer making use of Alembic operations. See
 https://alembic.sqlalchemy.org/en/latest/autogenerate.html and 
 https://alembic.sqlalchemy.org/en/latest/ops.html#ops.
+
+
+### The initial revision
+
+The migrations should be able to create a new database from scratch. This means
+that the initial migration will contain the complete schema of the database.
+
+This migration should 'work' for legacy databases as well as for empty database
+files.
 
 # Drawbacks
 
