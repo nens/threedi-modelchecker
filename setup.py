@@ -7,7 +7,7 @@ long_description = "\n\n".join([open("README.rst").read()])
 install_requires = [
     "Click",
     "GeoAlchemy2>=0.6",
-    "SQLAlchemy>=0.8",
+    "SQLAlchemy>=1.2",
 ]
 
 tests_require = [
@@ -39,7 +39,8 @@ setup(
     zip_safe=False,
     install_requires=install_requires,
     tests_require=tests_require,
-    extras_require={"test": tests_require},
+    extras_require={"test": tests_require, "postgis": ["psycopg2"]},
+    python_requires='>=3.6',
     entry_points={
         "console_scripts": [
             "threedi-modelchecker = threedi_modelchecker.scripts:check_model"
