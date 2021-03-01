@@ -6,7 +6,6 @@ try:
 except ImportError:
     has_alembic = False
 
-from threedi_modelchecker import threedi_model
 from threedi_modelchecker.threedi_database import ThreediDatabase
 
 import pytest
