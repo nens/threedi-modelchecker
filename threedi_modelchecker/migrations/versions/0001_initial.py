@@ -1,7 +1,7 @@
 """create account table
 
-Revision ID: 1fa55f8b320e
-Revises: 
+Revision ID: 0001
+Revises:
 Create Date: 2021-02-15 16:31:00.792077
 
 """
