@@ -1,4 +1,4 @@
-"""create account table
+"""Initial migration
 
 Revision ID: 0001
 Revises:
@@ -24,4 +24,4 @@ def upgrade():
 
 
 def downgrade():
-    op.create_table('v2_connection_nodes')
+    op.drop_table('v2_connection_nodes')
