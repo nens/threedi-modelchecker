@@ -6,6 +6,10 @@ from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from tests import Session
 
+try:
+    import psycopg2
+except ImportError:
+    psycopg2 = None
 
 cur_dir = os.path.dirname(__file__)
 data_dir = os.path.join(cur_dir, "data")
@@ -38,6 +42,9 @@ def threedi_db(request):
     the factories to operate on the same session object. See:
     https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
     """
+    if request.param[0] == "postgres" and psycopg2 is None:
+        pytest.skip("Skipping postgres test as psycopg2 is not available.")
+
     db = ThreediDatabase(
         request.param[1], db_type=request.param[0], echo=False
     )
