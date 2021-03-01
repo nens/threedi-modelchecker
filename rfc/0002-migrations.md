@@ -1,5 +1,5 @@
 - Start Date: 2021-02-15
-- RFC PR: https://github.com/nens/threedi-modelchecker
+- RFC PR: https://github.com/nens/threedi-modelchecker/39
 
 # Summary
 
@@ -15,27 +15,18 @@ Initialisation:
 >>> db = ThreediDatabase({"db_path": "/path/to/sqlite"})
 ```
 
-A database knows what version it has:
+A database knows what version it has (including South legacy migrations):
 
 ```
->>> db.get_version()
-0007
+>>> db.get_schema_version()
+174
 ```
 
-Allows inplace upgrading/downgrading schematisation versions:
+Allows inplace upgrading schematisation to the latest version provided that
+the current version is larger than the latest South legacy migration:
 
 ```
->>> db.upgrade("head")
->>> db.downgrade(revision="0005")
-```
-
-Can list differences between the current schematisation and database:
-
-```
->>> db.compare_schema()
-[('remove_table', Table(u'bar', ...),
- ('add_column', None, 'foo', Column('data', Integer(), table=<foo>)),
-]
+>>> db.upgrade(revision_id="head")
 ```
 
 Supports a method for the developer to autogenerate migrations based on a new
@@ -66,12 +57,17 @@ configured database, it is very flexible and also supports our use case.
 ### Migrating
 
 It is not necessary to use the commandline to start migrations.
-The relevant commands ``upgrade()``, ``downgrade()`` and ``current()`` are 
+The relevant commands ``upgrade()`` and ``current()`` are 
 all part of the public Alembic API and can be accessed from Python.
 
 See: https://alembic.sqlalchemy.org/en/latest/api/commands.html
 
-### Revisions
+Each migration should be run in a transaction to avoid situations with a half-
+executed transactions. Adding and dropping tables deserves extra attention here
+because in SQLite, these cannot be done from within a transaction.
+
+
+### Project structure
 
 Revisions are stored in a so-called "Migration Environment" which has a 
 folder structure like this::
@@ -82,20 +78,21 @@ yourproject/
         env.py
         script.py.mako
         versions/
-            3512b954651e_add_account.py
-            2b1ae634e5cd_add_order_id.py
-            3adcc9a56557_rename_username_field.py
+            0200_initial.py
+            0201_remove_v1.py
+            0202_manholes.py
 ```
 
 The revision versions are unordered by default. We can however control the
-revision number manually. We should try to force a linear history by using an
-increasing number ``0001``, ``0002`` etc as reversion version identifiers.
+revision number manually. We will force a linear history by using an
+increasing number, starting with ``0200`` to avoid confusion with the legacy
+South migrations.
 
-The ``env.py`` implements methods to connect to the database. This is possibly
-not necessary (to be investigated) because we will manage connections ourselves
-through the existing ``ThreediDatabase`` class. This also goes for the
-``alembic.ini`` file (containing things like database address). We should define
-this from the code.
+The ``env.py`` implements methods to connect to the database and to execute
+migrations. This is possibly not necessary (to be investigated) because we will
+manage connections ourselves through the existing ``ThreediDatabase`` class.
+This also goes for the ``alembic.ini`` file (containing things like database
+address). We should define this from the code.
 
 The ``script.py.mako`` is a template for new revisions. See next section.
 
@@ -129,13 +126,21 @@ https://alembic.sqlalchemy.org/en/latest/ops.html#ops.
 The migrations should be able to create a new database from scratch. This means
 that the initial migration will contain the complete schema of the database.
 
-This migration should 'work' for legacy databases as well as for empty database
-files.
+This migration should 'work' for legacy databases (being on the latest
+migration id) as well as for empty database files. This means faking the initial
+migration for legacy databases.
+
+See also:
+
+https://stackoverflow.com/questions/52121596/creating-zero-state-migration-for-existing-db-with-sqlalchemy-alembic-and-fak
 
 # Drawbacks
 
 The drawback of using Alembic is that migrations are written in a language
 that is yet unknown to our developers.
+
+Using automatic migrations means that we can never do backwards incompatible
+changes like adding new mandatory fields without providing a default.
 
 # Alternatives
 
@@ -146,8 +151,12 @@ to use (see RFC 0001)
 # Adoption strategy
 
 The current 172 migrations should be put in a specialized docker container, so
-that they can be used for older databases. This repository starts with a fresh
-revision history. 
+that they can be used for older databases. This repository starts with only an
+initial migration to be able to construct an SQLite from scratch.
+
+We are not going to add any more Django/South migrations.
+
+The second migration in this repo will remove the v1 tables.
 
 # How we teach this
 
