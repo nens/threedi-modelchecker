@@ -88,11 +88,11 @@ revision number manually. We will force a linear history by using an
 increasing number, starting with ``0200`` to avoid confusion with the legacy
 South migrations.
 
-The ``env.py`` implements methods to connect to the database and to execute
-migrations. This is possibly not necessary (to be investigated) because we will
-manage connections ourselves through the existing ``ThreediDatabase`` class.
-This also goes for the ``alembic.ini`` file (containing things like database
-address). We should define this from the code.
+The ``env.py`` implements the method ``run_migrations_online`` that runs
+migration on a given database connection. 
+
+The ``alembic.ini`` file normally contains settings for the database connection,
+we should define this from the code (except autogenerate settings if necessary)
 
 The ``script.py.mako`` is a template for new revisions. See next section.
 
