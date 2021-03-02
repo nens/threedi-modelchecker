@@ -1,15 +1,8 @@
-# Copied from ThreeDiToolbox
-from builtins import object
-import copy
-
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
-from sqlalchemy.ext.declarative import declarative_base
 
 from contextlib import contextmanager
-
-Base = declarative_base()
 
 
 def load_spatialite(con, connection_record):
@@ -42,7 +35,7 @@ def load_spatialite(con, connection_record):
     con.enable_load_extension(False)
 
 
-class ThreediDatabase(object):
+class ThreediDatabase:
     def __init__(self, connection_settings, db_type="spatialite", echo=False):
         """
 
@@ -87,21 +80,6 @@ class ThreediDatabase(object):
                     self._engine = engine
 
         return self._engine
-
-    def get_metadata(self, including_existing_tables=True, engine=None):
-
-        if including_existing_tables:
-            metadata = copy.deepcopy(Base.metadata)
-            if engine is None:
-                engine = self.engine
-
-            metadata.bind = engine
-            metadata.reflect(extend_existing=True)
-            return metadata
-        else:
-            if self._base_metadata is None:
-                self._base_metadata = copy.deepcopy(Base.metadata)
-            return self._base_metadata
 
     def get_session(self, **kwargs):
         """Get a SQLAlchemy session for optimal control.
