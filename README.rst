@@ -57,6 +57,9 @@ Run the tests:
 
     docker-compose run modelchecker pytest
 
+See `Creating revisions <threedi_modelchecker/migrations/README.rst>`_ for 
+instructions on how to change the 3Di model schematisation.
+
 Release
 -------
 
