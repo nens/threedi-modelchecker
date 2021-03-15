@@ -1,14 +1,13 @@
 from abc import ABC
 from abc import abstractmethod
-
 from geoalchemy2 import functions as geo_func
 from geoalchemy2.types import Geometry
 from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import types
 from sqlalchemy.orm.session import Session
-
-from typing import List, NamedTuple
+from typing import List
+from typing import NamedTuple
 
 
 class BaseCheck(ABC):

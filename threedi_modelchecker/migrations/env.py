@@ -1,6 +1,7 @@
 from alembic import context
 from threedi_modelchecker.threedi_model.models import Base
 
+
 target_metadata = Base.metadata
 config = context.config
 

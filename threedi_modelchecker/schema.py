@@ -1,10 +1,9 @@
-from sqlalchemy import func
-
+from .errors import MigrationMissingError
+from .errors import MigrationNameError  # noqa
+from .errors import MigrationTooHighError  # noqa
 from .threedi_model import constants
 from .threedi_model import models
-from .errors import MigrationMissingError
-from .errors import MigrationTooHighError  # noqa
-from .errors import MigrationNameError  # noqa
+from sqlalchemy import func
 
 
 class ModelSchema:

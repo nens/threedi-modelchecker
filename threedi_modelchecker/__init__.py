@@ -1,2 +1,2 @@
-from .threedi_database import *  # NOQA
 from .model_checks import *  # NOQA
+from .threedi_database import *  # NOQA

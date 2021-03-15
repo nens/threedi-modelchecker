@@ -1,15 +1,12 @@
-from typing import List
-
-from geoalchemy2 import functions as geo_func
-from sqlalchemy import Integer, func
-from sqlalchemy import and_
-from sqlalchemy import cast
-from sqlalchemy import or_
-from sqlalchemy.orm import Query
-
-from .checks.base import QueryCheck, ForeignKeyCheck, UniqueCheck, \
-    TypeCheck, GeometryCheck, GeometryTypeCheck, EnumCheck, BaseCheck
+from .checks.base import BaseCheck
+from .checks.base import EnumCheck
+from .checks.base import ForeignKeyCheck
 from .checks.base import GeneralCheck
+from .checks.base import GeometryCheck
+from .checks.base import GeometryTypeCheck
+from .checks.base import QueryCheck
+from .checks.base import TypeCheck
+from .checks.base import UniqueCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks
@@ -17,12 +14,24 @@ from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_not_null_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
-from .checks.other import BankLevelCheck, CrossSectionShapeCheck, \
-    ConnectionNodesLength, OpenChannelsWithNestedNewton, ConnectionNodesDistance
+from .checks.other import BankLevelCheck
+from .checks.other import ConnectionNodesDistance
+from .checks.other import ConnectionNodesLength
+from .checks.other import CrossSectionShapeCheck
+from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
 from .threedi_model.models import constants
+from geoalchemy2 import functions as geo_func
+from sqlalchemy import and_
+from sqlalchemy import cast
+from sqlalchemy import func
+from sqlalchemy import Integer
+from sqlalchemy import or_
+from sqlalchemy.orm import Query
+from typing import List
+
 
 FOREIGN_KEY_CHECKS: List[ForeignKeyCheck] = []
 UNIQUE_CHECKS: List[UniqueCheck] = []

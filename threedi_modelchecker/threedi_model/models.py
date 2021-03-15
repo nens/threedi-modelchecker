@@ -1,19 +1,18 @@
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-)
+from . import constants
+from .custom_types import IntegerEnum
+from .custom_types import VarcharEnum
+from geoalchemy2.types import Geometry
+from sqlalchemy import Boolean
+from sqlalchemy import Column
+from sqlalchemy import DateTime
+from sqlalchemy import Float
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from geoalchemy2.types import Geometry
 
-from .custom_types import IntegerEnum, VarcharEnum
-from . import constants
 
 Base = declarative_base()  # automap_base()
 

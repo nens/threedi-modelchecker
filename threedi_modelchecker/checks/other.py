@@ -1,13 +1,16 @@
-from typing import List, NamedTuple
-
-from geoalchemy2 import functions as geo_func
-from sqlalchemy import func, or_, text
-from sqlalchemy.orm import aliased, Query, Session
-
-from threedi_modelchecker.checks import patterns
-from .base import BaseCheck
 from ..threedi_model import constants
 from ..threedi_model import models
+from .base import BaseCheck
+from geoalchemy2 import functions as geo_func
+from sqlalchemy import func
+from sqlalchemy import or_
+from sqlalchemy import text
+from sqlalchemy.orm import aliased
+from sqlalchemy.orm import Query
+from sqlalchemy.orm import Session
+from threedi_modelchecker.checks import patterns
+from typing import List
+from typing import NamedTuple
 
 
 class BankLevelCheck(BaseCheck):
