@@ -1,9 +1,12 @@
 from .errors import MigrationMissingError
-from .errors import MigrationNameError  # noqa
 from .errors import MigrationTooHighError  # noqa
 from .threedi_model import constants
 from .threedi_model import models
 from sqlalchemy import func
+
+from contextlib import contextmanager
+
+from alembic.migration import MigrationContext
 
 
 class ModelSchema:
@@ -11,18 +14,28 @@ class ModelSchema:
         self.db = threedi_db
         self.declared_models = declared_models
 
-    def _latest_migration(self):
-        """Returns a tuple with latest migration id and name"""
-        session = self.db.get_session()
-        latest_migration_id = session.query(
-            func.max(models.SouthMigrationHistory.id)
-        ).scalar()
-        latest_migration_name = (
-            session.query(models.SouthMigrationHistory.migration)
-            .filter(models.SouthMigrationHistory.id == latest_migration_id)
-            .scalar()
-        )
-        return latest_migration_id, latest_migration_name
+    @contextmanager
+    def migration_context(self):
+        with self.db.get_engine().connect() as connection:
+            yield MigrationContext.configure(connection)
+
+    def _latest_migration_old(self):
+        """Returns the id of the latest old ('south') migration"""
+        with self.db.session_scope() as session:
+            latest_migration_id = session.query(
+                func.max(models.SouthMigrationHistory.id)
+            ).scalar()
+        return latest_migration_id
+
+    def get_version(self):
+        """Returns the id (integer) of the latest migration"""
+        with self.migration_context() as context:
+            version = context.get_current_revision()
+    
+        if version is not None:
+            return int(version)
+        else:
+            return self._latest_migration_old()
 
     def validate_schema(self):
         """Very basic validation of 3Di schema.
@@ -32,31 +45,16 @@ class ModelSchema:
         tables and columns defined in threedi_model.models.py.
 
         :return: True if the threedi_db schema is valid, raises an error otherwise.
-        :raise MigrationMissingError, MigrationTooHighError, MigrationNameError
+        :raise MigrationMissingError, MigrationTooHighError
         """
-        migration_id, migration_name = self._latest_migration()
+        migration_id = self._latest_migration()
         if migration_id is None or migration_id < constants.LATEST_MIGRATION_ID:
             raise MigrationMissingError
-        # TODO: on 08-07-2019 3Di has been released with the newest migration
-        #  174: '0172_auto__del_v2initialwaterlevel__del_field_v2orifice_max_capacity__del_f'.  # noqa
-        #  This migrations deletes some fields, which were already not present in the
-        #  models of the threedi-modelchecker. Therefore we can both accept migration
-        #  173 and 174.
-        #  Because inpy has not been run over all the existing models during this new
-        #  release, models downloaded via 3id.lizard.net/models still have the
-        #  migration 173 (unless a user has specifically re-run inpy for the model).
         elif migration_id > constants.LATEST_MIGRATION_ID:
             # don't raise warning for now, see comments above.
             # raise MigrationTooHighError
             pass
-        elif migration_name != constants.LATEST_MIGRATION_NAME:
-            # don't fix on a specific migration name, see comments above.
-            # raise MigrationNameError
-            pass
-        return (
-            migration_id == constants.LATEST_MIGRATION_ID
-            and migration_name == constants.LATEST_MIGRATION_NAME
-        )
+        return migration_id == constants.LATEST_MIGRATION_ID
 
     def get_missing_tables(self):
         pass

@@ -1,10 +1,15 @@
 from enum import Enum
 
 
+# TODO: on 08-07-2019 3Di has been released with the newest migration
+#  174: '0172_auto__del_v2initialwaterlevel__del_field_v2orifice_max_capacity__del_f'.
+#  This migrations deletes some fields, which were already not present in the
+#  models of the threedi-modelchecker. Therefore we can both accept migration
+#  173 and 174.
+#  Because inpy has not been run over all the existing models during this new
+#  release, models downloaded via 3id.lizard.net/models still have the
+#  migration 173 (unless a user has specifically re-run inpy for the model).
 LATEST_MIGRATION_ID = 173
-LATEST_MIGRATION_NAME = (
-    "0171_auto__chg_field_v2aggregationsettings_aggregation_method__del_field_v2"
-)
 
 
 class BoundaryType(Enum):
