@@ -217,7 +217,7 @@ CONDITIONAL_CHECKS = [
         ).filter(
             models.ConnectionNode.storage_area <= 0
         ),
-        message="The ConnectionNode.storage_area > 0 "
+        message="WARNING: The ConnectionNode.storage_area > 0 "
                 "when the ConnectionNode is a Manhole"
     ),
     QueryCheck(
