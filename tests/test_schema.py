@@ -5,7 +5,7 @@ from sqlalchemy import String
 from sqlalchemy import Table
 from threedi_modelchecker import errors
 from threedi_modelchecker.schema import constants
-from threedi_modelchecker.schema import ModelSchema
+from threedi_modelchecker.schema import ModelSchema, get_schema_version
 from unittest import mock
 
 import pytest
@@ -22,13 +22,18 @@ def south_migration_table(in_memory_sqlite):
 
 
 @pytest.fixture
-def alembic_versions_table(in_memory_sqlite):
-    alembic_versions = Table(
+def alembic_version_table(in_memory_sqlite):
+    alembic_version = Table(
         "alembic_version", MetaData(), Column("version_num", String(32), nullable=False)
     )
     engine = in_memory_sqlite.get_engine()
-    alembic_versions.create(engine)
-    return alembic_versions
+    alembic_version.create(engine)
+    return alembic_version
+
+def test_get_schema_version():
+    """The current version in the library. We start counting at 200."""
+    # this will catch future mistakes of setting non-integer revisions
+    assert get_schema_version() >= 200
 
 
 def test_get_version_no_tables(in_memory_sqlite):
@@ -56,17 +61,17 @@ def test_get_version_south(in_memory_sqlite, south_migration_table):
     assert migration_id == 43
 
 
-def test_get_version_empty_alembic(in_memory_sqlite, alembic_versions_table):
+def test_get_version_empty_alembic(in_memory_sqlite, alembic_version_table):
     """Get the version of a sqlite with an empty alembic version table"""
     schema_checker = ModelSchema(in_memory_sqlite)
     migration_id = schema_checker.get_version()
     assert migration_id is None
 
 
-def test_get_version_alembic(in_memory_sqlite, alembic_versions_table):
+def test_get_version_alembic(in_memory_sqlite, alembic_version_table):
     """Get the version of a sqlite with an alembic version table"""
     with in_memory_sqlite.get_engine().connect() as connection:
-        connection.execute(alembic_versions_table.insert().values(version_num="0201"))
+        connection.execute(alembic_version_table.insert().values(version_num="0201"))
 
     schema_checker = ModelSchema(in_memory_sqlite)
     migration_id = schema_checker.get_version()
