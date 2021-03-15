@@ -37,7 +37,8 @@ class ModelSchema:
 
     def upgrade(self):
         """Upgrade the sqlite inplace"""
-        assert self.get_version() >= constants.LATEST_SOUTH_MIGRATION_ID
+        if self.get_version() < constants.LATEST_SOUTH_MIGRATION_ID:
+            raise MigrationMissingError
 
         alembic_cfg = Config()
         alembic_cfg.set_main_option("script_location", "threedi_modelchecker:migrations")
