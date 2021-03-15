@@ -2,9 +2,9 @@ import pytest
 
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.exporters import format_check_results
-from threedi_modelchecker.threedi_model import constants
 
 from unittest import mock
+
 
 @pytest.fixture
 def model_checker(threedi_db):

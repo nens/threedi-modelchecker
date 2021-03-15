@@ -32,18 +32,21 @@ def alembic_versions_table(in_memory_sqlite):
 
 
 def test_get_version_no_tables(in_memory_sqlite):
+    """Get the version of a sqlite with no version tables"""
     schema_checker = ModelSchema(in_memory_sqlite)
     migration_id = schema_checker.get_version()
     assert migration_id is None
 
 
 def test_get_version_empty_south(in_memory_sqlite, south_migration_table):
+    """Get the version of a sqlite with an empty South version table"""
     schema_checker = ModelSchema(in_memory_sqlite)
     migration_id = schema_checker.get_version()
     assert migration_id is None
 
 
 def test_get_version_south(in_memory_sqlite, south_migration_table):
+    """Get the version of a sqlite with a South version table"""
     with in_memory_sqlite.get_engine().connect() as connection:
         for v in (42, 43):
             connection.execute(south_migration_table.insert().values(id=v))
@@ -54,12 +57,14 @@ def test_get_version_south(in_memory_sqlite, south_migration_table):
 
 
 def test_get_version_empty_alembic(in_memory_sqlite, alembic_versions_table):
+    """Get the version of a sqlite with an empty alembic version table"""
     schema_checker = ModelSchema(in_memory_sqlite)
     migration_id = schema_checker.get_version()
     assert migration_id is None
 
 
 def test_get_version_alembic(in_memory_sqlite, alembic_versions_table):
+    """Get the version of a sqlite with an alembic version table"""
     with in_memory_sqlite.get_engine().connect() as connection:
         connection.execute(alembic_versions_table.insert().values(version_num="0201"))
 
@@ -69,6 +74,7 @@ def test_get_version_alembic(in_memory_sqlite, alembic_versions_table):
 
 
 def test_validate_schema(threedi_db):
+    """Validate a correct schema version"""
     schema = ModelSchema(threedi_db)
     with mock.patch.object(
         schema, "get_version", return_value=constants.MIN_SCHEMA_VERSION
@@ -78,6 +84,7 @@ def test_validate_schema(threedi_db):
 
 @pytest.mark.parametrize("version", [-1, constants.MIN_SCHEMA_VERSION - 1, None])
 def test_validate_schema_missing_migration(threedi_db, version):
+    """Validate a too low schema version"""
     schema = ModelSchema(threedi_db)
     with mock.patch.object(schema, "get_version", return_value=version):
         with pytest.raises(errors.MigrationMissingError):
@@ -86,6 +93,7 @@ def test_validate_schema_missing_migration(threedi_db, version):
 
 @pytest.mark.parametrize("version", [9999])
 def test_validate_schema_too_high_migration(threedi_db, version):
+    """Validate a too high schema version"""
     schema = ModelSchema(threedi_db)
     with mock.patch.object(schema, "get_version", return_value=version):
         with pytest.warns(UserWarning):
@@ -93,6 +101,7 @@ def test_validate_schema_too_high_migration(threedi_db, version):
 
 
 def test_upgrade_empty(in_memory_sqlite):
+    """Upgrade an empty database to the latest version"""
     schema = ModelSchema(in_memory_sqlite)
     schema.upgrade(backup=False)
 
@@ -100,21 +109,24 @@ def test_upgrade_empty(in_memory_sqlite):
 
 
 def test_upgrade_south_not_latest_errors(in_memory_sqlite):
+    """Upgrading a database that is not at the latest south migration will error"""
     schema = ModelSchema(in_memory_sqlite)
-    with mock.patch.object(schema, "get_version", return_value=173):
+    with mock.patch.object(schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID - 1):
         with pytest.raises(errors.MigrationMissingError):
             schema.upgrade(backup=False)
 
 
 def test_upgrade_south_latest_ok(in_memory_sqlite):
+    """Upgrading a database that is at the latest south migration will proceed"""
     schema = ModelSchema(in_memory_sqlite)
-    with mock.patch.object(schema, "get_version", return_value=174):
+    with mock.patch.object(schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID):
         schema.upgrade(backup=False)
 
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
 
 
 def test_upgrade_with_backup(threedi_db):
+    """Upgrading with backup=True will proceed on a copy of the database"""
     if threedi_db.db_type != "spatialite":
         pytest.skip()
     schema = ModelSchema(threedi_db)
@@ -129,6 +141,7 @@ def test_upgrade_with_backup(threedi_db):
 
 
 def test_upgrade_without_backup(threedi_db):
+    """Upgrading with backup=True will proceed on the database itself"""
     schema = ModelSchema(threedi_db)
     with mock.patch(
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError

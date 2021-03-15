@@ -75,7 +75,17 @@ class ModelSchema:
             return self._get_version_old()
 
     def upgrade(self, backup=True):
-        """Upgrade the database inplace"""
+        """Upgrade the database to the latest version.
+
+        This requires the current version to be at least 174 (the latest
+        South migration).
+
+        The upgrade is done using database transactions. However, for SQLite,
+        database transactions are only partially supported. To ensure that the
+        database file does not become corrupt, enable the "backup" parameter.
+        If the database is temporary already (or if it is PostGIS), disable
+        it.
+        """
         v = self.get_version()
         if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
             raise MigrationMissingError(

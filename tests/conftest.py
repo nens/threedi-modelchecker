@@ -5,7 +5,6 @@ import pytest
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from tests import Session
-from sqlalchemy import create_engine
 
 try:
     import psycopg2
