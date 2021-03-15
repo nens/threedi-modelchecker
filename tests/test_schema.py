@@ -1,19 +1,22 @@
-import pytest
-
 from . import factories
-from threedi_modelchecker.schema import ModelSchema, constants, get_schema_version
+from sqlalchemy import Column
+from sqlalchemy import Integer
+from sqlalchemy import MetaData
+from sqlalchemy import String
+from sqlalchemy import Table
 from threedi_modelchecker import errors
-from sqlalchemy import MetaData, Column, Table, Integer, String
-
+from threedi_modelchecker.schema import constants
+from threedi_modelchecker.schema import get_schema_version
+from threedi_modelchecker.schema import ModelSchema
 from unittest import mock
+
+import pytest
 
 
 @pytest.fixture
 def south_migration_table(in_memory_sqlite):
     south_migrationhistory = Table(
-        "south_migrationhistory",
-        MetaData(),
-        Column("id", Integer),
+        "south_migrationhistory", MetaData(), Column("id", Integer)
     )
     engine = in_memory_sqlite.get_engine()
     south_migrationhistory.create(engine)
@@ -23,9 +26,7 @@ def south_migration_table(in_memory_sqlite):
 @pytest.fixture
 def alembic_versions_table(in_memory_sqlite):
     alembic_versions = Table(
-        "alembic_version",
-        MetaData(),
-        Column("version_num", String(32), nullable=False),
+        "alembic_version", MetaData(), Column("version_num", String(32), nullable=False)
     )
     engine = in_memory_sqlite.get_engine()
     alembic_versions.create(engine)
@@ -71,7 +72,9 @@ def test_get_version_alembic(in_memory_sqlite, alembic_versions_table):
 
 def test_validate_schema(threedi_db):
     schema = ModelSchema(threedi_db)
-    with mock.patch.object(schema, "get_version", return_value=constants.MIN_SCHEMA_VERSION):
+    with mock.patch.object(
+        schema, "get_version", return_value=constants.MIN_SCHEMA_VERSION
+    ):
         assert schema.validate_schema()
 
 
