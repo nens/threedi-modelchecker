@@ -1,22 +1,19 @@
-from geoalchemy2.types import Geometry
-
-from .base import ForeignKeyCheck
+from ..threedi_model import custom_types
 from .base import EnumCheck
+from .base import ForeignKeyCheck
 from .base import GeometryCheck
 from .base import GeometryTypeCheck
-from .base import TypeCheck
 from .base import NotNullCheck
+from .base import TypeCheck
 from .base import UniqueCheck
-from ..threedi_model import custom_types
+from geoalchemy2.types import Geometry
 
 
 def generate_foreign_key_checks(table):
     foreign_key_checks = []
     for fk_column in table.foreign_keys:
         foreign_key_checks.append(
-            ForeignKeyCheck(
-                reference_column=fk_column.column,
-                column=fk_column.parent)
+            ForeignKeyCheck(reference_column=fk_column.column, column=fk_column.parent)
         )
     return foreign_key_checks
 

@@ -1,15 +1,12 @@
-from typing import List
-
-from geoalchemy2 import functions as geo_func
-from sqlalchemy import Integer, func
-from sqlalchemy import and_
-from sqlalchemy import cast
-from sqlalchemy import or_
-from sqlalchemy.orm import Query
-
-from .checks.base import QueryCheck, ForeignKeyCheck, UniqueCheck, \
-    TypeCheck, GeometryCheck, GeometryTypeCheck, EnumCheck, BaseCheck
+from .checks.base import BaseCheck
+from .checks.base import EnumCheck
+from .checks.base import ForeignKeyCheck
 from .checks.base import GeneralCheck
+from .checks.base import GeometryCheck
+from .checks.base import GeometryTypeCheck
+from .checks.base import QueryCheck
+from .checks.base import TypeCheck
+from .checks.base import UniqueCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks
@@ -17,12 +14,24 @@ from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_not_null_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
-from .checks.other import BankLevelCheck, CrossSectionShapeCheck, \
-    ConnectionNodesLength, OpenChannelsWithNestedNewton, ConnectionNodesDistance
+from .checks.other import BankLevelCheck
+from .checks.other import ConnectionNodesDistance
+from .checks.other import ConnectionNodesLength
+from .checks.other import CrossSectionShapeCheck
+from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
 from .threedi_model.models import constants
+from geoalchemy2 import functions as geo_func
+from sqlalchemy import and_
+from sqlalchemy import cast
+from sqlalchemy import func
+from sqlalchemy import Integer
+from sqlalchemy import or_
+from sqlalchemy.orm import Query
+from typing import List
+
 
 FOREIGN_KEY_CHECKS: List[ForeignKeyCheck] = []
 UNIQUE_CHECKS: List[UniqueCheck] = []
@@ -179,11 +188,11 @@ RANGE_CHECKS: List[BaseCheck] = [
     ),
     GeneralCheck(
         column=models.GlobalSetting.maximum_sim_time_step,
-        criterion_valid=models.GlobalSetting.maximum_sim_time_step >= models.GlobalSetting.sim_time_step,  # noqa: E501
+        criterion_valid=models.GlobalSetting.maximum_sim_time_step >= models.GlobalSetting.sim_time_step,
     ),
     GeneralCheck(
         column=models.GlobalSetting.sim_time_step,
-        criterion_valid=models.GlobalSetting.sim_time_step >= models.GlobalSetting.minimum_sim_time_step,  # noqa: E501
+        criterion_valid=models.GlobalSetting.sim_time_step >= models.GlobalSetting.minimum_sim_time_step,
     ),
 ]
 
@@ -194,8 +203,8 @@ OTHER_CHECKS: List[BaseCheck] = [
     GeneralCheck(
         column=models.BoundaryCondition1D.connection_node_id,
         criterion_invalid=or_(
-            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_start_id,  # noqa: E501
-            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_end_id,  # noqa: E501
+            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_start_id,
+            models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_end_id,
         )
     ),
     GeneralCheck(
@@ -224,7 +233,7 @@ CONDITIONAL_CHECKS = [
         column=models.CrossSectionLocation.reference_level,
         invalid=Query(models.CrossSectionLocation).filter(
             models.CrossSectionLocation.bank_level != None,
-            models.CrossSectionLocation.reference_level >= models.CrossSectionLocation.bank_level  # noqa: E501
+            models.CrossSectionLocation.reference_level >= models.CrossSectionLocation.bank_level
         ),
         message="CrossSectionLocation.reference_level < CrossSectionLocation.bank_level"
                 "when CrossSectionLocation.bank_level is not null"
@@ -344,7 +353,7 @@ CONDITIONAL_CHECKS = [
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW
         ),
         message=f"Interflow.impervious_layer_elevation cannot be null when "
-                f"Interflow.interflow_type is not {constants.InterflowType.NO_INTERLFOW}"  # noqa: E501
+                f"Interflow.interflow_type is not {constants.InterflowType.NO_INTERLFOW}"
     ),
     QueryCheck(
         column=models.Interflow.hydraulic_conductivity,
@@ -422,7 +431,7 @@ CONDITIONAL_CHECKS = [
         ).join(
             models.Manhole
         ).filter(
-            models.Pipe.invert_level_start_point < models.Manhole.bottom_level,  # noqa: E501
+            models.Pipe.invert_level_start_point < models.Manhole.bottom_level,
         ),
         message="Pipe.invert_level_start_point should be higher than or equal to "
                 "Manhole.bottom_level"
@@ -638,7 +647,7 @@ class Config:
             NOT_NULL_CHECKS += generate_not_null_checks(model.__table__)
             INVALID_TYPE_CHECKS += generate_type_checks(model.__table__)
             INVALID_GEOMETRY_CHECKS += generate_geometry_checks(model.__table__)
-            INVALID_GEOMETRY_TYPE_CHECKS += generate_geometry_type_checks(model.__table__)  # noqa: E501
+            INVALID_GEOMETRY_TYPE_CHECKS += generate_geometry_type_checks(model.__table__)
             INVALID_ENUM_CHECKS += generate_enum_checks(model.__table__)
 
         self.checks += FOREIGN_KEY_CHECKS

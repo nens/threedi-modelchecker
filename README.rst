@@ -30,8 +30,8 @@ The following code sample shows how you can use the modelchecker to run all conf
 checks and print an overview of all discovered errors::
 
     from threedi_modelchecker.exporters import format_check_results
-    from threedi_modelchecker.model_checks import ThreediModelChecker
-    from threedi_modelchecker.threedi_database import ThreediDatabase
+    from threedi_modelchecker import ThreediModelChecker
+    from threedi_modelchecker import ThreediDatabase
 
     sqlite_file = "<Path to your sqlite file>"
     database = ThreediDatabase(

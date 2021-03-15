@@ -1,19 +1,18 @@
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-)
+from . import constants
+from .custom_types import IntegerEnum
+from .custom_types import VarcharEnum
+from geoalchemy2.types import Geometry
+from sqlalchemy import Boolean
+from sqlalchemy import Column
+from sqlalchemy import DateTime
+from sqlalchemy import Float
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from geoalchemy2.types import Geometry
 
-from .custom_types import IntegerEnum, VarcharEnum
-from . import constants
 
 Base = declarative_base()  # automap_base()
 
@@ -740,7 +739,7 @@ class Pumpstation(Base):
     sewerage = Column(Boolean, nullable=False)
     type_ = Column(
         IntegerEnum(constants.PumpType), name="type", key="type_", nullable=False
-    )  # type: ignore[call-overload] # noqa
+    )  # type: ignore[call-overload]
     start_level = Column(Float, nullable=False)
     lower_stop_level = Column(Float, nullable=False)
     upper_stop_level = Column(Float)

@@ -1,5 +1,6 @@
 class MigrationMissingError(Exception):
     """Raised when 3Di model is missing migrations."""
+
     pass
 
 
@@ -10,9 +11,11 @@ class MigrationTooHighError(Exception):
     threedi_modelchecker.threedi_model.constants in LATEST_MIGRATION_ID and
     LATEST_MIGRATION_NAME.
     """
+
     pass
 
 
 class MigrationNameError(Exception):
     """Raised when last migration name is unexpected"""
+
     pass

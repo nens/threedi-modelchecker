@@ -1,4 +1,6 @@
-from sqlalchemy.types import TypeDecorator, Integer, VARCHAR
+from sqlalchemy.types import Integer
+from sqlalchemy.types import TypeDecorator
+from sqlalchemy.types import VARCHAR
 
 
 class CustomEnum(TypeDecorator):

@@ -1,8 +1,8 @@
-import click
-
+from threedi_modelchecker import exporters
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_database import ThreediDatabase
-from threedi_modelchecker import exporters
+
+import click
 
 
 @click.group()

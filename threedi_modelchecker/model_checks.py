@@ -1,9 +1,13 @@
 from .checks.base import BaseCheck
-from .threedi_database import ThreediDatabase
-from .schema import ModelSchema
 from .config import Config
+from .schema import ModelSchema
+from .threedi_database import ThreediDatabase
+from typing import Iterator
+from typing import NamedTuple
+from typing import Tuple
 
-from typing import Iterator, Tuple, NamedTuple
+
+__all__ = ["ThreediModelChecker"]
 
 
 class ThreediModelChecker:
