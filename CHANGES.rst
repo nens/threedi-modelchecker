@@ -7,6 +7,8 @@ Changelog of threedi-modelchecker
 
 - Added ThreediDatabase.session_scope context manager.
 
+- Set WARNING in description of check on storage area of an isolated manhole.
+
 
 0.11 (2021-01-26)
 -----------------
