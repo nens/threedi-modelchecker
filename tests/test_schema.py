@@ -30,6 +30,7 @@ def alembic_version_table(in_memory_sqlite):
     alembic_version.create(engine)
     return alembic_version
 
+
 def test_get_schema_version():
     """The current version in the library. We start counting at 200."""
     # this will catch future mistakes of setting non-integer revisions
