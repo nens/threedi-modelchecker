@@ -36,8 +36,10 @@ class BankLevelCheck(BaseCheck):
         return q.all()
 
     def description(self):
-        return "CrossSectionLoaction.Banklevel cannot be null when calculation_type " \
-               "is CONNECTED or DOUBLE_CONNECTED"
+        return (
+            "CrossSectionLoaction.Banklevel cannot be null when calculation_type "
+            "is CONNECTED or DOUBLE_CONNECTED"
+        )
 
 
 class CrossSectionShapeCheck(BaseCheck):
@@ -259,29 +261,35 @@ class ConnectionNodesLength(BaseCheck):
     def get_invalid(self, session):
         start_node = aliased(models.ConnectionNode)
         end_node = aliased(models.ConnectionNode)
-        q = Query(
-            self.column.class_
-        ).join(
-            start_node, self.start_node
-        ).join(
-            end_node, self.end_node
-        ).filter(
-            geo_func.ST_Distance(
-                geo_func.ST_Transform(
-                    start_node.the_geom,
-                    Query(models.GlobalSetting.epsg_code).limit(1).label('epsg_code')
-                ),
-                geo_func.ST_Transform(
-                    end_node.the_geom,
-                    Query(models.GlobalSetting.epsg_code).limit(1).label('epsg_code')
+        q = (
+            Query(self.column.class_)
+            .join(start_node, self.start_node)
+            .join(end_node, self.end_node)
+            .filter(
+                geo_func.ST_Distance(
+                    geo_func.ST_Transform(
+                        start_node.the_geom,
+                        Query(models.GlobalSetting.epsg_code)
+                        .limit(1)
+                        .label("epsg_code"),
+                    ),
+                    geo_func.ST_Transform(
+                        end_node.the_geom,
+                        Query(models.GlobalSetting.epsg_code)
+                        .limit(1)
+                        .label("epsg_code"),
+                    ),
                 )
-            ) < self.min_distance
+                < self.min_distance
+            )
         )
         return list(q.with_session(session).all())
 
     def description(self) -> str:
-        return f"The distance of start- and end connectionnode of {self.table} is " \
-               f"too short, should be at least {self.min_distance} meters"
+        return (
+            f"The distance of start- and end connectionnode of {self.table} is "
+            f"too short, should be at least {self.min_distance} meters"
+        )
 
 
 class ConnectionNodesDistance(BaseCheck):
@@ -306,9 +314,13 @@ class ConnectionNodesDistance(BaseCheck):
         if session.bind.name == "postgresql":
             return []
 
-        check_spatial_index = "SELECT CheckSpatialIndex('v2_connection_nodes', 'the_geom')"  # noqa
+        check_spatial_index = (
+            "SELECT CheckSpatialIndex('v2_connection_nodes', 'the_geom')"
+        )
         if not session.connection().execute(check_spatial_index).scalar():
-            recover_spatial_index = "SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')"  # noqa
+            recover_spatial_index = (
+                "SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')"
+            )
             session.connection().execute(recover_spatial_index).scalar()
 
         query = text(
@@ -325,15 +337,19 @@ class ConnectionNodesDistance(BaseCheck):
                        AND search_frame = Buffer(cn1.the_geom, 0.0005)));
             """
         )
-        results = session.connection().execute(
-            query, min_distance=self.minimum_distance
-        ).fetchall()
+        results = (
+            session.connection()
+            .execute(query, min_distance=self.minimum_distance)
+            .fetchall()
+        )
 
         return results
 
     def description(self) -> str:
-        return f"The connection_node is within {self.minimum_distance} meters of " \
-               f"another connection_node."
+        return (
+            f"The connection_node is within {self.minimum_distance} meters of "
+            f"another connection_node."
+        )
 
 
 class OpenChannelsWithNestedNewton(BaseCheck):
@@ -350,47 +366,49 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         invalid_channels = []
 
         # Circle and egg cross-section definitions are always open:
-        circle_egg_definitions = Query(models.Channel).join(
-            models.CrossSectionLocation,
-            models.Channel.cross_section_locations
-        ).join(
-            models.CrossSectionDefinition,
-            models.CrossSectionLocation.definition
-        ).filter(
-            models.NumericalSettings.use_of_nested_newton == 0,
-            or_(
-                models.CrossSectionDefinition.shape.in_(
-                    [
-                        constants.CrossSectionShape.CIRCLE,
-                        constants.CrossSectionShape.EGG
-                    ]
-                )
+        circle_egg_definitions = (
+            Query(models.Channel)
+            .join(models.CrossSectionLocation, models.Channel.cross_section_locations)
+            .join(models.CrossSectionDefinition, models.CrossSectionLocation.definition)
+            .filter(
+                models.NumericalSettings.use_of_nested_newton == 0,
+                or_(
+                    models.CrossSectionDefinition.shape.in_(
+                        [
+                            constants.CrossSectionShape.CIRCLE,
+                            constants.CrossSectionShape.EGG,
+                        ]
+                    )
+                ),
             )
         )
         invalid_channels += circle_egg_definitions.with_session(session).all()
 
         # Tabulated cross-section definitions are open when the last element of 'width'
         # is zero
-        open_definitions = Query(
-            [models.Channel, models.CrossSectionLocation, models.CrossSectionDefinition]
-        ).join(
-            models.CrossSectionLocation,
-            models.Channel.cross_section_locations
-        ).join(
-            models.CrossSectionDefinition,
-            models.CrossSectionLocation.definition
-        ).filter(
-            models.NumericalSettings.use_of_nested_newton == 0,
-            models.CrossSectionDefinition.shape.in_(
+        open_definitions = (
+            Query(
                 [
-                    constants.CrossSectionShape.TABULATED_RECTANGLE,
-                    constants.CrossSectionShape.TABULATED_TRAPEZIUM
+                    models.Channel,
+                    models.CrossSectionLocation,
+                    models.CrossSectionDefinition,
                 ]
+            )
+            .join(models.CrossSectionLocation, models.Channel.cross_section_locations)
+            .join(models.CrossSectionDefinition, models.CrossSectionLocation.definition)
+            .filter(
+                models.NumericalSettings.use_of_nested_newton == 0,
+                models.CrossSectionDefinition.shape.in_(
+                    [
+                        constants.CrossSectionShape.TABULATED_RECTANGLE,
+                        constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+                    ]
+                ),
             )
         )
         for channel, _, definition in open_definitions.with_session(session).all():
             try:
-                if definition.width.split(' ')[-1] in ('0', '0.', '0.0'):
+                if definition.width.split(" ")[-1] in ("0", "0.", "0.0"):
                     # Open channel
                     invalid_channels.append(channel)
             except Exception:

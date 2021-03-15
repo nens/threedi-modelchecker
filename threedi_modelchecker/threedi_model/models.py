@@ -739,7 +739,7 @@ class Pumpstation(Base):
     sewerage = Column(Boolean, nullable=False)
     type_ = Column(
         IntegerEnum(constants.PumpType), name="type", key="type_", nullable=False
-    )  # type: ignore[call-overload] # noqa
+    )  # type: ignore[call-overload]
     start_level = Column(Float, nullable=False)
     lower_stop_level = Column(Float, nullable=False)
     upper_stop_level = Column(Float)

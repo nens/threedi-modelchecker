@@ -12,12 +12,10 @@ def run_migrations_online():
     Note: SQLite does not (completely) support transactions, so, backup the
     SQLite before running migrations.
     """
-    connectable = config.attributes.get('connection')
+    connectable = config.attributes.get("connection")
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

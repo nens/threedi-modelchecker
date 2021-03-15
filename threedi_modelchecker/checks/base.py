@@ -66,11 +66,7 @@ class BaseCheck(ABC):
         return "Invalid value in column '%s'" % self.column
 
     def __repr__(self) -> str:
-        return "<%s: %s.%s>" % (
-            type(self).__name__,
-            self.table.name,
-            self.column.name
-        )
+        return "<%s: %s.%s>" % (type(self).__name__, self.table.name, self.column.name)
 
 
 class GeneralCheck(BaseCheck):
@@ -78,7 +74,7 @@ class GeneralCheck(BaseCheck):
 
     Either specify what is valid with `criterion_valid` or what is invalid
     with `criterion_invalid`.
-    The criterion should be a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)  # noqa
+    The criterion should be a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)
     with operators being within `self.table.columns`
     """
 
@@ -166,9 +162,7 @@ class UniqueCheck(BaseCheck):
             .having(func.count(self.column) > 1)
         )
         q_invalid = self.to_check(session)
-        invalid_uniques_query = q_invalid.filter(
-            self.column.in_(duplicate_values)
-        )
+        invalid_uniques_query = q_invalid.filter(self.column.in_(duplicate_values))
         return invalid_uniques_query.all()
 
     def description(self):
@@ -207,10 +201,7 @@ class TypeCheck(BaseCheck):
         return invalid_type_query.all()
 
     def description(self):
-        return "Value in %s should to be of type %s" % (
-            self.column,
-            self.expected_type
-        )
+        return "Value in %s should to be of type %s" % (self.column, self.expected_type)
 
 
 def _sqlalchemy_to_sqlite_type(column_type):
@@ -280,8 +271,10 @@ class GeometryTypeCheck(BaseCheck):
         return invalid_geometry_types_q.all()
 
     def description(self):
-        return "Value in %s has invalid geometry type, expected geometry " \
-               "type %s" % (self.column, self.column.type.geometry_type)
+        return "Value in %s has invalid geometry type, expected geometry " "type %s" % (
+            self.column,
+            self.column.type.geometry_type,
+        )
 
 
 def _get_geometry_type(column, dialect):
@@ -312,8 +305,5 @@ class EnumCheck(BaseCheck):
     def description(self):
         return (
             "Value in %s has invalid value, expected one of the "
-            "following values %s" % (
-                self.column,
-                list(self.column.type.enum_class)
-            )
+            "following values %s" % (self.column, list(self.column.type.enum_class))
         )
