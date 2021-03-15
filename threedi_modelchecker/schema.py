@@ -7,12 +7,9 @@ from alembic.config import Config
 from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from contextlib import contextmanager
 from sqlalchemy import Column
-from sqlalchemy import func
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
-from sqlalchemy import String
 from sqlalchemy import Table
 
 
