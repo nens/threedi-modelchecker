@@ -70,7 +70,8 @@ class ModelSchema:
 
     def upgrade(self):
         """Upgrade the sqlite inplace"""
-        if self.get_version() < constants.LATEST_SOUTH_MIGRATION_ID:
+        v = self.get_version()
+        if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
             raise MigrationMissingError(
                 f"This library is unable to update versions below "
                 f"{constants.LATEST_SOUTH_MIGRATION_ID}."

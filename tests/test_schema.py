@@ -92,3 +92,25 @@ def test_validate_schema_too_high_migration(threedi_db, version):
     with mock.patch.object(schema, "get_version", return_value=version):
         with pytest.warns(UserWarning):
             schema.validate_schema()
+
+
+def test_upgrade_empty(in_memory_sqlite):
+    schema = ModelSchema(in_memory_sqlite)
+    schema.upgrade()
+
+    assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
+
+
+def test_upgrade_south_not_latest_errors(in_memory_sqlite):
+    schema = ModelSchema(in_memory_sqlite)
+    with mock.patch.object(schema, "get_version", return_value=173):
+        with pytest.raises(errors.MigrationMissingError):
+            schema.upgrade()
+
+
+def test_upgrade_south_latest_ok(in_memory_sqlite):
+    schema = ModelSchema(in_memory_sqlite)
+    with mock.patch.object(schema, "get_version", return_value=174):
+        schema.upgrade()
+
+    assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
