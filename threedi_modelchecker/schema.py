@@ -1,5 +1,4 @@
 from .errors import MigrationMissingError
-from .errors import MigrationTooHighError
 from .threedi_model import constants
 from .threedi_model import models
 from alembic import command
@@ -11,6 +10,11 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
+
+import warnings
+
+
+__all__ = ["ModelSchema"]
 
 
 def get_alembic_config(connection=None):
@@ -67,7 +71,10 @@ class ModelSchema:
     def upgrade(self):
         """Upgrade the sqlite inplace"""
         if self.get_version() < constants.LATEST_SOUTH_MIGRATION_ID:
-            raise MigrationMissingError
+            raise MigrationMissingError(
+                f"This library is unable to update versions below "
+                f"{constants.LATEST_SOUTH_MIGRATION_ID}."
+            )
 
         with self.db.get_engine().begin() as connection:
             command.upgrade(get_alembic_config(connection), "head")
@@ -82,11 +89,20 @@ class ModelSchema:
         :return: True if the threedi_db schema is valid, raises an error otherwise.
         :raise MigrationMissingError, MigrationTooHighError
         """
-        migration_id = self.get_version()
-        if migration_id is None or migration_id < constants.MIN_SCHEMA_VERSION:
-            raise MigrationMissingError
-        elif migration_id > get_schema_version():
-            raise MigrationTooHighError
+        version = self.get_version()
+        if version is None or version < constants.MIN_SCHEMA_VERSION:
+            raise MigrationMissingError(
+                f"The modelchecker requires at least schema version "
+                f"{constants.MIN_SCHEMA_VERSION}. Current version: {version}."
+            )
+
+        schema_version = get_schema_version()
+        if version > schema_version:
+            warnings.warn(
+                f"The database version is higher than the modelchecker "
+                f"({version} > {schema_version}). This may lead to unexpected "
+                f"results. "
+            )
         return True
 
     def get_missing_tables(self):

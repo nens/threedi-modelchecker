@@ -87,5 +87,5 @@ def test_validate_schema_missing_migration(threedi_db, version):
 def test_validate_schema_too_high_migration(threedi_db, version):
     schema = ModelSchema(threedi_db)
     with mock.patch.object(schema, "get_version", return_value=version):
-        with pytest.raises(errors.MigrationTooHighError):
+        with pytest.warns(UserWarning):
             schema.validate_schema()
