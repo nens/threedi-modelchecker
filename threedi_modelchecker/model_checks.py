@@ -6,6 +6,9 @@ from .config import Config
 from typing import Iterator, Tuple, NamedTuple
 
 
+__all__ = ["ThreediModelChecker"]
+
+
 class ThreediModelChecker:
     def __init__(self, threedi_db: ThreediDatabase):
         self.db = threedi_db

@@ -4,6 +4,8 @@ from sqlalchemy.event import listen
 
 from contextlib import contextmanager
 
+__all__ = ["ThreediDatabase"]
+
 
 def load_spatialite(con, connection_record):
     """Load spatialite extension as described in
