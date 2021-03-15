@@ -845,14 +845,6 @@ class ImperviousSurfaceMap(Base):
     )
 
 
-class SouthMigrationHistory(Base):
-    __tablename__ = "south_migrationhistory"
-    id = Column(Integer, primary_key=True)
-    app_name = Column(String(255), nullable=False)
-    migration = Column(String(255), nullable=False)
-    applied = Column(DateTime, nullable=False)
-
-
 DECLARED_MODELS = [
     AggregationSettings,
     BoundaryCondition1D,

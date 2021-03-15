@@ -5,6 +5,7 @@ import pytest
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from tests import Session
+from sqlalchemy import create_engine
 
 try:
     import psycopg2
@@ -80,3 +81,12 @@ def session(threedi_db):
 def modelchecker(threedi_db):
     mc = ThreediModelChecker(threedi_db)
     return mc
+
+
+@pytest.fixture
+def in_memory_sqlite():
+    """An in-memory database without a schema (to test schema migrations)
+    """
+    return ThreediDatabase(
+        {"db_path": ""}, db_type="spatialite", echo=False
+    )
