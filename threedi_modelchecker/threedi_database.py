@@ -3,6 +3,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.orm import sessionmaker
 
+import shutil
+import tempfile
+
 
 __all__ = ["ThreediDatabase"]
 
@@ -107,6 +110,25 @@ class ThreediDatabase:
             raise
         finally:
             session.close()
+
+    @contextmanager
+    def file_transaction(self, **kwargs):
+        """Copy the complete database into a tmpdir and work on that one.
+
+        On contextmanager exit, the database is copied back and the real
+        database is overwritten. On error, nothing happens.
+        """
+        if self.db_type != "spatialite":
+            raise NotImplementedError(
+                f"Cannot make database backups for db_type {self.db_type}"
+            )
+        with tempfile.NamedTemporaryFile(suffix=".sqlite") as work_file:
+            # copy the database to the temporary directory
+            shutil.copy(self.settings["db_path"], work_file.name)
+            # yield a new ThreediDatabase refering to the backup
+            yield self.__class__({"db_path": work_file.name}, "spatialite")
+            # this is only reached if there was no error:
+            shutil.copy(work_file.name, self.settings["db_path"])
 
     def check_connection(self):
         """Check if there a connection can be started with the database

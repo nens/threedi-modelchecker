@@ -1,4 +1,3 @@
-from . import factories
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
@@ -6,7 +5,6 @@ from sqlalchemy import String
 from sqlalchemy import Table
 from threedi_modelchecker import errors
 from threedi_modelchecker.schema import constants
-from threedi_modelchecker.schema import get_schema_version
 from threedi_modelchecker.schema import ModelSchema
 from unittest import mock
 
@@ -96,7 +94,7 @@ def test_validate_schema_too_high_migration(threedi_db, version):
 
 def test_upgrade_empty(in_memory_sqlite):
     schema = ModelSchema(in_memory_sqlite)
-    schema.upgrade()
+    schema.upgrade(backup=False)
 
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
 
@@ -105,12 +103,38 @@ def test_upgrade_south_not_latest_errors(in_memory_sqlite):
     schema = ModelSchema(in_memory_sqlite)
     with mock.patch.object(schema, "get_version", return_value=173):
         with pytest.raises(errors.MigrationMissingError):
-            schema.upgrade()
+            schema.upgrade(backup=False)
 
 
 def test_upgrade_south_latest_ok(in_memory_sqlite):
     schema = ModelSchema(in_memory_sqlite)
     with mock.patch.object(schema, "get_version", return_value=174):
-        schema.upgrade()
+        schema.upgrade(backup=False)
 
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
+
+
+def test_upgrade_with_backup(threedi_db):
+    if threedi_db.db_type != "spatialite":
+        pytest.skip()
+    schema = ModelSchema(threedi_db)
+    with mock.patch(
+        "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
+    ) as upgrade:
+        with pytest.raises(RuntimeError):
+            schema.upgrade(backup=True)
+
+    (db,), kwargs = upgrade.call_args
+    assert db is not threedi_db
+
+
+def test_upgrade_without_backup(threedi_db):
+    schema = ModelSchema(threedi_db)
+    with mock.patch(
+        "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
+    ) as upgrade:
+        with pytest.raises(RuntimeError):
+            schema.upgrade(backup=False)
+
+    (db,), kwargs = upgrade.call_args
+    assert db is threedi_db

@@ -33,6 +33,12 @@ def get_schema_version():
         return int(env.get_head_revision())
 
 
+def _upgrade_database(db, version="head"):
+    """Upgrade ThreediDatabase instance"""
+    with db.get_engine().begin() as connection:
+        command.upgrade(get_alembic_config(connection), version)
+
+
 class ModelSchema:
     def __init__(self, threedi_db, declared_models=models.DECLARED_MODELS):
         self.db = threedi_db
@@ -68,8 +74,8 @@ class ModelSchema:
         else:
             return self._get_version_old()
 
-    def upgrade(self):
-        """Upgrade the sqlite inplace"""
+    def upgrade(self, backup=True):
+        """Upgrade the database inplace"""
         v = self.get_version()
         if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
             raise MigrationMissingError(
@@ -77,8 +83,11 @@ class ModelSchema:
                 f"{constants.LATEST_SOUTH_MIGRATION_ID}."
             )
 
-        with self.db.get_engine().begin() as connection:
-            command.upgrade(get_alembic_config(connection), "head")
+        if backup:
+            with self.db.file_transaction() as work_db:
+                _upgrade_database(work_db)
+        else:
+            _upgrade_database(self.db)
 
     def validate_schema(self):
         """Very basic validation of 3Di schema.
