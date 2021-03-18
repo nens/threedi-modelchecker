@@ -6,6 +6,7 @@ LATEST_SOUTH_MIGRATION_ID = 174
 #  models of the threedi-modelchecker. Therefore we can both accept migration
 #  173 and 174.
 MIN_SCHEMA_VERSION = 173
+VERSION_TABLE_NAME = "schema_version"
 
 
 class BoundaryType(Enum):

@@ -24,7 +24,9 @@ def south_migration_table(in_memory_sqlite):
 @pytest.fixture
 def alembic_version_table(in_memory_sqlite):
     alembic_version = Table(
-        "alembic_version", MetaData(), Column("version_num", String(32), nullable=False)
+        constants.VERSION_TABLE_NAME,
+        MetaData(),
+        Column("version_num", String(32), nullable=False),
     )
     engine = in_memory_sqlite.get_engine()
     alembic_version.create(engine)
@@ -109,7 +111,17 @@ def test_validate_schema_too_high_migration(threedi_db, version):
 def test_upgrade_empty(in_memory_sqlite):
     """Upgrade an empty database to the latest version"""
     schema = ModelSchema(in_memory_sqlite)
-    schema.upgrade(backup=False)
+
+    with pytest.raises(errors.MigrationMissingError):
+        schema.upgrade(backup=False)
+
+
+def test_upgrade_with_preexisting_version(in_memory_sqlite):
+    """Upgrade an empty database to the latest version"""
+    schema = ModelSchema(in_memory_sqlite)
+
+    with mock.patch.object(schema, "get_version", return_value=199):
+        schema.upgrade(backup=False)
 
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
 
@@ -117,7 +129,9 @@ def test_upgrade_empty(in_memory_sqlite):
 def test_upgrade_south_not_latest_errors(in_memory_sqlite):
     """Upgrading a database that is not at the latest south migration will error"""
     schema = ModelSchema(in_memory_sqlite)
-    with mock.patch.object(schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID - 1):
+    with mock.patch.object(
+        schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID - 1
+    ):
         with pytest.raises(errors.MigrationMissingError):
             schema.upgrade(backup=False)
 
@@ -125,7 +139,9 @@ def test_upgrade_south_not_latest_errors(in_memory_sqlite):
 def test_upgrade_south_latest_ok(in_memory_sqlite):
     """Upgrading a database that is at the latest south migration will proceed"""
     schema = ModelSchema(in_memory_sqlite)
-    with mock.patch.object(schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID):
+    with mock.patch.object(
+        schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID
+    ):
         schema.upgrade(backup=False)
 
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
@@ -138,7 +154,7 @@ def test_upgrade_with_backup(threedi_db):
     schema = ModelSchema(threedi_db)
     with mock.patch(
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
-    ) as upgrade:
+    ) as upgrade, mock.patch.object(schema, "get_version", return_value=199):
         with pytest.raises(RuntimeError):
             schema.upgrade(backup=True)
 
@@ -151,7 +167,7 @@ def test_upgrade_without_backup(threedi_db):
     schema = ModelSchema(threedi_db)
     with mock.patch(
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
-    ) as upgrade:
+    ) as upgrade, mock.patch.object(schema, "get_version", return_value=199):
         with pytest.raises(RuntimeError):
             schema.upgrade(backup=False)
 

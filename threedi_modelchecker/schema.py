@@ -20,6 +20,7 @@ __all__ = ["ModelSchema"]
 def get_alembic_config(connection=None):
     alembic_cfg = Config()
     alembic_cfg.set_main_option("script_location", "threedi_modelchecker:migrations")
+    alembic_cfg.set_main_option("version_table", constants.VERSION_TABLE_NAME)
     if connection is not None:
         alembic_cfg.attributes["connection"] = connection
     return alembic_cfg
@@ -66,7 +67,9 @@ class ModelSchema:
     def get_version(self):
         """Returns the id (integer) of the latest migration"""
         with self.db.get_engine().connect() as connection:
-            context = MigrationContext.configure(connection)
+            context = MigrationContext.configure(
+                connection, opts={"version_table": constants.VERSION_TABLE_NAME}
+            )
             version = context.get_current_revision()
 
         if version is not None:
@@ -87,12 +90,18 @@ class ModelSchema:
         it.
         """
         v = self.get_version()
-        if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
+        if v is None:  # Note; we could allow creation of a new schema
             raise MigrationMissingError(
-                f"This library is unable to update versions below "
-                f"{constants.LATEST_SOUTH_MIGRATION_ID}."
+                f"The modelchecker requires a table named "
+                f'"{constants.VERSION_TABLE_NAME}" to determine the version '
+                f"of the database schema."
             )
-
+        if v < constants.LATEST_SOUTH_MIGRATION_ID:
+            raise MigrationMissingError(
+                f"The modelchecker cannot update versions below "
+                f"{constants.LATEST_SOUTH_MIGRATION_ID}. Please consult the "
+                f"3Di documentation on how to update legacy databases."
+            )
         if backup:
             with self.db.file_transaction() as work_db:
                 _upgrade_database(work_db)
