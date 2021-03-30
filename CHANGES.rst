@@ -9,6 +9,9 @@ Changelog of threedi-modelchecker
 
 - Set WARNING in description of check on storage area of an isolated manhole.
 
+- Added database schema revision management using alembic. The ModelSchema has
+  two new methods: .get_version() and .upgrade(). 
+
 
 0.11 (2021-01-26)
 -----------------
