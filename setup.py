@@ -8,6 +8,7 @@ install_requires = [
     "Click",
     "GeoAlchemy2>=0.6",
     "SQLAlchemy>=1.2",
+    "alembic>=0.9",
 ]
 
 tests_require = [
@@ -42,7 +43,6 @@ setup(
     extras_require={
         "test": tests_require,
         "postgis": ["psycopg2"],
-        "migrations": ["alembic"],
     },
     python_requires='>=3.6',
     entry_points={

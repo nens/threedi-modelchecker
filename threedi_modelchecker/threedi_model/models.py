@@ -4,7 +4,6 @@ from .custom_types import VarcharEnum
 from geoalchemy2.types import Geometry
 from sqlalchemy import Boolean
 from sqlalchemy import Column
-from sqlalchemy import DateTime
 from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
@@ -843,14 +842,6 @@ class ImperviousSurfaceMap(Base):
     connection_node = relationship(
         ConnectionNode, back_populates="impervious_surface_maps"
     )
-
-
-class SouthMigrationHistory(Base):
-    __tablename__ = "south_migrationhistory"
-    id = Column(Integer, primary_key=True)
-    app_name = Column(String(255), nullable=False)
-    migration = Column(String(255), nullable=False)
-    applied = Column(DateTime, nullable=False)
 
 
 DECLARED_MODELS = [

@@ -80,3 +80,12 @@ def session(threedi_db):
 def modelchecker(threedi_db):
     mc = ThreediModelChecker(threedi_db)
     return mc
+
+
+@pytest.fixture
+def in_memory_sqlite():
+    """An in-memory database without a schema (to test schema migrations)
+    """
+    return ThreediDatabase(
+        {"db_path": ""}, db_type="spatialite", echo=False
+    )

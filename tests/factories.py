@@ -175,13 +175,3 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     max_degree = 1
     use_of_cg = 0
     use_of_nested_newton = 0
-
-
-class MigrationHistoryFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.SouthMigrationHistory
-        sqlalchemy_session = Session
-
-    app_name = "my_app"
-    migration = "migration %s" % factory.Sequence(lambda n: n)
-    applied = datetime.datetime.now()

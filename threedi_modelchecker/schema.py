@@ -1,9 +1,43 @@
 from .errors import MigrationMissingError
-from .errors import MigrationNameError  # noqa
-from .errors import MigrationTooHighError  # noqa
 from .threedi_model import constants
 from .threedi_model import models
-from sqlalchemy import func
+from alembic import command
+from alembic.config import Config
+from alembic.environment import EnvironmentContext
+from alembic.migration import MigrationContext
+from alembic.script import ScriptDirectory
+from sqlalchemy import Column
+from sqlalchemy import Integer
+from sqlalchemy import MetaData
+from sqlalchemy import Table
+
+import warnings
+
+
+__all__ = ["ModelSchema"]
+
+
+def get_alembic_config(connection=None):
+    alembic_cfg = Config()
+    alembic_cfg.set_main_option("script_location", "threedi_modelchecker:migrations")
+    alembic_cfg.set_main_option("version_table", constants.VERSION_TABLE_NAME)
+    if connection is not None:
+        alembic_cfg.attributes["connection"] = connection
+    return alembic_cfg
+
+
+def get_schema_version():
+    """Returns the version of the schema in this library"""
+    config = get_alembic_config()
+    script = ScriptDirectory.from_config(config)
+    with EnvironmentContext(config=config, script=script) as env:
+        return int(env.get_head_revision())
+
+
+def _upgrade_database(db, version="head"):
+    """Upgrade ThreediDatabase instance"""
+    with db.get_engine().begin() as connection:
+        command.upgrade(get_alembic_config(connection), version)
 
 
 class ModelSchema:
@@ -11,18 +45,68 @@ class ModelSchema:
         self.db = threedi_db
         self.declared_models = declared_models
 
-    def _latest_migration(self):
-        """Returns a tuple with latest migration id and name"""
-        session = self.db.get_session()
-        latest_migration_id = session.query(
-            func.max(models.SouthMigrationHistory.id)
-        ).scalar()
-        latest_migration_name = (
-            session.query(models.SouthMigrationHistory.migration)
-            .filter(models.SouthMigrationHistory.id == latest_migration_id)
-            .scalar()
+    def _get_version_old(self):
+        """The version of the database using the old 'south' versioning.
+        """
+        south_migrationhistory = Table(
+            "south_migrationhistory", MetaData(), Column("id", Integer)
         )
-        return latest_migration_id, latest_migration_name
+        engine = self.db.get_engine()
+        if not engine.has_table("south_migrationhistory"):
+            return
+        with engine.connect() as connection:
+            query = south_migrationhistory.select().order_by(
+                south_migrationhistory.columns["id"].desc()
+            )
+            versions = list(connection.execute(query.limit(1)))
+            if len(versions) == 1:
+                return versions[0][0]
+            else:
+                return None
+
+    def get_version(self):
+        """Returns the id (integer) of the latest migration"""
+        with self.db.get_engine().connect() as connection:
+            context = MigrationContext.configure(
+                connection, opts={"version_table": constants.VERSION_TABLE_NAME}
+            )
+            version = context.get_current_revision()
+
+        if version is not None:
+            return int(version)
+        else:
+            return self._get_version_old()
+
+    def upgrade(self, backup=True):
+        """Upgrade the database to the latest version.
+
+        This requires the current version to be at least 174 (the latest
+        South migration).
+
+        The upgrade is done using database transactions. However, for SQLite,
+        database transactions are only partially supported. To ensure that the
+        database file does not become corrupt, enable the "backup" parameter.
+        If the database is temporary already (or if it is PostGIS), disable
+        it.
+        """
+        v = self.get_version()
+        if v is None:  # Note; we could allow creation of a new schema
+            raise MigrationMissingError(
+                f"The modelchecker requires a table named "
+                f'"{constants.VERSION_TABLE_NAME}" to determine the version '
+                f"of the database schema."
+            )
+        if v < constants.LATEST_SOUTH_MIGRATION_ID:
+            raise MigrationMissingError(
+                f"The modelchecker cannot update versions below "
+                f"{constants.LATEST_SOUTH_MIGRATION_ID}. Please consult the "
+                f"3Di documentation on how to update legacy databases."
+            )
+        if backup:
+            with self.db.file_transaction() as work_db:
+                _upgrade_database(work_db)
+        else:
+            _upgrade_database(self.db)
 
     def validate_schema(self):
         """Very basic validation of 3Di schema.
@@ -32,31 +116,23 @@ class ModelSchema:
         tables and columns defined in threedi_model.models.py.
 
         :return: True if the threedi_db schema is valid, raises an error otherwise.
-        :raise MigrationMissingError, MigrationTooHighError, MigrationNameError
+        :raise MigrationMissingError, MigrationTooHighError
         """
-        migration_id, migration_name = self._latest_migration()
-        if migration_id is None or migration_id < constants.LATEST_MIGRATION_ID:
-            raise MigrationMissingError
-        # TODO: on 08-07-2019 3Di has been released with the newest migration
-        #  174: '0172_auto__del_v2initialwaterlevel__del_field_v2orifice_max_capacity__del_f'.  # noqa
-        #  This migrations deletes some fields, which were already not present in the
-        #  models of the threedi-modelchecker. Therefore we can both accept migration
-        #  173 and 174.
-        #  Because inpy has not been run over all the existing models during this new
-        #  release, models downloaded via 3id.lizard.net/models still have the
-        #  migration 173 (unless a user has specifically re-run inpy for the model).
-        elif migration_id > constants.LATEST_MIGRATION_ID:
-            # don't raise warning for now, see comments above.
-            # raise MigrationTooHighError
-            pass
-        elif migration_name != constants.LATEST_MIGRATION_NAME:
-            # don't fix on a specific migration name, see comments above.
-            # raise MigrationNameError
-            pass
-        return (
-            migration_id == constants.LATEST_MIGRATION_ID
-            and migration_name == constants.LATEST_MIGRATION_NAME
-        )
+        version = self.get_version()
+        if version is None or version < constants.MIN_SCHEMA_VERSION:
+            raise MigrationMissingError(
+                f"The modelchecker requires at least schema version "
+                f"{constants.MIN_SCHEMA_VERSION}. Current version: {version}."
+            )
+
+        schema_version = get_schema_version()
+        if version > schema_version:
+            warnings.warn(
+                f"The database version is higher than the modelchecker "
+                f"({version} > {schema_version}). This may lead to unexpected "
+                f"results. "
+            )
+        return True
 
     def get_missing_tables(self):
         pass
