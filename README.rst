@@ -4,8 +4,12 @@ Threedi-modelchecker
 .. image:: https://img.shields.io/pypi/v/threedi-modelchecker.svg
         :target: https://pypi.org/project/threedi-modelchecker/
 
-.. image:: https://travis-ci.com/nens/threedi-modelchecker.svg?branch=master
-    :target: https://travis-ci.com/nens/threedi-modelchecker
+.. Github Actions status — https://github.com/nens/threedi-modelchecker/actions
+
+.. image:: https://github.com/nens/threedi-modelchecker/actions/workflows/test.yml/badge.svg
+	:alt: Github Actions status
+	:target: https://github.com/nens/threedi-modelchecker/actions/workflows/test.yml
+
 
 Threedi-modelchecker is a tool to verify the correctness of a 3Di model.
 The goal is to provide a tool for model builders to quickly check if his/her 
