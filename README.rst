@@ -67,7 +67,7 @@ Make sure you have zestreleaser_ installed.
 
     fullrelease
 
-When you create a tag on git, Travis CI automatically creates a new release to pypi_.
+When you created a tag, make sure to upload it to pypi_.
 
 .. _zestreleaser: https://zestreleaser.readthedocs.io/en/latest/
 .. _pypi: https://pypi.org/project/threedi-modelchecker/
