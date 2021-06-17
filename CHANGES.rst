@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.13 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fixed Pumpstation.lower_stop_level check.
 
 
 0.12 (2021-04-19)
