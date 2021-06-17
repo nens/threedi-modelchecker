@@ -1,4 +1,3 @@
-from threedi_modelchecker.threedi_model.constants import PumpType
 from .checks.base import BaseCheck
 from .checks.base import EnumCheck
 from .checks.base import ForeignKeyCheck
