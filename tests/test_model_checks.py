@@ -6,7 +6,6 @@ from .conftest import emtpy_sqlite_path
 
 from pathlib import Path
 from unittest import mock
-import pytest
 
 
 @pytest.fixture
