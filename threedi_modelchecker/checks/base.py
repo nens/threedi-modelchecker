@@ -2,6 +2,8 @@ from abc import ABC
 from abc import abstractmethod
 from geoalchemy2 import functions as geo_func
 from geoalchemy2.types import Geometry
+from pathlib import Path
+from sqlalchemy import false
 from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import types
@@ -170,7 +172,7 @@ class UniqueCheck(BaseCheck):
 
 
 class NotNullCheck(BaseCheck):
-    """"Check all values in `column` that are not null"""
+    """ "Check all values in `column` that are not null"""
 
     def get_invalid(self, session):
         q_invalid = self.to_check(session)
@@ -307,3 +309,41 @@ class EnumCheck(BaseCheck):
             "Value in %s has invalid value, expected one of the "
             "following values %s" % (self.column, list(self.column.type.enum_class))
         )
+
+
+class FileExistsCheck(BaseCheck):
+    """Check whether a file referenced in given Column exists.
+
+    If the column contains an empty string, this check is skipped.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.reason = None
+
+    def none(self, session):
+        return self.to_check(session).filter(false()).all()  # empty query
+
+    def get_invalid(self, session):
+        context = getattr(session, "model_checker_context", None)
+        available_rasters = getattr(context, "available_rasters", None)
+        if available_rasters and self.column.name in available_rasters:
+            # the raster is available (so says the context)
+            return self.none(session)
+
+        base_path = getattr(context, "base_path", None)
+        if not base_path:
+            # cannot check if there is no path: skip the check
+            return self.none(session)
+
+        invalid = []
+        for (path,) in session.query(self.column).all():
+            if not path:
+                continue  # ignore empty paths (this could be checked elsewhere)
+            if not Path(base_path / path).exists():
+                invalid.append(path)
+
+        return self.to_check(session).filter(self.column.in_(invalid)).all()
+
+    def description(self):
+        return f"file(s) specified in {self.column.name} are not present"

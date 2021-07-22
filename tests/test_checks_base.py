@@ -9,6 +9,7 @@ from sqlalchemy.orm import Query
 from tests import factories
 from threedi_modelchecker.checks.base import EnumCheck
 from threedi_modelchecker.checks.base import GeneralCheck
+from threedi_modelchecker.checks.base import FileExistsCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
@@ -808,3 +809,35 @@ def test_length_geom_linestring_missing_epsg_from_global_settings(session):
 
     errors = check_length_linestring.get_invalid(session)
     assert len(errors) == 0
+
+def test_file_exists_check_filesystem_err(session, tmp_path):
+    factories.GlobalSettingsFactory(dem_file="some/file")
+    session.model_checker_context.base_path = tmp_path
+    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 1
+
+
+def test_file_exists_check_filesystem_ok(session, tmp_path):
+    (tmp_path / "somefile").touch()
+    factories.GlobalSettingsFactory(dem_file="somefile")
+    session.model_checker_context.base_path = tmp_path
+    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0
+    
+
+def test_file_exists_check_available_raster(session):
+    factories.GlobalSettingsFactory(dem_file="some/file")
+    session.model_checker_context.available_rasters = {"dem_file"}
+    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0
+
+
+def test_file_exists_check_no_context(session):
+    # no context, no check, no invalid records
+    factories.GlobalSettingsFactory(dem_file="some/file")
+    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0

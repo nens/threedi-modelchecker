@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.orm import sessionmaker
@@ -59,6 +60,11 @@ class ThreediDatabase:
     def engine(self):
         return self.get_engine()
 
+    @property
+    def base_path(self):
+        if self.db_type == "spatialite":
+            return Path(self.settings["db_path"]).absolute().parent
+
     def get_engine(self, get_seperate_engine=False):
 
         if self._engine is None or get_seperate_engine:
@@ -99,8 +105,7 @@ class ThreediDatabase:
 
     @contextmanager
     def session_scope(self, **kwargs):
-        """Get a session to execute a single transaction in a "with as" block.
-        """
+        """Get a session to execute a single transaction in a "with as" block."""
         session = self.get_session(**kwargs)
         try:
             yield session

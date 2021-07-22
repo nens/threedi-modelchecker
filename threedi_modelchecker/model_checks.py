@@ -2,20 +2,39 @@ from .checks.base import BaseCheck
 from .config import Config
 from .schema import ModelSchema
 from .threedi_database import ThreediDatabase
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterator
 from typing import NamedTuple
+from typing import Optional
+from typing import Set
 from typing import Tuple
 
 
 __all__ = ["ThreediModelChecker"]
 
 
+@dataclass
+class Context:
+    available_rasters: Optional[Set] = None
+    base_path: Optional[Path] = None
+
+
 class ThreediModelChecker:
-    def __init__(self, threedi_db: ThreediDatabase):
+    def __init__(self, threedi_db: ThreediDatabase, context: Optional[Context] = None):
+        """Initialize the model checker.
+
+        Optionally, supply the context of the model check:
+        - "available_rasters": a set of raster options that are available
+        - "base_path": file presence is checked relative to this path
+        """
         self.db = threedi_db
         self.schema = ModelSchema(self.db)
         self.schema.validate_schema()
         self.config = Config(self.models)
+        self.context = Context(**(context or {}))
+        if not self.context.base_path:
+            self.context.base_path = self.db.base_path
 
     @property
     def models(self):
@@ -28,6 +47,7 @@ class ThreediModelChecker:
         :return: Tuple of the applied check and the failing row.
         """
         session = self.db.get_session()
+        session.model_checker_context = self.context
         for check in self.checks():
             model_errors = check.get_invalid(session)
             for error_row in model_errors:

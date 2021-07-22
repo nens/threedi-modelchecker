@@ -34,6 +34,8 @@ class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     use_0d_inflow = 0
     control_group_id = 1
 
+    dem_file = ""
+
 
 class ControlGroupFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
