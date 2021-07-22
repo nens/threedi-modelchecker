@@ -1,5 +1,6 @@
 from .checks.base import BaseCheck
 from .checks.base import EnumCheck
+from .checks.base import FileExistsCheck
 from .checks.base import ForeignKeyCheck
 from .checks.base import GeneralCheck
 from .checks.base import GeometryCheck
@@ -623,6 +624,23 @@ CONDITIONAL_CHECKS = [
 ]
 
 
+FILE_EXISTS_CHECKS = [
+    FileExistsCheck(column=models.GlobalSetting.dem_file),
+    FileExistsCheck(column=models.GlobalSetting.frict_coef_file),
+    FileExistsCheck(column=models.GlobalSetting.interception_file),
+    FileExistsCheck(column=models.Interflow.porosity_file),
+    FileExistsCheck(column=models.Interflow.hydraulic_conductivity_file),
+    FileExistsCheck(column=models.SimpleInfiltration.infiltration_rate_file),
+    FileExistsCheck(column=models.SimpleInfiltration.max_infiltration_capacity_file),
+    FileExistsCheck(column=models.GroundWater.groundwater_hydro_connectivity_file),
+    FileExistsCheck(column=models.GroundWater.phreatic_storage_capacity_file),
+    FileExistsCheck(column=models.GroundWater.equilibrium_infiltration_rate_file),
+    FileExistsCheck(column=models.GroundWater.initial_infiltration_rate_file),
+    FileExistsCheck(column=models.GroundWater.infiltration_decay_period_file),
+    FileExistsCheck(column=models.GroundWater.groundwater_hydro_connectivity_file),
+]
+
+
 class Config:
     """Collection of checks
 
@@ -663,4 +681,5 @@ class Config:
         self.checks += TIMESERIES_CHECKS
         self.checks += RANGE_CHECKS
         self.checks += CONDITIONAL_CHECKS
+        self.checks += FILE_EXISTS_CHECKS
         return None

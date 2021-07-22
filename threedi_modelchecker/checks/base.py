@@ -346,4 +346,4 @@ class FileExistsCheck(BaseCheck):
         return self.to_check(session).filter(self.column.in_(invalid)).all()
 
     def description(self):
-        return f"file(s) specified in {self.column.name} are not present"
+        return f"file in {self.column} is not present"
