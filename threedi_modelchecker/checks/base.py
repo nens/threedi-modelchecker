@@ -317,19 +317,19 @@ class FileExistsCheck(BaseCheck):
     If the column contains an empty string, this check is skipped.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.reason = None
-
     def none(self, session):
         return self.to_check(session).filter(false()).all()  # empty query
 
     def get_invalid(self, session):
         context = getattr(session, "model_checker_context", None)
         available_rasters = getattr(context, "available_rasters", None)
-        if available_rasters and self.column.name in available_rasters:
-            # the raster is available (so says the context)
-            return self.none(session)
+        if available_rasters:
+            if self.column.name in available_rasters:
+                # the raster is available (so says the context)
+                return self.none(session)
+            else:
+                # the raster is not available (so says the context)
+                return self.to_check(session).all()
 
         base_path = getattr(context, "base_path", None)
         if not base_path:

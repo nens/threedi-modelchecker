@@ -835,6 +835,14 @@ def test_file_exists_check_available_raster(session):
     assert len(invalid_rows) == 0
 
 
+def test_file_exists_check_not_available_raster(session):
+    factories.GlobalSettingsFactory(dem_file="some/file")
+    session.model_checker_context.available_rasters = {"frict_coef_file"}
+    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 1
+
+
 def test_file_exists_check_no_context(session):
     # no context, no check, no invalid records
     factories.GlobalSettingsFactory(dem_file="some/file")
