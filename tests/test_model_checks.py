@@ -16,8 +16,8 @@ def model_checker(threedi_db):
 
 
 def test_set_base_path(model_checker):
-    if model_checker.db.db_type == "postgis":
-        pytest.skip("postgis does not have a base_path in the context")
+    if model_checker.db.db_type == "postgres":
+        pytest.skip("postgres does not have a base_path in its context")
     assert model_checker.context.base_path == Path(emtpy_sqlite_path).parent
 
 
