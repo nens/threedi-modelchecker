@@ -5,7 +5,6 @@ import pytest
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.model_checks import ThreediModelChecker, Context
 from tests import Session
-from pathlib import Path
 
 try:
     import psycopg2

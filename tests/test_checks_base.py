@@ -810,6 +810,7 @@ def test_length_geom_linestring_missing_epsg_from_global_settings(session):
     errors = check_length_linestring.get_invalid(session)
     assert len(errors) == 0
 
+
 def test_file_exists_check_filesystem_err(session, tmp_path):
     factories.GlobalSettingsFactory(dem_file="some/file")
     session.model_checker_context.base_path = tmp_path
@@ -825,7 +826,7 @@ def test_file_exists_check_filesystem_ok(session, tmp_path):
     check = FileExistsCheck(column=models.GlobalSetting.dem_file)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
-    
+
 
 def test_file_exists_check_available_raster(session):
     factories.GlobalSettingsFactory(dem_file="some/file")
