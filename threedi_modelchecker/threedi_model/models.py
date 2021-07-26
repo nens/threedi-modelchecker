@@ -175,6 +175,8 @@ class Interflow(Base):
     hydraulic_conductivity_file = Column(String(255))
     display_name = Column(String(255), nullable=False)
 
+    global_settings = relationship("GlobalSetting", back_populates="interflow_settings")
+
 
 class PumpedDrainageArea(Base):
     __tablename__ = "v2_pumped_drainage_area"
@@ -199,6 +201,10 @@ class SimpleInfiltration(Base):
     )
     max_infiltration_capacity_file = Column(Text)
     display_name = Column(String(255), nullable=False)
+
+    global_settings = relationship(
+        "GlobalSetting", back_populates="simple_infiltration_settings"
+    )
 
 
 class SurfaceParameter(Base):
@@ -265,6 +271,10 @@ class GroundWater(Base):
     display_name = Column(String(255), nullable=False)
     leakage = Column(Float)
     leakage_file = Column(String(255))
+
+    global_settings = relationship(
+        "GlobalSetting", back_populates="groundwater_settings"
+    )
 
 
 class GridRefinement(Base):
@@ -439,12 +449,27 @@ class GlobalSetting(Base):
         Integer, ForeignKey(NumericalSettings.__tablename__ + ".id"), nullable=False
     )
     interflow_settings_id = Column(Integer, ForeignKey(Interflow.__tablename__ + ".id"))
+    interflow_settings = relationship(
+        Interflow,
+        foreign_keys=interflow_settings_id,
+        back_populates="global_settings",
+    )
     control_group_id = Column(Integer, ForeignKey(ControlGroup.__tablename__ + ".id"))
     simple_infiltration_settings_id = Column(
         Integer, ForeignKey(SimpleInfiltration.__tablename__ + ".id")
     )
+    simple_infiltration_settings = relationship(
+        SimpleInfiltration,
+        foreign_keys=simple_infiltration_settings_id,
+        back_populates="global_settings",
+    )
     groundwater_settings_id = Column(
         Integer, ForeignKey(GroundWater.__tablename__ + ".id")
+    )
+    groundwater_settings = relationship(
+        GroundWater,
+        foreign_keys=groundwater_settings_id,
+        back_populates="global_settings",
     )
 
 

@@ -811,14 +811,6 @@ def test_length_geom_linestring_missing_epsg_from_global_settings(session):
     assert len(errors) == 0
 
 
-def test_file_exists_check_filesystem_err(session, tmp_path):
-    factories.GlobalSettingsFactory(dem_file="some/file")
-    session.model_checker_context.base_path = tmp_path
-    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
-
-
 def test_file_exists_check_filesystem_ok(session, tmp_path):
     (tmp_path / "somefile").touch()
     factories.GlobalSettingsFactory(dem_file="somefile")
@@ -828,7 +820,23 @@ def test_file_exists_check_filesystem_ok(session, tmp_path):
     assert len(invalid_rows) == 0
 
 
-def test_file_exists_check_available_raster(session):
+def test_file_exists_check_filesystem_ignore(session, tmp_path):
+    factories.GlobalSettingsFactory(dem_file="")
+    session.model_checker_context.base_path = tmp_path
+    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0
+
+
+def test_file_exists_check_filesystem_err(session, tmp_path):
+    factories.GlobalSettingsFactory(dem_file="some/file")
+    session.model_checker_context.base_path = tmp_path
+    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 1
+
+
+def test_file_exists_check_context_ok(session):
     factories.GlobalSettingsFactory(dem_file="some/file")
     session.model_checker_context.available_rasters = {"dem_file"}
     check = FileExistsCheck(column=models.GlobalSetting.dem_file)
@@ -836,7 +844,7 @@ def test_file_exists_check_available_raster(session):
     assert len(invalid_rows) == 0
 
 
-def test_file_exists_check_not_available_raster(session):
+def test_file_exists_check_context_err(session):
     factories.GlobalSettingsFactory(dem_file="some/file")
     session.model_checker_context.available_rasters = {"frict_coef_file"}
     check = FileExistsCheck(column=models.GlobalSetting.dem_file)
@@ -844,7 +852,38 @@ def test_file_exists_check_not_available_raster(session):
     assert len(invalid_rows) == 1
 
 
-def test_file_exists_check_no_context(session):
+def test_file_exists_check_context_ignore(session):
+    factories.GlobalSettingsFactory(dem_file="")
+    session.model_checker_context.available_rasters = {"frict_coef_file"}
+    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0
+
+
+def test_file_exists_check_extra_filters_ok(session, tmp_path):
+    factories.SimpleInfiltrationFactory(infiltration_rate_file="some/file")
+    session.model_checker_context.base_path = tmp_path
+    check = FileExistsCheck(
+        column=models.SimpleInfiltration.infiltration_rate_file,
+        filters=[models.SimpleInfiltration.global_settings != None],
+    )
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0
+
+
+def test_file_exists_check_extra_filters_err(session, tmp_path):
+    inf = factories.SimpleInfiltrationFactory(infiltration_rate_file="some/file")
+    factories.GlobalSettingsFactory(simple_infiltration_settings=inf)
+    session.model_checker_context.base_path = tmp_path
+    check = FileExistsCheck(
+        column=models.SimpleInfiltration.infiltration_rate_file,
+        filters=[models.SimpleInfiltration.global_settings != None]
+    )
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 1
+
+
+def test_file_exists_check_skip(session):
     # no context, no check, no invalid records
     factories.GlobalSettingsFactory(dem_file="some/file")
     check = FileExistsCheck(column=models.GlobalSetting.dem_file)
