@@ -321,8 +321,11 @@ class FileExistsCheck(BaseCheck):
         super().__init__(column)
 
     def to_check(self, session):
-        _filters = (self.column != None, self.column != "") + tuple(self._filters)
-        return super().to_check(session).filter(*_filters)
+        return super().to_check(session).filter(
+            self.column != None,
+            self.column != "",
+            *self._filters,
+        )
 
     def none(self, session):
         return self.to_check(session).filter(false()).all()  # empty query
@@ -330,7 +333,7 @@ class FileExistsCheck(BaseCheck):
     def get_invalid(self, session):
         context = getattr(session, "model_checker_context", None)
         available_rasters = getattr(context, "available_rasters", None)
-        if available_rasters and self.to_check(session).count() > 0:
+        if available_rasters is not None and self.to_check(session).count() > 0:
             if self.column.name in available_rasters:
                 # the raster is available (so says the context)
                 return self.none(session)
@@ -345,8 +348,6 @@ class FileExistsCheck(BaseCheck):
 
         invalid = []
         for (path,) in session.query(self.column).all():
-            if not path:
-                continue  # ignore empty paths (this could be checked elsewhere)
             if not Path(base_path / path).exists():
                 invalid.append(path)
 
