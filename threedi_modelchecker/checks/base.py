@@ -314,7 +314,19 @@ class EnumCheck(BaseCheck):
 class FileExistsCheck(BaseCheck):
     """Check whether a file referenced in given Column exists.
 
-    If the column contains an empty string, this check is skipped.
+    In order to perform this check, the SQLAlchemy session requires a 
+    `model_checker_context` attribute, which is set automatically by the 
+    ThreediModelChecker and contains either `available_rasters` or `base_path`.
+    
+    If it contains `available_rasters`, non-empty file fields are checked
+    against this list. If a field contains a filename and does not occur in
+    the list, the field is invalid.
+
+    Else, if it contains `base_path`, the file fields are checked in the local
+    filesystem. Paths are interpreted relative to `base_path`. The `base_path`
+    is set automatically by ThreediModelChecker if a spatialite is used.
+
+    If the context does not exist, the checker is skipped.
     """
     def __init__(self, column, filters=()):
         self._filters = filters
