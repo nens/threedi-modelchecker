@@ -314,10 +314,10 @@ class EnumCheck(BaseCheck):
 class FileExistsCheck(BaseCheck):
     """Check whether a file referenced in given Column exists.
 
-    In order to perform this check, the SQLAlchemy session requires a 
-    `model_checker_context` attribute, which is set automatically by the 
+    In order to perform this check, the SQLAlchemy session requires a
+    `model_checker_context` attribute, which is set automatically by the
     ThreediModelChecker and contains either `available_rasters` or `base_path`.
-    
+
     If it contains `available_rasters`, non-empty file fields are checked
     against this list. If a field contains a filename and does not occur in
     the list, the field is invalid.
