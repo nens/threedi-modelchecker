@@ -1,10 +1,10 @@
-import datetime
-
-import factory
 from factory import Faker
-
-from threedi_modelchecker.threedi_model import models, constants
 from tests import Session
+from threedi_modelchecker.threedi_model import constants
+from threedi_modelchecker.threedi_model import models
+
+import datetime
+import factory
 
 
 class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -33,6 +33,14 @@ class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     advection_1d = 1
     use_0d_inflow = 0
     control_group_id = 1
+
+
+class SimpleInfiltrationFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SimpleInfiltration
+        sqlalchemy_session = Session
+
+    infiltration_rate = 0.0
 
 
 class ControlGroupFactory(factory.alchemy.SQLAlchemyModelFactory):

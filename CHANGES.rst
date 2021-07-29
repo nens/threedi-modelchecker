@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.14 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added FileExistsCheck.
 
 
 0.13 (2021-06-17)

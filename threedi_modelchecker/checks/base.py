@@ -2,6 +2,8 @@ from abc import ABC
 from abc import abstractmethod
 from geoalchemy2 import functions as geo_func
 from geoalchemy2.types import Geometry
+from pathlib import Path
+from sqlalchemy import false
 from sqlalchemy import func
 from sqlalchemy import not_
 from sqlalchemy import types
@@ -170,7 +172,7 @@ class UniqueCheck(BaseCheck):
 
 
 class NotNullCheck(BaseCheck):
-    """"Check all values in `column` that are not null"""
+    """ "Check all values in `column` that are not null"""
 
     def get_invalid(self, session):
         q_invalid = self.to_check(session)
@@ -307,3 +309,61 @@ class EnumCheck(BaseCheck):
             "Value in %s has invalid value, expected one of the "
             "following values %s" % (self.column, list(self.column.type.enum_class))
         )
+
+
+class FileExistsCheck(BaseCheck):
+    """Check whether a file referenced in given Column exists.
+
+    In order to perform this check, the SQLAlchemy session requires a
+    `model_checker_context` attribute, which is set automatically by the
+    ThreediModelChecker and contains either `available_rasters` or `base_path`.
+
+    If it contains `available_rasters`, non-empty file fields are checked
+    against this list. If a field contains a filename and does not occur in
+    the list, the field is invalid.
+
+    Else, if it contains `base_path`, the file fields are checked in the local
+    filesystem. Paths are interpreted relative to `base_path`. The `base_path`
+    is set automatically by ThreediModelChecker if a spatialite is used.
+
+    If the context does not exist, the checker is skipped.
+    """
+    def __init__(self, column, filters=()):
+        self._filters = filters
+        super().__init__(column)
+
+    def to_check(self, session):
+        return super().to_check(session).filter(
+            self.column != None,
+            self.column != "",
+            *self._filters,
+        )
+
+    def none(self, session):
+        return self.to_check(session).filter(false()).all()  # empty query
+
+    def get_invalid(self, session):
+        context = getattr(session, "model_checker_context", None)
+        available_rasters = getattr(context, "available_rasters", None)
+        if available_rasters is not None and self.to_check(session).count() > 0:
+            if self.column.name in available_rasters:
+                # the raster is available (so says the context)
+                return self.none(session)
+            else:
+                # the raster is not available (so says the context)
+                return self.to_check(session).all()
+
+        base_path = getattr(context, "base_path", None)
+        if not base_path:
+            # cannot check if there is no path: skip the check
+            return self.none(session)
+
+        invalid = []
+        for (path,) in session.query(self.column).all():
+            if not Path(base_path / path).exists():
+                invalid.append(path)
+
+        return self.to_check(session).filter(self.column.in_(invalid)).all()
+
+    def description(self):
+        return f"file in {self.column} is not present"
