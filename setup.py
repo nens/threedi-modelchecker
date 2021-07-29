@@ -9,7 +9,6 @@ install_requires = [
     "GeoAlchemy2>=0.6",
     "SQLAlchemy>=1.2",
     "alembic>=0.9",
-    "dataclasses ; python_version<'3.7'",
 ]
 
 tests_require = [

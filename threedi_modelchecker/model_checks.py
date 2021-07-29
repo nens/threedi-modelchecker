@@ -2,7 +2,6 @@ from .checks.base import BaseCheck
 from .config import Config
 from .schema import ModelSchema
 from .threedi_database import ThreediDatabase
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 from typing import NamedTuple
@@ -14,10 +13,14 @@ from typing import Tuple
 __all__ = ["ThreediModelChecker"]
 
 
-@dataclass
 class Context:
-    available_rasters: Optional[Set] = None
-    base_path: Optional[Path] = None
+    def __init__(
+        self,
+        available_rasters: Optional[Set] = None,
+        base_path: Optional[Path] = None,
+    ):
+        self.available_rasters = available_rasters
+        self.base_path = base_path
 
 
 class ThreediModelChecker:
