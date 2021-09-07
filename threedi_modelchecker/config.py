@@ -23,7 +23,7 @@ from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
-from .threedi_model.models import constants
+from .threedi_model.models import GlobalSetting, constants
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import and_
 from sqlalchemy import cast
@@ -377,13 +377,13 @@ CONDITIONAL_CHECKS = [
                 constants.CalculationType.CONNECTED,
                 constants.CalculationType.DOUBLE_CONNECTED
             ]),
-            models.GlobalSetting.dem_file == None
         ),
         message=f"Channel.calculation_type cannot be "
                 f"{constants.CalculationType.EMBEDDED} or"
                 f"{constants.CalculationType.CONNECTED} or "
                 f"{constants.CalculationType.DOUBLE_CONNECTED} when "
-                f"GlobalSetting.dem_file is null"
+                f"GlobalSetting.dem_file is null",
+        run_condition=lambda session: Query(models.GlobalSetting).filter(models.GlobalSetting.dem_file==None).with_session(session).first() != None
     ),
     QueryCheck(
         column=models.Pumpstation.lower_stop_level,

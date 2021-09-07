@@ -116,12 +116,16 @@ class QueryCheck(BaseCheck):
     sqlalchemy.sql.expression.BinaryExpression. For example, QueryCheck allows joins
     on multiple tables"""
 
-    def __init__(self, column, invalid, message):
+    def __init__(self, column, invalid, message, run_condition=None):
         super().__init__(column)
         self.invalid = invalid
         self.message = message
+        self.run_condition = run_condition
 
     def get_invalid(self, session):
+        if self.run_condition is not None:
+            if not self.run_condition(session):
+                return []
         return self.invalid.with_session(session).all()
 
     def description(self):
@@ -360,7 +364,9 @@ class FileExistsCheck(BaseCheck):
 
         invalid = []
         for (path,) in session.query(self.column).all():
-            if not Path(base_path / path).exists():
+            if path is None:
+                invalid.append(path)
+            elif not Path(base_path / path).exists():
                 invalid.append(path)
 
         return self.to_check(session).filter(self.column.in_(invalid)).all()

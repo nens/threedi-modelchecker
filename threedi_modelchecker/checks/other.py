@@ -365,21 +365,25 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         invalid_channels = []
 
+        no_newton: bool = Query(models.NumericalSettings).filter(
+            models.NumericalSettings.use_of_nested_newton==0).with_session(session).first() is None
+
+        if not no_newton:
+            # All numerical settings are set to use nested newton
+            return []
+
         # Circle and egg cross-section definitions are always open:
         circle_egg_definitions = (
             Query(models.Channel)
             .join(models.CrossSectionLocation, models.Channel.cross_section_locations)
             .join(models.CrossSectionDefinition, models.CrossSectionLocation.definition)
             .filter(
-                models.NumericalSettings.use_of_nested_newton == 0,
-                or_(
-                    models.CrossSectionDefinition.shape.in_(
-                        [
-                            constants.CrossSectionShape.CIRCLE,
-                            constants.CrossSectionShape.EGG,
-                        ]
-                    )
-                ),
+                models.CrossSectionDefinition.shape.in_(
+                    [
+                        constants.CrossSectionShape.CIRCLE,
+                        constants.CrossSectionShape.EGG,
+                    ]
+                )
             )
         )
         invalid_channels += circle_egg_definitions.with_session(session).all()
@@ -397,7 +401,6 @@ class OpenChannelsWithNestedNewton(BaseCheck):
             .join(models.CrossSectionLocation, models.Channel.cross_section_locations)
             .join(models.CrossSectionDefinition, models.CrossSectionLocation.definition)
             .filter(
-                models.NumericalSettings.use_of_nested_newton == 0,
                 models.CrossSectionDefinition.shape.in_(
                     [
                         constants.CrossSectionShape.TABULATED_RECTANGLE,

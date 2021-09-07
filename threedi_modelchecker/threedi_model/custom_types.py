@@ -46,10 +46,10 @@ class IntegerEnum(CustomEnum):
     CustomEnum should not be used directly but inherited by a class which
     provides the `impl` datatype.
     """
-
+    cache_ok = True
     impl = Integer
 
 
 class VarcharEnum(CustomEnum):
-
+    cache_ok = True
     impl = VARCHAR
