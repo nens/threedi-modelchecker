@@ -3,7 +3,6 @@ from ..threedi_model import models
 from .base import BaseCheck
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
-from sqlalchemy import or_
 from sqlalchemy import text
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Query
@@ -366,7 +365,7 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         invalid_channels = []
 
         all_newton: bool = Query(models.NumericalSettings).filter(
-            models.NumericalSettings.use_of_nested_newton==0).with_session(session).first() is None
+            models.NumericalSettings.use_of_nested_newton == 0).with_session(session).first() is None
 
         if all_newton:
             # All numerical settings are set to use nested newton
