@@ -365,11 +365,12 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         invalid_channels = []
 
-        no_newton: bool = Query(models.NumericalSettings).filter(
+        all_newton: bool = Query(models.NumericalSettings).filter(
             models.NumericalSettings.use_of_nested_newton==0).with_session(session).first() is None
 
-        if not no_newton:
+        if all_newton:
             # All numerical settings are set to use nested newton
+            # No need to run checks below
             return []
 
         # Circle and egg cross-section definitions are always open:
