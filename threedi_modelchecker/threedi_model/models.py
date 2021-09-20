@@ -200,7 +200,7 @@ class SimpleInfiltration(Base):
         IntegerEnum(constants.InfiltrationSurfaceOption)
     )
     max_infiltration_capacity_file = Column(Text)
-    display_name = Column(String(255), nullable=False)
+    display_name = Column(String(255), nullable=False) #TODO Mag dit ook True zijn, vanuit rekenkern gezien wel. Zo ja, dan geldt dit voor alle display names. Graag doorvoeren.
 
     global_settings = relationship(
         "GlobalSetting", back_populates="simple_infiltration_settings"

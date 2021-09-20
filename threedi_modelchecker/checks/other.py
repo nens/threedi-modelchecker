@@ -52,20 +52,20 @@ class CrossSectionShapeCheck(BaseCheck):
         cross_section_definitions = session.query(self.table)
         invalid_cross_section_shapes = []
 
-        for cross_section_definition in cross_section_definitions.all():
+        for cross_section_definition in cross_section_definitions.all(): #TODO rectangle_closed: width and height verplicht
             shape = cross_section_definition.shape
             width = cross_section_definition.width
             height = cross_section_definition.height
             if shape == constants.CrossSectionShape.RECTANGLE:
-                if not valid_rectangle(width, height):
+                if not valid_rectangle(width, height):  
                     invalid_cross_section_shapes.append(cross_section_definition)
-            elif shape == constants.CrossSectionShape.CIRCLE:
+            elif shape == constants.CrossSectionShape.CIRCLE: 
                 if not valid_circle(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.EGG:
                 if not valid_egg(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
-            if shape == constants.CrossSectionShape.TABULATED_RECTANGLE:
+            if shape == constants.CrossSectionShape.TABULATED_RECTANGLE: # TODO: eerste breedte moet >0 
                 if not valid_tabulated_shape(width, height):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.TABULATED_TRAPEZIUM:
