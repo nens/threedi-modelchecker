@@ -46,8 +46,7 @@ class ModelSchema:
         self.declared_models = declared_models
 
     def _get_version_old(self):
-        """The version of the database using the old 'south' versioning.
-        """
+        """The version of the database using the old 'south' versioning."""
         south_migrationhistory = Table(
             "south_migrationhistory", MetaData(), Column("id", Integer)
         )
