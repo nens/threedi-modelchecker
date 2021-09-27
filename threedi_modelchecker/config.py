@@ -41,7 +41,7 @@ INVALID_GEOMETRY_CHECKS: List[GeometryCheck] = []
 INVALID_GEOMETRY_TYPE_CHECKS: List[GeometryTypeCheck] = []
 INVALID_ENUM_CHECKS: List[EnumCheck] = []
 
-TIMESERIES_CHECKS: List[TimeseriesCheck] = [ #TODO: verbetering van de melding, nu is het onbekend over welke timeseries het gaat, en klopt de check wel. Bergermeer faalt hierop, maar die doet het al jaren wel.
+TIMESERIES_CHECKS: List[TimeseriesCheck] = [
     TimeseriesCheck(models.BoundaryCondition1D.timeseries),
     TimeseriesCheck(models.BoundaryConditions2D.timeseries),
     TimeseriesCheck(models.Lateral1d.timeseries),
@@ -51,17 +51,34 @@ TIMESERIES_CHECKS: List[TimeseriesCheck] = [ #TODO: verbetering van de melding, 
 RANGE_CHECKS: List[BaseCheck] = [
     GeneralCheck(
         column=models.CrossSectionLocation.friction_value,
-        criterion_valid=models.CrossSectionLocation.friction_value >= 0,  #TODO: Error &  #friction_type=2, value moet ook kleiner zijn dan 1
+        criterion_valid=models.CrossSectionLocation.friction_value >= 0,
+    ),
+    GeneralCheck(
+        column=models.CrossSectionLocation.friction_value,
+        criterion_invalid=(
+            models.CrossSectionLocation.friction_type == constants.FrictionType.MANNING
+        )
+        & (models.CrossSectionLocation.friction_value >= 1),
     ),
     GeneralCheck(
         column=models.Culvert.friction_value,       
-        criterion_valid=models.Culvert.friction_value >= 0, #TODO: Error &  #friction_type=2, value ook kleiner zijn dan 1
+        criterion_valid=models.Culvert.friction_value >= 0,
     ),
     GeneralCheck(
-        column=models.GroundWater.phreatic_storage_capacity, # TODO: Error, alleen checken als grondwater aangeroepen wordt in global settings
-        criterion_valid=and_(
-            models.GroundWater.phreatic_storage_capacity >= 0,
-            models.GroundWater.phreatic_storage_capacity <= 1
+        column=models.Culvert.friction_value,
+        criterion_invalid=(
+            models.Culvert.friction_type == constants.FrictionType.MANNING
+        )
+        & (models.Culvert.friction_value >= 1),
+    ),
+    GeneralCheck(
+        column=models.GroundWater.phreatic_storage_capacity,
+        criterion_invalid=(
+            (models.GroundWater.global_settings != None)
+            & (
+                (models.GroundWater.phreatic_storage_capacity < 0)
+                | (models.GroundWater.phreatic_storage_capacity > 1)
+            )
         ),
     ),
     GeneralCheck(
