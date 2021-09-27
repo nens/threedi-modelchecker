@@ -164,8 +164,11 @@ def test_tabulated_shape_invalid_non_increasing_height():
     height = "0 2 1"
     assert not valid_tabulated_shape(width, height)
 
+@pytest.mark.parametrize("timeseries", [
+    "0,-0.5", "0,-0.5 \n59, -0.5\n60 ,-0.5\n   "
+])
 
-def test_timeseries_check(session):
+def test_timeseries_check(session, timeseries):
     BoundaryConditions2DFactory()
 
     check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
