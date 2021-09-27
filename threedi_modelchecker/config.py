@@ -8,7 +8,7 @@ from .checks.base import GeometryCheck
 from .checks.base import GeometryTypeCheck
 from .checks.base import QueryCheck
 from .checks.base import TypeCheck
-from .checks.base import UniqueCheck
+from .checks.base import UniqueCheck, RangeCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks
@@ -35,6 +35,11 @@ from sqlalchemy.orm import Query
 from typing import List
 
 
+CHEZY = constants.FrictionType.CHEZY.value
+MANNING = constants.FrictionType.MANNING.value
+BROAD_CRESTED = constants.CrestType.BROAD_CRESTED.value
+SHORT_CRESTED = constants.CrestType.SHORT_CRESTED.value
+
 FOREIGN_KEY_CHECKS: List[ForeignKeyCheck] = []
 UNIQUE_CHECKS: List[UniqueCheck] = []
 INVALID_TYPE_CHECKS: List[TypeCheck] = []
@@ -50,37 +55,30 @@ TIMESERIES_CHECKS: List[TimeseriesCheck] = [
 ]
 
 RANGE_CHECKS: List[BaseCheck] = [
-    GeneralCheck(
+    RangeCheck(
         column=models.CrossSectionLocation.friction_value,
-        criterion_valid=models.CrossSectionLocation.friction_value >= 0,
+        filters=[models.CrossSectionLocation.friction_type == CHEZY],
+        rng="[0,)",
     ),
-    GeneralCheck(
+    RangeCheck(
         column=models.CrossSectionLocation.friction_value,
-        criterion_invalid=(
-            models.CrossSectionLocation.friction_type == constants.FrictionType.MANNING
-        )
-        & (models.CrossSectionLocation.friction_value >= 1),
+        filters=[models.CrossSectionLocation.friction_type == MANNING],
+        rng="[0,1)",
     ),
-    GeneralCheck(
-        column=models.Culvert.friction_value,       
-        criterion_valid=models.Culvert.friction_value >= 0,
-    ),
-    GeneralCheck(
+    RangeCheck(
         column=models.Culvert.friction_value,
-        criterion_invalid=(
-            models.Culvert.friction_type == constants.FrictionType.MANNING
-        )
-        & (models.Culvert.friction_value >= 1),
+        filters=[models.Culvert.friction_type == CHEZY],
+        rng="[0,)",
     ),
-    GeneralCheck(
+    RangeCheck(
+        column=models.Culvert.friction_value,
+        filters=[models.Culvert.friction_type == MANNING],
+        rng="[0,1)",
+    ),
+    RangeCheck(
         column=models.GroundWater.phreatic_storage_capacity,
-        criterion_invalid=(
-            (models.GroundWater.global_settings != None)
-            & (
-                (models.GroundWater.phreatic_storage_capacity < 0)
-                | (models.GroundWater.phreatic_storage_capacity > 1)
-            )
-        ),
+        filters=[models.GroundWater.global_settings != None],
+        rng="[0,1]",
     ),
     GeneralCheck(
         column=models.ImperviousSurface.area, # TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
@@ -94,46 +92,63 @@ RANGE_CHECKS: List[BaseCheck] = [
         column=models.ImperviousSurfaceMap.percentage,  # TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
         criterion_valid=models.ImperviousSurfaceMap.percentage >= 0,
     ),
-    GeneralCheck(  # TODO: Error, alleen checken als interflow aangeroepen wordt in global settings
+    RangeCheck(
         column=models.Interflow.porosity,
-        criterion_valid=and_(
-            models.Interflow.porosity >= 0,
-            models.Interflow.porosity <= 1,
-        ),
+        filters=[models.Interflow.global_settings != None],
+        rng="[0,1]",
+    ),
+    RangeCheck(
+        column=models.Interflow.impervious_layer_elevation,
+        filters=[models.Interflow.global_settings != None],
+        rng="[0,)",
+    ),
+    RangeCheck(
+        column=models.Orifice.discharge_coefficient_negative,
+        rng="[0,)",
+    ),
+    RangeCheck(
+        column=models.Orifice.discharge_coefficient_positive,
+        rng="[0,)",
+    ),
+    RangeCheck(
+        column=models.Orifice.friction_value,
+        filters=[
+            models.Orifice.friction_type == CHEZY,
+            models.Orifice.crest_type == BROAD_CRESTED,
+        ],
+        rng="[0,)",
+    ),
+    RangeCheck(
+        column=models.Orifice.friction_value,
+        filters=[
+            models.Orifice.friction_type == MANNING,
+            models.Orifice.crest_type == BROAD_CRESTED,
+        ],
+        rng="[0,1)",
+    ),
+    RangeCheck(
+        column=models.Pipe.dist_calc_points,
+        rng="[0,)",
+    ),
+    RangeCheck(
+        column=models.Pipe.friction_value,
+        filters=[models.Pipe.friction_type == CHEZY],
+        rng="[0,)",
+    ),
+    RangeCheck(
+        column=models.Pipe.friction_value,
+        filters=[models.Pipe.friction_type == MANNING],
+        rng="[0,1)",
     ),
     GeneralCheck(
-        column=models.Interflow.impervious_layer_elevation,  # TODO: Error, alleen checken als interflow aangeroepen wordt in global settings
-        criterion_valid=models.Interflow.impervious_layer_elevation >= 0,
-    ),
-    GeneralCheck(
-        column=models.Orifice.discharge_coefficient_negative, # TODO: Error
-        criterion_valid=models.Orifice.discharge_coefficient_negative >= 0,
-    ),
-    GeneralCheck(
-        column=models.Orifice.discharge_coefficient_positive, # TODO: Error
-        criterion_valid=models.Orifice.discharge_coefficient_positive >= 0,
-    ),
-    GeneralCheck(
-        column=models.Orifice.friction_value, # TODO: Error, alleen als type =3
-        criterion_valid=models.Orifice.friction_value >= 0,  # friction_type=2 ook kleiner zijn dan 1 
-    ),
-    GeneralCheck(
-        column=models.Pipe.dist_calc_points, # TODO: Error
-        criterion_valid=models.Pipe.dist_calc_points > 0,
-    ),
-    GeneralCheck(
-        column=models.Pipe.friction_value, # TODO: Error
-        criterion_valid=models.Pipe.friction_value >= 0,
-    ),
-    GeneralCheck(
-        column=models.Pumpstation.upper_stop_level, # TODO: Error
+        column=models.Pumpstation.upper_stop_level,
         criterion_valid=and_(
             models.Pumpstation.upper_stop_level > models.Pumpstation.lower_stop_level,
             models.Pumpstation.upper_stop_level > models.Pumpstation.start_level,
         )
     ),
     GeneralCheck(
-        column=models.Pumpstation.lower_stop_level, # TODO: Error 
+        column=models.Pumpstation.lower_stop_level,
         criterion_valid=and_(
             models.Pumpstation.lower_stop_level < models.Pumpstation.start_level,
             models.Pumpstation.lower_stop_level < models.Pumpstation.upper_stop_level,
@@ -142,19 +157,22 @@ RANGE_CHECKS: List[BaseCheck] = [
 
     #TODO: toevoegen: check op bottom level van connection node, moet groter zijn, anders error
 
-    GeneralCheck( # TODO: Error
+    GeneralCheck(
         column=models.Pumpstation.start_level, 
         criterion_valid=and_(
             models.Pumpstation.start_level > models.Pumpstation.lower_stop_level,
             models.Pumpstation.start_level < models.Pumpstation.upper_stop_level,
         )
     ),
-    GeneralCheck( # TODO: Error
+    RangeCheck(
         column=models.Pumpstation.capacity,
-        criterion_valid=models.Pumpstation.capacity >= 0,
+        rng="[0,)",
     ),
-
-    # TODO: Toevoegen, als models.Pumpstation.capacity=0 Warning geven
+    GeneralCheck(
+        column=models.Pumpstation.capacity,
+        criterion_invalid=models.Pumpstation.capacity == 0.0,
+        level=CheckLevel.WARNING,
+    ),
 
     GeneralCheck( # TODO: Error
         column=models.SimpleInfiltration.infiltration_rate,

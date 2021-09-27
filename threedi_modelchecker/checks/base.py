@@ -6,11 +6,12 @@ from geoalchemy2.types import Geometry
 from pathlib import Path
 from sqlalchemy import false
 from sqlalchemy import func
-from sqlalchemy import not_
+from sqlalchemy import not_, and_
 from sqlalchemy import types
 from sqlalchemy.orm.session import Session
 from typing import List
 from typing import NamedTuple
+import re
 
 
 class CheckLevel(IntEnum):
@@ -326,6 +327,42 @@ class EnumCheck(BaseCheck):
     def description(self):
         allowed = {x.value for x in self.column.type.enum_class}
         return f"{self.column} is not one of {allowed}"
+
+
+class RangeCheck(BaseCheck):
+    """Check to if all values are within range [min_value, max_value]
+    
+    Use left_inclusive and right_inclusive to specify whether the min/max values
+    themselves should be considered valid. By default they are both considered
+    valid.
+    """
+    PATTERN = re.compile(r"^(\[|\()(.*),(.*)(\]|\))$")
+
+    def __init__(self, rng, filters=(), *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rng = rng
+        self._filters = filters
+
+    def to_check(self, session):
+        return super().to_check(session).filter(*self._filters)
+
+    def get_invalid(self, session):
+        left, min_value, max_value, right = self.PATTERN.findall(self.rng)[0]
+        min_value = float(min_value) if min_value else None
+        max_value = float(max_value) if max_value else None
+        conditions = []
+        if min_value is not None and left == "[":
+            conditions.append(self.column >= min_value)
+        elif min_value is not None and left == "(":
+            conditions.append(self.column > min_value)
+        if max_value is not None and right == "]":
+            conditions.append(self.column <= max_value)
+        elif max_value is not None and right == ")":
+            conditions.append(self.column < max_value)
+        return self.to_check(session).filter(~and_(*conditions))
+ 
+    def description(self):
+        return f"{self.column} is not in range {self.rng}"
 
 
 class FileExistsCheck(BaseCheck):
