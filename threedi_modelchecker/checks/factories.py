@@ -13,7 +13,9 @@ def generate_foreign_key_checks(table, **kwargs):
     foreign_key_checks = []
     for fk_column in table.foreign_keys:
         foreign_key_checks.append(
-            ForeignKeyCheck(reference_column=fk_column.column, column=fk_column.parent, **kwargs)
+            ForeignKeyCheck(
+                reference_column=fk_column.column, column=fk_column.parent, **kwargs
+            )
         )
     return foreign_key_checks
 

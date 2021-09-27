@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+from enum import IntEnum
 from geoalchemy2 import functions as geo_func
 from geoalchemy2.types import Geometry
 from pathlib import Path
@@ -10,7 +11,6 @@ from sqlalchemy import types
 from sqlalchemy.orm.session import Session
 from typing import List
 from typing import NamedTuple
-from enum import IntEnum
 
 
 class CheckLevel(IntEnum):
@@ -37,9 +37,10 @@ class BaseCheck(ABC):
     This method will return a list of rows (as named_tuples) which are invalid.
     """
 
-    def __init__(self, column, level=CheckLevel.ERROR):
+    def __init__(self, column, level=CheckLevel.ERROR, error_code=None):
         self.column = column
         self.table = column.table
+        self.error_code = error_code or "NOCODE"
         self.level = CheckLevel.get(level)
 
     @abstractmethod
@@ -323,10 +324,8 @@ class EnumCheck(BaseCheck):
         return invalid_values_q.all()
 
     def description(self):
-        return (
-            "Value in %s has invalid value, expected one of the "
-            "following values %s" % (self.column, list(self.column.type.enum_class))
-        )
+        allowed = [x.name for x in self.column.type.enum_class]
+        return f"Value in {self.column} is invalid, expected one of {allowed}"
 
 
 class FileExistsCheck(BaseCheck):
@@ -346,15 +345,20 @@ class FileExistsCheck(BaseCheck):
 
     If the context does not exist, the checker is skipped.
     """
+
     def __init__(self, column, filters=(), *args, **kwargs):
         self._filters = filters
         super().__init__(column, *args, **kwargs)
 
     def to_check(self, session):
-        return super().to_check(session).filter(
-            self.column != None,
-            self.column != "",
-            *self._filters,
+        return (
+            super()
+            .to_check(session)
+            .filter(
+                self.column != None,
+                self.column != "",
+                *self._filters,
+            )
         )
 
     def none(self, session):
@@ -378,10 +382,12 @@ class FileExistsCheck(BaseCheck):
 
         invalid = []
         for (path,) in session.query(self.column).all():
+            if path is None:
+                continue  # Hopefully another check will handle this situation
             if not Path(base_path / path).exists():
                 invalid.append(path)
 
         return self.to_check(session).filter(self.column.in_(invalid)).all()
 
     def description(self):
-        return f"file in {self.column} is not present"
+        return f"The file in {self.column} is not present"

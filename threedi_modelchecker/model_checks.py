@@ -1,4 +1,5 @@
-from .checks.base import BaseCheck, CheckLevel
+from .checks.base import BaseCheck
+from .checks.base import CheckLevel
 from .config import Config
 from .schema import ModelSchema
 from .threedi_database import ThreediDatabase
