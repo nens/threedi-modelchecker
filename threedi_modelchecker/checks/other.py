@@ -182,7 +182,7 @@ class TimeseriesCheck(BaseCheck):
         return invalid_timeseries
 
     def description(self):
-        return "Invalid timeseries"
+        return f"{self.column} contains an invalid timeseries"
 
 
 class Use0DFlowCheck(BaseCheck):
