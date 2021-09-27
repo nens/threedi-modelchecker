@@ -174,9 +174,10 @@ RANGE_CHECKS: List[BaseCheck] = [
         level=CheckLevel.WARNING,
     ),
 
-    GeneralCheck( # TODO: Error
+    RangeCheck(
         column=models.SimpleInfiltration.infiltration_rate,
-        criterion_valid=models.SimpleInfiltration.infiltration_rate >= 0,
+        filters=[models.SimpleInfiltration.global_settings != None],
+        rng="[0,)",
     ),
     GeneralCheck( # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt 
         column=models.Surface.nr_of_inhabitants,
@@ -217,19 +218,30 @@ RANGE_CHECKS: List[BaseCheck] = [
         column=models.SurfaceParameter.infiltration_recovery_constant,
         criterion_valid=models.SurfaceParameter.infiltration_recovery_constant >= 0,
     ),
-    GeneralCheck(# TODO: Error
+    RangeCheck(
         column=models.Weir.discharge_coefficient_negative,
-        criterion_valid=models.Weir.discharge_coefficient_negative >= 0,
+        rng="[0,)",
     ),
-    GeneralCheck(# TODO: Error
+    RangeCheck(
         column=models.Weir.discharge_coefficient_positive,
-        criterion_valid=models.Weir.discharge_coefficient_positive >= 0,
+        rng="[0,)",
     ),
-    GeneralCheck(# TODO: Error, alleen bij type 3 weirs, bij type 4 hoeft het niet gecheckt te worden
+    RangeCheck(
         column=models.Weir.friction_value,
-        criterion_valid=models.Weir.friction_value >= 0, #friction_type=2 ook kleiner zijn dan 1
+        filters=[
+            models.Weir.friction_type == CHEZY,
+            models.Weir.crest_type == BROAD_CRESTED,
+        ],
+        rng="[0,)",
     ),
-
+    RangeCheck(
+        column=models.Weir.friction_value,
+        filters=[
+            models.Weir.friction_type == MANNING,
+            models.Weir.crest_type == BROAD_CRESTED,
+        ],
+        rng="[0,1)",
+    ),
     GeneralCheck( #TODO: zou in de api checks moeten zitten
         column=models.GlobalSetting.maximum_sim_time_step,
         criterion_valid=models.GlobalSetting.maximum_sim_time_step >= models.GlobalSetting.sim_time_step,
