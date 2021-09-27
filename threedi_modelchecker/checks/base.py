@@ -324,10 +324,8 @@ class EnumCheck(BaseCheck):
         return invalid_values_q.all()
 
     def description(self):
-        allowed = ", ".join([x.name for x in self.column.type.enum_class])
-        if len(allowed) > 40:
-            allowed = allowed[:37] + "..."
-        return f"Value in {self.column} is invalid, expected one of [{allowed}]"
+        allowed = {x.value for x in self.column.type.enum_class}
+        return f"Value in {self.column} is not one of {allowed}"
 
 
 class FileExistsCheck(BaseCheck):
