@@ -59,9 +59,17 @@ def generate_geometry_type_checks(table, **kwargs):
     return geometry_type_checks
 
 
+# Fields to log with less-than-ERROR level
+ENUM_LEVEL_MAP = {
+    "sewerage_type": "WARNING",
+    "zoom_category": "INFO",
+}
+
+
 def generate_enum_checks(table, **kwargs):
     enum_checks = []
     for column in table.columns:
         if issubclass(type(column.type), custom_types.CustomEnum):
-            enum_checks.append(EnumCheck(column, **kwargs))
+            level = ENUM_LEVEL_MAP.get(column.name, "ERROR")
+            enum_checks.append(EnumCheck(column, level=level, **kwargs))
     return enum_checks

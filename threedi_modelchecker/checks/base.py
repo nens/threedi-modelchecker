@@ -37,10 +37,10 @@ class BaseCheck(ABC):
     This method will return a list of rows (as named_tuples) which are invalid.
     """
 
-    def __init__(self, column, level=CheckLevel.ERROR, error_code=None):
+    def __init__(self, column, level=CheckLevel.ERROR, error_code=0):
         self.column = column
         self.table = column.table
-        self.error_code = error_code or "NOCODE"
+        self.error_code = int(error_code)
         self.level = CheckLevel.get(level)
 
     @abstractmethod
@@ -324,8 +324,10 @@ class EnumCheck(BaseCheck):
         return invalid_values_q.all()
 
     def description(self):
-        allowed = [x.name for x in self.column.type.enum_class]
-        return f"Value in {self.column} is invalid, expected one of {allowed}"
+        allowed = ", ".join([x.name for x in self.column.type.enum_class])
+        if len(allowed) > 40:
+            allowed = allowed[:37] + "..."
+        return f"Value in {self.column} is invalid, expected one of [{allowed}]"
 
 
 class FileExistsCheck(BaseCheck):

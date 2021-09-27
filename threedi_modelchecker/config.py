@@ -1,5 +1,6 @@
 from .checks.base import BaseCheck
-from .checks.base import EnumCheck, CheckLevel
+from .checks.base import CheckLevel
+from .checks.base import EnumCheck
 from .checks.base import FileExistsCheck
 from .checks.base import ForeignKeyCheck
 from .checks.base import GeneralCheck

@@ -27,10 +27,10 @@ def export_to_file(errors, file):
 
 
 def format_check_results(check: BaseCheck, invalid_row: NamedTuple):
-    OUTPUT_FORMAT = "{level} {check} (row {row_id:d}) {description!s}"
+    OUTPUT_FORMAT = "{level}{error_code:04d} (row {row_id:d}) {description!s}"
     return OUTPUT_FORMAT.format(
-        level=check.level.name,
-        check=check.error_code,
+        level=check.level.name[:1],
+        error_code=check.error_code,
         row_id=invalid_row.id,
         description=check.description(),
     )
