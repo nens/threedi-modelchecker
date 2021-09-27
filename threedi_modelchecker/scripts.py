@@ -1,3 +1,4 @@
+from threedi_modelchecker.checks.base import CheckLevel
 from threedi_modelchecker import exporters
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_database import ThreediDatabase
@@ -10,10 +11,20 @@ import click
 @click.option(
     "-s", "--sum/--no-sum", default=False, help="Prints a summary instead of all errors"
 )
+@click.option(
+    "-l", "--level", type=click.Choice([x.name for x in CheckLevel], case_sensitive=False), default="ERROR", help="Minimum level for checks. 'ERROR' by, meaning that 'WARNING' and 'INFO' are ignored."
+)
 @click.pass_context
-def check_model(ctx, file, sum):
-    """Checks the threedi-model for errors"""
-    click.echo("Parsing threedi-model for any errors")
+def check_model(ctx, file, sum, level):
+    """Checks the threedi-model for errors / warnings / info messages"""
+    level = level.upper()
+    if level == "ERROR":
+        msg = "errors"
+    elif level == "WARNING":
+        msg = "errors or warnings"
+    else:
+        msg = "errors, warnings or info messages"
+    click.echo("Parsing threedi-model for any %s" % msg)
     if file:
         click.echo("Model errors will be written to %s" % file)
     if sum:
@@ -61,7 +72,7 @@ def sqlite(context, sqlite):
 
 def process(threedi_db, context):
     mc = ThreediModelChecker(threedi_db)
-    model_errors = mc.errors()
+    model_errors = mc.errors(level=context.params.get("level"))
 
     file_output = context.params.get("file")
     summary = context.params.get("sum")

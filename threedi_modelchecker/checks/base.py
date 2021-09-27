@@ -10,6 +10,23 @@ from sqlalchemy import types
 from sqlalchemy.orm.session import Session
 from typing import List
 from typing import NamedTuple
+from enum import IntEnum
+
+
+class CheckLevel(IntEnum):
+    ERROR = 40
+    WARNING = 30
+    INFO = 20
+
+    @classmethod
+    def get(cls, value):
+        """Get a CheckLevel from a CheckLevel, str or int."""
+        if isinstance(value, cls):
+            return value
+        elif isinstance(value, str):
+            return cls[value.upper()]
+        else:
+            return cls(value)
 
 
 class BaseCheck(ABC):
@@ -20,9 +37,10 @@ class BaseCheck(ABC):
     This method will return a list of rows (as named_tuples) which are invalid.
     """
 
-    def __init__(self, column):
+    def __init__(self, column, level=CheckLevel.ERROR):
         self.column = column
         self.table = column.table
+        self.level = CheckLevel.get(level)
 
     @abstractmethod
     def get_invalid(self, session: Session) -> List[NamedTuple]:
@@ -116,8 +134,8 @@ class QueryCheck(BaseCheck):
     sqlalchemy.sql.expression.BinaryExpression. For example, QueryCheck allows joins
     on multiple tables"""
 
-    def __init__(self, column, invalid, message):
-        super().__init__(column)
+    def __init__(self, column, invalid, message, *args, **kwargs):
+        super().__init__(column, *args, **kwargs)
         self.invalid = invalid
         self.message = message
 
@@ -328,9 +346,9 @@ class FileExistsCheck(BaseCheck):
 
     If the context does not exist, the checker is skipped.
     """
-    def __init__(self, column, filters=()):
+    def __init__(self, column, filters=(), *args, **kwargs):
         self._filters = filters
-        super().__init__(column)
+        super().__init__(column, *args, **kwargs)
 
     def to_check(self, session):
         return super().to_check(session).filter(

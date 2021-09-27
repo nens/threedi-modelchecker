@@ -1,5 +1,5 @@
 from .checks.base import BaseCheck
-from .checks.base import EnumCheck
+from .checks.base import EnumCheck, CheckLevel
 from .checks.base import FileExistsCheck
 from .checks.base import ForeignKeyCheck
 from .checks.base import GeneralCheck
@@ -713,3 +713,10 @@ class Config:
         self.checks += CONDITIONAL_CHECKS
         self.checks += FILE_EXISTS_CHECKS
         return None
+
+    def iter_checks(self, level=CheckLevel.ERROR):
+        """Iterate over checks with at least 'level'"""
+        level = CheckLevel.get(level)  # normalize
+        for check in self.checks:
+            if check.level >= level:
+                yield check
