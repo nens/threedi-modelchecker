@@ -165,9 +165,9 @@ class ForeignKeyCheck(BaseCheck):
         return invalid_foreign_keys_query.all()
 
     def description(self):
-        return "Missing foreign key in column %s, expected reference to %s." % (
+        return "%s refers to a non-existing %s" % (
             self.column,
-            self.reference_column,
+            self.reference_column.table,
         )
 
 
@@ -187,7 +187,7 @@ class UniqueCheck(BaseCheck):
         return invalid_uniques_query.all()
 
     def description(self):
-        return "Value in %s should to be unique" % self.column
+        return "%s should to be unique" % self.column
 
 
 class NotNullCheck(BaseCheck):
@@ -199,7 +199,7 @@ class NotNullCheck(BaseCheck):
         return not_null_query.all()
 
     def description(self):
-        return "Value in %s cannot be null" % self.column
+        return "%s cannot be null" % self.column
 
 
 class TypeCheck(BaseCheck):
@@ -222,7 +222,7 @@ class TypeCheck(BaseCheck):
         return invalid_type_query.all()
 
     def description(self):
-        return "Value in %s should to be of type %s" % (self.column, self.expected_type)
+        return "%s should to be of type %s" % (self.column, self.expected_type)
 
 
 def _sqlalchemy_to_sqlite_type(column_type):
@@ -271,7 +271,7 @@ class GeometryCheck(BaseCheck):
         return invalid_geometries.all()
 
     def description(self):
-        return "Value in %s is invalid geometry" % self.column
+        return "%s is an invalid geometry" % self.column
 
 
 class GeometryTypeCheck(BaseCheck):
@@ -292,7 +292,7 @@ class GeometryTypeCheck(BaseCheck):
         return invalid_geometry_types_q.all()
 
     def description(self):
-        return "Value in %s has invalid geometry type, expected geometry " "type %s" % (
+        return "%s has invalid geometry type, expected %s" % (
             self.column,
             self.column.type.geometry_type,
         )
@@ -325,7 +325,7 @@ class EnumCheck(BaseCheck):
 
     def description(self):
         allowed = {x.value for x in self.column.type.enum_class}
-        return f"Value in {self.column} is not one of {allowed}"
+        return f"{self.column} is not one of {allowed}"
 
 
 class FileExistsCheck(BaseCheck):
