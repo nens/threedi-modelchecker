@@ -13,7 +13,7 @@ import click
     "--level",
     type=click.Choice([x.name for x in CheckLevel], case_sensitive=False),
     default="ERROR",
-    help="Minimum level for checks. 'ERROR' by, meaning that 'WARNING' and 'INFO' are ignored.",
+    help="Minimum check level.",
 )
 @click.pass_context
 def check_model(ctx, file, level):
