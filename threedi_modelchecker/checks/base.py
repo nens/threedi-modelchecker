@@ -351,7 +351,15 @@ class FileExistsCheck(BaseCheck):
         super().__init__(column, *args, **kwargs)
 
     def to_check(self, session):
-        return super().to_check(session).filter(*self._filters)
+        return (
+            super()
+            .to_check(session)
+            .filter(
+                self.column != None,
+                self.column != "",
+                *self._filters,
+            )
+        )
 
     def none(self, session):
         return self.to_check(session).filter(false()).all()  # empty query
@@ -373,9 +381,8 @@ class FileExistsCheck(BaseCheck):
             return self.none(session)
 
         invalid = []
-        for (path,) in session.query(self.column).all():
-            if not path:
-                continue  # Hopefully another check will handle this situation
+        for record in self.to_check(session).all():
+            path = getattr(record, self.column.name)
             if not Path(base_path / path).exists():
                 invalid.append(path)
 
