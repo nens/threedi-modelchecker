@@ -339,30 +339,34 @@ class RangeCheck(BaseCheck):
     PATTERN = re.compile(r"^(\[|\()(.*),(.*)(\]|\))$")
 
     def __init__(self, rng, filters=(), *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.rng = rng
+        left, min_value, max_value, right = self.PATTERN.findall(rng)[0]
+        self._rng = rng
+        self._left_open = left == "("
+        self._right_open = right == ")"
+        self._min_value = float(min_value) if min_value else None
+        self._max_value = float(max_value) if max_value else None
         self._filters = filters
+        super().__init__(*args, **kwargs)
 
     def to_check(self, session):
         return super().to_check(session).filter(*self._filters)
 
     def get_invalid(self, session):
-        left, min_value, max_value, right = self.PATTERN.findall(self.rng)[0]
-        min_value = float(min_value) if min_value else None
-        max_value = float(max_value) if max_value else None
         conditions = []
-        if min_value is not None and left == "[":
-            conditions.append(self.column >= min_value)
-        elif min_value is not None and left == "(":
-            conditions.append(self.column > min_value)
-        if max_value is not None and right == "]":
-            conditions.append(self.column <= max_value)
-        elif max_value is not None and right == ")":
-            conditions.append(self.column < max_value)
+        if self._min_value is not None:
+            if self._left_open:
+                conditions.append(self.column > self._min_value)
+            else:
+                conditions.append(self.column >= self._min_value)
+        if self._max_value is not None:
+            if self._right_open:
+                conditions.append(self.column < self._max_value)
+            else:
+                conditions.append(self.column <= self._max_value)
         return self.to_check(session).filter(~and_(*conditions))
  
     def description(self):
-        return f"{self.column} is not in range {self.rng}"
+        return f"{self.column} is not in range {self._rng}"
 
 
 class FileExistsCheck(BaseCheck):
