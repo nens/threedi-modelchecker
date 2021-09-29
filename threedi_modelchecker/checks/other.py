@@ -37,7 +37,7 @@ class BankLevelCheck(BaseCheck):
 
     def description(self):
         return (
-            "CrossSectionLoaction.Banklevel cannot be null when calculation_type "
+            "CrossSectionLocation.bank_level cannot be NULL when calculation_type "
             "is CONNECTED or DOUBLE_CONNECTED"
         )
 
@@ -57,12 +57,12 @@ class CrossSectionShapeCheck(BaseCheck):
             width = cross_section_definition.width
             height = cross_section_definition.height
             if shape == constants.CrossSectionShape.RECTANGLE:
-                if not valid_rectangle(width, height):  
+                if not valid_rectangle(width, height):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.CLOSED_RECTANGLE:
-                if not valid_closed_rectangle(width, height):  
+                if not valid_closed_rectangle(width, height):
                     invalid_cross_section_shapes.append(cross_section_definition)
-            elif shape == constants.CrossSectionShape.CIRCLE: 
+            elif shape == constants.CrossSectionShape.CIRCLE:
                 if not valid_circle(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.EGG:
@@ -228,9 +228,14 @@ class Use0DFlowCheck(BaseCheck):
 
         invalid_rows = []
         for row in self.to_check(session):
-            if row.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE and impervious_surface_count == 0:
+            if (
+                row.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE
+                and impervious_surface_count == 0
+            ):
                 invalid_rows.append(row)
-            elif row.use_0d_inflow == constants.InflowType.SURFACE and surface_count == 0:
+            elif (
+                row.use_0d_inflow == constants.InflowType.SURFACE and surface_count == 0
+            ):
                 invalid_rows.append(row)
             else:
                 continue
@@ -238,7 +243,7 @@ class Use0DFlowCheck(BaseCheck):
 
     def description(self):
         return (
-            "When %s is used, there should exists at least one "
+            "When %s is used, there should exist at least one "
             "(impervious) surface." % self.column
         )
 

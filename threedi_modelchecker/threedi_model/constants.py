@@ -9,7 +9,7 @@ MIN_SCHEMA_VERSION = 173
 VERSION_TABLE_NAME = "schema_version"
 
 
-class BoundaryType(Enum): #TODO waar is randvoorwaarde 4?
+class BoundaryType(Enum):  # TODO waar is randvoorwaarde 4?
     WATERLEVEL = 1
     VELOCITY = 2
     DISCHARGE = 3
@@ -36,7 +36,7 @@ class FlowVariable(Enum):
     SURFACE_SOURCE_SINK_DISCHARGE = "surface_source_sink_discharge"
 
 
-class AggregationMethod(Enum): #TODO Waar is SUM?
+class AggregationMethod(Enum):
     AVERAGE = "avg"
     MINIMUM = "min"
     MAXIMUM = "max"
@@ -44,6 +44,7 @@ class AggregationMethod(Enum): #TODO Waar is SUM?
     CUMULATIVE_NEGATIVE = "cum_negative"
     CUMULATIVE_POSITIVE = "cum_positive"
     CURRENT = "current"
+    SUMMATION = "sum"
 
 
 class CalculationType(Enum):
@@ -78,7 +79,7 @@ class CrossSectionShape(Enum):
     TABULATED_TRAPEZIUM = 6
 
 
-class FrictionType(Enum): 
+class FrictionType(Enum):
     CHEZY = 1
     MANNING = 2
 
@@ -134,7 +135,9 @@ class PipeCalculationType(Enum):
     SHORT_CRESTED = 4
 
 
-class SewerageType(Enum): #warning als het niet klopt. Checken of het wel gevisualiseerd wordt in de livesite, mag namelijk leeggelaten worden
+class SewerageType(
+    Enum
+):  # warning als het niet klopt. Checken of het wel gevisualiseerd wordt in de livesite, mag namelijk leeggelaten worden
     MIXED = 0
     RAIN_WATER = 1
     DRY_WEATHER_FLOW = 2
@@ -156,7 +159,7 @@ class InfiltrationSurfaceOption(Enum):
     WET_SURFACE = 2
 
 
-class ZoomCategories(Enum): #TODO: weghalen
+class ZoomCategories(Enum):
     # Visibility in live-site: 0 is lowest for smallest level (i.e. ditch)
     # and 5 for highest (rivers).
     LOWEST_VISIBILITY = 0
