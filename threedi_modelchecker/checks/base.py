@@ -30,6 +30,22 @@ class CheckLevel(IntEnum):
             return cls(value)
 
 
+class CheckLevel(IntEnum):
+    ERROR = 40
+    WARNING = 30
+    INFO = 20
+
+    @classmethod
+    def get(cls, value):
+        """Get a CheckLevel from a CheckLevel, str or int."""
+        if isinstance(value, cls):
+            return value
+        elif isinstance(value, str):
+            return cls[value.upper()]
+        else:
+            return cls(value)
+
+
 class BaseCheck(ABC):
     """Base class for all checks.
 
