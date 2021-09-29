@@ -69,7 +69,8 @@ class CalculationTypeNode(Enum):
     CONNECTED = 2
 
 
-class CrossSectionShape(Enum): ##TODO: Volgens mij is er ook nog een type 0 RECTANGLE_CLOSED
+class CrossSectionShape(Enum):
+    CLOSED_RECTANGLE = 0
     RECTANGLE = 1
     CIRCLE = 2
     EGG = 3

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Query, aliased
 from geoalchemy2 import functions as geo_func
 
 from threedi_modelchecker.checks.other import BankLevelCheck, valid_egg, \
-    valid_rectangle, valid_circle, ConnectionNodesLength, \
+    valid_rectangle, valid_circle, valid_closed_rectangle, ConnectionNodesLength, \
     OpenChannelsWithNestedNewton, ConnectionNodesDistance
 from threedi_modelchecker.checks.other import CrossSectionShapeCheck
 from threedi_modelchecker.checks.other import TimeseriesCheck
@@ -92,6 +92,18 @@ def test_valid_rectangle_negative_value():
     assert not valid_rectangle(width="-1", height="2")
 
 
+def test_valid_closed_rectangle():
+    assert valid_closed_rectangle(width="1", height="2")
+
+
+def test_valid_closed_rectangle_none_value():
+    assert not valid_closed_rectangle(width="1", height=None)
+
+
+def test_valid_closed_rectangle_negative_value():
+    assert not valid_closed_rectangle(width="-1", height="2")
+
+
 def test_valid_circle():
     assert valid_circle("3")
 
@@ -123,46 +135,58 @@ def test_valid_egg_positive_value():
 def test_valid_tabulated_shape():
     width = "0 1 2 3"
     height = "0 1 2 3"
-    assert valid_tabulated_shape(width, height)
+    assert valid_tabulated_shape(width, height, is_rectangle=False)
 
 
 def test_valid_tabulated_shape_none():
-    assert not valid_tabulated_shape(None, None)
+    assert not valid_tabulated_shape(None, None, is_rectangle=True)
 
 
 def test_valid_tabulated_shape_empty():
-    assert not valid_tabulated_shape("", "")
+    assert not valid_tabulated_shape("", "", is_rectangle=True)
 
 
 def test_valid_tabulated_shape_unequal_length():
     width = "1 2"
     height = "1 2 3"
-    assert not valid_tabulated_shape(width, height)
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
 
 
 def test_valid_tabulated_shape_invalid_char():
     width = "1 2"
     height = "1 a"
-    assert not valid_tabulated_shape(width, height)
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
 
 
 def test_tabulated_shape_valid123():
     width = "7 7 0"
     height = "0 2.25 2.25"
-    assert valid_tabulated_shape(width, height)
+    assert valid_tabulated_shape(width, height, is_rectangle=True)
 
 
 def test_tabulated_shape_invalid_height_not_start_0():
     width = "0.5106338 0.8793753 1.109911 1.279277 1.409697 1.511286 1.589584 " \
             "1.647911 1.688341 1.71214 1.72 1.72"
     height = "0.831 0.749 0.667 0.585 0.503 0.421 0.338 0.256 0.174 0.092 0 0.01"
-    assert not valid_tabulated_shape(width, height)
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
 
 
 def test_tabulated_shape_invalid_non_increasing_height():
     width = "1 2 3"
     height = "0 2 1"
-    assert not valid_tabulated_shape(width, height)
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
+
+
+def test_tabulated_rectangle_invalid_first_width():
+    width = "0 2 3"
+    height = "0 1 2"
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
+
+def test_tabulated_trapezium_valid_first_width():
+    width = "0 2 3"
+    height = "0 1 2"
+    assert valid_tabulated_shape(width, height, is_rectangle=False)
+
 
 @pytest.mark.parametrize("timeseries", [
     "0,-0.5", "0,-0.5 \n59, -0.5\n60 ,-0.5\n   "

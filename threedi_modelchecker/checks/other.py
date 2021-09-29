@@ -52,12 +52,15 @@ class CrossSectionShapeCheck(BaseCheck):
         cross_section_definitions = session.query(self.table)
         invalid_cross_section_shapes = []
 
-        for cross_section_definition in cross_section_definitions.all(): #TODO rectangle_closed: width and height verplicht
+        for cross_section_definition in cross_section_definitions.all():
             shape = cross_section_definition.shape
             width = cross_section_definition.width
             height = cross_section_definition.height
             if shape == constants.CrossSectionShape.RECTANGLE:
                 if not valid_rectangle(width, height):  
+                    invalid_cross_section_shapes.append(cross_section_definition)
+            elif shape == constants.CrossSectionShape.CLOSED_RECTANGLE:
+                if not valid_closed_rectangle(width, height):  
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.CIRCLE: 
                 if not valid_circle(width):
@@ -65,16 +68,26 @@ class CrossSectionShapeCheck(BaseCheck):
             elif shape == constants.CrossSectionShape.EGG:
                 if not valid_egg(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
-            if shape == constants.CrossSectionShape.TABULATED_RECTANGLE: # TODO: eerste breedte moet >0 
-                if not valid_tabulated_shape(width, height):
+            if shape == constants.CrossSectionShape.TABULATED_RECTANGLE:
+                if not valid_tabulated_shape(width, height, is_rectangle=True):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.TABULATED_TRAPEZIUM:
-                if not valid_tabulated_shape(width, height):
+                if not valid_tabulated_shape(width, height, is_rectangle=False):
                     invalid_cross_section_shapes.append(cross_section_definition)
         return invalid_cross_section_shapes
 
     def description(self):
         return "Invalid CrossSectionShape"
+
+
+def valid_closed_rectangle(width, height):
+    if width is None:  # width is required
+        return False
+    width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
+    if height is None:  # height is required
+        return False
+    height_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(height)
+    return width_match and height_match
 
 
 def valid_rectangle(width, height):
@@ -104,7 +117,7 @@ def valid_egg(width):
     return w > 0
 
 
-def valid_tabulated_shape(width, height):
+def valid_tabulated_shape(width, height, is_rectangle):
     """Return if the tabulated shape is valid.
 
     Validating that the strings `width` and `height` contain positive floats
@@ -128,6 +141,14 @@ def valid_tabulated_shape(width, height):
             return False
     except ValueError:
         return False
+    if is_rectangle:
+        try:
+            # first width must larger than 0
+            first_width = float(width_string_list[0])
+            if first_width <= 0:
+                return False
+        except ValueError:
+            return False
     previous_height = -1
     for h_string, w_string in zip(height_string_list, width_string_list):
         try:

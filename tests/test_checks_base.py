@@ -45,29 +45,6 @@ def test_base_extra_filters_err(session):
     invalid_rows = null_check.get_invalid(session)
     assert len(invalid_rows) == 1
 
-def test_base_join_ok(session):
-    factories.ManholeFactory(connection_node__storage_area=3.0)
-    factories.ConnectionNodeFactory(id=2, storage_area=None)
-
-    # only check for connection nodes that have a manhole
-    null_check = NotNullCheck(
-        column=models.ConnectionNode.storage_area,
-        join=(models.Manhole,),
-    )
-    invalid_rows = null_check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-def test_base_join_err(session):
-    factories.ManholeFactory()
-    factories.ConnectionNodeFactory(id=2, storage_area=3.0)
-
-    # only check for connection nodes that have a manhole
-    null_check = NotNullCheck(
-        column=models.ConnectionNode.storage_area,
-        join=(models.Manhole,),
-    )
-    invalid_rows = null_check.get_invalid(session)
-    assert len(invalid_rows) == 1
 
 def test_base_extra_filters_err(session):
     factories.ConnectionNodeFactory(id=1, storage_area=3.0)
