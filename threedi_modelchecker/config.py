@@ -6,7 +6,6 @@ from .checks.base import ForeignKeyCheck
 from .checks.base import GeneralCheck
 from .checks.base import GeometryCheck
 from .checks.base import GeometryTypeCheck
-from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
 from .checks.base import RangeCheck
 from .checks.base import TypeCheck

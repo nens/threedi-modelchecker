@@ -1,3 +1,4 @@
+from threedi_modelchecker.checks.base import CheckLevel
 from threedi_modelchecker.checks.factories import generate_foreign_key_checks
 from threedi_modelchecker.checks.factories import generate_unique_checks
 from threedi_modelchecker.checks.factories import generate_not_null_checks
@@ -22,11 +23,10 @@ def test_gen_not_unique_checks():
 
 def test_gen_not_null_checks():
     not_null_checks = generate_not_null_checks(models.Manhole.__table__)
-    assert len(not_null_checks) == 5
+    assert len(not_null_checks) == 4
     not_null_check_columns = [check.column for check in not_null_checks]
     assert models.Manhole.id in not_null_check_columns
     assert models.Manhole.code in not_null_check_columns
-    assert models.Manhole.display_name in not_null_check_columns
 
 
 def test_gen_geometry_check():
@@ -52,3 +52,12 @@ def test_gen_enum_checks_varcharenum():
     enum_check_columns = [check.column for check in enum_checks]
     assert models.AggregationSettings.aggregation_method in enum_check_columns
     assert models.AggregationSettings.flow_variable in enum_check_columns
+
+
+def test_gen_enum_checks_custom_mapping():
+    enum_checks = generate_enum_checks(models.AggregationSettings.__table__, custom_level_map={"aggregation_method": "WARNING"})
+
+    assert len(enum_checks) == 2
+    checks = {check.column.name: check for check in enum_checks}
+    assert checks["aggregation_method"].level == CheckLevel.WARNING
+    assert checks["flow_variable"].level == CheckLevel.ERROR
