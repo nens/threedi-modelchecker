@@ -13,9 +13,6 @@ from sqlalchemy.orm.session import Session
 from typing import List
 from typing import NamedTuple
 
-import re
-
-
 class CheckLevel(IntEnum):
     ERROR = 40
     WARNING = 30
@@ -56,10 +53,11 @@ class BaseCheck(ABC):
     This method will return a list of rows (as named_tuples) which are invalid.
     """
 
-    def __init__(self, column, filters=None, level=CheckLevel.ERROR, error_code=0):
+    def __init__(self, column, filters=None, join=None, level=CheckLevel.ERROR, error_code=0):
         self.column = column
         self.table = column.table
         self.filters = filters
+        self.join = join
         self.error_code = int(error_code)
         self.level = CheckLevel.get(level)
 
@@ -97,6 +95,8 @@ class BaseCheck(ABC):
         :return: sqlalchemy.Query
         """
         query = session.query(self.table)
+        if self.join is not None:
+            query = query.join(*self.join)
         if self.filters is not None:
             query = query.filter(self.filters)
         return query

@@ -164,3 +164,9 @@ class ZoomCategories(Enum): #TODO: weghalen
     MEDIUM_VISIBILITY = 3
     HIGH_VISIBILITY = 4
     HIGHEST_VISIBILITY = 5
+
+
+class InflowType(Enum):
+    NO_INFLOW = 0
+    IMPERVIOUS_SURFACE = 1
+    SURFACE = 2

@@ -207,9 +207,9 @@ class Use0DFlowCheck(BaseCheck):
 
         invalid_rows = []
         for row in self.to_check(session):
-            if row.use_0d_inflow == 1 and impervious_surface_count == 0:
+            if row.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE and impervious_surface_count == 0:
                 invalid_rows.append(row)
-            elif row.use_0d_inflow == 2 and surface_count == 0:
+            elif row.use_0d_inflow == constants.InflowType.SURFACE and surface_count == 0:
                 invalid_rows.append(row)
             else:
                 continue
@@ -287,8 +287,8 @@ class ConnectionNodesLength(BaseCheck):
 
     def description(self) -> str:
         return (
-            f"The distance of start- and end connectionnode of {self.table} is "
-            f"too short, should be at least {self.min_distance} meters"
+            f"The distance between start- and end connectionnode of {self.table} is "
+            f"very short (< {self.min_distance}). A length of at least 1.0 m is recommended."
         )
 
 

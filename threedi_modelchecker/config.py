@@ -8,7 +8,7 @@ from .checks.base import GeometryCheck
 from .checks.base import GeometryTypeCheck
 from .checks.base import QueryCheck
 from .checks.base import TypeCheck
-from .checks.base import UniqueCheck, RangeCheck
+from .checks.base import UniqueCheck, RangeCheck, NotNullCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks
@@ -26,11 +26,8 @@ from .checks.other import Use0DFlowCheck
 from .threedi_model import models
 from .threedi_model.models import constants
 from geoalchemy2 import functions as geo_func
-from sqlalchemy import and_
-from sqlalchemy import cast
 from sqlalchemy import func
-from sqlalchemy import Integer
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from sqlalchemy.orm import Query
 from typing import List
 
@@ -87,17 +84,21 @@ RANGE_CHECKS: List[BaseCheck] = [
         min_value=0,
         max_value=1,
     ),
-    GeneralCheck(
-        column=models.ImperviousSurface.area, # TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
-        criterion_valid=models.ImperviousSurface.area >= 0,
+    RangeCheck(
+        column=models.ImperviousSurface.area,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE,
     ),
-    GeneralCheck(
-        column=models.ImperviousSurface.dry_weather_flow,  # # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt 
-        criterion_valid=models.ImperviousSurface.dry_weather_flow >= 0,
+    RangeCheck(
+        level=CheckLevel.WARNING,
+        column=models.ImperviousSurface.dry_weather_flow,  # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt 
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE,
     ),
-    GeneralCheck(
-        column=models.ImperviousSurfaceMap.percentage,  # TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
-        criterion_valid=models.ImperviousSurfaceMap.percentage >= 0,
+    RangeCheck(
+        column=models.ImperviousSurfaceMap.percentage,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE,
     ),
     RangeCheck(
         column=models.Interflow.porosity,
@@ -194,44 +195,56 @@ RANGE_CHECKS: List[BaseCheck] = [
         filters=models.SimpleInfiltration.global_settings != None,
         min_value=0,
     ),
-    GeneralCheck( # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt 
+    RangeCheck( # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt 
         column=models.Surface.nr_of_inhabitants,
-        criterion_valid=models.Surface.nr_of_inhabitants >= 0,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    GeneralCheck( # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt 
+    RangeCheck( # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt 
         column=models.Surface.dry_weather_flow,
-        criterion_valid=models.Surface.dry_weather_flow >= 0,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    GeneralCheck( # TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
+    RangeCheck(
         column=models.Surface.area,
-        criterion_valid=models.Surface.area >= 0,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    GeneralCheck( # TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
+    RangeCheck(
         column=models.SurfaceMap.percentage,
-        criterion_valid=and_(
-            models.SurfaceMap.percentage >= 0,
-            models.SurfaceMap.percentage <= 100, #TODO: Warning van maken. error alleen bij < 0
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
         ),
+    RangeCheck(
+        level=CheckLevel.WARNING,
+        column=models.SurfaceMap.percentage,
+        max_value=100,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    GeneralCheck( # TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
+    RangeCheck(
         column=models.SurfaceParameter.outflow_delay,
-        criterion_valid=models.SurfaceParameter.outflow_delay >= 0,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    GeneralCheck( # TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
+    RangeCheck(
         column=models.SurfaceParameter.max_infiltration_capacity,
-        criterion_valid=models.SurfaceParameter.max_infiltration_capacity >= 0,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    GeneralCheck(# TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
+    RangeCheck(
         column=models.SurfaceParameter.min_infiltration_capacity,
-        criterion_valid=models.SurfaceParameter.min_infiltration_capacity >= 0,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    GeneralCheck(# TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
+    RangeCheck(
         column=models.SurfaceParameter.infiltration_decay_constant,
-        criterion_valid=models.SurfaceParameter.infiltration_decay_constant >= 0,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    GeneralCheck(# TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
+    RangeCheck(
         column=models.SurfaceParameter.infiltration_recovery_constant,
-        criterion_valid=models.SurfaceParameter.infiltration_recovery_constant >= 0,
+        min_value=0,
+        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
     RangeCheck(
         column=models.Weir.discharge_coefficient_negative,
@@ -315,75 +328,83 @@ CONDITIONAL_CHECKS = [
             models.GlobalSetting.dem_obstacle_detection == True
         ),
         message="GlobalSetting.dem_obstacle_height should be larger than 0 when "
-                "GlobalSetting.dem_obstacle_detection == True" #TODO error
+                "GlobalSetting.dem_obstacle_detection == True"
     ),
-    QueryCheck( #TODO: error, maar alleen checken als groundwater ingevuld is in the global settings
+    QueryCheck(
         column=models.GroundWater.equilibrium_infiltration_rate_type,
         invalid=Query(models.GroundWater).filter(
+            models.GroundWater.global_settings != None,
             models.GroundWater.equilibrium_infiltration_rate_type == None,
             models.GroundWater.equilibrium_infiltration_rate_file != None
         ),
         message="The field GroundWater.equilibrium_infiltration_rate_type should be filled, when using "
                 "GroundWater.equilibrium_infiltration_rate_file."
     ),
-    QueryCheck( #TODO: error, maar alleen checken als groundwater ingevuld is in the global settings
+    QueryCheck(
         column=models.GroundWater.infiltration_decay_period_type,
         invalid=Query(models.GroundWater).filter(
+            models.GroundWater.global_settings != None,
             models.GroundWater.infiltration_decay_period_type == None,
             models.GroundWater.infiltration_decay_period_type != None
         ),
         message="The field GroundWater.infiltration_decay_period_type should be filled, when using"
                 "GroundWater.infiltration_decay_period_type."
     ),
-    QueryCheck(#TODO: error, maar alleen checken als groundwater ingevuld is in the global settings
+    QueryCheck(
         column=models.GroundWater.groundwater_hydro_connectivity_type,
         invalid=Query(models.GroundWater).filter(
+            models.GroundWater.global_settings != None,
             models.GroundWater.groundwater_hydro_connectivity_type == None,
             models.GroundWater.groundwater_hydro_connectivity_file != None
         ),
         message="The field GroundWater.groundwater_hydro_connectivity_type should be filled, when using "
                 "GroundWater.groundwater_hydro_connectivity_file is not null"
     ),
-    QueryCheck(#TODO: error, maar alleen checken als groundwater ingevuld is in the global settings
+    QueryCheck(
         column=models.GroundWater.groundwater_impervious_layer_level_type,
         invalid=Query(models.GroundWater).filter(
+            models.GroundWater.global_settings != None,
             models.GroundWater.groundwater_impervious_layer_level_type == None,
             models.GroundWater.groundwater_impervious_layer_level_file != None
         ),
         message="The field GroundWater.groundwater_impervious_layer_level_type should be filled, when using"
                 "when GroundWater.groundwater_impervious_layer_level_file"
     ),
-    QueryCheck(#TODO: error, maar alleen checken als groundwater ingevuld is in the global settings
+    QueryCheck(
         column=models.GroundWater.initial_infiltration_rate_type,
         invalid=Query(models.GroundWater).filter(
+            models.GroundWater.global_settings != None,
             models.GroundWater.initial_infiltration_rate_type == None,
             models.GroundWater.initial_infiltration_rate_file != None
         ),
         message="The field GroundWater.initial_infiltration_rate_type should be filled, when using "
                 "GroundWater.initial_infiltration_rate_file"
     ),
-    QueryCheck(#TODO: error, maar alleen checken als groundwater ingevuld is in the global settings
+    QueryCheck(
         column=models.GroundWater.phreatic_storage_capacity_type,
         invalid=Query(models.GroundWater).filter(
+            models.GroundWater.global_settings != None,
             models.GroundWater.initial_infiltration_rate_type == None,
             models.GroundWater.initial_infiltration_rate_file != None
         ),
         message="The field GroundWater.phreatic_storage_capacity_type should be filled, when using "
                 "GroundWater.phreatic_storage_capacity_file."
     ),
-    QueryCheck(#TODO: error, maar alleen checken als interflow ingevuld is in the global settings
+    QueryCheck(
         column=models.Interflow.porosity,
         invalid=Query(models.Interflow).filter(
+            models.Interflow.global_settings != None,
             models.Interflow.porosity == None,
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW
         ),
         message=f"The field Interflow.porosity should be filled, when "
                 f"Interflow.interflow_type != {constants.InterflowType.NO_INTERLFOW}"
     ),
-    QueryCheck(#TODO: error, maar alleen checken als interflow ingevuld is in the global settings, thickness moet groter dan 0 zijn
+    QueryCheck(
         column=models.Interflow.porosity_layer_thickness,
         invalid=Query(models.Interflow).filter(
-            models.Interflow.porosity_layer_thickness == None,
+            models.Interflow.global_settings != None,
+            models.Interflow.porosity_layer_thickness > 0,
             models.Interflow.interflow_type in [
                 constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
                 constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY,
@@ -394,18 +415,20 @@ CONDITIONAL_CHECKS = [
                 f"{constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY} or "
                 f"{constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY}"
     ),
-    QueryCheck( #TODO: error
+    QueryCheck(
         column=models.Interflow.impervious_layer_elevation,
         invalid=Query(models.Interflow).filter(
+            models.Interflow.global_settings != None,
             models.Interflow.impervious_layer_elevation == None,
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW
         ),
         message=f"Interflow.impervious_layer_elevation cannot be null when "
                 f"Interflow.interflow_type is not {constants.InterflowType.NO_INTERLFOW}"
     ),
-    QueryCheck(#TODO: error, maar alleen checken als interflow ingevuld is in the global settings
+    QueryCheck(
         column=models.Interflow.hydraulic_conductivity,
         invalid=Query(models.Interflow).filter(
+            models.Interflow.global_settings != None,
             or_(
                 models.Interflow.hydraulic_conductivity == None,
                 models.Interflow.hydraulic_conductivity_file == None,
@@ -416,7 +439,7 @@ CONDITIONAL_CHECKS = [
                 f"Interflow.hydraulic_conductivity_file cannot be null when "
                 f"Interflow.interflow_type != {constants.InterflowType.NO_INTERLFOW}"
     ),
-    QueryCheck(#TODO: ERROR
+    QueryCheck(
         column=models.Channel.calculation_type,
         invalid=Query(models.Channel).filter(
             models.Channel.calculation_type.in_([
@@ -432,7 +455,8 @@ CONDITIONAL_CHECKS = [
                 f"{constants.CalculationType.DOUBLE_CONNECTED} when "
                 f"GlobalSetting.dem_file is null"
     ),
-    QueryCheck(#TODO: Warning& toevoegen van een "future warning  "We will stop correcting this in the future, this constraint will be mandatory in the database"
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.Pumpstation.lower_stop_level,
         invalid=Query(models.Pumpstation).join(
             models.ConnectionNode,
@@ -444,9 +468,10 @@ CONDITIONAL_CHECKS = [
             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
         ),
         message="Pumpstation.lower_stop_level should be higher than "
-                "Manhole.bottom_level. Computational core will use Manhole.bottom_level as lower_stop_level."
+                "Manhole.bottom_level. In the future, this will lead to an error."
     ),
-    QueryCheck(#TODO: Warning& toevoegen van een "future warning  "We will stop correcting this in the future, this constraint will be mandatory in the database"
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.Pumpstation.lower_stop_level,
         invalid=Query(models.Pumpstation).join(
             models.ConnectionNode,
@@ -458,9 +483,10 @@ CONDITIONAL_CHECKS = [
             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
         ),
         message="Pumpstation.lower_stop_level should be higher than "
-                "Manhole.bottom_level.  Computational core will use Manhole.bottom_level as lower_stop_level."
+                "Manhole.bottom_level. In the future, this will lead to an error."
     ),
-    QueryCheck(#TODO: Warning& toevoegen van een "future warning  "We will stop correcting this in the future, this constraint will be mandatory in the database"
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.Pipe.invert_level_end_point,
         invalid=Query(models.Pipe).join(
             models.ConnectionNode,
@@ -471,9 +497,10 @@ CONDITIONAL_CHECKS = [
             models.Pipe.invert_level_end_point < models.Manhole.bottom_level,
         ),
         message="Pipe.invert_level_end_point should be higher than or equal to "
-                "Manhole.bottom_level. Computational core will use Manhole.bottom_level as Pipe.invert_level_end_point."
+                "Manhole.bottom_level. In the future, this will lead to an error."
     ),
-    QueryCheck(#TODO: Warning& toevoegen van een "future warning  "We will stop correcting this in the future, this constraint will be mandatory in the database"
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.Pipe.invert_level_start_point,
         invalid=Query(models.Pipe).join(
             models.ConnectionNode,
@@ -484,16 +511,17 @@ CONDITIONAL_CHECKS = [
             models.Pipe.invert_level_start_point < models.Manhole.bottom_level,
         ),
         message="Pipe.invert_level_start_point should be higher than or equal to "
-                "Manhole.bottom_level.  Computational core will use Manhole.bottom_level as Pipe.invert_level_start_point."
+                "Manhole.bottom_level. In the future, this will lead to an error."
     ),
-    QueryCheck(#TODO: Warning& toevoegen van een "future warning  "We will stop correcting this in the future, this constraint will be mandatory in the database"
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.Manhole.bottom_level,
         invalid=Query(models.Manhole).filter(
             models.Manhole.drain_level < models.Manhole.bottom_level,
             models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED
         ),
         message="Manhole.drain_level >= Manhole.bottom_level when "
-                "Manhole.calculation_type is CONNECTED.  Computational core will use Manhole.bottom_level as Manhole.drain_level."
+                "Manhole.calculation_type is CONNECTED. In the future, this will lead to an error."
     ),
     QueryCheck(#TODO als er geen DEM is en manhole_storage_area is ingevuld, alleen dan is dit een warning, anders info melding. Future warning "In case of using sub-basins this constraint becomes mandatory. "
         column=models.Manhole.drain_level,
@@ -513,7 +541,7 @@ CONDITIONAL_CHECKS = [
         message="GlobalSettings.maximum_sim_time_step cannot be null when "
                 "GlobalSettings.timestep_plus is True"
     ),
-    QueryCheck(#TODO Error
+    QueryCheck(
         column=models.GlobalSetting.use_1d_flow,
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.use_1d_flow == False,
@@ -522,7 +550,8 @@ CONDITIONAL_CHECKS = [
         message="GlobalSettings.use_1d_flow must be set to True when there are 1D "
                 "elements in the model"
     ),
-    QueryCheck(# TODO Warning 
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.Channel.id,
         invalid=Query(models.Channel).filter(
             geo_func.ST_Length(
@@ -532,9 +561,10 @@ CONDITIONAL_CHECKS = [
                 )
             ) < 0.05
         ),
-        message="Length of the line geometry is very short. Consider extending individual geometries to 1.0 m"
+        message="Length of a channel geometry is very short (< 0.05 m). A length of at least 1.0 m is recommended."
     ),
-    QueryCheck(# TODO Warning 
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.Culvert.id,
         invalid=Query(models.Culvert).filter(
             geo_func.ST_Length(
@@ -544,27 +574,33 @@ CONDITIONAL_CHECKS = [
                 )
             ) < 0.05
         ),
-        message="Length of the line geometry is very short. Consider extending individual geometries to 1.0 m"
+        message="Length of a culvert geometry is very short (< 0.05 m). A length of at least 1.0 m is recommended."
     ),
     ConnectionNodesLength( #TO DO zie foutmelding hierover bij culverts, we willen een check distance en een advies distance
+        level=CheckLevel.WARNING,
         column=models.Pipe.id,
         start_node=models.Pipe.connection_node_start,
         end_node=models.Pipe.connection_node_end,
         min_distance=0.05
     ),
-    ConnectionNodesLength(#TODO Alleen checken voor kcu=3 +zie foutmelding hierover bij culverts, we willen een check distance en een advies distance
+    ConnectionNodesLength(
+        level=CheckLevel.WARNING,
         column=models.Weir.id,
+        filters=models.Weir.crest_type == constants.CrestType.BROAD_CRESTED,
         start_node=models.Weir.connection_node_start,
         end_node=models.Weir.connection_node_end,
         min_distance=0.05
     ),
-    ConnectionNodesLength(#TODO Alleen checken voor kcu=3 +zie foutmelding hierover bij culverts, we willen een check distance en een advies distance
+    ConnectionNodesLength(
+        level=CheckLevel.WARNING,
         column=models.Orifice.id,
+        filters=models.Orifice.crest_type == constants.CrestType.BROAD_CRESTED,
         start_node=models.Orifice.connection_node_start,
         end_node=models.Orifice.connection_node_end,
         min_distance=0.05
     ),
-    QueryCheck(#TODO Warning
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode).filter(
             models.ConnectionNode.id.notin_(
@@ -584,10 +620,11 @@ CONDITIONAL_CHECKS = [
                 )
             )
         ),
-        message="This is an individual, ConnectionNode. Possibly it should be connected to either a manhole, pipe, "
+        message="This is an individual ConnectionNode. Connect it to either a manhole, pipe, "
                 "channel, culvert, weir, pumpstation or orifice"
     ),
-    QueryCheck(#TODO Warning & toevoegen combinatie van pipes, met weir, met orrifice and met culverts
+    QueryCheck( #TODO Warning & toevoegen combinatie van pipes, met weir, met orrifice and met culverts
+        level=CheckLevel.WARNING,
         column=models.Pipe.id,
         invalid=Query(models.Pipe).join(
             models.ConnectionNode,
@@ -604,37 +641,86 @@ CONDITIONAL_CHECKS = [
                 models.ConnectionNode.storage_area.is_(None)
             )
         ),
-        message="It can be beneficial for the computational stability to add storage to a connection_node in case of connecting two isolated pipes."
+        message="When connecting two isolated pipes, it is recommended to add storage to the connection node."
     ),
-    QueryCheck(#TODO Error
+    # QueryCheck(
+    #     level=CheckLevel.WARNING,
+    #     column=models.Culvert.id,
+    #     invalid=Query(models.Culvert).join(
+    #         models.ConnectionNode,
+    #         models.Culvert.connection_node_start_id == models.ConnectionNode.id
+    #     ).filter(
+    #         models.Culvert.calculation_type == constants.CalculationTypeCulvert.ISOLATED_NODE,
+    #         models.ConnectionNode.storage_area.is_(None)
+    #     ).union(
+    #         Query(models.Culvert).join(
+    #             models.ConnectionNode,
+    #             models.Culvert.connection_node_end_id == models.ConnectionNode.id
+    #         ).filter(
+    #             models.Culvert.calculation_type == constants.CalculationTypeCulvert.ISOLATED_NODE,
+    #             models.ConnectionNode.storage_area.is_(None)
+    #         )
+    #     ),
+    #     message="When connecting two isolated culverts, it is recommended to add storage to the connection node."
+    # ),
+    # QueryCheck(
+    #     level=CheckLevel.WARNING,
+    #     column=models.Weir.id,
+    #     invalid=Query(models.Weir).join(
+    #         models.ConnectionNode,
+    #         models.Weir.connection_node_start_id == models.ConnectionNode.id
+    #     ).filter(
+    #         models.ConnectionNode.storage_area.is_(None)
+    #     ).union(
+    #         Query(models.Weir).join(
+    #             models.ConnectionNode,
+    #             models.Weir.connection_node_end_id == models.ConnectionNode.id
+    #         ).filter(
+    #             models.ConnectionNode.storage_area.is_(None)
+    #         )
+    #     ),
+    #     message="When connecting two weirs, it is recommended to add storage to the connection node."
+    # ),
+    # QueryCheck(
+    #     level=CheckLevel.WARNING,
+    #     column=models.Orifice.id,
+    #     invalid=Query(models.Orifice).join(
+    #         models.ConnectionNode,
+    #         models.Orifice.connection_node_start_id == models.ConnectionNode.id
+    #     ).filter(
+    #         models.ConnectionNode.storage_area.is_(None)
+    #     ).union(
+    #         Query(models.Orifice).join(
+    #             models.ConnectionNode,
+    #             models.Orifice.connection_node_end_id == models.ConnectionNode.id
+    #         ).filter(
+    #             models.ConnectionNode.storage_area.is_(None)
+    #         )
+    #     ),
+    #     message="When connecting two orifices, it is recommended to add storage to the connection node."
+    # ),
+    RangeCheck(
         column=models.NumericalSettings.convergence_eps,
-        invalid=Query(models.NumericalSettings).filter(
-            models.NumericalSettings.convergence_eps <= 0
-        ),
-        message="NumericalSettings.convergence_eps must be larger than 0"
+        min_value=0,
+        left_inclusive=False,
     ),
-    QueryCheck(#TODO Error
+    RangeCheck(
         column=models.NumericalSettings.convergence_cg,
-        invalid=Query(models.NumericalSettings).filter(
-            models.NumericalSettings.convergence_cg <= 0
-        ),
-        message="NumericalSettings.convergence_cg must be larger than 0"
+        min_value=0,
+        left_inclusive=False,
     ),
-    QueryCheck(#TODO Error
+    RangeCheck(
         column=models.NumericalSettings.general_numerical_threshold,
-        invalid=Query(models.NumericalSettings).filter(
-            models.NumericalSettings.general_numerical_threshold <= 0
-        ),
-        message="NumericalSettings.general_numerical_threshold must be larger than 0"
+        min_value=0,
+        left_inclusive=False,
     ),
-    QueryCheck(#TODO Error
+    RangeCheck(
         column=models.NumericalSettings.flow_direction_threshold,
-        invalid=Query(models.NumericalSettings).filter(
-            models.NumericalSettings.flow_direction_threshold <= 0
-        ),
-        message="NumericalSettings.flow_direction_threshold must be larger than 0"
+        min_value=0,
+        left_inclusive=False,
     ),
-    QueryCheck(#TODO Warning
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.NumericalSettings.use_of_nested_newton,
         invalid=Query(models.NumericalSettings).filter(
             models.NumericalSettings.use_of_nested_newton == 0,
@@ -727,7 +813,10 @@ class Config:
             INVALID_TYPE_CHECKS += generate_type_checks(model.__table__)
             INVALID_GEOMETRY_CHECKS += generate_geometry_checks(model.__table__)
             INVALID_GEOMETRY_TYPE_CHECKS += generate_geometry_type_checks(model.__table__)
-            INVALID_ENUM_CHECKS += generate_enum_checks(model.__table__)
+            INVALID_ENUM_CHECKS += generate_enum_checks(model.__table__, custom_level_map={
+                "sewerage_type": "WARNING",
+                "zoom_category": "INFO",
+            })
 
         self.checks += FOREIGN_KEY_CHECKS
         self.checks += UNIQUE_CHECKS

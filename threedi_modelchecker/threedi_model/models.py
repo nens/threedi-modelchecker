@@ -437,7 +437,7 @@ class GlobalSetting(Base):
     maximum_sim_time_step = Column(Float)
     frict_avg = Column(Integer)
     wind_shielding_file = Column(String(255))
-    use_0d_inflow = Column(Integer, nullable=False)
+    use_0d_inflow = Column(IntegerEnum(constants.InflowType))
     table_step_size_1d = Column(Float)
     table_step_size_volume_2d = Column(Float)
     use_2d_rain = Column(Integer, nullable=False)
