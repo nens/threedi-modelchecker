@@ -57,28 +57,35 @@ TIMESERIES_CHECKS: List[TimeseriesCheck] = [
 RANGE_CHECKS: List[BaseCheck] = [
     RangeCheck(
         column=models.CrossSectionLocation.friction_value,
-        filters=[models.CrossSectionLocation.friction_type == CHEZY],
-        rng="[0,)",
+        filters=models.CrossSectionLocation.friction_type == CHEZY,
+        min_value=0,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.CrossSectionLocation.friction_value,
-        filters=[models.CrossSectionLocation.friction_type == MANNING],
-        rng="[0,1)",
+        filters=models.CrossSectionLocation.friction_type == MANNING,
+        min_value=0,
+        max_value=1,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Culvert.friction_value,
-        filters=[models.Culvert.friction_type == CHEZY],
-        rng="[0,)",
+        filters=models.Culvert.friction_type == CHEZY,
+        min_value=0,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Culvert.friction_value,
-        filters=[models.Culvert.friction_type == MANNING],
-        rng="[0,1)",
+        filters=models.Culvert.friction_type == MANNING,
+        min_value=0,
+        max_value=1,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.GroundWater.phreatic_storage_capacity,
-        filters=[models.GroundWater.global_settings != None],
-        rng="[0,1]",
+        filters=models.GroundWater.global_settings != None,
+        min_value=0,
+        max_value=1,
     ),
     GeneralCheck(
         column=models.ImperviousSurface.area, # TODO: Error, alleen checken als 0D inflow aangeroepen wordt in global settings
@@ -94,51 +101,59 @@ RANGE_CHECKS: List[BaseCheck] = [
     ),
     RangeCheck(
         column=models.Interflow.porosity,
-        filters=[models.Interflow.global_settings != None],
-        rng="[0,1]",
+        filters=models.Interflow.global_settings != None,
+        min_value=0,
+        max_value=1,
     ),
     RangeCheck(
         column=models.Interflow.impervious_layer_elevation,
-        filters=[models.Interflow.global_settings != None],
-        rng="[0,)",
+        filters=models.Interflow.global_settings != None,
+        min_value=0,
     ),
     RangeCheck(
         column=models.Orifice.discharge_coefficient_negative,
-        rng="[0,)",
+        min_value=0,
     ),
     RangeCheck(
         column=models.Orifice.discharge_coefficient_positive,
-        rng="[0,)",
+        min_value=0,
     ),
     RangeCheck(
         column=models.Orifice.friction_value,
-        filters=[
-            models.Orifice.friction_type == CHEZY,
-            models.Orifice.crest_type == BROAD_CRESTED,
-        ],
-        rng="[0,)",
+        filters=(
+            (models.Orifice.friction_type == CHEZY)
+            & (models.Orifice.crest_type == BROAD_CRESTED)
+        ),
+        min_value=0,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Orifice.friction_value,
-        filters=[
-            models.Orifice.friction_type == MANNING,
-            models.Orifice.crest_type == BROAD_CRESTED,
-        ],
-        rng="[0,1)",
+        filters=(
+            (models.Orifice.friction_type == MANNING)
+            & (models.Orifice.crest_type == BROAD_CRESTED)
+        ),
+        min_value=0,
+        max_value=1,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Pipe.dist_calc_points,
-        rng="[0,)",
+        min_value=0,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Pipe.friction_value,
-        filters=[models.Pipe.friction_type == CHEZY],
-        rng="[0,)",
+        filters=models.Pipe.friction_type == CHEZY,
+        min_value=0,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Pipe.friction_value,
-        filters=[models.Pipe.friction_type == MANNING],
-        rng="[0,1)",
+        filters=models.Pipe.friction_type == MANNING,
+        min_value=0,
+        max_value=1,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     GeneralCheck(
         column=models.Pumpstation.upper_stop_level,
@@ -166,7 +181,7 @@ RANGE_CHECKS: List[BaseCheck] = [
     ),
     RangeCheck(
         column=models.Pumpstation.capacity,
-        rng="[0,)",
+        min_value=0,
     ),
     GeneralCheck(
         column=models.Pumpstation.capacity,
@@ -176,8 +191,8 @@ RANGE_CHECKS: List[BaseCheck] = [
 
     RangeCheck(
         column=models.SimpleInfiltration.infiltration_rate,
-        filters=[models.SimpleInfiltration.global_settings != None],
-        rng="[0,)",
+        filters=models.SimpleInfiltration.global_settings != None,
+        min_value=0,
     ),
     GeneralCheck( # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt 
         column=models.Surface.nr_of_inhabitants,
@@ -220,27 +235,31 @@ RANGE_CHECKS: List[BaseCheck] = [
     ),
     RangeCheck(
         column=models.Weir.discharge_coefficient_negative,
-        rng="[0,)",
+        min_value=0,
     ),
     RangeCheck(
         column=models.Weir.discharge_coefficient_positive,
-        rng="[0,)",
+        min_value=0,
     ),
     RangeCheck(
         column=models.Weir.friction_value,
-        filters=[
-            models.Weir.friction_type == CHEZY,
-            models.Weir.crest_type == BROAD_CRESTED,
-        ],
-        rng="[0,)",
+        filters=(
+            (models.Weir.friction_type == CHEZY)
+            & (models.Weir.crest_type == BROAD_CRESTED)
+        ),
+        min_value=0,
+        max_value=1,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Weir.friction_value,
-        filters=[
-            models.Weir.friction_type == MANNING,
-            models.Weir.crest_type == BROAD_CRESTED,
-        ],
-        rng="[0,1)",
+        filters=(
+            (models.Weir.friction_type == MANNING)
+            & (models.Weir.crest_type == BROAD_CRESTED)
+        ),
+        min_value=0,
+        max_value=1,
+        left_inclusive=False,  # 0 itself is not allowed,
     ),
     GeneralCheck( #TODO: zou in de api checks moeten zitten
         column=models.GlobalSetting.maximum_sim_time_step,
@@ -640,43 +659,43 @@ FILE_EXISTS_CHECKS = [
     FileExistsCheck(column=models.GlobalSetting.interception_file),
     FileExistsCheck(
         column=models.Interflow.porosity_file,
-        filters=[models.Interflow.global_settings != None],
+        filters=models.Interflow.global_settings != None,
     ),
     FileExistsCheck(
         column=models.Interflow.hydraulic_conductivity_file,
-        filters=[models.Interflow.global_settings != None],
+        filters=models.Interflow.global_settings != None,
     ),
     FileExistsCheck(
         column=models.SimpleInfiltration.infiltration_rate_file,
-        filters=[models.SimpleInfiltration.global_settings != None],
+        filters=models.SimpleInfiltration.global_settings != None,
     ),
     FileExistsCheck(
         column=models.SimpleInfiltration.max_infiltration_capacity_file,
-        filters=[models.SimpleInfiltration.global_settings != None],
+        filters=models.SimpleInfiltration.global_settings != None,
     ),
     FileExistsCheck(
         column=models.GroundWater.groundwater_hydro_connectivity_file,
-        filters=[models.GroundWater.global_settings != None],
+        filters=models.GroundWater.global_settings != None,
     ),
     FileExistsCheck(
         column=models.GroundWater.phreatic_storage_capacity_file,
-        filters=[models.GroundWater.global_settings != None],
+        filters=models.GroundWater.global_settings != None,
     ),
     FileExistsCheck(
         column=models.GroundWater.equilibrium_infiltration_rate_file,
-        filters=[models.GroundWater.global_settings != None],
+        filters=models.GroundWater.global_settings != None,
     ),
     FileExistsCheck(
         column=models.GroundWater.initial_infiltration_rate_file,
-        filters=[models.GroundWater.global_settings != None],
+        filters=models.GroundWater.global_settings != None,
     ),
     FileExistsCheck(
         column=models.GroundWater.infiltration_decay_period_file,
-        filters=[models.GroundWater.global_settings != None],
+        filters=models.GroundWater.global_settings != None,
     ),
     FileExistsCheck(
         column=models.GroundWater.groundwater_hydro_connectivity_file,
-        filters=[models.GroundWater.global_settings != None],
+        filters=models.GroundWater.global_settings != None,
     ),
 ]
 

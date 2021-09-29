@@ -7,7 +7,7 @@ from sqlalchemy import Integer
 from sqlalchemy.orm import Query
 
 from tests import factories
-from threedi_modelchecker.checks.base import EnumCheck
+from threedi_modelchecker.checks.base import EnumCheck, RangeCheck
 from threedi_modelchecker.checks.base import GeneralCheck
 from threedi_modelchecker.checks.base import FileExistsCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
@@ -20,6 +20,30 @@ from threedi_modelchecker.checks.base import UniqueCheck
 from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_type
 from threedi_modelchecker.threedi_model import constants, custom_types, models
 
+
+
+def test_base_extra_filters_ok(session):
+    factories.ConnectionNodeFactory(id=1, storage_area=3.0)
+    factories.ConnectionNodeFactory(id=2, storage_area=None)
+
+    null_check = NotNullCheck(
+        column=models.ConnectionNode.storage_area,
+        filters=models.ConnectionNode.id != 2
+    )
+    invalid_rows = null_check.get_invalid(session)
+    assert len(invalid_rows) == 0
+
+
+def test_base_extra_filters_err(session):
+    factories.ConnectionNodeFactory(id=1, storage_area=3.0)
+    factories.ConnectionNodeFactory(id=2, storage_area=None)
+
+    null_check = NotNullCheck(
+        column=models.ConnectionNode.storage_area,
+        filters=models.ConnectionNode.id == 2
+    )
+    invalid_rows = null_check.get_invalid(session)
+    assert len(invalid_rows) == 1
 
 def test_fk_check(session):
     factories.ManholeFactory.create_batch(5)
@@ -859,33 +883,43 @@ def test_file_exists_check_context_ignore(session):
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
-
-def test_file_exists_check_extra_filters_ok(session, tmp_path):
-    factories.SimpleInfiltrationFactory(infiltration_rate_file="some/file")
-    session.model_checker_context.base_path = tmp_path
-    check = FileExistsCheck(
-        column=models.SimpleInfiltration.infiltration_rate_file,
-        filters=[models.SimpleInfiltration.global_settings != None],
-    )
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
-def test_file_exists_check_extra_filters_err(session, tmp_path):
-    inf = factories.SimpleInfiltrationFactory(infiltration_rate_file="some/file")
-    factories.GlobalSettingsFactory(simple_infiltration_settings=inf)
-    session.model_checker_context.base_path = tmp_path
-    check = FileExistsCheck(
-        column=models.SimpleInfiltration.infiltration_rate_file,
-        filters=[models.SimpleInfiltration.global_settings != None]
-    )
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
-
-
 def test_file_exists_check_skip(session):
     # no context, no check, no invalid records
     factories.GlobalSettingsFactory(dem_file="some/file")
     check = FileExistsCheck(column=models.GlobalSetting.dem_file)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
+
+
+@pytest.mark.parametrize("min_value,max_value,left_inclusive,right_inclusive", [
+    (0, 100, False, False),
+    (0, 42, False, True),
+    (42, 100, True, False),
+    (None, 100, False, False),
+    (0, None, False, False),
+])
+def test_range_check_valid(session, min_value,max_value,left_inclusive,right_inclusive):
+    factories.ConnectionNodeFactory(storage_area=42)
+
+    check = RangeCheck(
+        
+        min_value,max_value,left_inclusive,right_inclusive,column=models.ConnectionNode.storage_area,
+    )
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0
+
+
+@pytest.mark.parametrize("min_value,max_value,left_inclusive,right_inclusive", [
+    (0, 42, True, False),
+    (42, 100, False, True),
+    (None, 42, True, False),
+    (42, None, False, False),
+])
+def test_range_check_invalid(session, min_value,max_value,left_inclusive,right_inclusive):
+    factories.ConnectionNodeFactory(storage_area=42)
+
+    check = RangeCheck(
+        min_value,max_value,left_inclusive,right_inclusive,column=models.ConnectionNode.storage_area,
+    )
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 1
