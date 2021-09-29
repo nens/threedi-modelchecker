@@ -18,8 +18,8 @@ class BankLevelCheck(BaseCheck):
     calculation_type is CONNECTED or DOUBLE_CONNECTED.
     """
 
-    def __init__(self):
-        super().__init__(column=models.CrossSectionLocation.bank_level)
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionLocation.bank_level, *args, **kwargs)
 
     def get_invalid(self, session):
         q = session.query(self.table).filter(
@@ -45,8 +45,8 @@ class BankLevelCheck(BaseCheck):
 class CrossSectionShapeCheck(BaseCheck):
     """Check if all CrossSectionDefinition.shape are valid"""
 
-    def __init__(self):
-        super().__init__(column=models.CrossSectionDefinition.shape)
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionDefinition.shape, *args, **kwargs)
 
     def get_invalid(self, session):
         cross_section_definitions = session.query(self.table)
@@ -190,8 +190,8 @@ class Use0DFlowCheck(BaseCheck):
     2, there is at least one impervious surface or surfaces respectively.
     """
 
-    def __init__(self):
-        super().__init__(column=models.GlobalSetting.use_0d_inflow)
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.GlobalSetting.use_0d_inflow, *args, **kwargs)
 
     def to_check(self, session):
         """Return a Query object on which this check is applied"""
@@ -233,8 +233,8 @@ class ConnectionNodes(BaseCheck):
     - Weir
     """
 
-    def __init__(self):
-        super().__init__(column=models.ConnectionNode.id)
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.ConnectionNode.id, *args, **kwargs)
 
     def get_invalid(self, session):
         raise NotImplementedError
@@ -359,8 +359,8 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     See https://github.com/nens/threeditoolbox/issues/522
     """
 
-    def __init__(self):
-        super().__init__(column=models.Channel.id)
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.Channel.id, *args, **kwargs)
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         invalid_channels = []

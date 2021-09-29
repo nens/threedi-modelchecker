@@ -4,6 +4,6 @@ flake8
 pytest
 pytest-cov
 pytest-flake8
-
+mock
 mypy
 sqlalchemy-stubs

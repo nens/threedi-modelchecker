@@ -1,5 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
+from enum import IntEnum
 from geoalchemy2 import functions as geo_func
 from geoalchemy2.types import Geometry
 from pathlib import Path
@@ -12,6 +13,22 @@ from typing import List
 from typing import NamedTuple
 
 
+class CheckLevel(IntEnum):
+    ERROR = 40
+    WARNING = 30
+    INFO = 20
+
+    @classmethod
+    def get(cls, value):
+        """Get a CheckLevel from a CheckLevel, str or int."""
+        if isinstance(value, cls):
+            return value
+        elif isinstance(value, str):
+            return cls[value.upper()]
+        else:
+            return cls(value)
+
+
 class BaseCheck(ABC):
     """Base class for all checks.
 
@@ -20,9 +37,11 @@ class BaseCheck(ABC):
     This method will return a list of rows (as named_tuples) which are invalid.
     """
 
-    def __init__(self, column):
+    def __init__(self, column, level=CheckLevel.ERROR, error_code=0):
         self.column = column
         self.table = column.table
+        self.error_code = int(error_code)
+        self.level = CheckLevel.get(level)
 
     @abstractmethod
     def get_invalid(self, session: Session) -> List[NamedTuple]:
@@ -116,8 +135,8 @@ class QueryCheck(BaseCheck):
     sqlalchemy.sql.expression.BinaryExpression. For example, QueryCheck allows joins
     on multiple tables"""
 
-    def __init__(self, column, invalid, message):
-        super().__init__(column)
+    def __init__(self, column, invalid, message, *args, **kwargs):
+        super().__init__(column, *args, **kwargs)
         self.invalid = invalid
         self.message = message
 
@@ -146,9 +165,9 @@ class ForeignKeyCheck(BaseCheck):
         return invalid_foreign_keys_query.all()
 
     def description(self):
-        return "Missing foreign key in column %s, expected reference to %s." % (
+        return "%s refers to a non-existing %s" % (
             self.column,
-            self.reference_column,
+            self.reference_column.table,
         )
 
 
@@ -168,7 +187,7 @@ class UniqueCheck(BaseCheck):
         return invalid_uniques_query.all()
 
     def description(self):
-        return "Value in %s should to be unique" % self.column
+        return "%s should to be unique" % self.column
 
 
 class NotNullCheck(BaseCheck):
@@ -180,7 +199,7 @@ class NotNullCheck(BaseCheck):
         return not_null_query.all()
 
     def description(self):
-        return "Value in %s cannot be null" % self.column
+        return "%s cannot be null" % self.column
 
 
 class TypeCheck(BaseCheck):
@@ -203,7 +222,7 @@ class TypeCheck(BaseCheck):
         return invalid_type_query.all()
 
     def description(self):
-        return "Value in %s should to be of type %s" % (self.column, self.expected_type)
+        return "%s should to be of type %s" % (self.column, self.expected_type)
 
 
 def _sqlalchemy_to_sqlite_type(column_type):
@@ -252,7 +271,7 @@ class GeometryCheck(BaseCheck):
         return invalid_geometries.all()
 
     def description(self):
-        return "Value in %s is invalid geometry" % self.column
+        return "%s is an invalid geometry" % self.column
 
 
 class GeometryTypeCheck(BaseCheck):
@@ -273,7 +292,7 @@ class GeometryTypeCheck(BaseCheck):
         return invalid_geometry_types_q.all()
 
     def description(self):
-        return "Value in %s has invalid geometry type, expected geometry " "type %s" % (
+        return "%s has invalid geometry type, expected %s" % (
             self.column,
             self.column.type.geometry_type,
         )
@@ -305,10 +324,8 @@ class EnumCheck(BaseCheck):
         return invalid_values_q.all()
 
     def description(self):
-        return (
-            "Value in %s has invalid value, expected one of the "
-            "following values %s" % (self.column, list(self.column.type.enum_class))
-        )
+        allowed = {x.value for x in self.column.type.enum_class}
+        return f"{self.column} is not one of {allowed}"
 
 
 class FileExistsCheck(BaseCheck):
@@ -328,15 +345,20 @@ class FileExistsCheck(BaseCheck):
 
     If the context does not exist, the checker is skipped.
     """
-    def __init__(self, column, filters=()):
+
+    def __init__(self, column, filters=(), *args, **kwargs):
         self._filters = filters
-        super().__init__(column)
+        super().__init__(column, *args, **kwargs)
 
     def to_check(self, session):
-        return super().to_check(session).filter(
-            self.column != None,
-            self.column != "",
-            *self._filters,
+        return (
+            super()
+            .to_check(session)
+            .filter(
+                self.column != None,
+                self.column != "",
+                *self._filters,
+            )
         )
 
     def none(self, session):
@@ -359,11 +381,12 @@ class FileExistsCheck(BaseCheck):
             return self.none(session)
 
         invalid = []
-        for (path,) in session.query(self.column).all():
+        for record in self.to_check(session).all():
+            path = getattr(record, self.column.name)
             if not Path(base_path / path).exists():
                 invalid.append(path)
 
         return self.to_check(session).filter(self.column.in_(invalid)).all()
 
     def description(self):
-        return f"file in {self.column} is not present"
+        return f"The file in {self.column} is not present"
