@@ -5,7 +5,13 @@ Changelog of threedi-modelchecker
 0.15 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added log levels (INFO, WARNING, ERROR). The level of the checker can be
+  adjusted through ThreediModelChecker().errors and .checks. The command-line
+  interface also supports the --level parameter.
+
+- Fixed formatting of the command-line interface output.
+
+- Removed the summarize (--sum, --no-sum) option from the command-line interface.
 
 
 0.14 (2021-07-29)
