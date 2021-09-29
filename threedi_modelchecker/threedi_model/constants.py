@@ -5,7 +5,7 @@ LATEST_SOUTH_MIGRATION_ID = 174
 #  Migration 174 deletes some fields, which were already not present in the
 #  models of the threedi-modelchecker. Therefore we can both accept migration
 #  173 and 174.
-MIN_SCHEMA_VERSION = 175
+MIN_SCHEMA_VERSION = 200
 VERSION_TABLE_NAME = "schema_version"
 
 

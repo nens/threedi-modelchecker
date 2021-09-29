@@ -1,7 +1,7 @@
 """Migration the old friction_type 4 to 2 (MANNING)
 
 Revision ID: 0200
-Revises: 
+Revises:
 Create Date: 2021-09-29 13:50:19.544275
 
 """
