@@ -1,6 +1,6 @@
 """Migration the old friction_type 4 to 2 (MANNING)
 
-Revision ID: 0200
+Revision ID: 0201
 Revises:
 Create Date: 2021-09-29 13:50:19.544275
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "0200"
+revision = "0201"
 down_revision = None
 branch_labels = None
 depends_on = None

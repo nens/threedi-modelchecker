@@ -52,6 +52,17 @@ def _upgrade_database(db, revision="head"):
             script.run_env()
 
 
+def _stamp_database(db, revision):
+    """Set the version without actually migrating"""
+    with db.get_engine().begin() as connection:
+        config = get_alembic_config(connection)
+        script = ScriptDirectory.from_config(config)
+        context = MigrationContext.configure(
+            connection, opts={"version_table": constants.VERSION_TABLE_NAME}
+        )
+        context.stamp(script, revision=revision)
+
+
 class ModelSchema:
     def __init__(self, threedi_db, declared_models=models.DECLARED_MODELS):
         self.db = threedi_db
@@ -115,8 +126,12 @@ class ModelSchema:
             )
         if backup:
             with self.db.file_transaction() as work_db:
+                if v < 200:
+                    _stamp_database(work_db, revision="0200")
                 _upgrade_database(work_db, revision=revision)
         else:
+            if v < 200:
+                _stamp_database(self.db, revision="0200")
             _upgrade_database(self.db, revision=revision)
 
     def validate_schema(self):
