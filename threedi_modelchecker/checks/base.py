@@ -4,6 +4,7 @@ from enum import IntEnum
 from geoalchemy2 import functions as geo_func
 from geoalchemy2.types import Geometry
 from pathlib import Path
+from sqlalchemy import and_
 from sqlalchemy import false
 from sqlalchemy import func
 from sqlalchemy import not_
@@ -37,9 +38,10 @@ class BaseCheck(ABC):
     This method will return a list of rows (as named_tuples) which are invalid.
     """
 
-    def __init__(self, column, level=CheckLevel.ERROR, error_code=0):
+    def __init__(self, column, filters=None, level=CheckLevel.ERROR, error_code=0):
         self.column = column
         self.table = column.table
+        self.filters = filters
         self.error_code = int(error_code)
         self.level = CheckLevel.get(level)
 
@@ -76,7 +78,10 @@ class BaseCheck(ABC):
         :param session: sqlalchemy.orm.session.Session
         :return: sqlalchemy.Query
         """
-        return session.query(self.table)
+        query = session.query(self.table)
+        if self.filters is not None:
+            query = query.filter(self.filters)
+        return query
 
     def description(self) -> str:
         """Return a string explaining why rows are invalid according to this
@@ -222,7 +227,7 @@ class TypeCheck(BaseCheck):
         return invalid_type_query.all()
 
     def description(self):
-        return "%s should to be of type %s" % (self.column, self.expected_type)
+        return f"{self.column} is not of type {self.expected_type}"
 
 
 def _sqlalchemy_to_sqlite_type(column_type):
@@ -328,6 +333,56 @@ class EnumCheck(BaseCheck):
         return f"{self.column} is not one of {allowed}"
 
 
+class RangeCheck(BaseCheck):
+    """Check to if all values are within range [min_value, max_value]
+
+    Use left_inclusive and right_inclusive to specify whether the min/max values
+    themselves should be considered valid. By default they are both considered
+    valid.
+    """
+
+    def __init__(
+        self,
+        min_value=None,
+        max_value=None,
+        left_inclusive=True,
+        right_inclusive=True,
+        *args,
+        **kwargs,
+    ):
+        if min_value is None and max_value is None:
+            raise ValueError("Please supply at least one of {min_value, max_value}.")
+        self.min_value = min_value
+        self.max_value = max_value
+        self.left_inclusive = left_inclusive
+        self.right_inclusive = right_inclusive
+        super().__init__(*args, **kwargs)
+
+    def get_invalid(self, session):
+        conditions = []
+        if self.min_value is not None:
+            if self.left_inclusive:
+                conditions.append(self.column >= self.min_value)
+            else:
+                conditions.append(self.column > self.min_value)
+        if self.max_value is not None:
+            if self.right_inclusive:
+                conditions.append(self.column <= self.max_value)
+            else:
+                conditions.append(self.column < self.max_value)
+        return self.to_check(session).filter(~and_(*conditions)).all()
+
+    def description(self):
+        if self.min_value is None:
+            msg = f"is not less than {'or equal to' if self.right_inclusive else ''} {self.max_value}"
+        elif self.max_value is None:
+            msg = f"is not greater than {'or equal to' if self.left_inclusive else ''} {self.min_value}"
+        else:
+            # no room for 'left_inclusive' / 'right_inclusive' info
+            msg = f"is not between {self.min_value} and {self.max_value}"
+        return f"{self.column} {msg}"
+
+
 class FileExistsCheck(BaseCheck):
     """Check whether a file referenced in given Column exists.
 
@@ -346,10 +401,6 @@ class FileExistsCheck(BaseCheck):
     If the context does not exist, the checker is skipped.
     """
 
-    def __init__(self, column, filters=(), *args, **kwargs):
-        self._filters = filters
-        super().__init__(column, *args, **kwargs)
-
     def to_check(self, session):
         return (
             super()
@@ -357,7 +408,6 @@ class FileExistsCheck(BaseCheck):
             .filter(
                 self.column != None,
                 self.column != "",
-                *self._filters,
             )
         )
 

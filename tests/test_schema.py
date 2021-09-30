@@ -5,7 +5,8 @@ from sqlalchemy import String
 from sqlalchemy import Table
 from threedi_modelchecker import errors
 from threedi_modelchecker.schema import constants
-from threedi_modelchecker.schema import ModelSchema, get_schema_version
+from threedi_modelchecker.schema import get_schema_version
+from threedi_modelchecker.schema import ModelSchema
 from unittest import mock
 
 import pytest
