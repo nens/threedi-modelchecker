@@ -4,7 +4,6 @@ from .base import BaseCheck
 from .base import CheckLevel
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
-from sqlalchemy import or_
 from sqlalchemy import text
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Query
