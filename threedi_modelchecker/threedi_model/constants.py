@@ -13,6 +13,7 @@ class BoundaryType(Enum):
     WATERLEVEL = 1
     VELOCITY = 2
     DISCHARGE = 3
+    RIEMANN = 4
     SOMMERFELD = 5
 
 
@@ -41,10 +42,10 @@ class AggregationMethod(Enum):
     MINIMUM = "min"
     MAXIMUM = "max"
     CUMULATIVE = "cum"
-    MEDIAN = "med"
     CUMULATIVE_NEGATIVE = "cum_negative"
     CUMULATIVE_POSITIVE = "cum_positive"
     CURRENT = "current"
+    SUMMATION = "sum"
 
 
 class CalculationType(Enum):
@@ -71,6 +72,7 @@ class CalculationTypeNode(Enum):
 
 
 class CrossSectionShape(Enum):
+    CLOSED_RECTANGLE = 0
     RECTANGLE = 1
     CIRCLE = 2
     EGG = 3
@@ -165,3 +167,9 @@ class ZoomCategories(Enum):
     MEDIUM_VISIBILITY = 3
     HIGH_VISIBILITY = 4
     HIGHEST_VISIBILITY = 5
+
+
+class InflowType(Enum):
+    NO_INFLOW = 0
+    IMPERVIOUS_SURFACE = 1
+    SURFACE = 2

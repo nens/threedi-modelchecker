@@ -183,3 +183,23 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     max_degree = 1
     use_of_cg = 0
     use_of_nested_newton = 0
+
+
+class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Culvert
+        sqlalchemy_session = Session
+
+    code = "code"
+    display_name = Faker("name")
+    calculation_type = constants.CalculationTypeCulvert.ISOLATED_NODE
+    the_geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
+    connection_node_start = factory.SubFactory(ConnectionNodeFactory)
+    connection_node_end = factory.SubFactory(ConnectionNodeFactory)
+    friction_value = 0.03
+    friction_type = 2
+    invert_level_start_point = 0.1
+    invert_level_end_point = 1.1
+    cross_section_definition = factory.SubFactory(CrossSectionDefinitionFactory)
+    discharge_coefficient_negative = 1.0
+    discharge_coefficient_positive = 1.0
