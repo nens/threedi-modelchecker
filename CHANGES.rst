@@ -13,6 +13,13 @@ Changelog of threedi-modelchecker
 
 - Removed the summarize (--sum, --no-sum) option from the command-line interface.
 
+- Complete run through of the checks.
+
+- Added an initial migration (0200) that adds the tables only when necessary. In
+  this way, empty and existing sqlite files can be initialized.
+
+- Added a migration (0201) that replaces friction_type=4 with 2.
+
 
 0.14 (2021-07-29)
 -----------------
