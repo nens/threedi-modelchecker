@@ -35,6 +35,12 @@ from sqlalchemy.orm import Query
 from typing import List
 
 
+# some conditions that are used often
+uses_0d_surfaces = models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE
+uses_0d_impervious_surfaces = (
+    models.GlobalSetting.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE
+)
+
 CHEZY = constants.FrictionType.CHEZY.value
 MANNING = constants.FrictionType.MANNING.value
 BROAD_CRESTED = constants.CrestType.BROAD_CRESTED.value
@@ -92,21 +98,18 @@ RANGE_CHECKS: List[BaseCheck] = [
     RangeCheck(
         column=models.ImperviousSurface.area,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow
-        == constants.InflowType.IMPERVIOUS_SURFACE,
+        filters=uses_0d_impervious_surfaces,
     ),
     RangeCheck(
         level=CheckLevel.WARNING,
         column=models.ImperviousSurface.dry_weather_flow,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow
-        == constants.InflowType.IMPERVIOUS_SURFACE,
+        filters=uses_0d_impervious_surfaces,
     ),
     RangeCheck(
         column=models.ImperviousSurfaceMap.percentage,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow
-        == constants.InflowType.IMPERVIOUS_SURFACE,
+        filters=uses_0d_impervious_surfaces,
     ),
     RangeCheck(
         column=models.Interflow.porosity,
@@ -196,9 +199,9 @@ RANGE_CHECKS: List[BaseCheck] = [
         min_value=0,
     ),
     GeneralCheck(
+        level=CheckLevel.WARNING,
         column=models.Pumpstation.capacity,
         criterion_invalid=models.Pumpstation.capacity == 0.0,
-        level=CheckLevel.WARNING,
     ),
     RangeCheck(
         column=models.SimpleInfiltration.infiltration_rate,
@@ -208,53 +211,53 @@ RANGE_CHECKS: List[BaseCheck] = [
     RangeCheck(
         column=models.Surface.nr_of_inhabitants,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         column=models.Surface.dry_weather_flow,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         column=models.Surface.area,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         column=models.SurfaceMap.percentage,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         level=CheckLevel.WARNING,
         column=models.SurfaceMap.percentage,
         max_value=100,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         column=models.SurfaceParameter.outflow_delay,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         column=models.SurfaceParameter.max_infiltration_capacity,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         column=models.SurfaceParameter.min_infiltration_capacity,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         column=models.SurfaceParameter.infiltration_decay_constant,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         column=models.SurfaceParameter.infiltration_recovery_constant,
         min_value=0,
-        filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        filters=uses_0d_surfaces,
     ),
     RangeCheck(
         column=models.Weir.discharge_coefficient_negative,
@@ -635,8 +638,7 @@ CONDITIONAL_CHECKS = [
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode).filter(
             models.ConnectionNode.id.notin_(
-                Query(models.Manhole.connection_node_id).union_all(
-                    Query(models.Pipe.connection_node_start_id),
+                Query(models.Pipe.connection_node_start_id).union_all(
                     Query(models.Pipe.connection_node_end_id),
                     Query(models.Channel.connection_node_start_id),
                     Query(models.Channel.connection_node_end_id),
@@ -698,23 +700,6 @@ CONDITIONAL_CHECKS = [
         column=models.NumericalSettings.flow_direction_threshold,
         min_value=0,
         left_inclusive=False,
-    ),
-    QueryCheck(
-        level=CheckLevel.WARNING,
-        column=models.NumericalSettings.use_of_nested_newton,
-        invalid=Query(models.NumericalSettings).filter(
-            models.NumericalSettings.use_of_nested_newton == 0,
-            or_(
-                Query(func.count(models.Pipe.id) > 0).label("pipes"),
-                Query(func.count(models.Culvert.id) > 0).label("culverts"),
-                Query(func.count(models.Orifice.id) > 0).label("orifices"),
-            ),
-        ),
-        message="NumericalSettings.use_of_nested_newton is turned off, this in "
-        "combination with pipes, culverts or orifices in the model can "
-        "increase your computational cost. Please consider turning this on "
-        "NumericalSettings.use_of_nested_newton or removing the pipes, "
-        "culverts and orifices.",
     ),
 ]
 

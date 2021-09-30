@@ -382,7 +382,7 @@ class ConnectionNodesDistance(BaseCheck):
 
 
 class OpenChannelsWithNestedNewton(BaseCheck):
-    """Checks whether the model has any open cross-section in use when the
+    """Checks whether the model has any closed cross-section in use when the
     NumericalSettings.use_of_nested_newton is turned off.
 
     See https://github.com/nens/threeditoolbox/issues/522
@@ -390,64 +390,56 @@ class OpenChannelsWithNestedNewton(BaseCheck):
 
     def __init__(self, *args, **kwargs):
         super().__init__(
-            column=models.Channel.id, level=CheckLevel.WARNING, *args, **kwargs
+            column=models.CrossSectionDefinition.id,
+            level=CheckLevel.WARNING,
+            *args,
+            **kwargs,
         )
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        invalid_channels = []
-
-        # Circle and egg cross-section definitions are always open:
-        closed_definitions = (
-            Query(models.Channel)
-            .join(models.CrossSectionLocation, models.Channel.cross_section_locations)
-            .join(models.CrossSectionDefinition, models.CrossSectionLocation.definition)
-            .filter(
-                models.NumericalSettings.use_of_nested_newton == 0,
-                or_(
-                    models.CrossSectionDefinition.shape.in_(
-                        [
-                            constants.CrossSectionShape.CLOSED_RECTANGLE,
-                            constants.CrossSectionShape.CIRCLE,
-                            constants.CrossSectionShape.EGG,
-                        ]
-                    )
-                ),
-            )
+        definitions_in_use = Query(models.CrossSectionDefinition).filter(
+            models.NumericalSettings.use_of_nested_newton == 0,
+            models.CrossSectionDefinition.id.in_(
+                Query(models.CrossSectionLocation.definition_id).union_all(
+                    Query(models.Pipe.cross_section_definition_id),
+                    Query(models.Culvert.cross_section_definition_id),
+                    Query(models.Weir.cross_section_definition_id),
+                    Query(models.Orifice.cross_section_definition_id),
+                )
+            ),
         )
-        invalid_channels += closed_definitions.with_session(session).all()
 
-        # Tabulated cross-section definitions are open when the last element of 'width'
-        # is zero
-        tabulated_definitions = (
-            Query(
+        # closed_rectangle, circle, and egg cross-section definitions are always closed:
+        closed_definitions = definitions_in_use.filter(
+            models.CrossSectionDefinition.shape.in_(
                 [
-                    models.Channel,
-                    models.CrossSectionLocation,
-                    models.CrossSectionDefinition,
+                    constants.CrossSectionShape.CLOSED_RECTANGLE,
+                    constants.CrossSectionShape.CIRCLE,
+                    constants.CrossSectionShape.EGG,
                 ]
             )
-            .join(models.CrossSectionLocation, models.Channel.cross_section_locations)
-            .join(models.CrossSectionDefinition, models.CrossSectionLocation.definition)
-            .filter(
-                models.NumericalSettings.use_of_nested_newton == 0,
-                models.CrossSectionDefinition.shape.in_(
-                    [
-                        constants.CrossSectionShape.TABULATED_RECTANGLE,
-                        constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-                    ]
-                ),
+        )
+        result = list(closed_definitions.with_session(session).all())
+
+        # tabulated cross-section definitions are closed when the last element of 'width'
+        # is zero
+        tabulated_definitions = definitions_in_use.filter(
+            models.CrossSectionDefinition.shape.in_(
+                [
+                    constants.CrossSectionShape.TABULATED_RECTANGLE,
+                    constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+                ]
             )
         )
-        for channel, _, definition in tabulated_definitions.with_session(session).all():
+        for definition in tabulated_definitions.with_session(session).all():
             try:
-                if definition.width.split(" ")[-1] in ("0", "0.", "0.0"):
-                    # Open channel
-                    invalid_channels.append(channel)
+                if float(definition.width.split(" ")[-1]) == 0.0:
+                    # Closed channel
+                    result.append(definition)
             except Exception:
-                # Many things can go wrong, I won't bother with trying to catch all
-                # possible exceptions
+                # Many things can go wrong, these are caught elsewhere
                 pass
-        return invalid_channels
+        return result
 
     def description(self) -> str:
         return (
