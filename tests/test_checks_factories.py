@@ -1,9 +1,9 @@
 from threedi_modelchecker.checks.base import CheckLevel
-from threedi_modelchecker.checks.factories import generate_foreign_key_checks
-from threedi_modelchecker.checks.factories import generate_unique_checks
-from threedi_modelchecker.checks.factories import generate_not_null_checks
-from threedi_modelchecker.checks.factories import generate_geometry_checks
 from threedi_modelchecker.checks.factories import generate_enum_checks
+from threedi_modelchecker.checks.factories import generate_foreign_key_checks
+from threedi_modelchecker.checks.factories import generate_geometry_checks
+from threedi_modelchecker.checks.factories import generate_not_null_checks
+from threedi_modelchecker.checks.factories import generate_unique_checks
 from threedi_modelchecker.threedi_model import models
 
 
@@ -53,7 +53,10 @@ def test_gen_enum_checks_varcharenum():
 
 
 def test_gen_enum_checks_custom_mapping():
-    enum_checks = generate_enum_checks(models.AggregationSettings.__table__, custom_level_map={"aggregation_method": "WARNING"})
+    enum_checks = generate_enum_checks(
+        models.AggregationSettings.__table__,
+        custom_level_map={"aggregation_method": "WARNING"},
+    )
 
     assert len(enum_checks) == 2
     checks = {check.column.name: check for check in enum_checks}

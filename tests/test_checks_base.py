@@ -1,25 +1,28 @@
-import factory
-import pytest
 from geoalchemy2 import functions as geo_func
-from sqlalchemy import cast, and_
+from sqlalchemy import and_
+from sqlalchemy import cast
 from sqlalchemy import func
 from sqlalchemy import Integer
 from sqlalchemy.orm import Query
-
 from tests import factories
-from threedi_modelchecker.checks.base import EnumCheck, RangeCheck
-from threedi_modelchecker.checks.base import GeneralCheck
+from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_type
+from threedi_modelchecker.checks.base import EnumCheck
 from threedi_modelchecker.checks.base import FileExistsCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
+from threedi_modelchecker.checks.base import GeneralCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
-from threedi_modelchecker.checks.base import QueryCheck
 from threedi_modelchecker.checks.base import NotNullCheck
+from threedi_modelchecker.checks.base import QueryCheck
+from threedi_modelchecker.checks.base import RangeCheck
 from threedi_modelchecker.checks.base import TypeCheck
 from threedi_modelchecker.checks.base import UniqueCheck
-from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_type
-from threedi_modelchecker.threedi_model import constants, custom_types, models
+from threedi_modelchecker.threedi_model import constants
+from threedi_modelchecker.threedi_model import custom_types
+from threedi_modelchecker.threedi_model import models
 
+import factory
+import pytest
 
 
 def test_base_extra_filters_ok(session):
@@ -27,8 +30,7 @@ def test_base_extra_filters_ok(session):
     factories.ConnectionNodeFactory(id=2, storage_area=None)
 
     null_check = NotNullCheck(
-        column=models.ConnectionNode.storage_area,
-        filters=models.ConnectionNode.id != 2
+        column=models.ConnectionNode.storage_area, filters=models.ConnectionNode.id != 2
     )
     invalid_rows = null_check.get_invalid(session)
     assert len(invalid_rows) == 0
@@ -39,23 +41,11 @@ def test_base_extra_filters_err(session):
     factories.ConnectionNodeFactory(id=2, storage_area=None)
 
     null_check = NotNullCheck(
-        column=models.ConnectionNode.storage_area,
-        filters=models.ConnectionNode.id == 2
+        column=models.ConnectionNode.storage_area, filters=models.ConnectionNode.id == 2
     )
     invalid_rows = null_check.get_invalid(session)
     assert len(invalid_rows) == 1
 
-
-def test_base_extra_filters_err(session):
-    factories.ConnectionNodeFactory(id=1, storage_area=3.0)
-    factories.ConnectionNodeFactory(id=2, storage_area=None)
-
-    null_check = NotNullCheck(
-        column=models.ConnectionNode.storage_area,
-        filters=models.ConnectionNode.id == 2
-    )
-    invalid_rows = null_check.get_invalid(session)
-    assert len(invalid_rows) == 1
 
 def test_fk_check(session):
     factories.ManholeFactory.create_batch(5)
@@ -178,7 +168,7 @@ def test_threedi_db_and_factories(threedi_db):
 def test_run_spatial_function(session):
     """Example how to use spatial functions.
 
-     Works on postgis and spatialite"""
+    Works on postgis and spatialite"""
     factories.ConnectionNodeFactory()
     from geoalchemy2 import func
 
@@ -260,9 +250,7 @@ def test_type_check_boolean(session):
 
 
 def test_geometry_check(session):
-    factories.ConnectionNodeFactory(
-        the_geom="SRID=28992;POINT(-371.064544 42.28787)"
-    )
+    factories.ConnectionNodeFactory(the_geom="SRID=28992;POINT(-371.064544 42.28787)")
 
     geometry_check = GeometryCheck(models.ConnectionNode.the_geom)
     invalid_rows = geometry_check.get_invalid(session)
@@ -284,6 +272,7 @@ def test_geometry_check_with_invalid_geoms(session):
     geometry_check = GeometryCheck(models.ConnectionNode.the_geom)
     invalid_rows = geometry_check.get_invalid(session)
     assert len(invalid_rows) == 1
+
 
 def test_geometry_type_check(session):
     factories.ConnectionNodeFactory.create_batch(
@@ -346,8 +335,7 @@ def test_enum_check_string_enum(session):
 def test_enum_check_string_with_invalid_value(session):
     if session.bind.name == "postgresql":
         pytest.skip(
-            "Not able to add invalid aggregation method due to "
-            "CHECKED CONSTRAINT"
+            "Not able to add invalid aggregation method due to " "CHECKED CONSTRAINT"
         )
     a = factories.AggregationSettingsFactory(aggregation_method="invalid")
 
@@ -372,13 +360,13 @@ def test_conditional_checks(session):
 
     query = Query(models.GlobalSetting).filter(
         models.GlobalSetting.dem_obstacle_height <= 0,
-        models.GlobalSetting.dem_obstacle_detection == True
+        models.GlobalSetting.dem_obstacle_detection == True,
     )
     conditional_range_check_to_query_check = QueryCheck(
         column=models.GlobalSetting.dem_obstacle_height,
         invalid=query,
         message="GlobalSetting.dem_obstacle_height should be larger than 0 "
-                "when GlobalSetting.dem_obstacle_height is True."
+        "when GlobalSetting.dem_obstacle_height is True.",
     )
     invalids_querycheck = conditional_range_check_to_query_check.get_invalid(session)
     assert len(invalids_querycheck) == 1
@@ -393,19 +381,15 @@ def test_conditional_check_storage_area(session):
     conn_node_manhole_valid = factories.ConnectionNodeFactory(storage_area=4)
     conn_node_manhole_invalid = factories.ConnectionNodeFactory(storage_area=-5)
     factories.ManholeFactory(connection_node=conn_node_manhole_valid)
-    factories.ManholeFactory(
-        connection_node=conn_node_manhole_invalid
-    )
+    factories.ManholeFactory(connection_node=conn_node_manhole_invalid)
 
-    query = Query(models.ConnectionNode).join(
-        models.Manhole
-    ).filter(
-        models.ConnectionNode.storage_area <= 0
+    query = (
+        Query(models.ConnectionNode)
+        .join(models.Manhole)
+        .filter(models.ConnectionNode.storage_area <= 0)
     )
     query_check = QueryCheck(
-        column=models.ConnectionNode.storage_area,
-        invalid=query,
-        message=""
+        column=models.ConnectionNode.storage_area, invalid=query, message=""
     )
 
     invalids = query_check.get_invalid(session)
@@ -422,9 +406,7 @@ def test_conditional_check_joining_criterion_valid(session):
     manhole1 = factories.ManholeFactory(
         connection_node=connection_node1, bottom_level=1.0
     )
-    factories.ManholeFactory(
-        connection_node=connection_node2, bottom_level=-1.0
-    )
+    factories.ManholeFactory(connection_node=connection_node2, bottom_level=-1.0)
     factories.PumpstationFactory(
         connection_node_start=connection_node1, lower_stop_level=0.0
     )
@@ -448,12 +430,8 @@ def test_conditional_check_joining_criterion_valid(session):
 def test_query_check_with_joins(session):
     connection_node1 = factories.ConnectionNodeFactory()
     connection_node2 = factories.ConnectionNodeFactory()
-    factories.ManholeFactory(
-        connection_node=connection_node1, bottom_level=1.0
-    )
-    factories.ManholeFactory(
-        connection_node=connection_node2, bottom_level=-1.0
-    )
+    factories.ManholeFactory(connection_node=connection_node1, bottom_level=1.0)
+    factories.ManholeFactory(connection_node=connection_node2, bottom_level=-1.0)
     pump1 = factories.PumpstationFactory(
         connection_node_start=connection_node1, lower_stop_level=0.0
     )
@@ -461,19 +439,22 @@ def test_query_check_with_joins(session):
         connection_node_start=connection_node2, lower_stop_level=2.0
     )
 
-    query = Query(models.Pumpstation).join(
-        models.ConnectionNode,
-        models.Pumpstation.connection_node_start_id == models.ConnectionNode.id
-    ).join(
-        models.Manhole
-    ).filter(
-        models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+    query = (
+        Query(models.Pumpstation)
+        .join(
+            models.ConnectionNode,
+            models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+        )
+        .join(models.Manhole)
+        .filter(
+            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+        )
     )
     check = QueryCheck(
         column=models.Pumpstation.lower_stop_level,
         invalid=query,
         message="Pumpstation.lower_stop_level should be higher than "
-                "Manhole.bottom_level"
+        "Manhole.bottom_level",
     )
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
@@ -483,12 +464,8 @@ def test_query_check_with_joins(session):
 def test_query_check_on_pumpstation(session):
     connection_node1 = factories.ConnectionNodeFactory()
     connection_node2 = factories.ConnectionNodeFactory()
-    factories.ManholeFactory(
-        connection_node=connection_node1, bottom_level=1.0
-    )
-    factories.ManholeFactory(
-        connection_node=connection_node2, bottom_level=-1.0
-    )
+    factories.ManholeFactory(connection_node=connection_node1, bottom_level=1.0)
+    factories.ManholeFactory(connection_node=connection_node2, bottom_level=-1.0)
     pumpstation_wrong = factories.PumpstationFactory(
         connection_node_start=connection_node1, lower_stop_level=0.0
     )
@@ -496,18 +473,26 @@ def test_query_check_on_pumpstation(session):
         connection_node_start=connection_node2, lower_stop_level=2.0
     )
 
-    query = Query(models.Pumpstation).join(
-        models.ConnectionNode, models.Pumpstation.connection_node_start_id == models.ConnectionNode.id  # noqa: E501
-    ).join(
-        models.Manhole, models.Manhole.connection_node_id == models.ConnectionNode.id
-    ).filter(
-        models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+    query = (
+        Query(models.Pumpstation)
+        .join(
+            models.ConnectionNode,
+            models.Pumpstation.connection_node_start_id
+            == models.ConnectionNode.id,  # noqa: E501
+        )
+        .join(
+            models.Manhole,
+            models.Manhole.connection_node_id == models.ConnectionNode.id,
+        )
+        .filter(
+            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+        )
     )
     check = QueryCheck(
         column=models.Pumpstation.lower_stop_level,
         invalid=query,
         message="Pumpstation lower_stop_level should be higher than Manhole "
-                "bottom_level"
+        "bottom_level",
     )
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
@@ -578,9 +563,7 @@ def test_general_check_aggregation_function(session):
 
 
 def test_general_check_modulo_operator(session):
-    factories.GlobalSettingsFactory(
-        nr_timesteps=120, output_time_step=20
-    )
+    factories.GlobalSettingsFactory(nr_timesteps=120, output_time_step=20)
     global_settings_remainder = factories.GlobalSettingsFactory(
         nr_timesteps=125, output_time_step=20  # This is a FLOAT
     )
@@ -590,7 +573,8 @@ def test_general_check_modulo_operator(session):
     modulo_check = GeneralCheck(
         column=models.GlobalSetting.nr_timesteps,
         criterion_valid=models.GlobalSetting.nr_timesteps
-        % cast(models.GlobalSetting.output_time_step, Integer) == 0,
+        % cast(models.GlobalSetting.output_time_step, Integer)
+        == 0,
     )
 
     invalid = modulo_check.get_invalid(session)
@@ -604,44 +588,43 @@ def test_query_check_manhole_drain_level_calc_type_2(session):
     factories.ManholeFactory(drain_level=None)
     factories.ManholeFactory(drain_level=1)
     m3_error = factories.ManholeFactory(
-        drain_level=None,
-        calculation_type=constants.CalculationTypeNode.CONNECTED
+        drain_level=None, calculation_type=constants.CalculationTypeNode.CONNECTED
     )  # drain_level cannot be null when calculation_type is CONNECTED
     m4_error = factories.ManholeFactory(
         drain_level=1,
         bottom_level=2,
-        calculation_type=constants.CalculationTypeNode.CONNECTED
+        calculation_type=constants.CalculationTypeNode.CONNECTED,
     )  # bottom_level  >= drain_level when calculation_type is CONNECTED
     factories.ManholeFactory(
         drain_level=1,
         bottom_level=0,
-        calculation_type=constants.CalculationTypeNode.CONNECTED
+        calculation_type=constants.CalculationTypeNode.CONNECTED,
     )
     factories.ManholeFactory(
         drain_level=None,
         bottom_level=0,
-        calculation_type=constants.CalculationTypeNode.EMBEDDED
+        calculation_type=constants.CalculationTypeNode.EMBEDDED,
     )
 
     query_drn_lvl_st_bttm_lvl = Query(models.Manhole).filter(
         models.Manhole.drain_level < models.Manhole.bottom_level,
-        models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED
+        models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED,
     )
     query_invalid_not_null = Query(models.Manhole).filter(
         models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED,
-        models.Manhole.drain_level == None
+        models.Manhole.drain_level == None,
     )
     check_drn_lvl_gt_bttm_lvl = QueryCheck(
         column=models.Manhole.bottom_level,
         invalid=query_drn_lvl_st_bttm_lvl,
         message="Manhole.drain_level >= Manhole.bottom_level when "
-                "Manhole.calculation_type is CONNECTED"
+        "Manhole.calculation_type is CONNECTED",
     )
     check_invalid_not_null = QueryCheck(
         column=models.Manhole.drain_level,
         invalid=query_invalid_not_null,
         message="Manhole.drain_level cannot be null when Manhole.calculation_type is "
-                "CONNECTED"
+        "CONNECTED",
     )
     errors1 = check_drn_lvl_gt_bttm_lvl.get_invalid(session)
     errors2 = check_invalid_not_null.get_invalid(session)
@@ -658,13 +641,13 @@ def test_global_settings_no_use_1d_flow_and_1d_elements(session):
 
     query_1d_nodes_and_no_use_1d_flow = Query(models.GlobalSetting).filter(
         models.GlobalSetting.use_1d_flow == False,
-        Query(func.count(models.ConnectionNode.id) > 0).label("1d_count")
+        Query(func.count(models.ConnectionNode.id) > 0).label("1d_count"),
     )
     check_use_1d_flow_has_1d = QueryCheck(
         column=models.GlobalSetting.use_1d_flow,
         invalid=query_1d_nodes_and_no_use_1d_flow,
         message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
-                "elements"
+        "elements",
     )
     errors = check_use_1d_flow_has_1d.get_invalid(session)
     assert len(errors) == 1
@@ -677,13 +660,13 @@ def test_global_settings_use_1d_flow_and_no_1d_elements(session):
 
     query_1d_nodes_and_no_use_1d_flow = Query(models.GlobalSetting).filter(
         models.GlobalSetting.use_1d_flow == False,
-        Query(func.count(models.ConnectionNode.id) > 0).label("1d_count")
+        Query(func.count(models.ConnectionNode.id) > 0).label("1d_count"),
     )
     check_use_1d_flow_has_1d = QueryCheck(
         column=models.GlobalSetting.use_1d_flow,
         invalid=query_1d_nodes_and_no_use_1d_flow,
         message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
-                "elements"
+        "elements",
     )
     errors = check_use_1d_flow_has_1d.get_invalid(session)
     assert len(errors) == 0
@@ -692,18 +675,18 @@ def test_global_settings_use_1d_flow_and_no_1d_elements(session):
 def test_global_settings_start_time(session):
     if session.bind.name == "postgresql":
         pytest.skip("Can't insert wrong datatype in postgres")
-    factories.GlobalSettingsFactory(start_time='18:00:00')
+    factories.GlobalSettingsFactory(start_time="18:00:00")
     factories.GlobalSettingsFactory(start_time=None)
-    wrong_start_time = factories.GlobalSettingsFactory(start_time='asdf18:00:00')
+    wrong_start_time = factories.GlobalSettingsFactory(start_time="asdf18:00:00")
 
     check_start_time = QueryCheck(
         column=models.GlobalSetting.start_time,
         invalid=Query(models.GlobalSetting).filter(
             func.date(models.GlobalSetting.start_time) == None,
-            models.GlobalSetting.start_time != None
+            models.GlobalSetting.start_time != None,
         ),
         message="GlobalSettings.start_time is an invalid, make sure it has the "
-                "following format: 'HH:MM:SS'"
+        "following format: 'HH:MM:SS'",
     )
 
     errors = check_start_time.get_invalid(session)
@@ -714,17 +697,17 @@ def test_global_settings_start_time(session):
 def test_global_settings_start_date(session):
     if session.bind.name == "postgresql":
         pytest.skip("Can't insert wrong datatype in postgres")
-    factories.GlobalSettingsFactory(start_date='1991-08-27')
-    wrong_start_date = factories.GlobalSettingsFactory(start_date='asdf18:00:00')
+    factories.GlobalSettingsFactory(start_date="1991-08-27")
+    wrong_start_date = factories.GlobalSettingsFactory(start_date="asdf18:00:00")
 
     check_start_date = QueryCheck(
         column=models.GlobalSetting.start_date,
         invalid=Query(models.GlobalSetting).filter(
             func.date(models.GlobalSetting.start_date) == None,
-            models.GlobalSetting.start_date != None
+            models.GlobalSetting.start_date != None,
         ),
         message="GlobalSettings.start_date is an invalid, make sure it has the "
-                "following format: 'YYYY-MM-DD'"
+        "following format: 'YYYY-MM-DD'",
     )
 
     errors = check_start_date.get_invalid(session)
@@ -738,16 +721,16 @@ def test_length_geom_linestring_in_28992(session):
     # around 0.109m
     factories.ChannelFactory(
         the_geom="SRID=28992;LINESTRING("
-                 "122829.98048471771471668 473589.68720115750329569, "
-                 "122830.00490918199648149 473589.68720115750329569, "
-                 "122829.95687440223991871 473589.70983449439518154, "
-                 "122829.9793449093849631 473589.68850379559444264)"
+        "122829.98048471771471668 473589.68720115750329569, "
+        "122830.00490918199648149 473589.68720115750329569, "
+        "122829.95687440223991871 473589.70983449439518154, "
+        "122829.9793449093849631 473589.68850379559444264)"
     )
     # around 0.001m
     channel_too_short = factories.ChannelFactory(
         the_geom="SRID=28992;LINESTRING("
-                 "122829.98185859377554152 473589.69248294795397669, "
-                 "122829.98260150455462281 473589.69248294795397669)",
+        "122829.98185859377554152 473589.69248294795397669, "
+        "122829.98260150455462281 473589.69248294795397669)",
     )
 
     check_length_linestring = QueryCheck(
@@ -755,7 +738,7 @@ def test_length_geom_linestring_in_28992(session):
         invalid=Query(models.Channel).filter(
             geo_func.ST_Length(models.Channel.the_geom) < 0.05
         ),
-        message="Length of the v2_channel is too short, should be at least 0.05m"
+        message="Length of the v2_channel is too short, should be at least 0.05m",
     )
 
     errors = check_length_linestring.get_invalid(session)
@@ -769,29 +752,29 @@ def test_length_geom_linestring_in_4326(session):
     factories.GlobalSettingsFactory(epsg_code=28992)
     channel_too_short = factories.ChannelFactory(
         the_geom="SRID=4326;LINESTRING("
-                 "-0.38222938832999598 -0.13872236685816669, "
-                 "-0.38222930900909202 -0.13872236685816669)",
+        "-0.38222938832999598 -0.13872236685816669, "
+        "-0.38222930900909202 -0.13872236685816669)",
     )
     factories.ChannelFactory(
         the_geom="SRID=4326;LINESTRING("
-                 "-0.38222938468305784 -0.13872235682908687, "
-                 "-0.38222931083256106 -0.13872235591735235, "
-                 "-0.38222930992082654 -0.13872207236791409, "
-                 "-0.38222940929989008 -0.13872235591735235)",
+        "-0.38222938468305784 -0.13872235682908687, "
+        "-0.38222931083256106 -0.13872235591735235, "
+        "-0.38222930992082654 -0.13872207236791409, "
+        "-0.38222940929989008 -0.13872235591735235)",
     )
 
     q = Query(models.Channel).filter(
         geo_func.ST_Length(
             geo_func.ST_Transform(
-                models.Channel.the_geom,
-                Query(models.GlobalSetting.epsg_code).limit(1)
+                models.Channel.the_geom, Query(models.GlobalSetting.epsg_code).limit(1)
             )
-        ) < 0.05
+        )
+        < 0.05
     )
     check_length_linestring = QueryCheck(
         column=models.Channel.the_geom,
         invalid=q,
-        message="Length of the v2_channel is too short, should be at least 0.05m"
+        message="Length of the v2_channel is too short, should be at least 0.05m",
     )
 
     errors = check_length_linestring.get_invalid(session)
@@ -804,29 +787,29 @@ def test_length_geom_linestring_missing_epsg_from_global_settings(session):
         pytest.skip("Postgres already has a constrain that checks on the length")
     factories.ChannelFactory(
         the_geom="SRID=4326;LINESTRING("
-                 "-0.38222938832999598 -0.13872236685816669, "
-                 "-0.38222930900909202 -0.13872236685816669)",
+        "-0.38222938832999598 -0.13872236685816669, "
+        "-0.38222930900909202 -0.13872236685816669)",
     )
     factories.ChannelFactory(
         the_geom="SRID=4326;LINESTRING("
-                 "-0.38222938468305784 -0.13872235682908687, "
-                 "-0.38222931083256106 -0.13872235591735235, "
-                 "-0.38222930992082654 -0.13872207236791409, "
-                 "-0.38222940929989008 -0.13872235591735235)",
+        "-0.38222938468305784 -0.13872235682908687, "
+        "-0.38222931083256106 -0.13872235591735235, "
+        "-0.38222930992082654 -0.13872207236791409, "
+        "-0.38222940929989008 -0.13872235591735235)",
     )
 
     q = Query(models.Channel).filter(
         geo_func.ST_Length(
             geo_func.ST_Transform(
-                models.Channel.the_geom,
-                Query(models.GlobalSetting.epsg_code).limit(1)
+                models.Channel.the_geom, Query(models.GlobalSetting.epsg_code).limit(1)
             )
-        ) < 0.05
+        )
+        < 0.05
     )
     check_length_linestring = QueryCheck(
         column=models.Channel.the_geom,
         invalid=q,
-        message="Length of the v2_channel is too short, should be at least 0.05m"
+        message="Length of the v2_channel is too short, should be at least 0.05m",
     )
 
     errors = check_length_linestring.get_invalid(session)
@@ -881,6 +864,7 @@ def test_file_exists_check_context_ignore(session):
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
+
 def test_file_exists_check_skip(session):
     # no context, no check, no invalid records
     factories.GlobalSettingsFactory(dem_file="some/file")
@@ -889,35 +873,52 @@ def test_file_exists_check_skip(session):
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.parametrize("min_value,max_value,left_inclusive,right_inclusive", [
-    (0, 100, False, False),
-    (0, 42, False, True),
-    (42, 100, True, False),
-    (None, 100, False, False),
-    (0, None, False, False),
-])
-def test_range_check_valid(session, min_value,max_value,left_inclusive,right_inclusive):
+@pytest.mark.parametrize(
+    "min_value,max_value,left_inclusive,right_inclusive",
+    [
+        (0, 100, False, False),
+        (0, 42, False, True),
+        (42, 100, True, False),
+        (None, 100, False, False),
+        (0, None, False, False),
+    ],
+)
+def test_range_check_valid(
+    session, min_value, max_value, left_inclusive, right_inclusive
+):
     factories.ConnectionNodeFactory(storage_area=42)
 
     check = RangeCheck(
-        
-        min_value,max_value,left_inclusive,right_inclusive,column=models.ConnectionNode.storage_area,
+        min_value,
+        max_value,
+        left_inclusive,
+        right_inclusive,
+        column=models.ConnectionNode.storage_area,
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.parametrize("min_value,max_value,left_inclusive,right_inclusive", [
-    (0, 42, True, False),
-    (42, 100, False, True),
-    (None, 42, True, False),
-    (42, None, False, False),
-])
-def test_range_check_invalid(session, min_value,max_value,left_inclusive,right_inclusive):
+@pytest.mark.parametrize(
+    "min_value,max_value,left_inclusive,right_inclusive",
+    [
+        (0, 42, True, False),
+        (42, 100, False, True),
+        (None, 42, True, False),
+        (42, None, False, False),
+    ],
+)
+def test_range_check_invalid(
+    session, min_value, max_value, left_inclusive, right_inclusive
+):
     factories.ConnectionNodeFactory(storage_area=42)
 
     check = RangeCheck(
-        min_value,max_value,left_inclusive,right_inclusive,column=models.ConnectionNode.storage_area,
+        min_value,
+        max_value,
+        left_inclusive,
+        right_inclusive,
+        column=models.ConnectionNode.storage_area,
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1

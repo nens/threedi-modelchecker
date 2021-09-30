@@ -1,10 +1,11 @@
-import os
+from tests import Session
+from threedi_modelchecker.model_checks import Context
+from threedi_modelchecker.model_checks import ThreediModelChecker
+from threedi_modelchecker.threedi_database import ThreediDatabase
 
+import os
 import pytest
 
-from threedi_modelchecker.threedi_database import ThreediDatabase
-from threedi_modelchecker.model_checks import ThreediModelChecker, Context
-from tests import Session
 
 try:
     import psycopg2
@@ -45,9 +46,7 @@ def threedi_db(request):
     if request.param[0] == "postgres" and psycopg2 is None:
         pytest.skip("Skipping postgres test as psycopg2 is not available.")
 
-    db = ThreediDatabase(
-        request.param[1], db_type=request.param[0], echo=False
-    )
+    db = ThreediDatabase(request.param[1], db_type=request.param[0], echo=False)
     engine = db.get_engine()
     Session.configure(bind=engine)
 
@@ -85,8 +84,5 @@ def modelchecker(threedi_db):
 
 @pytest.fixture
 def in_memory_sqlite():
-    """An in-memory database without a schema (to test schema migrations)
-    """
-    return ThreediDatabase(
-        {"db_path": ""}, db_type="spatialite", echo=False
-    )
+    """An in-memory database without a schema (to test schema migrations)"""
+    return ThreediDatabase({"db_path": ""}, db_type="spatialite", echo=False)
