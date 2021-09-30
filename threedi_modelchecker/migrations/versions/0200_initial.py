@@ -22,7 +22,7 @@ import sqlalchemy as sa
 def _add_if_not_exists(element, compiler, **kw):
     output = compiler.visit_create_table(element, **kw)
     if element.element.info.get("ifexists"):
-        output = re.sub("^\s*CREATE TABLE", "CREATE TABLE IF NOT EXISTS", output, re.S)
+        output = re.sub(r"^\s*CREATE TABLE", "CREATE TABLE IF NOT EXISTS", output, re.S)
     return output
 
 
