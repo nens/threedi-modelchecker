@@ -1,8 +1,9 @@
 from alembic import context
-import os
 from sqlalchemy import create_engine
-import threedi_modelchecker.threedi_model.models  # NOQA needed for autogenerate
 from threedi_modelchecker.threedi_model.models import Base
+
+import os
+import threedi_modelchecker.threedi_model.models  # NOQA needed for autogenerate
 
 
 target_metadata = Base.metadata
@@ -12,7 +13,9 @@ config = context.config
 def get_url():
     db_url = os.environ.get("DB_URL")
     if not db_url:
-        raise RuntimeError("Database URL must be specified using the environment variable DB_URL")
+        raise RuntimeError(
+            "Database URL must be specified using the environment variable DB_URL"
+        )
     return db_url
 
 
