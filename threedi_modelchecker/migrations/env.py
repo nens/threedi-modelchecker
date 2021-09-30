@@ -1,10 +1,19 @@
 from alembic import context
+import os
+from sqlalchemy import create_engine
+import threedi_modelchecker.threedi_model.models  # NOQA needed for autogenerate
 from threedi_modelchecker.threedi_model.models import Base
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+
 
 target_metadata = Base.metadata
 config = context.config
+
+
+def get_url():
+    db_url = os.environ.get("DB_URL")
+    if not db_url:
+        raise RuntimeError("Database URL must be specified using the environment variable DB_URL")
+    return db_url
 
 
 def run_migrations_online():
@@ -15,11 +24,7 @@ def run_migrations_online():
     """
     connectable = config.attributes.get("connection")
     if connectable is None:
-        connectable = engine_from_config(
-            config.get_section(config.config_ini_section),
-            prefix="sqlalchemy.",
-            poolclass=pool.NullPool,
-        )
+        connectable = create_engine(get_url())
 
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
