@@ -1,4 +1,4 @@
-"""Initial migration
+"""Create all tables if they do not exist already.
 
 Revision ID: 0200
 Revises:
