@@ -1,6 +1,7 @@
 from ..threedi_model import constants
 from ..threedi_model import models
 from .base import BaseCheck
+from .base import CheckLevel
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
 from sqlalchemy import or_
@@ -313,7 +314,7 @@ class ConnectionNodesLength(BaseCheck):
 
     def description(self) -> str:
         return (
-            f"The distance between start- and end connectionnode of {self.table} is "
+            f"The length of {self.table} is "
             f"very short (< {self.min_distance}). A length of at least 1.0 m is recommended."
         )
 
@@ -327,7 +328,9 @@ class ConnectionNodesDistance(BaseCheck):
         """
         :param minimum_distance: threshold distance in meters
         """
-        super().__init__(column=models.ConnectionNode.id, *args, **kwargs)
+        super().__init__(
+            column=models.ConnectionNode.id, level=CheckLevel.WARNING, *args, **kwargs
+        )
         self.minimum_distance = minimum_distance
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
@@ -350,7 +353,7 @@ class ConnectionNodesDistance(BaseCheck):
             session.connection().execute(recover_spatial_index).scalar()
 
         query = text(
-            """SELECT *
+            f"""SELECT *
                FROM v2_connection_nodes AS cn1, v2_connection_nodes AS cn2
                WHERE
                    distance(cn1.the_geom, cn2.the_geom, 1) < :min_distance
@@ -360,7 +363,7 @@ class ConnectionNodesDistance(BaseCheck):
                      FROM SpatialIndex
                      WHERE (
                        f_table_name = "v2_connection_nodes"
-                       AND search_frame = Buffer(cn1.the_geom, 0.0005)));
+                       AND search_frame = Buffer(cn1.the_geom, {self.minimum_distance / 2})));
             """
         )
         results = (
@@ -386,13 +389,15 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(column=models.Channel.id, *args, **kwargs)
+        super().__init__(
+            column=models.Channel.id, level=CheckLevel.WARNING, *args, **kwargs
+        )
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         invalid_channels = []
 
         # Circle and egg cross-section definitions are always open:
-        circle_egg_definitions = (
+        closed_definitions = (
             Query(models.Channel)
             .join(models.CrossSectionLocation, models.Channel.cross_section_locations)
             .join(models.CrossSectionDefinition, models.CrossSectionLocation.definition)
@@ -401,6 +406,7 @@ class OpenChannelsWithNestedNewton(BaseCheck):
                 or_(
                     models.CrossSectionDefinition.shape.in_(
                         [
+                            constants.CrossSectionShape.CLOSED_RECTANGLE,
                             constants.CrossSectionShape.CIRCLE,
                             constants.CrossSectionShape.EGG,
                         ]
@@ -408,11 +414,11 @@ class OpenChannelsWithNestedNewton(BaseCheck):
                 ),
             )
         )
-        invalid_channels += circle_egg_definitions.with_session(session).all()
+        invalid_channels += closed_definitions.with_session(session).all()
 
         # Tabulated cross-section definitions are open when the last element of 'width'
         # is zero
-        open_definitions = (
+        tabulated_definitions = (
             Query(
                 [
                     models.Channel,
@@ -432,7 +438,7 @@ class OpenChannelsWithNestedNewton(BaseCheck):
                 ),
             )
         )
-        for channel, _, definition in open_definitions.with_session(session).all():
+        for channel, _, definition in tabulated_definitions.with_session(session).all():
             try:
                 if definition.width.split(" ")[-1] in ("0", "0.", "0.0"):
                     # Open channel
@@ -445,9 +451,7 @@ class OpenChannelsWithNestedNewton(BaseCheck):
 
     def description(self) -> str:
         return (
-            "Channel in the model with an open cross-section-definition while also "
-            "having the NumericalSettings.use_of_nested_newton turned off can be a "
-            "cause of instabilities in the simulation. Please turn on the "
-            "NumericalSettings.use_of_nested_newton on or make the Channel a "
-            "closed definition."
+            f"{self.column} has a closed cross section definition while "
+            f"NumericalSettings.use_of_nested_newton is switched off. "
+            f"This gives convergence issues. We recommend setting use_of_nested_newton = 1."
         )

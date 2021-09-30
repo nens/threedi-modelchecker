@@ -23,19 +23,17 @@ def test_gen_not_unique_checks():
 
 def test_gen_not_null_checks():
     not_null_checks = generate_not_null_checks(models.Manhole.__table__)
-    assert len(not_null_checks) == 4
+    assert len(not_null_checks) == 3
     not_null_check_columns = [check.column for check in not_null_checks]
     assert models.Manhole.id in not_null_check_columns
-    assert models.Manhole.code in not_null_check_columns
 
 
 def test_gen_geometry_check():
     geometry_checks = generate_geometry_checks(models.ConnectionNode.__table__)
 
-    assert len(geometry_checks) == 2
+    assert len(geometry_checks) == 1
     geometry_check_columns = [check.column for check in geometry_checks]
     assert models.ConnectionNode.the_geom in geometry_check_columns
-    assert models.ConnectionNode.the_geom_linestring in geometry_check_columns
 
 
 def test_gen_enum_checks():

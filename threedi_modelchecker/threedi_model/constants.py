@@ -9,10 +9,11 @@ MIN_SCHEMA_VERSION = 173
 VERSION_TABLE_NAME = "schema_version"
 
 
-class BoundaryType(Enum):  # TODO waar is randvoorwaarde 4?
+class BoundaryType(Enum):
     WATERLEVEL = 1
     VELOCITY = 2
     DISCHARGE = 3
+    RIEMANN = 4
     SOMMERFELD = 5
 
 
@@ -135,9 +136,7 @@ class PipeCalculationType(Enum):
     SHORT_CRESTED = 4
 
 
-class SewerageType(
-    Enum
-):  # warning als het niet klopt. Checken of het wel gevisualiseerd wordt in de livesite, mag namelijk leeggelaten worden
+class SewerageType(Enum):
     MIXED = 0
     RAIN_WATER = 1
     DRY_WEATHER_FLOW = 2

@@ -285,20 +285,6 @@ def test_geometry_check_with_invalid_geoms(session):
     invalid_rows = geometry_check.get_invalid(session)
     assert len(invalid_rows) == 1
 
-
-def test_geometry_check_with_none_geoms(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Not sure how to insert invalid types in postgresql")
-    factories.ConnectionNodeFactory(
-        the_geom_linestring="SRID=4326;LINESTRING(71.0 42.2, 71.3 42.3)"
-    )
-    factories.ConnectionNodeFactory(the_geom_linestring=None)
-
-    geometry_check = GeometryCheck(models.ConnectionNode.the_geom_linestring)
-    invalid_rows = geometry_check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
 def test_geometry_type_check(session):
     factories.ConnectionNodeFactory.create_batch(
         2, the_geom="SRID=28992;POINT(-71.064544 42.28787)"

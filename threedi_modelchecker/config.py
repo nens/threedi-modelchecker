@@ -6,6 +6,7 @@ from .checks.base import ForeignKeyCheck
 from .checks.base import GeneralCheck
 from .checks.base import GeometryCheck
 from .checks.base import GeometryTypeCheck
+from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
 from .checks.base import RangeCheck
 from .checks.base import TypeCheck
@@ -38,6 +39,10 @@ CHEZY = constants.FrictionType.CHEZY.value
 MANNING = constants.FrictionType.MANNING.value
 BROAD_CRESTED = constants.CrestType.BROAD_CRESTED.value
 SHORT_CRESTED = constants.CrestType.SHORT_CRESTED.value
+CONNECTED_ALL = [
+    constants.CalculationType.CONNECTED,
+    constants.CalculationType.DOUBLE_CONNECTED,
+]
 
 FOREIGN_KEY_CHECKS: List[ForeignKeyCheck] = []
 UNIQUE_CHECKS: List[UniqueCheck] = []
@@ -58,27 +63,25 @@ RANGE_CHECKS: List[BaseCheck] = [
         column=models.CrossSectionLocation.friction_value,
         filters=models.CrossSectionLocation.friction_type == CHEZY,
         min_value=0,
-        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.CrossSectionLocation.friction_value,
         filters=models.CrossSectionLocation.friction_type == MANNING,
         min_value=0,
         max_value=1,
-        left_inclusive=False,  # 0 itself is not allowed
+        right_inclusive=False,  # 1 is not allowed
     ),
     RangeCheck(
         column=models.Culvert.friction_value,
         filters=models.Culvert.friction_type == CHEZY,
         min_value=0,
-        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Culvert.friction_value,
         filters=models.Culvert.friction_type == MANNING,
         min_value=0,
         max_value=1,
-        left_inclusive=False,  # 0 itself is not allowed
+        right_inclusive=False,  # 1 is not allowed
     ),
     RangeCheck(
         column=models.GroundWater.phreatic_storage_capacity,
@@ -94,7 +97,7 @@ RANGE_CHECKS: List[BaseCheck] = [
     ),
     RangeCheck(
         level=CheckLevel.WARNING,
-        column=models.ImperviousSurface.dry_weather_flow,  # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt
+        column=models.ImperviousSurface.dry_weather_flow,
         min_value=0,
         filters=models.GlobalSetting.use_0d_inflow
         == constants.InflowType.IMPERVIOUS_SURFACE,
@@ -124,6 +127,14 @@ RANGE_CHECKS: List[BaseCheck] = [
         column=models.Orifice.discharge_coefficient_positive,
         min_value=0,
     ),
+    NotNullCheck(
+        column=models.Orifice.friction_value,
+        filters=(models.Orifice.crest_type == BROAD_CRESTED),
+    ),
+    NotNullCheck(
+        column=models.Orifice.friction_type,
+        filters=(models.Orifice.crest_type == BROAD_CRESTED),
+    ),
     RangeCheck(
         column=models.Orifice.friction_value,
         filters=(
@@ -131,7 +142,6 @@ RANGE_CHECKS: List[BaseCheck] = [
             & (models.Orifice.crest_type == BROAD_CRESTED)
         ),
         min_value=0,
-        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Orifice.friction_value,
@@ -141,7 +151,7 @@ RANGE_CHECKS: List[BaseCheck] = [
         ),
         min_value=0,
         max_value=1,
-        left_inclusive=False,  # 0 itself is not allowed
+        right_inclusive=False,  # 1 is not allowed
     ),
     RangeCheck(
         column=models.Pipe.dist_calc_points,
@@ -152,14 +162,13 @@ RANGE_CHECKS: List[BaseCheck] = [
         column=models.Pipe.friction_value,
         filters=models.Pipe.friction_type == CHEZY,
         min_value=0,
-        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Pipe.friction_value,
         filters=models.Pipe.friction_type == MANNING,
         min_value=0,
         max_value=1,
-        left_inclusive=False,  # 0 itself is not allowed
+        right_inclusive=False,  # 1 is not allowed
     ),
     GeneralCheck(
         column=models.Pumpstation.upper_stop_level,
@@ -175,7 +184,6 @@ RANGE_CHECKS: List[BaseCheck] = [
             models.Pumpstation.lower_stop_level < models.Pumpstation.upper_stop_level,
         ),
     ),
-    # TODO: toevoegen: check op bottom level van connection node, moet groter zijn, anders error
     GeneralCheck(
         column=models.Pumpstation.start_level,
         criterion_valid=and_(
@@ -197,12 +205,12 @@ RANGE_CHECKS: List[BaseCheck] = [
         filters=models.SimpleInfiltration.global_settings != None,
         min_value=0,
     ),
-    RangeCheck(  # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt
+    RangeCheck(
         column=models.Surface.nr_of_inhabitants,
         min_value=0,
         filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    RangeCheck(  # TODO: warning, alleen checken als dry_weather_flow aangeroepen wordt
+    RangeCheck(
         column=models.Surface.dry_weather_flow,
         min_value=0,
         filters=models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
@@ -256,6 +264,14 @@ RANGE_CHECKS: List[BaseCheck] = [
         column=models.Weir.discharge_coefficient_positive,
         min_value=0,
     ),
+    NotNullCheck(
+        column=models.Weir.friction_value,
+        filters=(models.Weir.crest_type == BROAD_CRESTED),
+    ),
+    NotNullCheck(
+        column=models.Weir.friction_type,
+        filters=(models.Weir.crest_type == BROAD_CRESTED),
+    ),
     RangeCheck(
         column=models.Weir.friction_value,
         filters=(
@@ -263,8 +279,6 @@ RANGE_CHECKS: List[BaseCheck] = [
             & (models.Weir.crest_type == BROAD_CRESTED)
         ),
         min_value=0,
-        max_value=1,
-        left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         column=models.Weir.friction_value,
@@ -274,14 +288,14 @@ RANGE_CHECKS: List[BaseCheck] = [
         ),
         min_value=0,
         max_value=1,
-        left_inclusive=False,  # 0 itself is not allowed,
+        right_inclusive=False,  # 1 is not allowed
     ),
-    GeneralCheck(  # TODO: zou in de api checks moeten zitten
+    GeneralCheck(
         column=models.GlobalSetting.maximum_sim_time_step,
         criterion_valid=models.GlobalSetting.maximum_sim_time_step
         >= models.GlobalSetting.sim_time_step,
     ),
-    GeneralCheck(  # TODO: zou in de api checks moeten zitten
+    GeneralCheck(
         column=models.GlobalSetting.sim_time_step,
         criterion_valid=models.GlobalSetting.sim_time_step
         >= models.GlobalSetting.minimum_sim_time_step,
@@ -303,7 +317,7 @@ OTHER_CHECKS: List[BaseCheck] = [
     ),
     Use0DFlowCheck(),
     OpenChannelsWithNestedNewton(),
-    ConnectionNodesDistance(minimum_distance=0.01),
+    ConnectionNodesDistance(minimum_distance=0.001),
 ]
 
 
@@ -313,7 +327,7 @@ CONDITIONAL_CHECKS = [
         invalid=Query(models.ConnectionNode)
         .join(models.Manhole)
         .filter(models.ConnectionNode.storage_area < 0),
-        message="WARNING: The ConnectionNode.storage_area should be >= 0 "
+        message="The ConnectionNode.storage_area should be >= 0 "
         "when the ConnectionNode is a Manhole",
     ),
     QueryCheck(
@@ -321,7 +335,7 @@ CONDITIONAL_CHECKS = [
         invalid=Query(models.CrossSectionLocation).filter(
             models.CrossSectionLocation.bank_level != None,
             models.CrossSectionLocation.reference_level
-            >= models.CrossSectionLocation.bank_level,
+            > models.CrossSectionLocation.bank_level,
         ),
         message="CrossSectionLocation.reference_level should be below the CrossSectionLocation.bank_level"
         "when CrossSectionLocation.bank_level is not null",
@@ -455,10 +469,11 @@ CONDITIONAL_CHECKS = [
                     constants.CalculationType.DOUBLE_CONNECTED,
                 ]
             ),
-            models.GlobalSetting.dem_file == None,
+            (models.GlobalSetting.dem_file == None)
+            | (models.GlobalSetting.dem_file == ""),
         ),
         message=f"Channel.calculation_type cannot be "
-        f"{constants.CalculationType.EMBEDDED} or"
+        f"{constants.CalculationType.EMBEDDED}, "
         f"{constants.CalculationType.CONNECTED} or "
         f"{constants.CalculationType.DOUBLE_CONNECTED} when "
         f"GlobalSetting.dem_file is null",
@@ -530,21 +545,24 @@ CONDITIONAL_CHECKS = [
         column=models.Manhole.bottom_level,
         invalid=Query(models.Manhole).filter(
             models.Manhole.drain_level < models.Manhole.bottom_level,
-            models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED,
+            models.Manhole.calculation_type.in_(CONNECTED_ALL),
         ),
         message="Manhole.drain_level >= Manhole.bottom_level when "
         "Manhole.calculation_type is CONNECTED. In the future, this will lead to an error.",
     ),
-    QueryCheck(  # TODO als er geen DEM is en manhole_storage_area is ingevuld, alleen dan is dit een warning, anders info melding. Future warning "In case of using sub-basins this constraint becomes mandatory. "
+    QueryCheck(
+        level=CheckLevel.WARNING,
         column=models.Manhole.drain_level,
         invalid=Query(models.Manhole).filter(
-            models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED,
+            (models.GlobalSetting.dem_file == None)
+            | (models.GlobalSetting.dem_file == ""),
+            models.GlobalSetting.manhole_storage_area > 0,
+            models.Manhole.calculation_type.in_(CONNECTED_ALL),
             models.Manhole.drain_level == None,
         ),
-        message="Manhole.drain_level cannot be null when Manhole.calculation_type is "
-        "CONNECTED",
+        message="Manhole.drain_level cannot be null when using sub-basins (GlobalSettings.manhole_storage_area > 0) and no DEM is supplied.",
     ),
-    QueryCheck(  # TODO mag volgens ons weg, wordt via api settings gedaan
+    QueryCheck(
         column=models.GlobalSetting.maximum_sim_time_step,
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.timestep_plus == True,
@@ -614,7 +632,6 @@ CONDITIONAL_CHECKS = [
         min_distance=0.05,
     ),
     QueryCheck(
-        level=CheckLevel.WARNING,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode).filter(
             models.ConnectionNode.id.notin_(
@@ -634,10 +651,10 @@ CONDITIONAL_CHECKS = [
                 )
             )
         ),
-        message="This is an individual ConnectionNode. Connect it to either a manhole, pipe, "
-        "channel, culvert, weir, pumpstation or orifice",
+        message="This is an individual ConnectionNode. Connect it to either a pipe, "
+        "channel, culvert, weir, orifice or pumpstation.",
     ),
-    QueryCheck(  # TODO Warning & toevoegen combinatie van pipes, met weir, met orrifice and met culverts
+    QueryCheck(
         level=CheckLevel.WARNING,
         column=models.Pipe.id,
         invalid=Query(models.Pipe)
@@ -662,62 +679,6 @@ CONDITIONAL_CHECKS = [
         ),
         message="When connecting two isolated pipes, it is recommended to add storage to the connection node.",
     ),
-    # QueryCheck(
-    #     level=CheckLevel.WARNING,
-    #     column=models.Culvert.id,
-    #     invalid=Query(models.Culvert).join(
-    #         models.ConnectionNode,
-    #         models.Culvert.connection_node_start_id == models.ConnectionNode.id
-    #     ).filter(
-    #         models.Culvert.calculation_type == constants.CalculationTypeCulvert.ISOLATED_NODE,
-    #         models.ConnectionNode.storage_area.is_(None)
-    #     ).union(
-    #         Query(models.Culvert).join(
-    #             models.ConnectionNode,
-    #             models.Culvert.connection_node_end_id == models.ConnectionNode.id
-    #         ).filter(
-    #             models.Culvert.calculation_type == constants.CalculationTypeCulvert.ISOLATED_NODE,
-    #             models.ConnectionNode.storage_area.is_(None)
-    #         )
-    #     ),
-    #     message="When connecting two isolated culverts, it is recommended to add storage to the connection node."
-    # ),
-    # QueryCheck(
-    #     level=CheckLevel.WARNING,
-    #     column=models.Weir.id,
-    #     invalid=Query(models.Weir).join(
-    #         models.ConnectionNode,
-    #         models.Weir.connection_node_start_id == models.ConnectionNode.id
-    #     ).filter(
-    #         models.ConnectionNode.storage_area.is_(None)
-    #     ).union(
-    #         Query(models.Weir).join(
-    #             models.ConnectionNode,
-    #             models.Weir.connection_node_end_id == models.ConnectionNode.id
-    #         ).filter(
-    #             models.ConnectionNode.storage_area.is_(None)
-    #         )
-    #     ),
-    #     message="When connecting two weirs, it is recommended to add storage to the connection node."
-    # ),
-    # QueryCheck(
-    #     level=CheckLevel.WARNING,
-    #     column=models.Orifice.id,
-    #     invalid=Query(models.Orifice).join(
-    #         models.ConnectionNode,
-    #         models.Orifice.connection_node_start_id == models.ConnectionNode.id
-    #     ).filter(
-    #         models.ConnectionNode.storage_area.is_(None)
-    #     ).union(
-    #         Query(models.Orifice).join(
-    #             models.ConnectionNode,
-    #             models.Orifice.connection_node_end_id == models.ConnectionNode.id
-    #         ).filter(
-    #             models.ConnectionNode.storage_area.is_(None)
-    #         )
-    #     ),
-    #     message="When connecting two orifices, it is recommended to add storage to the connection node."
-    # ),
     RangeCheck(
         column=models.NumericalSettings.convergence_eps,
         min_value=0,
@@ -825,11 +786,7 @@ class Config:
         INVALID_GEOMETRY_TYPE_CHECKS = []
         INVALID_ENUM_CHECKS = []
         # Call the check factories:
-        for (
-            model
-        ) in (
-            self.models
-        ):  # TODO splitsing tussen warning en errors ? Afhankelijk van hoeveel werk
+        for model in self.models:
             FOREIGN_KEY_CHECKS += generate_foreign_key_checks(model.__table__)
             UNIQUE_CHECKS += generate_unique_checks(model.__table__)
             NOT_NULL_CHECKS += generate_not_null_checks(model.__table__)
@@ -841,8 +798,9 @@ class Config:
             INVALID_ENUM_CHECKS += generate_enum_checks(
                 model.__table__,
                 custom_level_map={
-                    "sewerage_type": "WARNING",
+                    "sewerage_type": "INFO",
                     "zoom_category": "INFO",
+                    "material": "INFO",
                 },
             )
 
@@ -854,9 +812,7 @@ class Config:
         self.checks += INVALID_GEOMETRY_TYPE_CHECKS
         self.checks += INVALID_ENUM_CHECKS
         self.checks += OTHER_CHECKS
-        self.checks += (
-            TIMESERIES_CHECKS  # TODO: Deze moet weg, en naar template/event validatie
-        )
+        self.checks += TIMESERIES_CHECKS
         self.checks += RANGE_CHECKS
         self.checks += CONDITIONAL_CHECKS
         self.checks += FILE_EXISTS_CHECKS
