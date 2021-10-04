@@ -21,10 +21,11 @@ from .checks.factories import generate_unique_checks
 from .checks.other import BankLevelCheck
 from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
+from .checks.other import CrossSectionLocationCheck
 from .checks.other import CrossSectionShapeCheck
 from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import TimeseriesCheck
-from .checks.other import Use0DFlowCheck, CrossSectionLocationCheck
+from .checks.other import Use0DFlowCheck
 from .threedi_model import models
 from .threedi_model.models import constants
 from geoalchemy2 import functions as geo_func

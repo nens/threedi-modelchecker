@@ -42,7 +42,6 @@ class BankLevelCheck(BaseCheck):
         )
 
 
-
 class CrossSectionLocationCheck(BaseCheck):
     """Check if cross section locations intersect with their channel."""
 
@@ -50,10 +49,19 @@ class CrossSectionLocationCheck(BaseCheck):
         super().__init__(column=models.CrossSectionLocation.the_geom, *args, **kwargs)
 
     def get_invalid(self, session):
-        return self.to_check(session).join(models.Channel).filter(geo_func.ST_Disjoint(models.CrossSectionLocation.the_geom, models.Channel.the_geom)).all()
+        return (
+            self.to_check(session)
+            .join(models.Channel)
+            .filter(
+                geo_func.ST_Disjoint(
+                    models.CrossSectionLocation.the_geom, models.Channel.the_geom
+                )
+            )
+            .all()
+        )
 
     def description(self):
-        return f"v2_cross_section_location.the_geom is invalid: it should intersect with the associated channel geometry"
+        return "v2_cross_section_location.the_geom is invalid: it should intersect with the associated channel geometry"
 
 
 class CrossSectionShapeCheck(BaseCheck):
