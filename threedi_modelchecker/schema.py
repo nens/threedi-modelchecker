@@ -1,7 +1,6 @@
 from .errors import MigrationMissingError
 from .threedi_model import constants
 from .threedi_model import models
-from alembic import command
 from alembic.config import Config
 from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
@@ -34,10 +33,23 @@ def get_schema_version():
         return int(env.get_head_revision())
 
 
-def _upgrade_database(db, version="head"):
+def _upgrade_database(db, revision="head"):
     """Upgrade ThreediDatabase instance"""
     with db.get_engine().begin() as connection:
-        command.upgrade(get_alembic_config(connection), version)
+        config = get_alembic_config(connection)
+        script = ScriptDirectory.from_config(config)
+
+        def upgrade(rev, context):
+            return script._upgrade_revs(revision, rev)
+
+        with EnvironmentContext(
+            config,
+            script,
+            fn=upgrade,
+            destination_rev=revision,
+            version_table=constants.VERSION_TABLE_NAME,
+        ):
+            script.run_env()
 
 
 class ModelSchema:
@@ -76,7 +88,7 @@ class ModelSchema:
         else:
             return self._get_version_old()
 
-    def upgrade(self, backup=True):
+    def upgrade(self, revision="head", backup=True):
         """Upgrade the database to the latest version.
 
         This requires the current version to be at least 174 (the latest
@@ -103,9 +115,9 @@ class ModelSchema:
             )
         if backup:
             with self.db.file_transaction() as work_db:
-                _upgrade_database(work_db)
+                _upgrade_database(work_db, revision=revision)
         else:
-            _upgrade_database(self.db)
+            _upgrade_database(self.db, revision=revision)
 
     def validate_schema(self):
         """Very basic validation of 3Di schema.

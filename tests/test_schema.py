@@ -122,7 +122,7 @@ def test_upgrade_with_preexisting_version(in_memory_sqlite):
     schema = ModelSchema(in_memory_sqlite)
 
     with mock.patch.object(schema, "get_version", return_value=199):
-        schema.upgrade(backup=False)
+        schema.upgrade(backup=False, revision="0201")
 
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
 
