@@ -26,7 +26,7 @@ from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
-from .threedi_model.models import constants
+from .threedi_model.models import Pumpstation, constants
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import and_
 from sqlalchemy import func
@@ -750,6 +750,15 @@ FILE_EXISTS_CHECKS = [
     ),
 ]
 
+SELF_CONNECTED_CHECKS = [
+    QueryCheck(
+        column=table.connection_node_end_id,
+        invalid=Query(table).filter(table.connection_node_start_id == table.connection_node_end_id),
+        message=f"a {table.__tablename__} cannot be connected to itself (connection_node_start_id must not equal connection_node_end_id)"
+    )
+    for table in (models.Channel, models.Culvert, models.Orifice, models.Pipe, models.Pumpstation, models.Weir)
+]
+
 
 class Config:
     """Collection of checks
@@ -801,6 +810,7 @@ class Config:
         self.checks += RANGE_CHECKS
         self.checks += CONDITIONAL_CHECKS
         self.checks += FILE_EXISTS_CHECKS
+        self.checks += SELF_CONNECTED_CHECKS
         return None
 
     def iter_checks(self, level=CheckLevel.ERROR):
