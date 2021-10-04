@@ -51,10 +51,6 @@ CHEZY = constants.FrictionType.CHEZY.value
 MANNING = constants.FrictionType.MANNING.value
 BROAD_CRESTED = constants.CrestType.BROAD_CRESTED.value
 SHORT_CRESTED = constants.CrestType.SHORT_CRESTED.value
-CONNECTED_ALL = [
-    constants.CalculationType.CONNECTED,
-    constants.CalculationType.DOUBLE_CONNECTED,
-]
 
 FOREIGN_KEY_CHECKS: List[ForeignKeyCheck] = []
 UNIQUE_CHECKS: List[UniqueCheck] = []
@@ -609,7 +605,9 @@ CONDITIONAL_CHECKS = [
         column=models.Manhole.bottom_level,
         invalid=Query(models.Manhole).filter(
             models.Manhole.drain_level < models.Manhole.bottom_level,
-            models.Manhole.calculation_type.in_(CONNECTED_ALL),
+            models.Manhole.calculation_type.in_(
+                [constants.CalculationTypeNode.CONNECTED]
+            ),
         ),
         message="Manhole.drain_level >= Manhole.bottom_level when "
         "Manhole.calculation_type is CONNECTED. In the future, this will lead to an error.",
@@ -620,7 +618,9 @@ CONDITIONAL_CHECKS = [
         invalid=Query(models.Manhole).filter(
             is_none_or_empty(models.GlobalSetting.dem_file),
             models.GlobalSetting.manhole_storage_area > 0,
-            models.Manhole.calculation_type.in_(CONNECTED_ALL),
+            models.Manhole.calculation_type.in_(
+                [constants.CalculationTypeNode.CONNECTED]
+            ),
             models.Manhole.drain_level == None,
         ),
         message="Manhole.drain_level cannot be null when using sub-basins (v2_global_settings.manhole_storage_area > 0) and no DEM is supplied.",
