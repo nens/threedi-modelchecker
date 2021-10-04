@@ -479,7 +479,7 @@ CONDITIONAL_CHECKS = [
             is_none_or_empty(models.Interflow.porosity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message=f"a global porosity (v2_interflow.porosity) should be defined when not using a porosity file.",
+        message="a global porosity (v2_interflow.porosity) should be defined when not using a porosity file.",
     ),
     QueryCheck(
         column=models.Interflow.porosity_layer_thickness,
