@@ -24,7 +24,7 @@ from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionShapeCheck
 from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import TimeseriesCheck
-from .checks.other import Use0DFlowCheck
+from .checks.other import Use0DFlowCheck, CrossSectionLocationCheck
 from .threedi_model import models
 from .threedi_model.models import constants
 from geoalchemy2 import functions as geo_func
@@ -308,6 +308,7 @@ RANGE_CHECKS: List[BaseCheck] = [
 OTHER_CHECKS: List[BaseCheck] = [
     BankLevelCheck(),
     CrossSectionShapeCheck(),
+    CrossSectionLocationCheck(),
     # 1d boundary conditions cannot be connected to a pumpstation
     GeneralCheck(
         column=models.BoundaryCondition1D.connection_node_id,
