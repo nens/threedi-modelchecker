@@ -43,7 +43,7 @@ uses_0d_impervious_surfaces = (
 
 
 def is_none_or_empty(col):
-    return col == None | col == ""
+    return (col == None) | (col == "")
 
 
 CHEZY = constants.FrictionType.CHEZY.value
@@ -362,7 +362,7 @@ CONDITIONAL_CHECKS = [
         invalid=Query(models.SimpleInfiltration).filter(
             models.SimpleInfiltration.global_settings != None,
             models.SimpleInfiltration.infiltration_rate == None,
-            is_none_or_empty(models.GroundWater.infiltration_rate_file),
+            is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
         ),
         message="a global simple infiltration rate (v2_simple_infiltration.infiltration_rate) should be defined when not using a simple infiltration rate file.",
     ),
