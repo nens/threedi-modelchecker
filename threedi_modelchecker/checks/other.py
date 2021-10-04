@@ -61,7 +61,7 @@ class CrossSectionLocationCheck(BaseCheck):
         )
 
     def description(self):
-        return "v2_cross_section_location.the_geom is invalid: it should intersect with the associated channel geometry"
+        return "v2_cross_section_location.the_geom is invalid: the cross-section location should be located on the channel geometry"
 
 
 class CrossSectionShapeCheck(BaseCheck):
