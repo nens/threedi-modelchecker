@@ -90,6 +90,11 @@ RANGE_CHECKS: List[BaseCheck] = [
         right_inclusive=False,  # 1 is not allowed
     ),
     RangeCheck(
+        column=models.GlobalSetting.kmax,
+        min_value=0,
+        left_inclusive=False,  # 0 is not allowed
+    ),
+    RangeCheck(
         column=models.GroundWater.phreatic_storage_capacity,
         filters=models.GroundWater.global_settings != None,
         min_value=0,
