@@ -21,6 +21,7 @@ from .checks.factories import generate_unique_checks
 from .checks.other import BankLevelCheck
 from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
+from .checks.other import CrossSectionLocationCheck
 from .checks.other import CrossSectionShapeCheck
 from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import TimeseriesCheck
@@ -313,6 +314,7 @@ RANGE_CHECKS: List[BaseCheck] = [
 OTHER_CHECKS: List[BaseCheck] = [
     BankLevelCheck(),
     CrossSectionShapeCheck(),
+    CrossSectionLocationCheck(),
     # 1d boundary conditions cannot be connected to a pumpstation
     GeneralCheck(
         column=models.BoundaryCondition1D.connection_node_id,
