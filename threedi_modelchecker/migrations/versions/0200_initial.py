@@ -101,6 +101,15 @@ def upgrade():
             ),
             nullable=False,
         ),
+        sa.Column(
+            "the_geom_linestring",
+            geoalchemy2.types.Geometry(
+                geometry_type="LINESTRING",
+                srid=4326,
+                management=True,
+            ),
+            nullable=True,
+        ),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.PrimaryKeyConstraint("id"),
         info={"ifexists": True},
