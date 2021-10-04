@@ -184,7 +184,7 @@ class SimpleInfiltration(Base):
     infiltration_rate = Column(Float)
     infiltration_rate_file = Column(String(255))
     infiltration_surface_option = Column(
-        IntegerEnum(constants.InfiltrationSurfaceOption)
+        IntegerEnum(constants.InfiltrationSurfaceOption), nullable=False
     )
     max_infiltration_capacity_file = Column(Text)
     display_name = Column(String(255))
