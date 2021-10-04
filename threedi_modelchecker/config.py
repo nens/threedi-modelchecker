@@ -372,7 +372,7 @@ CONDITIONAL_CHECKS = [
             models.GroundWater.global_settings != None,
             models.GroundWater.equilibrium_infiltration_rate == None,
             is_none_or_empty(
-                models.GroundWater.groundwater_impervious_layer_level_file
+                models.GroundWater.equilibrium_infiltration_rate_file,
             ),
         ),
         message="a global equilibrium infiltration rate (v2_groundwater.equilibrium_infiltration_rate) should be defined when not using an equilibrium infiltration rate file.",
@@ -458,7 +458,7 @@ CONDITIONAL_CHECKS = [
         invalid=Query(models.GroundWater).filter(
             models.GroundWater.global_settings != None,
             models.GroundWater.phreatic_storage_capacity == None,
-            ~is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
+            is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
         ),
         message="a global phreatic storage capacity (v2_groundwater.phreatic_storage_capacity) should be defined when using a phreatic storage capacity file.",
     ),
@@ -515,8 +515,7 @@ CONDITIONAL_CHECKS = [
             is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message=f"Interflow.hydraulic_conductivity cannot be null when "
-        f"Interflow.interflow_type != {constants.InterflowType.NO_INTERLFOW}",
+        message=f"v2_interflow.hydraulic_conductivity cannot be null when no hydraulic conductivity file is supplied.",
     ),
     QueryCheck(
         column=models.Channel.calculation_type,
