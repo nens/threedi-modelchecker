@@ -352,6 +352,13 @@ CONDITIONAL_CHECKS = [
         "when CrossSectionLocation.bank_level is not null",
     ),
     QueryCheck(
+        column=models.Channel.id,
+        invalid=Query(models.Channel).filter(
+            ~models.Channel.cross_section_locations.any()
+        ),
+        message="v2_channel has no cross section locations",
+    ),
+    QueryCheck(
         column=models.GlobalSetting.dem_obstacle_height,
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.dem_obstacle_height <= 0,
