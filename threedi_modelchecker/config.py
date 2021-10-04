@@ -515,7 +515,7 @@ CONDITIONAL_CHECKS = [
             is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message=f"v2_interflow.hydraulic_conductivity cannot be null when no hydraulic conductivity file is supplied.",
+        message="v2_interflow.hydraulic_conductivity cannot be null when no hydraulic conductivity file is supplied.",
     ),
     QueryCheck(
         column=models.Channel.calculation_type,
