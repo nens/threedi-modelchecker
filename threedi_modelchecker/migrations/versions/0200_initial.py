@@ -41,7 +41,8 @@ def upgrade():
     # Setup the global 'existing_tables'
     _get_existing_tables()
     # Initialize the Spatialite if necessary:
-    if "spatial_ref_sys" not in existing_tables:
+    conn = op.get_bind()
+    if conn.dialect.name == "sqlite" and "spatial_ref_sys" not in existing_tables:
         op.execute("SELECT InitSpatialMetadata()")
     create_table_if_not_exists(
         "v2_2d_boundary_conditions",

@@ -7,6 +7,7 @@ from sqlalchemy.event import listen
 from sqlalchemy.orm import sessionmaker
 
 import shutil
+import sqlite3
 import tempfile
 
 
@@ -25,9 +26,10 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
        "batch operations" fail in case a view referred to the table that is getting a "batch operation".
        The solution was a PRAGMA command. See https://www.sqlite.org/pragma.html#pragma_legacy_alter_table.
     """
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA legacy_alter_table=ON")
-    cursor.close()
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA legacy_alter_table=ON")
+        cursor.close()
 
 
 def load_spatialite(con, connection_record):

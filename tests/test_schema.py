@@ -117,12 +117,12 @@ def test_full_upgrade_empty(in_memory_sqlite):
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
 
 
-def test_full_upgrade_with_preexisting_version(empty_sqlite):
+def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
     """Upgrade an empty database to the latest version"""
-    schema = ModelSchema(empty_sqlite)
+    schema = ModelSchema(south_latest_sqlite)
     schema.upgrade(backup=False)
     assert schema.get_version() == get_schema_version()
-    assert empty_sqlite.get_engine().has_table("v2_connection_nodes")
+    assert south_latest_sqlite.get_engine().has_table("v2_connection_nodes")
 
 
 def test_upgrade_south_not_latest_errors(in_memory_sqlite):

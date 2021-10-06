@@ -89,8 +89,8 @@ def in_memory_sqlite():
     return ThreediDatabase({"db_path": ""}, db_type="spatialite", echo=False)
 
 @pytest.fixture
-def empty_sqlite(tmp_path):
+def south_latest_sqlite(tmp_path):
     """An empty SQLite that is in its latest South migration state"""
-    tmp_sqlite = tmp_path / "empty.sqlite"
-    shutil.copyfile(os.path.join(data_dir, "empty.sqlite"), tmp_sqlite)
+    tmp_sqlite = tmp_path / "south_latest.sqlite"
+    shutil.copyfile(os.path.join(data_dir, "south_latest.sqlite"), tmp_sqlite)
     return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)
