@@ -1,6 +1,8 @@
 from contextlib import contextmanager
 from pathlib import Path
 from sqlalchemy import create_engine
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 from sqlalchemy.event import listen
 from sqlalchemy.orm import sessionmaker
 
@@ -9,6 +11,21 @@ import tempfile
 
 
 __all__ = ["ThreediDatabase"]
+
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Turn legacy_alter_table ON to fix alembic migrations that
+    alter a table's schema. Because of SQLite limitations, this is always
+    done in 'batch mode', which means that the table is recreated, data is
+    copied over, and the old table is dropped, and then the new table is renamed.
+    
+    SQLite errors on the last step if legacy_alter_table=OFF in case a view refers
+    to the table.
+    """
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA legacy_alter_table=ON")
+    cursor.close()
 
 
 def load_spatialite(con, connection_record):
