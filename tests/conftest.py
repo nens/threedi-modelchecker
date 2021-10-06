@@ -2,6 +2,7 @@ from tests import Session
 from threedi_modelchecker.model_checks import Context
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_database import ThreediDatabase
+import shutil
 
 import os
 import pytest
@@ -86,3 +87,10 @@ def modelchecker(threedi_db):
 def in_memory_sqlite():
     """An in-memory database without a schema (to test schema migrations)"""
     return ThreediDatabase({"db_path": ""}, db_type="spatialite", echo=False)
+
+@pytest.fixture
+def empty_sqlite(tmp_path):
+    """An empty SQLite that is in its latest South migration state"""
+    tmp_sqlite = tmp_path / "empty.sqlite"
+    shutil.copyfile(os.path.join(data_dir, "empty.sqlite"), tmp_sqlite)
+    return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)

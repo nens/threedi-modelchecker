@@ -91,8 +91,9 @@ class ModelSchema:
     def upgrade(self, revision="head", backup=True):
         """Upgrade the database to the latest version.
 
-        This requires the current version to be at least 174 (the latest
-        South migration).
+        This requires either a completely empty database or a database with its
+        current schema version at least 174 (the latest migration of the old
+        model databank).
 
         The upgrade is done using database transactions. However, for SQLite,
         database transactions are only partially supported. To ensure that the
@@ -101,13 +102,7 @@ class ModelSchema:
         it.
         """
         v = self.get_version()
-        if v is None:  # Note; we could allow creation of a new schema
-            raise MigrationMissingError(
-                f"The modelchecker requires a table named "
-                f'"{constants.VERSION_TABLE_NAME}" to determine the version '
-                f"of the database schema."
-            )
-        if v < constants.LATEST_SOUTH_MIGRATION_ID:
+        if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
             raise MigrationMissingError(
                 f"The modelchecker cannot update versions below "
                 f"{constants.LATEST_SOUTH_MIGRATION_ID}. Please consult the "

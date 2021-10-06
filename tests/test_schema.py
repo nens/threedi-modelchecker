@@ -109,22 +109,20 @@ def test_validate_schema_too_high_migration(threedi_db, version):
             schema.validate_schema()
 
 
-def test_upgrade_empty(in_memory_sqlite):
+def test_full_upgrade_empty(in_memory_sqlite):
     """Upgrade an empty database to the latest version"""
     schema = ModelSchema(in_memory_sqlite)
-
-    with pytest.raises(errors.MigrationMissingError):
-        schema.upgrade(backup=False)
-
-
-def test_upgrade_with_preexisting_version(in_memory_sqlite):
-    """Upgrade an empty database to the latest version"""
-    schema = ModelSchema(in_memory_sqlite)
-
-    with mock.patch.object(schema, "get_version", return_value=199):
-        schema.upgrade(backup=False, revision="0201")
-
+    schema.upgrade(backup=False)
+    assert schema.get_version() == get_schema_version()
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
+
+
+def test_full_upgrade_with_preexisting_version(empty_sqlite):
+    """Upgrade an empty database to the latest version"""
+    schema = ModelSchema(empty_sqlite)
+    schema.upgrade(backup=False)
+    assert schema.get_version() == get_schema_version()
+    assert empty_sqlite.get_engine().has_table("v2_connection_nodes")
 
 
 def test_upgrade_south_not_latest_errors(in_memory_sqlite):
@@ -135,18 +133,6 @@ def test_upgrade_south_not_latest_errors(in_memory_sqlite):
     ):
         with pytest.raises(errors.MigrationMissingError):
             schema.upgrade(backup=False)
-
-
-def test_upgrade_south_latest_ok(in_memory_sqlite):
-    """Upgrading a database that is at the latest south migration will proceed"""
-    schema = ModelSchema(in_memory_sqlite)
-    with mock.patch.object(
-        schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID
-    ):
-        schema.upgrade(backup=False)
-
-    assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
-
 
 def test_upgrade_with_backup(threedi_db):
     """Upgrading with backup=True will proceed on a copy of the database"""

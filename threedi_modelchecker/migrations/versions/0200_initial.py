@@ -21,7 +21,8 @@ depends_on = None
 existing_tables = []
 
 
-def _set_existing_tables():
+def _get_existing_tables():
+    """Fill the global 'existing_tables'"""
     global existing_tables
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
@@ -29,6 +30,7 @@ def _set_existing_tables():
 
 
 def create_table_if_not_exists(table_name, *args, **kwargs):
+    """Create a table if it is not in the global 'existing_tables'"""
     if table_name in existing_tables:
         return
     else:
@@ -36,7 +38,11 @@ def create_table_if_not_exists(table_name, *args, **kwargs):
 
 
 def upgrade():
-    _set_existing_tables()
+    # Setup the global 'existing_tables'
+    _get_existing_tables()
+    # Initialize the Spatialite if necessary:
+    if "spatial_ref_sys" not in existing_tables:
+        op.execute("SELECT InitSpatialMetadata()")
     create_table_if_not_exists(
         "v2_2d_boundary_conditions",
         sa.Column("id", sa.Integer(), nullable=False),
