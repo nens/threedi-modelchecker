@@ -134,6 +134,7 @@ def test_upgrade_south_not_latest_errors(in_memory_sqlite):
         with pytest.raises(errors.MigrationMissingError):
             schema.upgrade(backup=False)
 
+
 def test_upgrade_with_backup(threedi_db):
     """Upgrading with backup=True will proceed on a copy of the database"""
     if threedi_db.db_type != "spatialite":

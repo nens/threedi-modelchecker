@@ -2,10 +2,10 @@ from tests import Session
 from threedi_modelchecker.model_checks import Context
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_database import ThreediDatabase
-import shutil
 
 import os
 import pytest
+import shutil
 
 
 try:
@@ -87,6 +87,7 @@ def modelchecker(threedi_db):
 def in_memory_sqlite():
     """An in-memory database without a schema (to test schema migrations)"""
     return ThreediDatabase({"db_path": ""}, db_type="spatialite", echo=False)
+
 
 @pytest.fixture
 def south_latest_sqlite(tmp_path):
