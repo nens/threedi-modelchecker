@@ -2,15 +2,13 @@ from typing import List, Dict, Union
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_api_client.openapi.models.timed_structure_control import TimedStructureControl
-from threedi_modelchecker.threedi_model.models import Control, ControlGroup, ControlMeasureGroup, ControlMeasureMap, ControlMemory, ControlTimed, ControlTable
-
 from threedi_api_client.openapi.models.measure_location import MeasureLocation
 from threedi_api_client.openapi.models.measure_specification import MeasureSpecification
 from threedi_api_client.openapi.models.table_structure_control import TableStructureControl
 from threedi_api_client.openapi.models.memory_structure_control import MemoryStructureControl
-from simulation_templates.utils import strip_dict_none_values
-
-from simulation_templates.models import StructureControls
+from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
+from threedi_modelchecker.threedi_model.models import Control, ControlGroup, ControlMeasureGroup, ControlMeasureMap, ControlMemory, ControlTimed, ControlTable
+from threedi_modelchecker.simulation_templates.models import StructureControls
 
 
 def control_measure_map_to_measure_location(c_measure_map: ControlMeasureMap) -> MeasureLocation:
@@ -131,12 +129,16 @@ class StructureControlExtractor(object):
                     memory: ControlMemory = memory_lookup[control.control_id]
                     measure_spec = to_measure_specification(memory, group, maps)
                     api_control = to_memory_control(control, memory, measure_spec)
-                elif control.control_type == "timed":
-                    timed: ControlTimed = timed_lookup[control.control_id]
-                    api_control = to_timed_control(control, timed)
                 else:
-                    raise Exception("Unknown control_type %s", control.control_type)
+                    continue
+                self._controls[control.control_type].append(api_control)
 
+            for control in Query(Control).filter(
+               Control.control_type=='timed', Control.control_group_id==self._control_group_id).with_session(
+               self.session).all():
+
+                timed: ControlTimed = timed_lookup[control.control_id]
+                api_control = to_timed_control(control, timed)
                 self._controls[control.control_type].append(api_control)
             
     def all_controls(self) -> StructureControls:

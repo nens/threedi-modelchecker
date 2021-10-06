@@ -1,5 +1,5 @@
-from dataclasses import dataclass, fields, asdict
-from typing import Dict, List, Union, Optional
+from dataclasses import dataclass, fields
+from typing import Dict, List, Optional
 from threedi_api_client.openapi.models import TimeStepSettings
 from threedi_api_client.openapi.models import PhysicalSettings
 from threedi_api_client.openapi.models import NumericalSettings, AggregationSettings
@@ -11,7 +11,7 @@ from threedi_api_client.openapi.models.one_d_water_level import OneDWaterLevel
 from threedi_api_client.openapi.models.one_d_water_level_predefined import OneDWaterLevelPredefined
 from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
 from threedi_api_client.openapi.models.two_d_water_raster import TwoDWaterRaster
-from simulation_templates.utils import strip_dict_none_values
+from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
 
 
 def openapi_to_dict(value):
@@ -20,8 +20,23 @@ def openapi_to_dict(value):
         strip_dict_none_values(value)
     return value
 
+
+class AsDictMixin:
+    def as_dict(self) -> Dict:
+        rt = {}
+        for field_name in [x.name for x in fields(self)]:
+            value = getattr(self, field_name)
+            if isinstance(value, AsDictMixin):
+                value = value.as_dict()
+            elif isinstance(value, list):
+                value = [openapi_to_dict(x) for x in value]
+            else: 
+                value = openapi_to_dict(value)
+            rt[field_name] = value
+        return rt
+
 @dataclass
-class InitialWaterlevels:
+class InitialWaterlevels(AsDictMixin):
     constant_2d: Optional[TwoDWaterLevel] = None
     constant_1d: Optional[OneDWaterLevel] = None
     constant_gw: Optional[GroundWaterLevel] =  None
@@ -46,20 +61,9 @@ class InitialWaterlevels:
     
         return InitialWaterlevels(**data)
 
-    def as_dict(self) -> Dict:
-        rt = {}
-        for field_name in [x.name for x in fields(self)]:
-            value = getattr(self, field_name)
-            if isinstance(value, list):
-                value = [openapi_to_dict(x) for x in value]
-            else: 
-                value = openapi_to_dict(value)
-            rt[field_name] = value
-        return rt
-
 
 @dataclass
-class StructureControls:
+class StructureControls(AsDictMixin):
     memory: List[MemoryStructureControl]
     table: List[TableStructureControl]
     timed: List[TimedStructureControl]
@@ -72,19 +76,8 @@ class StructureControls:
             timed=[TimedStructureControl(**x) for x in dict["timed"]]
         )
 
-    def as_dict(self) -> Dict:
-        rt = {}
-        for field_name in [x.name for x in fields(self)]:
-            value = getattr(self, field_name)
-            if isinstance(value, list):
-                value = [openapi_to_dict(x) for x in value]
-            else: 
-                value = openapi_to_dict(value)
-            rt[field_name] = value
-        return rt
-       
 @dataclass
-class Settings:
+class Settings(AsDictMixin):
     numerical: NumericalSettings
     physical: PhysicalSettings
     timestep: TimeStepSettings
@@ -100,44 +93,31 @@ class Settings:
             aggregations=[AggregationSettings(**x) for x in dict["aggregations"]],
         )
 
-    def as_dict(self) -> Dict:
-        rt = {}
-        for field_name in [x.name for x in fields(self)]:
-            value = getattr(self, field_name)
-            if isinstance(value, list):
-                value = [openapi_to_dict(x) for x in value]
-            else: 
-                value = openapi_to_dict(value)
-            rt[field_name] = value
-        return rt
-
 @dataclass
-class SimulationTemplate:
-    settings: Settings
+class Events(AsDictMixin):
     laterals: List[Lateral]
     boundaries: List[Dict]
     structure_controls: StructureControls
-    initial_waterlevels: InitialWaterlevels
 
+    @classmethod
+    def from_dict(cls, dict: Dict) -> "Events":
+        return Events(
+            laterals=[Lateral(**x) for x in dict["laterals"]],
+            boundaries=dict["boundaries"],
+            structure_controls=StructureControls.from_dict(dict["structure_controls"])
+        )
+
+
+@dataclass
+class SimulationTemplate(AsDictMixin):
+    settings: Settings
+    events: Events
+    initial_waterlevels: InitialWaterlevels
+        
     @classmethod
     def from_dict(cls, dict: Dict) -> "SimulationTemplate":
         return SimulationTemplate(
             settings=Settings.from_dict(dict["settings"]),
-            laterals=[Lateral(**x) for x in dict["laterals"]],
-            boundaries=dict["boundaries"],
+            events=Events.from_dict(dict["events"]),
             initial_waterlevels=InitialWaterlevels.from_dict(dict["initial_waterlevels"]),
-            structure_controls=StructureControls.from_dict(dict["structure_controls"])
         )
-
-    def as_dict(self) -> Dict:
-        rt = {}
-        for field_name in [x.name for x in fields(self)]:
-            value = getattr(self, field_name)
-            if isinstance(value, StructureControls) or isinstance(value, InitialWaterlevels) or isinstance(value, Settings):
-                value = value.as_dict()
-            elif isinstance(value, list):
-                value = [openapi_to_dict(x) for x in value]
-            else: 
-                value = openapi_to_dict(value)
-            rt[field_name] = value
-        return rt

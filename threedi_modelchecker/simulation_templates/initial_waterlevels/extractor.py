@@ -5,9 +5,9 @@ from threedi_api_client.openapi.models.ground_water_level import GroundWaterLeve
 from threedi_api_client.openapi.models.one_d_water_level_predefined import OneDWaterLevelPredefined
 from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
 from threedi_api_client.openapi.models import TwoDWaterRaster, GroundWaterRaster
-from simulation_templates.models import InitialWaterlevels
-from threedi_modelchecker.threedi_model.models import ConnectionNode, GlobalSetting
 from threedi_api_client.openapi.models import OneDWaterLevel
+from threedi_modelchecker.simulation_templates.models import InitialWaterlevels
+from threedi_modelchecker.threedi_model.models import ConnectionNode, GlobalSetting
 
 sqlite_agg_method_to_api_map = {
     0: "max",
@@ -43,7 +43,7 @@ class InitialWaterlevelExtractor(object):
     def constant_waterlevel_1d(self) -> Optional[OneDWaterLevel]:
         if self.global_settings.initial_waterlevel is None:
             return None
-        if self._connection_nodes_with_initial_waterlevels:
+        if self.has_connection_nodes_with_initial_waterlevels:
             return None
         return OneDWaterLevel(value=float(self.global_settings.initial_waterlevel))
  

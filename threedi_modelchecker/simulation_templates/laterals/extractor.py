@@ -1,14 +1,18 @@
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Type
+from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
 from threedi_modelchecker.threedi_model.models import Lateral1d, Lateral2D
 from sqlalchemy.orm import Query
 from geoalchemy2 import func
 from geoalchemy2.shape import to_shape 
 from threedi_api_client.openapi.models.lateral import Lateral
 from sqlalchemy.orm.session import Session
-from simulation_templates.utils import strip_dict_none_values
+from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
 
 def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:
-    values = [[float(y) for y in x.split(",")] for x in lateral_1d.timeseries.split('\n')]
+    try:
+        values = [[float(y) for y in x.split(",")] for x in lateral_1d.timeseries.split('\n')]
+    except (ValueError, TypeError):
+        raise SchematisationError(f"Incorrect timeseries format for lateral 1D with id: {lateral_1d.id}")
 
     offset = values[0][0]
 
@@ -16,10 +20,10 @@ def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:
         # Shift timeseries to start at t=0 
         values = [[x[0] - offset, x[1]] for x in values]
 
+
     return Lateral(
         connection_node=int(lateral_1d.connection_node_id),
         offset=int(values[0][0]),
-        duration=int(values[-1][0]),
         values=values,
         units="m3/s",
         interpolate=False
@@ -27,7 +31,10 @@ def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:
 
 
 def lateral_2d_to_api_lateral(lateral_2d: Lateral2D) -> Lateral:
-    values = [[float(y) for y in x.split(",")] for x in lateral_2d.timeseries.split(' ')]
+    try:
+        values = [[float(y) for y in x.split(",")] for x in lateral_2d.timeseries.split(' ')]
+    except (ValueError, TypeError):
+        raise SchematisationError(f"Incorrect timeseries format for lateral 2D with id: {lateral_2d.id}")
 
     offset = values[0][0]
 
@@ -44,7 +51,6 @@ def lateral_2d_to_api_lateral(lateral_2d: Lateral2D) -> Lateral:
 
     return Lateral(
         offset=int(values[0][0]),
-        duration=int(values[-1][0]),
         values=values,
         point=point,
         units="m3/s",

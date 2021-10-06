@@ -337,6 +337,7 @@ class ConnectionNode(Base):
     impervious_surface_maps = relationship(
         "ImperviousSurfaceMap", back_populates="connection_node"
     )
+    laterals1d = relationship("Lateral1d", back_populates="connection_node")
 
 
 class Lateral1d(Base):
@@ -346,6 +347,7 @@ class Lateral1d(Base):
         Integer, ForeignKey(ConnectionNode.__tablename__ + ".id"), nullable=False
     )
     timeseries = Column(Text, nullable=False)
+    connection_node = relationship(ConnectionNode, back_populates="laterals1d")
 
 
 class Manhole(Base):
