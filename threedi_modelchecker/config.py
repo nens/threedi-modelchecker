@@ -28,11 +28,13 @@ from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
 from .threedi_model.models import constants
+from .threedi_model.models import GlobalSetting
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
+from threedi_modelchecker.threedi_model.constants import InflowType
 from typing import List
 
 
@@ -776,6 +778,28 @@ CONDITIONAL_CHECKS = [
         column=models.NumericalSettings.flow_direction_threshold,
         min_value=0,
         left_inclusive=False,
+    ),
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        column=models.SurfaceMap.connection_node_id,
+        invalid=Query(models.SurfaceMap).filter(
+            uses_0d_surfaces,
+            models.SurfaceMap.connection_node_id.in_(
+                Query(models.BoundaryCondition1D.connection_node_id)
+            ),
+        ),
+        message="v2_surface_map will be ignored because it is connected to a 1D boundary condition.",
+    ),
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        column=models.ImperviousSurfaceMap.connection_node_id,
+        invalid=Query(models.ImperviousSurfaceMap).filter(
+            uses_0d_impervious_surfaces,
+            models.ImperviousSurfaceMap.connection_node_id.in_(
+                Query(models.BoundaryCondition1D.connection_node_id)
+            ),
+        ),
+        message="v2_impervious_surface_map will be ignored because it is connected to a 1D boundary condition.",
     ),
 ]
 
