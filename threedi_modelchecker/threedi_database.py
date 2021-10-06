@@ -19,7 +19,7 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     alter a table's schema. Because of SQLite limitations, this is always
     done in 'batch mode', which means that the table is recreated, data is
     copied over, and the old table is dropped, and then the new table is renamed.
-    
+
     SQLite errors on the last step if legacy_alter_table=OFF in case a view refers
     to the table.
     """
