@@ -467,7 +467,6 @@ class AggregationSettings(Base):
     var_name = Column(String(100), nullable=False)
     flow_variable = Column(VarcharEnum(constants.FlowVariable), nullable=False)
     aggregation_method = Column(VarcharEnum(constants.AggregationMethod))
-    aggregation_in_space = Column(Boolean, nullable=False)
     timestep = Column(Integer, nullable=False)
 
 

@@ -171,7 +171,6 @@ class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     var_name = Faker("name")
     flow_variable = "max_timestep"
     aggregation_method = "avg"
-    aggregation_in_space = False
     timestep = 10
 
 
