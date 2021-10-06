@@ -28,13 +28,11 @@ from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
 from .threedi_model import models
 from .threedi_model.models import constants
-from .threedi_model.models import GlobalSetting
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
-from threedi_modelchecker.threedi_model.constants import InflowType
 from typing import List
 
 
