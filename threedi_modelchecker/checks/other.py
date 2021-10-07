@@ -71,7 +71,16 @@ class CrossSectionShapeCheck(BaseCheck):
         super().__init__(column=models.CrossSectionDefinition.shape, *args, **kwargs)
 
     def get_invalid(self, session):
-        cross_section_definitions = session.query(self.table)
+        cross_section_definitions = self.to_check(session).filter(
+            models.CrossSectionDefinition.id.in_(
+                Query(models.CrossSectionLocation.definition_id).union_all(
+                    Query(models.Pipe.cross_section_definition_id),
+                    Query(models.Culvert.cross_section_definition_id),
+                    Query(models.Weir.cross_section_definition_id),
+                    Query(models.Orifice.cross_section_definition_id),
+                )
+            ),
+        )
         invalid_cross_section_shapes = []
 
         for cross_section_definition in cross_section_definitions.all():
@@ -99,7 +108,7 @@ class CrossSectionShapeCheck(BaseCheck):
         return invalid_cross_section_shapes
 
     def description(self):
-        return "Invalid CrossSectionShape"
+        return f"{self.table.name} contains an invalid width or height"
 
 
 def valid_closed_rectangle(width, height):
@@ -115,12 +124,7 @@ def valid_closed_rectangle(width, height):
 def valid_rectangle(width, height):
     if width is None:  # width is required
         return False
-    width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
-    if height is not None:  # height is not required
-        height_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(height)
-    else:
-        height_match = True
-    return width_match and height_match
+    return patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
 
 
 def valid_circle(width):
