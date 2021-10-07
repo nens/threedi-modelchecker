@@ -223,7 +223,7 @@ class Surface(Base):
         Geometry(
             geometry_type="POLYGON", srid=4326, spatial_index=True, management=True
         ),
-        nullable=False,
+        nullable=True,
     )
 
 
@@ -300,6 +300,7 @@ class CrossSectionDefinition(Base):
     height = Column(String(255))
     shape = Column(IntegerEnum(constants.CrossSectionShape))
     code = Column(String(100))
+    cross_section_locations = relationship("CrossSectionLocation", backref="definition")
 
 
 class ConnectionNode(Base):
@@ -826,7 +827,7 @@ class ImperviousSurface(Base):
         Geometry(
             geometry_type="POLYGON", srid=4326, spatial_index=True, management=True
         ),
-        nullable=False,
+        nullable=True,
     )
     impervious_surface_maps = relationship(
         "ImperviousSurfaceMap", back_populates="impervious_surface"

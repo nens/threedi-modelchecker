@@ -326,7 +326,7 @@ def upgrade():
                 srid=4326,
                 management=True,
             ),
-            nullable=False,
+            nullable=True,
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -684,7 +684,7 @@ def upgrade():
                 srid=4326,
                 management=True,
             ),
-            nullable=False,
+            nullable=True,
         ),
         sa.PrimaryKeyConstraint("id"),
     )
