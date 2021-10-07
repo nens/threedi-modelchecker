@@ -92,7 +92,7 @@ class BaseCheck(ABC):
         return "Invalid value in column '%s'" % self.column
 
     def __repr__(self) -> str:
-        return "<%s: %s.%s>" % (type(self).__name__, self.table.name, self.column.name)
+        return "<%s: %s.%s>" % (self.__tablename__, self.table.name, self.column.name)
 
 
 class GeneralCheck(BaseCheck):

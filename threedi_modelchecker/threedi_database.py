@@ -1,14 +1,35 @@
 from contextlib import contextmanager
 from pathlib import Path
 from sqlalchemy import create_engine
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 from sqlalchemy.event import listen
 from sqlalchemy.orm import sessionmaker
 
 import shutil
+import sqlite3
 import tempfile
 
 
 __all__ = ["ThreediDatabase"]
+
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    """Switch on legacy_alter_table setting to fix our migrations.
+
+    Why?
+    1) SQLite does not support "DROP COLUMN ...". You have to create a new table,
+       copy the data, drop the old table, then rename. Luckily Alembic supports this pattern.
+       They call it a "batch operation". See https://alembic.sqlalchemy.org/en/latest/batch.html.
+    2) Newer SQLite drivers do a lot of fancy checks on a RENAME command. This made our
+       "batch operations" fail in case a view referred to the table that is getting a "batch operation".
+       The solution was a PRAGMA command. See https://www.sqlite.org/pragma.html#pragma_legacy_alter_table.
+    """
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA legacy_alter_table=ON")
+        cursor.close()
 
 
 def load_spatialite(con, connection_record):
