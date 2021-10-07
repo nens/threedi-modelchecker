@@ -468,3 +468,43 @@ class OpenChannelsWithNestedNewton(BaseCheck):
             f"NumericalSettings.use_of_nested_newton is switched off. "
             f"This gives convergence issues. We recommend setting use_of_nested_newton = 1."
         )
+
+
+class BoundaryCondition1DObjectNumberCheck(BaseCheck):
+    """Check that the number of connected objects to 1D boundary connections is 1."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            column=models.BoundaryCondition1D.connection_node_id, *args, **kwargs
+        )
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalid_ids = []
+        for bc in self.to_check(session).all():
+            total_objects = 0
+            for table in [
+                models.Channel,
+                models.Pipe,
+                models.Culvert,
+                models.Orifice,
+                models.Weir,
+            ]:
+                total_objects += (
+                    session.query(table)
+                    .filter(table.connection_node_start_id == bc.connection_node_id)
+                    .count()
+                )
+                total_objects += (
+                    session.query(table)
+                    .filter(table.connection_node_end_id == bc.connection_node_id)
+                    .count()
+                )
+            if total_objects != 1:
+                invalid_ids.append(bc.id)
+
+        return self.to_check(session).filter(
+            models.BoundaryCondition1D.id.in_(invalid_ids)
+        )
+
+    def description(self) -> str:
+        return "1D boundary condition should be connected to exactly one object."

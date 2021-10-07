@@ -13,6 +13,7 @@ from .checks.factories import generate_not_null_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
 from .checks.other import BankLevelCheck
+from .checks.other import BoundaryCondition1DObjectNumberCheck
 from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionLocationCheck
@@ -246,6 +247,8 @@ CHECKS += [
             == models.Pumpstation.connection_node_end_id,
         ),
     ),
+    # 1d boundary conditions should be connected to exactly 1 object
+    BoundaryCondition1DObjectNumberCheck(error_code=72),
 ]
 
 
