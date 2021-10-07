@@ -300,7 +300,6 @@ class CrossSectionDefinition(Base):
     height = Column(String(255))
     shape = Column(IntegerEnum(constants.CrossSectionShape))
     code = Column(String(100))
-    cross_section_locations = relationship("CrossSectionLocation", backref="definition")
 
 
 class ConnectionNode(Base):
