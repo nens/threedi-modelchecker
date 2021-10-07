@@ -370,8 +370,7 @@ CHECKS += [
         run_condition=(
             models.GlobalSetting,
             is_none_or_empty(models.GlobalSetting.dem_file)
-            & models.GlobalSetting.manhole_storage_area
-            > 0,
+            & (models.GlobalSetting.manhole_storage_area > 0),
         ),
         invalid=Query(models.Manhole).filter(
             models.Manhole.calculation_type.in_(
