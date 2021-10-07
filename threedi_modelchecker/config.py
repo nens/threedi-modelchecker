@@ -194,7 +194,7 @@ CHECKS += [
 
 CHECKS += [
     CrossSectionShapeCheck(error_code=51),
-    CrossSectionLocationCheck(error_code=52),
+    CrossSectionLocationCheck(max_distance=1.0, error_code=52),
     OpenChannelsWithNestedNewton(error_code=53),
     QueryCheck(
         error_code=54,
@@ -983,8 +983,17 @@ class Config:
         self.checks = []
         # Error codes 1 to 9: factories
         for model in self.models:
-            self.checks += generate_foreign_key_checks(model.__table__, error_code=1,
-            custom_level_map={""})
+            self.checks += generate_foreign_key_checks(
+                model.__table__,
+                error_code=1,
+                custom_level_map={
+                    "interflow_settings_id": "warning",
+                    "control_group_id": "warning",
+                    "simple_infiltration_settings_id": "warning",
+                    "groundwater_settings_id": "warning",
+                    "global_settings_id": "warning",
+                },
+            )
             self.checks += generate_unique_checks(model.__table__, error_code=2)
             self.checks += generate_not_null_checks(model.__table__, error_code=3)
             self.checks += generate_type_checks(model.__table__, error_code=4)

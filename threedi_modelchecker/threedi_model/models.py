@@ -221,7 +221,7 @@ class Surface(Base):
     )
     the_geom = Column(
         Geometry(
-            geometry_type="POLYGON", srid=4326, spatial_index=True, management=True
+            geometry_type="GEOMETRY", srid=4326, spatial_index=True, management=True
         ),
         nullable=True,
     )
@@ -380,9 +380,7 @@ class NumericalSettings(Base):
     use_of_cg = Column(Integer, nullable=False)
     use_of_nested_newton = Column(Integer, nullable=False)
 
-    global_settings = relationship(
-        "GlobalSetting", back_populates="numerical_settings"
-    )
+    global_settings = relationship("GlobalSetting", back_populates="numerical_settings")
 
 
 class GlobalSetting(Base):
@@ -833,7 +831,7 @@ class ImperviousSurface(Base):
     dry_weather_flow = Column(Float)
     the_geom = Column(
         Geometry(
-            geometry_type="POLYGON", srid=4326, spatial_index=True, management=True
+            geometry_type="GEOMETRY", srid=4326, spatial_index=True, management=True
         ),
         nullable=True,
     )

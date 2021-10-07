@@ -314,6 +314,9 @@ class GeometryTypeCheck(BaseCheck):
             self.column, dialect=session.bind.dialect.name
         )
         q_invalid = self.to_check(session)
+        if expected_geometry_type is None:
+            # skip in case of generic GEOMETRY column
+            return q_invalid.filter(false())
         invalid_geometry_types_q = q_invalid.filter(
             geo_func.ST_GeometryType(self.column) != expected_geometry_type,
             self.column != None,
@@ -328,6 +331,8 @@ class GeometryTypeCheck(BaseCheck):
 
 
 def _get_geometry_type(column, dialect):
+    if column.type.geometry_type == "GEOMETRY":
+        return  # should skip the check
     if dialect == "sqlite":
         return column.type.geometry_type
     elif dialect == "postgresql":

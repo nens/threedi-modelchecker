@@ -9,12 +9,17 @@ from .base import UniqueCheck
 from geoalchemy2.types import Geometry
 
 
-def generate_foreign_key_checks(table, **kwargs):
+def generate_foreign_key_checks(table, custom_level_map=None, **kwargs):
+    custom_level_map = custom_level_map or {}
     foreign_key_checks = []
     for fk_column in table.foreign_keys:
+        level = custom_level_map.get(fk_column.parent.name, "ERROR")
         foreign_key_checks.append(
             ForeignKeyCheck(
-                reference_column=fk_column.column, column=fk_column.parent, **kwargs
+                reference_column=fk_column.column,
+                column=fk_column.parent,
+                level=level,
+                **kwargs
             )
         )
     return foreign_key_checks
