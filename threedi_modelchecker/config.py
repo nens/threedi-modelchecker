@@ -191,6 +191,14 @@ CHECKS += [
         message="CrossSectionLocation.reference_level should be below the CrossSectionLocation.bank_level"
         "when CrossSectionLocation.bank_level is not null",
     ),
+    QueryCheck(
+        error_code=55,
+        column=models.Channel.id,
+        invalid=Query(models.Channel).filter(
+            ~models.Channel.cross_section_locations.any()
+        ),
+        message="v2_channel has no cross section locations",
+    ),
 ]
 
 ## 006x: PUMPSTATIONS
