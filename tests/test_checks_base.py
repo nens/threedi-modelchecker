@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy import Integer
 from sqlalchemy.orm import Query
 from tests import factories
-from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_type
+from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_types
 from threedi_modelchecker.checks.base import EnumCheck
 from threedi_modelchecker.checks.base import FileExistsCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
@@ -347,7 +347,7 @@ def test_enum_check_string_with_invalid_value(session):
 
 def test_sqlalchemy_to_sqlite_type_with_custom_type():
     customIntegerEnum = custom_types.IntegerEnum(constants.BoundaryType)
-    assert _sqlalchemy_to_sqlite_type(customIntegerEnum) == "integer"
+    assert _sqlalchemy_to_sqlite_types(customIntegerEnum) == ["integer"]
 
 
 def test_conditional_checks(session):

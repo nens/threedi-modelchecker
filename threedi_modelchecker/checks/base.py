@@ -240,14 +240,14 @@ class TypeCheck(BaseCheck):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.expected_type = _sqlalchemy_to_sqlite_type(self.column.type)
+        self.expected_types = _sqlalchemy_to_sqlite_types(self.column.type)
 
     def get_invalid(self, session):
         if "sqlite" not in session.bind.dialect.dialect_description:
             return []
         q_invalid = self.to_check(session)
         invalid_type_query = q_invalid.filter(
-            func.typeof(self.column) != self.expected_type,
+            func.typeof(self.column).notin_(self.expected_types),
             func.typeof(self.column) != "null",
         )
         return invalid_type_query.all()
@@ -256,8 +256,8 @@ class TypeCheck(BaseCheck):
         return f"{self.column} is not of type {self.expected_type}"
 
 
-def _sqlalchemy_to_sqlite_type(column_type):
-    """Convert the sqlalchemy column type to sqlite data type
+def _sqlalchemy_to_sqlite_types(column_type):
+    """Convert the sqlalchemy column type to allowed sqlite data types
 
     Returns the value similar as the sqlite 'typeof' function.
     Raises TypeError if the column type is unknown.
@@ -270,21 +270,19 @@ def _sqlalchemy_to_sqlite_type(column_type):
         column_type = column_type.impl
 
     if isinstance(column_type, types.String):
-        return "text"
-    elif isinstance(column_type, types.Float):
-        return "real"
+        return ["text"]
+    elif isinstance(column_type, (types.Float, types.Numeric)):
+        return ["integer", "numeric", "real"]
     elif isinstance(column_type, types.Integer):
-        return "integer"
+        return ["integer"]
     elif isinstance(column_type, types.Boolean):
-        return "integer"
-    elif isinstance(column_type, types.Numeric):
-        return "numeric"
+        return ["integer"]
     elif isinstance(column_type, types.Date):
-        return "text"
+        return ["text"]
     elif isinstance(column_type, Geometry):
-        return "blob"
+        return ["blob"]
     elif isinstance(column_type, types.TIMESTAMP):
-        return "text"
+        return ["text"]
     else:
         raise TypeError("Unknown column type: %s" % column_type)
 
