@@ -1,6 +1,5 @@
 from .conftest import emtpy_sqlite_path
 from pathlib import Path
-from threedi_modelchecker.exporters import format_check_results
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from unittest import mock
 
