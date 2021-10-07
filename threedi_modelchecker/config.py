@@ -931,24 +931,28 @@ CHECKS += [
     RangeCheck(
         error_code=1104,
         column=models.NumericalSettings.convergence_eps,
+        filters=models.NumericalSettings.global_settings != None,
         min_value=0,
         left_inclusive=False,
     ),
     RangeCheck(
         error_code=1105,
         column=models.NumericalSettings.convergence_cg,
+        filters=models.NumericalSettings.global_settings != None,
         min_value=0,
         left_inclusive=False,
     ),
     RangeCheck(
         error_code=1106,
         column=models.NumericalSettings.general_numerical_threshold,
+        filters=models.NumericalSettings.global_settings != None,
         min_value=0,
         left_inclusive=False,
     ),
     RangeCheck(
         error_code=1107,
         column=models.NumericalSettings.flow_direction_threshold,
+        filters=models.NumericalSettings.global_settings != None,
         min_value=0,
         left_inclusive=False,
     ),
@@ -979,7 +983,8 @@ class Config:
         self.checks = []
         # Error codes 1 to 9: factories
         for model in self.models:
-            self.checks += generate_foreign_key_checks(model.__table__, error_code=1)
+            self.checks += generate_foreign_key_checks(model.__table__, error_code=1,
+            custom_level_map={""})
             self.checks += generate_unique_checks(model.__table__, error_code=2)
             self.checks += generate_not_null_checks(model.__table__, error_code=3)
             self.checks += generate_type_checks(model.__table__, error_code=4)

@@ -380,6 +380,10 @@ class NumericalSettings(Base):
     use_of_cg = Column(Integer, nullable=False)
     use_of_nested_newton = Column(Integer, nullable=False)
 
+    global_settings = relationship(
+        "GlobalSetting", back_populates="numerical_settings"
+    )
+
 
 class GlobalSetting(Base):
     __tablename__ = "v2_global_settings"
@@ -430,6 +434,11 @@ class GlobalSetting(Base):
 
     numerical_settings_id = Column(
         Integer, ForeignKey(NumericalSettings.__tablename__ + ".id"), nullable=False
+    )
+    numerical_settings = relationship(
+        NumericalSettings,
+        foreign_keys=numerical_settings_id,
+        back_populates="global_settings",
     )
     interflow_settings_id = Column(Integer, ForeignKey(Interflow.__tablename__ + ".id"))
     interflow_settings = relationship(
