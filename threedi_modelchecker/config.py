@@ -82,9 +82,7 @@ CHECKS += [
     RangeCheck(
         error_code=23,
         column=table.friction_value,
-        filters=(
-            table.friction_type == constants.FrictionType.MANNING.value
-        )
+        filters=(table.friction_type == constants.FrictionType.MANNING.value)
         & (table.crest_type == constants.CrestType.BROAD_CRESTED.value),
         min_value=0,
         max_value=1,
@@ -782,8 +780,6 @@ for (surface, surface_map, _filters) in [
             message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
         ),
     ]
-
-
 
 
 CHECKS += [
