@@ -40,8 +40,8 @@ CHECKS: List[BaseCheck] = []
 CHECKS += [
     RangeCheck(
         error_code=21,
-        column=getattr(table, "friction_value"),
-        filters=getattr(table, "friction_type") == constants.FrictionType.CHEZY.value,
+        column=table.friction_value,
+        filters=table.friction_type == constants.FrictionType.CHEZY.value,
         min_value=0,
     )
     for table in [
@@ -53,9 +53,9 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=21,
-        column=getattr(table, "friction_value"),
-        filters=(getattr(table, "friction_type") == constants.FrictionType.CHEZY.value)
-        & (getattr(table, "crest_type") == constants.CrestType.BROAD_CRESTED.value),
+        column=table.friction_value,
+        filters=(table.friction_type == constants.FrictionType.CHEZY.value)
+        & (table.crest_type == constants.CrestType.BROAD_CRESTED.value),
         min_value=0,
     )
     for table in [
@@ -66,8 +66,8 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=22,
-        column=getattr(table, "friction_value"),
-        filters=getattr(table, "friction_type") == constants.FrictionType.MANNING.value,
+        column=table.friction_value,
+        filters=table.friction_type == constants.FrictionType.MANNING.value,
         min_value=0,
         max_value=1,
         right_inclusive=False,  # 1 is not allowed
@@ -81,11 +81,9 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=23,
-        column=getattr(table, "friction_value"),
-        filters=(
-            getattr(table, "friction_type") == constants.FrictionType.MANNING.value
-        )
-        & (getattr(table, "crest_type") == constants.CrestType.BROAD_CRESTED.value),
+        column=table.friction_value,
+        filters=(table.friction_type == constants.FrictionType.MANNING.value)
+        & (table.crest_type == constants.CrestType.BROAD_CRESTED.value),
         min_value=0,
         max_value=1,
         right_inclusive=False,  # 1 is not allowed
@@ -98,16 +96,16 @@ CHECKS += [
 CHECKS += [
     NotNullCheck(
         error_code=24,
-        column=getattr(table, "friction_value"),
-        filters=getattr(table, "crest_type") == constants.CrestType.BROAD_CRESTED.value,
+        column=table.friction_value,
+        filters=table.crest_type == constants.CrestType.BROAD_CRESTED.value,
     )
     for table in [models.Orifice, models.Weir]
 ]
 CHECKS += [
     NotNullCheck(
         error_code=25,
-        column=getattr(table, "friction_type"),
-        filters=getattr(table, "crest_type") == constants.CrestType.BROAD_CRESTED.value,
+        column=table.friction_type,
+        filters=table.crest_type == constants.CrestType.BROAD_CRESTED.value,
     )
     for table in [models.Orifice, models.Weir]
 ]
@@ -141,7 +139,7 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=41,
-        column=getattr(table, "discharge_coefficient_negative"),
+        column=table.discharge_coefficient_negative,
         min_value=0,
     )
     for table in [models.Culvert, models.Weir, models.Orifice]
@@ -149,7 +147,7 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=42,
-        column=getattr(table, "discharge_coefficient_positive"),
+        column=table.discharge_coefficient_positive,
         min_value=0,
     )
     for table in [models.Culvert, models.Weir, models.Orifice]
@@ -157,7 +155,7 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=43,
-        column=getattr(table, "dist_calc_points"),
+        column=table.dist_calc_points,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
     )
@@ -258,15 +256,15 @@ CHECKS += [
     QueryCheck(
         level=CheckLevel.WARNING,
         error_code=102,
-        column=getattr(table, "invert_level_start_point"),
+        column=table.invert_level_start_point,
         invalid=Query(table)
         .join(
             models.ConnectionNode,
-            getattr(table, "connection_node_start_id") == models.ConnectionNode.id,
+            table.connection_node_start_id == models.ConnectionNode.id,
         )
         .join(models.Manhole)
         .filter(
-            getattr(table, "invert_level_start_point") < models.Manhole.bottom_level,
+            table.invert_level_start_point < models.Manhole.bottom_level,
         ),
         message=f"{table}.invert_level_start_point should be higher than or equal to Manhole.bottom_level. In the future, this will lead to an error.",
     )
@@ -276,15 +274,15 @@ CHECKS += [
     QueryCheck(
         level=CheckLevel.WARNING,
         error_code=103,
-        column=getattr(table, "invert_level_end_point"),
+        column=table.invert_level_end_point,
         invalid=Query(table)
         .join(
             models.ConnectionNode,
-            getattr(table, "connection_node_end_id") == models.ConnectionNode.id,
+            table.connection_node_end_id == models.ConnectionNode.id,
         )
         .join(models.Manhole)
         .filter(
-            getattr(table, "invert_level_end_point") < models.Manhole.bottom_level,
+            table.invert_level_end_point < models.Manhole.bottom_level,
         ),
         message=f"{table}.invert_level_end_point should be higher than or equal to Manhole.bottom_level. In the future, this will lead to an error.",
     )
@@ -361,11 +359,11 @@ CHECKS += [
     QueryCheck(
         error_code=202,
         level=CheckLevel.WARNING,
-        column=getattr(table, "id"),
-        invalid=Query(models.Channel).filter(
+        column=table.id,
+        invalid=Query(table).filter(
             geo_func.ST_Length(
                 geo_func.ST_Transform(
-                    getattr(table, "the_geom"),
+                    table.the_geom,
                     Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code"),
                 )
             )
@@ -389,10 +387,10 @@ CHECKS += [
     ConnectionNodesLength(
         error_code=204,
         level=CheckLevel.WARNING,
-        column=getattr(table, "id"),
-        filters=getattr(table, "crest_type") == constants.CrestType.BROAD_CRESTED,
-        start_node=getattr(table, "connection_node_start"),
-        end_node=getattr(table, "connection_node_end"),
+        column=table.id,
+        filters=table.crest_type == constants.CrestType.BROAD_CRESTED,
+        start_node=table.connection_node_start,
+        end_node=table.connection_node_end,
         min_distance=0.05,
     )
     for table in [models.Orifice, models.Weir]
@@ -739,37 +737,50 @@ for (surface, surface_map, _filters) in [
     CHECKS += [
         RangeCheck(
             error_code=601,
-            column=getattr(surface, "area"),
+            column=surface.area,
             min_value=0,
             filters=_filters,
         ),
         RangeCheck(
             level=CheckLevel.WARNING,
             error_code=602,
-            column=getattr(surface, "dry_weather_flow"),
+            column=surface.dry_weather_flow,
             min_value=0,
             filters=_filters,
         ),
         RangeCheck(
             error_code=603,
-            column=getattr(surface_map, "percentage"),
+            column=surface_map.percentage,
             min_value=0,
             filters=_filters,
         ),
         RangeCheck(
             error_code=604,
             level=CheckLevel.WARNING,
-            column=getattr(surface_map, "percentage"),
+            column=surface_map.percentage,
             max_value=100,
             filters=_filters,
         ),
         RangeCheck(
             error_code=605,
-            column=getattr(surface, "nr_of_inhabitants"),
+            column=surface.nr_of_inhabitants,
             min_value=0,
             filters=_filters,
         ),
+        QueryCheck(
+            level=CheckLevel.WARNING,
+            error_code=612,
+            column=surface_map.connection_node_id,
+            invalid=Query(surface_map).filter(
+                _filters,
+                surface_map.connection_node_id.in_(
+                    Query(models.BoundaryCondition1D.connection_node_id)
+                ),
+            ),
+            message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
+        ),
     ]
+
 
 CHECKS += [
     RangeCheck(
