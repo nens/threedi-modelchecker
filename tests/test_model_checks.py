@@ -1,6 +1,5 @@
 from .conftest import emtpy_sqlite_path
 from pathlib import Path
-from threedi_modelchecker.exporters import format_check_results
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from unittest import mock
 
@@ -19,6 +18,7 @@ def test_set_base_path(model_checker):
     assert model_checker.context.base_path == Path(emtpy_sqlite_path).parent
 
 
+@pytest.mark.filterwarnings("error::")
 def test_get_model_error_iterator(model_checker):
-    for check, error in model_checker.errors():
-        print(format_check_results(check, error))
+    errors = list(model_checker.errors(level="info"))
+    assert len(errors) == 0

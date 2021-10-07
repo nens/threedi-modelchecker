@@ -38,10 +38,18 @@ class BaseCheck(ABC):
     This method will return a list of rows (as named_tuples) which are invalid.
     """
 
-    def __init__(self, column, filters=None, level=CheckLevel.ERROR, error_code=0):
+    def __init__(
+        self,
+        column,
+        filters=None,
+        run_condition=None,
+        level=CheckLevel.ERROR,
+        error_code=0,
+    ):
         self.column = column
         self.table = column.table
         self.filters = filters
+        self.run_condition = run_condition
         self.error_code = int(error_code)
         self.level = CheckLevel.get(level)
 
@@ -79,6 +87,10 @@ class BaseCheck(ABC):
         :return: sqlalchemy.Query
         """
         query = session.query(self.table)
+        if self.run_condition is not None:
+            table, _filter = self.run_condition
+            if session.query(table).filter(_filter).count() == 0:
+                return query.filter(false())
         if self.filters is not None:
             query = query.filter(self.filters)
         return query
@@ -140,13 +152,27 @@ class QueryCheck(BaseCheck):
     sqlalchemy.sql.expression.BinaryExpression. For example, QueryCheck allows joins
     on multiple tables"""
 
-    def __init__(self, column, invalid, message, *args, **kwargs):
-        super().__init__(column, *args, **kwargs)
+    def __init__(
+        self,
+        column,
+        invalid,
+        message,
+        run_condition=None,
+        level=CheckLevel.ERROR,
+        error_code=0,
+    ):
+        super().__init__(column, level=level, error_code=error_code)
         self.invalid = invalid
         self.message = message
+        self.run_condition = run_condition
 
     def get_invalid(self, session):
-        return self.invalid.with_session(session).all()
+        query = self.invalid.with_session(session)
+        if self.run_condition is not None:
+            table, _filter = self.run_condition
+            if session.query(table).filter(_filter).count() == 0:
+                return query.filter(false())
+        return query.all()
 
     def description(self):
         return self.message

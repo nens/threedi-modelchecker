@@ -27,6 +27,8 @@ Changelog of threedi-modelchecker
 - Added a migration (0203) that drops v2_connection_nodes.the_geom_linestring and
   v2_aggregation_settings.aggregation_in_space.
 
+- Fixed compatibility with SQLAlchemy 1.4.*.
+
 
 0.14 (2021-07-29)
 -----------------

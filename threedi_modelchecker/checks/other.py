@@ -413,13 +413,16 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         super().__init__(
             column=models.CrossSectionDefinition.id,
             level=CheckLevel.WARNING,
+            run_condition=(
+                models.NumericalSettings,
+                models.NumericalSettings.use_of_nested_newton == 0,
+            ),
             *args,
             **kwargs,
         )
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        definitions_in_use = Query(models.CrossSectionDefinition).filter(
-            models.NumericalSettings.use_of_nested_newton == 0,
+        definitions_in_use = self.to_check(session).filter(
             models.CrossSectionDefinition.id.in_(
                 Query(models.CrossSectionLocation.definition_id).union_all(
                     Query(models.Pipe.cross_section_definition_id),

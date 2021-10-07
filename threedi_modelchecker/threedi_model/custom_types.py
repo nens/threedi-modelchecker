@@ -47,9 +47,10 @@ class IntegerEnum(CustomEnum):
     provides the `impl` datatype.
     """
 
+    cache_ok = True
     impl = Integer
 
 
 class VarcharEnum(CustomEnum):
-
+    cache_ok = True
     impl = VARCHAR
