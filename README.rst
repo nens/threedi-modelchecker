@@ -43,8 +43,28 @@ checks and print an overview of all discovered errors::
     )
 
     model_checker = ThreediModelChecker(database)
-    for check, error in model_checker.errors():
+    for check, error in model_checker.errors(level="WARNING"):
         print(format_check_results(check, error))
+
+
+Command-line interface
+----------------------
+
+Use the modelchecker from the command line as follows::
+
+    threedi_modelchecker -s path/to/model.sqlite check -l warning 
+
+By default, WARNING and INFO checks are ignored.
+
+
+Migrations
+----------
+
+Migrate the schematisation file to the latest version as follows::
+
+    threedi_modelchecker -s path/to/model.sqlite migrate
+
+The file will be change in-place.
 
 
 Development

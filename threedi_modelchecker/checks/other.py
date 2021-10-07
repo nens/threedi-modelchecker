@@ -1,6 +1,7 @@
 from ..threedi_model import constants
 from ..threedi_model import models
 from .base import BaseCheck
+from .base import CheckLevel
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
 from sqlalchemy import text
@@ -17,8 +18,8 @@ class BankLevelCheck(BaseCheck):
     calculation_type is CONNECTED or DOUBLE_CONNECTED.
     """
 
-    def __init__(self):
-        super().__init__(column=models.CrossSectionLocation.bank_level)
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionLocation.bank_level, *args, **kwargs)
 
     def get_invalid(self, session):
         q = session.query(self.table).filter(
@@ -36,16 +37,38 @@ class BankLevelCheck(BaseCheck):
 
     def description(self):
         return (
-            "CrossSectionLoaction.Banklevel cannot be null when calculation_type "
+            "CrossSectionLocation.bank_level cannot be NULL when calculation_type "
             "is CONNECTED or DOUBLE_CONNECTED"
         )
+
+
+class CrossSectionLocationCheck(BaseCheck):
+    """Check if cross section locations intersect with their channel."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionLocation.the_geom, *args, **kwargs)
+
+    def get_invalid(self, session):
+        return (
+            self.to_check(session)
+            .join(models.Channel)
+            .filter(
+                geo_func.ST_Disjoint(
+                    models.CrossSectionLocation.the_geom, models.Channel.the_geom
+                )
+            )
+            .all()
+        )
+
+    def description(self):
+        return "v2_cross_section_location.the_geom is invalid: the cross-section location should be located on the channel geometry"
 
 
 class CrossSectionShapeCheck(BaseCheck):
     """Check if all CrossSectionDefinition.shape are valid"""
 
-    def __init__(self):
-        super().__init__(column=models.CrossSectionDefinition.shape)
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionDefinition.shape, *args, **kwargs)
 
     def get_invalid(self, session):
         cross_section_definitions = session.query(self.table)
@@ -58,6 +81,9 @@ class CrossSectionShapeCheck(BaseCheck):
             if shape == constants.CrossSectionShape.RECTANGLE:
                 if not valid_rectangle(width, height):
                     invalid_cross_section_shapes.append(cross_section_definition)
+            elif shape == constants.CrossSectionShape.CLOSED_RECTANGLE:
+                if not valid_closed_rectangle(width, height):
+                    invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.CIRCLE:
                 if not valid_circle(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
@@ -65,15 +91,25 @@ class CrossSectionShapeCheck(BaseCheck):
                 if not valid_egg(width):
                     invalid_cross_section_shapes.append(cross_section_definition)
             if shape == constants.CrossSectionShape.TABULATED_RECTANGLE:
-                if not valid_tabulated_shape(width, height):
+                if not valid_tabulated_shape(width, height, is_rectangle=True):
                     invalid_cross_section_shapes.append(cross_section_definition)
             elif shape == constants.CrossSectionShape.TABULATED_TRAPEZIUM:
-                if not valid_tabulated_shape(width, height):
+                if not valid_tabulated_shape(width, height, is_rectangle=False):
                     invalid_cross_section_shapes.append(cross_section_definition)
         return invalid_cross_section_shapes
 
     def description(self):
         return "Invalid CrossSectionShape"
+
+
+def valid_closed_rectangle(width, height):
+    if width is None:  # width is required
+        return False
+    width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
+    if height is None:  # height is required
+        return False
+    height_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(height)
+    return width_match and height_match
 
 
 def valid_rectangle(width, height):
@@ -103,7 +139,7 @@ def valid_egg(width):
     return w > 0
 
 
-def valid_tabulated_shape(width, height):
+def valid_tabulated_shape(width, height, is_rectangle):
     """Return if the tabulated shape is valid.
 
     Validating that the strings `width` and `height` contain positive floats
@@ -127,6 +163,14 @@ def valid_tabulated_shape(width, height):
             return False
     except ValueError:
         return False
+    if is_rectangle:
+        try:
+            # first width must larger than 0
+            first_width = float(width_string_list[0])
+            if first_width <= 0:
+                return False
+        except ValueError:
+            return False
     previous_height = -1
     for h_string, w_string in zip(height_string_list, width_string_list):
         try:
@@ -181,7 +225,7 @@ class TimeseriesCheck(BaseCheck):
         return invalid_timeseries
 
     def description(self):
-        return "Invalid timeseries"
+        return f"{self.column} contains an invalid timeseries"
 
 
 class Use0DFlowCheck(BaseCheck):
@@ -189,8 +233,8 @@ class Use0DFlowCheck(BaseCheck):
     2, there is at least one impervious surface or surfaces respectively.
     """
 
-    def __init__(self):
-        super().__init__(column=models.GlobalSetting.use_0d_inflow)
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.GlobalSetting.use_0d_inflow, *args, **kwargs)
 
     def to_check(self, session):
         """Return a Query object on which this check is applied"""
@@ -206,9 +250,14 @@ class Use0DFlowCheck(BaseCheck):
 
         invalid_rows = []
         for row in self.to_check(session):
-            if row.use_0d_inflow == 1 and impervious_surface_count == 0:
+            if (
+                row.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE
+                and impervious_surface_count == 0
+            ):
                 invalid_rows.append(row)
-            elif row.use_0d_inflow == 2 and surface_count == 0:
+            elif (
+                row.use_0d_inflow == constants.InflowType.SURFACE and surface_count == 0
+            ):
                 invalid_rows.append(row)
             else:
                 continue
@@ -216,7 +265,7 @@ class Use0DFlowCheck(BaseCheck):
 
     def description(self):
         return (
-            "When %s is used, there should exists at least one "
+            "When %s is used, there should exist at least one "
             "(impervious) surface." % self.column
         )
 
@@ -232,8 +281,8 @@ class ConnectionNodes(BaseCheck):
     - Weir
     """
 
-    def __init__(self):
-        super().__init__(column=models.ConnectionNode.id)
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.ConnectionNode.id, *args, **kwargs)
 
     def get_invalid(self, session):
         raise NotImplementedError
@@ -286,8 +335,8 @@ class ConnectionNodesLength(BaseCheck):
 
     def description(self) -> str:
         return (
-            f"The distance of start- and end connectionnode of {self.table} is "
-            f"too short, should be at least {self.min_distance} meters"
+            f"The length of {self.table} is "
+            f"very short (< {self.min_distance}). A length of at least 1.0 m is recommended."
         )
 
 
@@ -300,7 +349,9 @@ class ConnectionNodesDistance(BaseCheck):
         """
         :param minimum_distance: threshold distance in meters
         """
-        super().__init__(column=models.ConnectionNode.id, *args, **kwargs)
+        super().__init__(
+            column=models.ConnectionNode.id, level=CheckLevel.WARNING, *args, **kwargs
+        )
         self.minimum_distance = minimum_distance
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
@@ -323,7 +374,7 @@ class ConnectionNodesDistance(BaseCheck):
             session.connection().execute(recover_spatial_index).scalar()
 
         query = text(
-            """SELECT *
+            f"""SELECT *
                FROM v2_connection_nodes AS cn1, v2_connection_nodes AS cn2
                WHERE
                    distance(cn1.the_geom, cn2.the_geom, 1) < :min_distance
@@ -333,7 +384,7 @@ class ConnectionNodesDistance(BaseCheck):
                      FROM SpatialIndex
                      WHERE (
                        f_table_name = "v2_connection_nodes"
-                       AND search_frame = Buffer(cn1.the_geom, 0.0005)));
+                       AND search_frame = Buffer(cn1.the_geom, {self.minimum_distance / 2})));
             """
         )
         results = (
@@ -352,79 +403,111 @@ class ConnectionNodesDistance(BaseCheck):
 
 
 class OpenChannelsWithNestedNewton(BaseCheck):
-    """Checks whether the model has any open cross-section in use when the
+    """Checks whether the model has any closed cross-section in use when the
     NumericalSettings.use_of_nested_newton is turned off.
 
     See https://github.com/nens/threeditoolbox/issues/522
     """
 
-    def __init__(self):
-        super().__init__(column=models.Channel.id)
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            column=models.CrossSectionDefinition.id,
+            level=CheckLevel.WARNING,
+            run_condition=(
+                models.NumericalSettings,
+                models.NumericalSettings.use_of_nested_newton == 0,
+            ),
+            *args,
+            **kwargs,
+        )
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        invalid_channels = []
-
-        all_newton: bool = Query(models.NumericalSettings).filter(
-            models.NumericalSettings.use_of_nested_newton == 0).with_session(session).first() is None
-
-        if all_newton:
-            # All numerical settings are set to use nested newton
-            # No need to run checks below
-            return []
-
-        # Circle and egg cross-section definitions are always open:
-        circle_egg_definitions = (
-            Query(models.Channel)
-            .join(models.CrossSectionLocation, models.Channel.cross_section_locations)
-            .join(models.CrossSectionDefinition, models.CrossSectionLocation.definition)
-            .filter(
-                models.CrossSectionDefinition.shape.in_(
-                    [
-                        constants.CrossSectionShape.CIRCLE,
-                        constants.CrossSectionShape.EGG,
-                    ]
+        definitions_in_use = self.to_check(session).filter(
+            models.CrossSectionDefinition.id.in_(
+                Query(models.CrossSectionLocation.definition_id).union_all(
+                    Query(models.Pipe.cross_section_definition_id),
+                    Query(models.Culvert.cross_section_definition_id),
+                    Query(models.Weir.cross_section_definition_id),
+                    Query(models.Orifice.cross_section_definition_id),
                 )
-            )
+            ),
         )
-        invalid_channels += circle_egg_definitions.with_session(session).all()
 
-        # Tabulated cross-section definitions are open when the last element of 'width'
-        # is zero
-        open_definitions = (
-            Query(
+        # closed_rectangle, circle, and egg cross-section definitions are always closed:
+        closed_definitions = definitions_in_use.filter(
+            models.CrossSectionDefinition.shape.in_(
                 [
-                    models.Channel,
-                    models.CrossSectionLocation,
-                    models.CrossSectionDefinition,
+                    constants.CrossSectionShape.CLOSED_RECTANGLE,
+                    constants.CrossSectionShape.CIRCLE,
+                    constants.CrossSectionShape.EGG,
                 ]
             )
-            .join(models.CrossSectionLocation, models.Channel.cross_section_locations)
-            .join(models.CrossSectionDefinition, models.CrossSectionLocation.definition)
-            .filter(
-                models.CrossSectionDefinition.shape.in_(
-                    [
-                        constants.CrossSectionShape.TABULATED_RECTANGLE,
-                        constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-                    ]
-                ),
+        )
+        result = list(closed_definitions.with_session(session).all())
+
+        # tabulated cross-section definitions are closed when the last element of 'width'
+        # is zero
+        tabulated_definitions = definitions_in_use.filter(
+            models.CrossSectionDefinition.shape.in_(
+                [
+                    constants.CrossSectionShape.TABULATED_RECTANGLE,
+                    constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+                ]
             )
         )
-        for channel, _, definition in open_definitions.with_session(session).all():
+        for definition in tabulated_definitions.with_session(session).all():
             try:
-                if definition.width.split(" ")[-1] in ("0", "0.", "0.0"):
-                    # Open channel
-                    invalid_channels.append(channel)
+                if float(definition.width.split(" ")[-1]) == 0.0:
+                    # Closed channel
+                    result.append(definition)
             except Exception:
-                # Many things can go wrong, I won't bother with trying to catch all
-                # possible exceptions
+                # Many things can go wrong, these are caught elsewhere
                 pass
-        return invalid_channels
+        return result
 
     def description(self) -> str:
         return (
-            "Channel in the model with an open cross-section-definition while also "
-            "having the NumericalSettings.use_of_nested_newton turned off can be a "
-            "cause of instabilities in the simulation. Please turn on the "
-            "NumericalSettings.use_of_nested_newton on or make the Channel a "
-            "closed definition."
+            f"{self.column} has a closed cross section definition while "
+            f"NumericalSettings.use_of_nested_newton is switched off. "
+            f"This gives convergence issues. We recommend setting use_of_nested_newton = 1."
         )
+
+
+class BoundaryCondition1DObjectNumberCheck(BaseCheck):
+    """Check that the number of connected objects to 1D boundary connections is 1."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            column=models.BoundaryCondition1D.connection_node_id, *args, **kwargs
+        )
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalid_ids = []
+        for bc in self.to_check(session).all():
+            total_objects = 0
+            for table in [
+                models.Channel,
+                models.Pipe,
+                models.Culvert,
+                models.Orifice,
+                models.Weir,
+            ]:
+                total_objects += (
+                    session.query(table)
+                    .filter(table.connection_node_start_id == bc.connection_node_id)
+                    .count()
+                )
+                total_objects += (
+                    session.query(table)
+                    .filter(table.connection_node_end_id == bc.connection_node_id)
+                    .count()
+                )
+            if total_objects != 1:
+                invalid_ids.append(bc.id)
+
+        return self.to_check(session).filter(
+            models.BoundaryCondition1D.id.in_(invalid_ids)
+        )
+
+    def description(self) -> str:
+        return "1D boundary condition should be connected to exactly one object."

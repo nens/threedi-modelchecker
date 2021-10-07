@@ -47,7 +47,7 @@ setup(
     python_requires='>=3.6',
     entry_points={
         "console_scripts": [
-            "threedi-modelchecker = threedi_modelchecker.scripts:check_model"
+            "threedi_modelchecker = threedi_modelchecker.scripts:threedi_modelchecker"
         ]
     },
 )

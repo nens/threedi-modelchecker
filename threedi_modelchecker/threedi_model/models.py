@@ -32,8 +32,8 @@ class BoundaryConditions2D(Base):
     __tablename__ = "v2_2d_boundary_conditions"
     id = Column(Integer, primary_key=True)
 
-    display_name = Column(String(255), nullable=False)
-    timeseries = Column(Text, nullable=False)
+    display_name = Column(String(255))
+    timeseries = Column(Text)
     boundary_type = Column(IntegerEnum(constants.BoundaryType), nullable=False)
     the_geom = Column(
         Geometry(
@@ -47,9 +47,9 @@ class CalculationPoint(Base):
     __tablename__ = "v2_calculation_point"
     id = Column(Integer, primary_key=True)
 
-    content_type_id = Column(Integer, nullable=False)
+    content_type_id = Column(Integer)
     user_ref = Column(String(80), nullable=False)
-    calc_type = Column(Integer, nullable=False)
+    calc_type = Column(Integer)
     the_geom = Column(
         Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
         nullable=False,
@@ -173,34 +173,21 @@ class Interflow(Base):
     impervious_layer_elevation = Column(Float)
     hydraulic_conductivity = Column(Float)
     hydraulic_conductivity_file = Column(String(255))
-    display_name = Column(String(255), nullable=False)
+    display_name = Column(String(255))
 
     global_settings = relationship("GlobalSetting", back_populates="interflow_settings")
-
-
-class PumpedDrainageArea(Base):
-    __tablename__ = "v2_pumped_drainage_area"
-    id = Column(Integer, primary_key=True)
-    name = Column(String(64), nullable=False)
-    code = Column(String(100), nullable=False)
-    the_geom = Column(
-        Geometry(
-            geometry_type="POLYGON", srid=4326, spatial_index=True, management=True
-        ),
-        nullable=False,
-    )
 
 
 class SimpleInfiltration(Base):
     __tablename__ = "v2_simple_infiltration"
     id = Column(Integer, primary_key=True)
-    infiltration_rate = Column(Float, nullable=False)
+    infiltration_rate = Column(Float)
     infiltration_rate_file = Column(String(255))
     infiltration_surface_option = Column(
         IntegerEnum(constants.InfiltrationSurfaceOption)
     )
     max_infiltration_capacity_file = Column(Text)
-    display_name = Column(String(255), nullable=False)
+    display_name = Column(String(255))
 
     global_settings = relationship(
         "GlobalSetting", back_populates="simple_infiltration_settings"
@@ -222,8 +209,8 @@ class SurfaceParameter(Base):
 class Surface(Base):
     __tablename__ = "v2_surface"
     id = Column(Integer, primary_key=True)
-    display_name = Column(String(255), nullable=False)
-    code = Column(String(100), nullable=False)
+    display_name = Column(String(255))
+    code = Column(String(100))
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     nr_of_inhabitants = Column(Float)
     dry_weather_flow = Column(Float)
@@ -268,7 +255,7 @@ class GroundWater(Base):
     groundwater_hydro_connectivity_type = Column(
         IntegerEnum(constants.InitializationType)
     )
-    display_name = Column(String(255), nullable=False)
+    display_name = Column(String(255))
     leakage = Column(Float)
     leakage_file = Column(String(255))
 
@@ -281,7 +268,7 @@ class GridRefinement(Base):
     __tablename__ = "v2_grid_refinement"
     id = Column(Integer, primary_key=True)
 
-    display_name = Column(String(255), nullable=False)
+    display_name = Column(String(255))
     refinement_level = Column(Integer, nullable=False)
     the_geom = Column(
         Geometry(
@@ -289,19 +276,20 @@ class GridRefinement(Base):
         ),
         nullable=False,
     )
-    code = Column(String(100), nullable=False)
+    code = Column(String(100))
 
 
 class GridRefinementArea(Base):
     __tablename__ = "v2_grid_refinement_area"
     id = Column(Integer, primary_key=True)
-    display_name = Column(String(255), nullable=False)
+    display_name = Column(String(255))
     refinement_level = Column(Integer, nullable=False)
-    code = Column(String(100), nullable=False)
+    code = Column(String(100))
     the_geom = Column(
         Geometry(
             geometry_type="POLYGON", srid=4326, spatial_index=True, management=True
-        )
+        ),
+        nullable=False,
     )
 
 
@@ -311,7 +299,7 @@ class CrossSectionDefinition(Base):
     width = Column(String(255))
     height = Column(String(255))
     shape = Column(IntegerEnum(constants.CrossSectionShape))
-    code = Column(String(100), default="", nullable=False)
+    code = Column(String(100))
 
 
 class ConnectionNode(Base):
@@ -323,12 +311,7 @@ class ConnectionNode(Base):
         Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
         nullable=False,
     )
-    the_geom_linestring = Column(
-        Geometry(
-            geometry_type="LINESTRING", srid=4326, spatial_index=False, management=True
-        )
-    )
-    code = Column(String(100), nullable=False)
+    code = Column(String(100))
 
     manholes = relationship("Manhole", back_populates="connection_node")
     boundary_conditions = relationship(
@@ -352,8 +335,8 @@ class Manhole(Base):
     __tablename__ = "v2_manhole"
 
     id = Column(Integer, primary_key=True)
-    display_name = Column(String(255), nullable=False)
-    code = Column(String(100), nullable=False)
+    display_name = Column(String(255))
+    code = Column(String(100))
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     shape = Column(String(4))
     width = Column(Float)
@@ -437,7 +420,7 @@ class GlobalSetting(Base):
     maximum_sim_time_step = Column(Float)
     frict_avg = Column(Integer)
     wind_shielding_file = Column(String(255))
-    use_0d_inflow = Column(Integer, nullable=False)
+    use_0d_inflow = Column(IntegerEnum(constants.InflowType))
     table_step_size_1d = Column(Float)
     table_step_size_volume_2d = Column(Float)
     use_2d_rain = Column(Integer, nullable=False)
@@ -484,7 +467,6 @@ class AggregationSettings(Base):
     var_name = Column(String(100), nullable=False)
     flow_variable = Column(VarcharEnum(constants.FlowVariable), nullable=False)
     aggregation_method = Column(VarcharEnum(constants.AggregationMethod))
-    aggregation_in_space = Column(Boolean, nullable=False)
     timestep = Column(Integer, nullable=False)
 
 
@@ -493,7 +475,7 @@ class BoundaryCondition1D(Base):
 
     id = Column(Integer, primary_key=True)
     boundary_type = Column(IntegerEnum(constants.BoundaryType), nullable=False)
-    timeseries = Column(Text, nullable=False)
+    timeseries = Column(Text)
 
     connection_node_id = Column(
         Integer,
@@ -522,8 +504,8 @@ class SurfaceMap(Base):
 class Channel(Base):
     __tablename__ = "v2_channel"
     id = Column(Integer, primary_key=True)
-    display_name = Column(String(255), nullable=False)
-    code = Column(String(100), nullable=False)
+    display_name = Column(String(255))
+    code = Column(String(100))
     calculation_type = Column(IntegerEnum(constants.CalculationType), nullable=False)
     dist_calc_points = Column(Float)
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
@@ -573,7 +555,7 @@ class Windshielding(Base):
 class CrossSectionLocation(Base):
     __tablename__ = "v2_cross_section_location"
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), nullable=False)
+    code = Column(String(100))
     reference_level = Column(Float, nullable=False)
     friction_type = Column(IntegerEnum(constants.FrictionType), nullable=False)
     friction_value = Column(Float, nullable=False)
@@ -597,8 +579,8 @@ class CrossSectionLocation(Base):
 class Pipe(Base):
     __tablename__ = "v2_pipe"
     id = Column(Integer, primary_key=True)
-    display_name = Column(String(255), nullable=False)
-    code = Column(String(100), nullable=False)
+    display_name = Column(String(255))
+    code = Column(String(100))
     profile_num = Column(Integer)
     sewerage_type = Column(IntegerEnum(constants.SewerageType))
     calculation_type = Column(
@@ -636,22 +618,21 @@ class Pipe(Base):
 class Culvert(Base):
     __tablename__ = "v2_culvert"
     id = Column(Integer, primary_key=True)
-    display_name = Column(String(255), nullable=False)
-    code = Column(String(100), nullable=False)
+    display_name = Column(String(255))
+    code = Column(String(100))
     calculation_type = Column(IntegerEnum(constants.CalculationTypeCulvert))
     friction_value = Column(Float, nullable=False)
     friction_type = Column(IntegerEnum(constants.FrictionType), nullable=False)
     dist_calc_points = Column(Float)
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
-    discharge_coefficient_positive = Column(Float, nullable=False)
-    discharge_coefficient_negative = Column(Float, nullable=False)
+    discharge_coefficient_positive = Column(Float)
+    discharge_coefficient_negative = Column(Float)
     invert_level_start_point = Column(Float, nullable=False)
     invert_level_end_point = Column(Float, nullable=False)
     the_geom = Column(
         Geometry(
             geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
         ),
-        nullable=False,
     )
 
     connection_node_start_id = Column(
@@ -680,22 +661,23 @@ class DemAverageArea(Base):
     the_geom = Column(
         Geometry(
             geometry_type="POLYGON", srid=4326, spatial_index=True, management=True
-        )
+        ),
+        nullable=False,
     )
 
 
 class Weir(Base):
     __tablename__ = "v2_weir"
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False)
+    code = Column(String(100))
+    display_name = Column(String(255))
     crest_level = Column(Float, nullable=False)
     crest_type = Column(IntegerEnum(constants.CrestType), nullable=False)
-    friction_value = Column(Float, nullable=False)
-    friction_type = Column(IntegerEnum(constants.FrictionType), nullable=False)
+    friction_value = Column(Float)
+    friction_type = Column(IntegerEnum(constants.FrictionType))
     discharge_coefficient_positive = Column(Float)
     discharge_coefficient_negative = Column(Float)
-    sewerage = Column(Boolean, nullable=False)
+    sewerage = Column(Boolean)
     external = Column(Boolean)
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
 
@@ -722,13 +704,13 @@ class Weir(Base):
 class Orifice(Base):
     __tablename__ = "v2_orifice"
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False)
+    code = Column(String(100))
+    display_name = Column(String(255))
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     crest_type = Column(IntegerEnum(constants.CrestType), nullable=False)
     crest_level = Column(Float, nullable=False)
-    friction_value = Column(Float, nullable=False)
-    friction_type = Column(IntegerEnum(constants.FrictionType), nullable=False)
+    friction_value = Column(Float)
+    friction_type = Column(IntegerEnum(constants.FrictionType))
     discharge_coefficient_positive = Column(Float)
     discharge_coefficient_negative = Column(Float)
     sewerage = Column(Boolean, nullable=False)
@@ -756,11 +738,11 @@ class Orifice(Base):
 class Pumpstation(Base):
     __tablename__ = "v2_pumpstation"
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False)
+    code = Column(String(100))
+    display_name = Column(String(255))
     zoom_category = Column(IntegerEnum(constants.ZoomCategories))
     classification = Column(Integer)
-    sewerage = Column(Boolean, nullable=False)
+    sewerage = Column(Boolean)
     type_ = Column(
         IntegerEnum(constants.PumpType), name="type", key="type_", nullable=False
     )  # type: ignore[call-overload]
@@ -785,7 +767,7 @@ class Pumpstation(Base):
 class Obstacle(Base):
     __tablename__ = "v2_obstacle"
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), nullable=False)
+    code = Column(String(100))
     crest_level = Column(Float, nullable=False)
     the_geom = Column(
         Geometry(
@@ -798,7 +780,7 @@ class Obstacle(Base):
 class Levee(Base):
     __tablename__ = "v2_levee"
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), default="", nullable=False)
+    code = Column(String(100))
     crest_level = Column(Float)
     the_geom = Column(
         Geometry(
@@ -829,8 +811,8 @@ class ConnectedPoint(Base):
 class ImperviousSurface(Base):
     __tablename__ = "v2_impervious_surface"
     id = Column(Integer, primary_key=True)
-    code = Column(String(100), nullable=False)
-    display_name = Column(String(255), nullable=False)
+    code = Column(String(100))
+    display_name = Column(String(255))
     surface_inclination = Column(
         VarcharEnum(constants.SurfaceInclinationType), nullable=False
     )
@@ -906,7 +888,6 @@ DECLARED_MODELS = [
     Obstacle,
     Orifice,
     Pipe,
-    PumpedDrainageArea,
     Pumpstation,
     SimpleInfiltration,
     Surface,

@@ -37,11 +37,6 @@ def test_TIMESERIES():
     assert TIMESERIES_REGEX.fullmatch(text)
 
 
-def test_TIMESERIES_trailing_newline():
-    text = """0,-0.5\n9999,-0.5\n"""
-    assert not TIMESERIES_REGEX.fullmatch(text)
-
-
 def test_TIMESERIES_missing_separator():
     text = """0,-0.5\n9999,-0.50,-0.5"""
     assert not TIMESERIES_REGEX.fullmatch(text)
