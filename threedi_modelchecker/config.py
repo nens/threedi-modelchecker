@@ -524,12 +524,13 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=303,
+        level=CheckLevel.WARNING,
         column=models.GlobalSetting.use_1d_flow,
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.use_1d_flow == False,
             Query(func.count(models.ConnectionNode.id) > 0).label("1d_count"),
         ),
-        message="v2_global_settings.use_1d_flow must be set to True when there are 1D "
+        message="v2_global_settings.use_1d_flow is turned off while there are 1D "
         "elements in the model",
     ),
     QueryCheck(
