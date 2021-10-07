@@ -19,6 +19,7 @@ def test_set_base_path(model_checker):
     assert model_checker.context.base_path == Path(emtpy_sqlite_path).parent
 
 
+@pytest.mark.filterwarnings("error::")
 def test_get_model_error_iterator(model_checker):
-    for check, error in model_checker.errors():
-        print(format_check_results(check, error))
+    errors = list(model_checker.errors(level="info"))
+    assert len(errors) == 0
