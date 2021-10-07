@@ -15,6 +15,8 @@ Changelog of threedi-modelchecker
 
 - Complete run through of the checks.
 
+- Added an error codes to each check.
+
 - Added an initial migration (0200) that adds the tables only when necessary. In
   this way, empty and existing sqlite files can be initialized.
 
