@@ -184,7 +184,7 @@ class SimpleInfiltration(Base):
     infiltration_rate = Column(Float)
     infiltration_rate_file = Column(String(255))
     infiltration_surface_option = Column(
-        IntegerEnum(constants.InfiltrationSurfaceOption), nullable=False
+        IntegerEnum(constants.InfiltrationSurfaceOption)
     )
     max_infiltration_capacity_file = Column(Text)
     display_name = Column(String(255))
@@ -467,7 +467,6 @@ class AggregationSettings(Base):
     var_name = Column(String(100), nullable=False)
     flow_variable = Column(VarcharEnum(constants.FlowVariable), nullable=False)
     aggregation_method = Column(VarcharEnum(constants.AggregationMethod))
-    aggregation_in_space = Column(Boolean, nullable=False)
     timestep = Column(Integer, nullable=False)
 
 

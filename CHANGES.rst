@@ -15,10 +15,17 @@ Changelog of threedi-modelchecker
 
 - Complete run through of the checks.
 
+- Added an error codes to each check.
+
 - Added an initial migration (0200) that adds the tables only when necessary. In
   this way, empty and existing sqlite files can be initialized.
 
 - Added a migration (0201) that replaces friction_type=4 with 2.
+
+- Added a migration (0202) that removes all v1 tables and views.
+
+- Added a migration (0203) that drops v2_connection_nodes.the_geom_linestring and
+  v2_aggregation_settings.aggregation_in_space.
 
 
 0.14 (2021-07-29)
