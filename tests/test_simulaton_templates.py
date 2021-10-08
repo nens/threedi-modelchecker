@@ -61,7 +61,7 @@ except ImportError:
 @pytest.fixture
 async def upload_file_m():
     with mock.patch(
-        "threedi_modelchecker.simulation_templates.models.upload_fileobj"
+        "threedi_modelchecker.simulation_templates.models.upload_fileobj", new_callable=AsyncMock
     ) as upload_file:
         yield upload_file
 
