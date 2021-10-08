@@ -1,5 +1,7 @@
 import pytest
 from pathlib import Path
+from unittest import mock
+from threedi_api_client.openapi.models import Simulation
 from threedi_api_client.openapi.models.aggregation_settings import AggregationSettings
 from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
 from threedi_api_client.openapi.models.lateral import Lateral
@@ -16,7 +18,9 @@ from threedi_modelchecker.simulation_templates.exceptions import SchematisationE
 from threedi_modelchecker.simulation_templates.boundaries.extractor import (
     BoundariesExtractor,
 )
-from threedi_modelchecker.simulation_templates.extractor import SimulationTemplateExtractor
+from threedi_modelchecker.simulation_templates.extractor import (
+    SimulationTemplateExtractor,
+)
 from threedi_modelchecker.simulation_templates.initial_waterlevels.extractor import (
     InitialWaterlevelExtractor,
 )
@@ -33,8 +37,12 @@ from threedi_modelchecker.simulation_templates.settings.extractor import (
 from threedi_modelchecker.simulation_templates.structure_controls.extractor import (
     StructureControlExtractor,
 )
+from threedi_api_client.openapi.models import UploadEventFile
 from threedi_modelchecker.threedi_model.constants import InitializationType
-from threedi_modelchecker.simulation_templates.models import Settings, SimulationTemplate
+from threedi_modelchecker.simulation_templates.models import (
+    Settings,
+    SimulationTemplate,
+)
 from threedi_modelchecker.threedi_model.models import (
     ControlGroup,
     ControlMeasureGroup,
@@ -42,6 +50,165 @@ from threedi_modelchecker.threedi_model.models import (
     ControlTable,
     ControlTimed,
 )
+
+
+@pytest.fixture
+async def upload_file_m():
+    with mock.patch(
+        "threedi_modelchecker.simulation_templates.models.upload_fileobj"
+    ) as upload_file:
+        yield upload_file
+
+
+@pytest.fixture
+async def simulation() -> Simulation:
+    simulation = Simulation(
+        id=1,
+        name="sim-1",
+        threedimodel=1,
+        organisation="b08433fa47c1401eb9cbd4156034c679",
+        start_datetime="2021-10-06T09:32:38.222",
+        duration=3600,
+    )
+    return simulation
+
+
+@pytest.fixture
+async def client():
+    api = mock.AsyncMock()
+    yield api.return_value
+
+
+@pytest.fixture
+def measure_group(session):
+    measure_group: ControlMeasureGroup = factories.ControlMeasureGroupFactory.create(
+        id=1
+    )
+    factories.ControlMeasureMapFactory.create(measure_group_id=measure_group.id)
+    return measure_group
+
+
+@pytest.mark.asyncio
+async def test_save_to_api(
+    session,
+    client: mock.AsyncMock,
+    upload_file_m: mock.AsyncMock,
+    simulation: Simulation,
+    measure_group,
+):
+    num_settings = factories.NumericalSettingsFactory.create(id=1)
+    global_settings = factories.GlobalSettingsFactory.create(
+        id=1,
+        numerical_settings_id=num_settings.id,
+        initial_waterlevel=-10,
+        initial_waterlevel_file="test.tif",
+        water_level_ini_type=InitializationType.MAX,
+        initial_groundwater_level=-12,
+    )
+
+    factories.AggregationSettingsFactory.create(global_settings_id=global_settings.id)
+
+    factories.Lateral1dFactory.create()
+    factories.Lateral2DFactory.create()
+
+    factories.BoundaryConditions2DFactory.create(timeseries="0.0,-0.1\n0.1,-0.2")
+
+    factories.BoundaryConditions1DFactory.create(timeseries="0.0,-0.3\n0.1,-0.4")
+
+    control_group: ControlGroup = factories.ControlGroupFactory.create(
+        id=1, name="test group"
+    )
+    table_control: ControlTable = factories.ControlTableFactory.create(id=1)
+    memory_control: ControlMemory = factories.ControlMemoryFactory.create(id=1)
+    timed_control: ControlTimed = factories.ControlTimedFactory.create(id=1)
+
+    factories.ControlFactory.create(
+        control_group_id=control_group.id,
+        measure_group_id=measure_group.id,
+        control_type="table",
+        control_id=table_control.id,
+    )
+    factories.ControlFactory.create(
+        control_group_id=control_group.id,
+        measure_group_id=measure_group.id,
+        control_type="memory",
+        control_id=memory_control.id,
+    )
+    factories.ControlFactory.create(
+        control_group_id=control_group.id,
+        measure_group_id=None,
+        control_type="timed",
+        control_id=timed_control.id,
+    )
+
+    extractor = SimulationTemplateExtractor(Path("/tmp/nothing.sqlite"))
+
+    simulation_template: SimulationTemplate = extractor._extract_simulation_template(
+        session
+    )
+
+    await simulation_template.save_to_api(client, simulation)
+
+    # Settings
+    assert client.simulations_settings_numerical_create.await_args.kwargs == {
+        "simulation_pk": simulation.id,
+        "data": simulation_template.settings.numerical,
+    }
+    assert client.simulations_settings_physical_create.await_args.kwargs == {
+        "simulation_pk": simulation.id,
+        "data": simulation_template.settings.physical,
+    }
+    assert client.simulations_settings_time_step_create.await_args.kwargs == {
+        "simulation_pk": simulation.id,
+        "data": simulation_template.settings.timestep,
+    }
+    assert client.simulations_settings_aggregation_create.await_args.kwargs == {
+        "simulation_pk": simulation.id,
+        "data": simulation_template.settings.aggregations[0],
+    }
+
+    # Initials (based on specified, misses some calls)
+    assert (
+        client.simulations_initial1d_water_level_constant_create.await_args.kwargs
+        == {
+            "simulation_pk": simulation.id,
+            "data": simulation_template.initial_waterlevels.constant_1d,
+        }
+    )
+    assert (
+        client.simulations_initial_groundwater_level_constant_create.await_args.kwargs
+        == {
+            "simulation_pk": simulation.id,
+            "data": simulation_template.initial_waterlevels.constant_gw,
+        }
+    )
+
+    # Laterals
+    assert client.simulations_events_lateral_file_create.await_args.kwargs == {
+        "simulation_pk": simulation.id,
+        "data": UploadEventFile(filename="laterals.json", offset=0),
+    }
+
+    # Boundaries
+    assert (
+        client.simulations_events_boundaryconditions_file_create.await_args.kwargs
+        == {
+            "simulation_pk": simulation.id,
+            "data": UploadEventFile(filename="boundaries.json", offset=0),
+        }
+    )
+
+    # Structure controls
+    assert (
+        client.simulations_events_structure_control_file_create.await_args.kwargs
+        == {
+            "simulation_pk": simulation.id,
+            "data": UploadEventFile(filename="structure_controls.json", offset=0),
+        }
+    )
+
+    #  laterals, boundaries and structure controls file uploads
+    assert upload_file_m.call_count == 3
 
 
 def test_simulation_template_extractor(session):
@@ -52,7 +219,9 @@ def test_simulation_template_extractor(session):
     factories.AggregationSettingsFactory.create(global_settings_id=global_settings.id)
     extractor = SimulationTemplateExtractor(Path("/tmp/nothing.sqlite"))
 
-    simulation_template: SimulationTemplate = extractor._extract_simulation_template(session)
+    simulation_template: SimulationTemplate = extractor._extract_simulation_template(
+        session
+    )
 
     assert isinstance(simulation_template, SimulationTemplate)
 
@@ -224,15 +393,6 @@ def test_simulation_settings(session):
     )
 
     assert extractor.all_settings() == to_check
-
-
-@pytest.fixture
-def measure_group(session):
-    measure_group: ControlMeasureGroup = factories.ControlMeasureGroupFactory.create(
-        id=1
-    )
-    factories.ControlMeasureMapFactory.create(measure_group_id=measure_group.id)
-    return measure_group
 
 
 def test_structure_controls(session, measure_group):

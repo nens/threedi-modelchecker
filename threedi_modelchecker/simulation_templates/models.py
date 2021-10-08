@@ -27,13 +27,6 @@ from threedi_api_client.openapi.models import Simulation, UploadEventFile
 from threedi_api_client.versions import V3BetaApi
 from threedi_api_client.aio.files import upload_fileobj
 
-# Upload structure controls if there are more than this limit
-STRUCTURE_CONTROL_FILE_UPLOAD_LIMIT: int = 3
-
-
-class StructureControlLimit(Exception):
-    pass
-
 
 class AsyncBytesIO:
     """
@@ -176,60 +169,17 @@ class StructureControls(AsDictMixin):
         )
 
     @property
-    def use_file_upload(self) -> bool:
-        return (
-            len(self.memory) + len(self.table) + len(self.timed)
-            <= STRUCTURE_CONTROL_FILE_UPLOAD_LIMIT
-        )
-
-    @property
     def has_controls(self) -> bool:
         return len(self.memory) + len(self.table) + len(self.timed) > 0
 
-    async def _save_to_api_individual(self, client: V3BetaApi, simulation: Simulation):
+    async def save_to_api(self, client: V3BetaApi, simulation: Simulation):
         """
         :param: client = ThreediApi(async=True)
 
-        Save structure controls via file upload on the given simulation
-        """
-        if not self.has_controls:
-            return
+        Save structure controls to API on the given simulation
 
-        if not self.use_file_upload:
-            raise StructureControlLimit(
-                "To many structure controls, use _save_to_api_file_upload instead"
-            )
-
-        tasks = []
-
-        for memory_control in self.memory:
-            tasks.append(
-                client.simulations_events_structure_control_memory_create(
-                    simulation_pk=simulation.id, data=memory_control
-                )
-            )
-        for table_control in self.table:
-            tasks.append(
-                client.simulations_events_structure_control_table_create(
-                    simulation_pk=simulation.id, data=table_control
-                )
-            )
-        for timed_control in self.timed:
-            tasks.append(
-                client.simulations_events_structure_control_timed_create(
-                    simulation_pk=simulation.id, data=timed_control
-                )
-            )
-
-        if tasks:
-            # Add all structure controls
-            await asyncio.gather(*tasks)
-
-    async def _save_to_api_file_upload(self, client: V3BetaApi, simulation: Simulation):
-        """
-        :param: client = ThreediApi(async=True)
-
-        Save structure controls via file upload on the given simulation
+        Saves them individual if the total count <= 30, else saves
+        them using file upload.
         """
         if not self.has_controls:
             return
@@ -252,23 +202,6 @@ class StructureControls(AsDictMixin):
         await upload_fileobj(
             upload.put_url, AsyncBytesIO(BytesIO(json.dumps(data).encode()))
         )
-
-    async def save_to_api(self, client: V3BetaApi, simulation: Simulation):
-        """
-        :param: client = ThreediApi(async=True)
-
-        Save structure controls to API on the given simulation
-
-        Saves them individual if the total count <= 30, else saves
-        them using file upload.
-        """
-        if not self.has_controls:
-            return
-
-        if self.use_file_upload:
-            await self._save_to_api_file_upload(client, simulation)
-        else:
-            await self._save_to_api_individual(client, simulation)
 
 
 @dataclass
