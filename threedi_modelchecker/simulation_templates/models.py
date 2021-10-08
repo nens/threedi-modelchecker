@@ -1,5 +1,8 @@
+import json
+from io import BytesIO
+import asyncio
 from dataclasses import dataclass, fields
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from threedi_api_client.openapi.models import TimeStepSettings
 from threedi_api_client.openapi.models import PhysicalSettings
 from threedi_api_client.openapi.models import NumericalSettings, AggregationSettings
@@ -8,6 +11,8 @@ from threedi_api_client.openapi.models import (
     TableStructureControl,
     MemoryStructureControl,
     TimedStructureControl,
+    MeasureSpecification,
+    MeasureLocation,
 )
 from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
 from threedi_api_client.openapi.models.ground_water_raster import GroundWaterRaster
@@ -18,9 +23,37 @@ from threedi_api_client.openapi.models.one_d_water_level_predefined import (
 from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
 from threedi_api_client.openapi.models.two_d_water_raster import TwoDWaterRaster
 from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
+from threedi_api_client.openapi.models import Simulation, UploadEventFile
+from threedi_api_client.versions import V3BetaApi
+from threedi_api_client.aio.files import upload_fileobj
+
+# Upload structure controls if there are more than this limit
+STRUCTURE_CONTROL_FILE_UPLOAD_LIMIT: int = 3
 
 
-def openapi_to_dict(value):
+class StructureControlLimit(Exception):
+    pass
+
+
+class AsyncBytesIO:
+    """
+    Simple wrapper class to make BytesIO async
+    """
+
+    def __init__(self, bytes_io: BytesIO):
+        self._bytes_io = bytes_io
+
+    async def seek(self, *args, **kwargs):
+        return self._bytes_io.seek(*args, **kwargs)
+
+    async def read(self, *args, **kwargs):
+        return self._bytes_io.read(*args, **kwargs)
+
+
+def openapi_to_dict(value: Any):
+    """
+    Convert openapi object to Dict
+    """
     if hasattr(value, "openapi_types") and hasattr(value, "to_dict"):
         value = value.to_dict()
         strip_dict_none_values(value)
@@ -29,6 +62,9 @@ def openapi_to_dict(value):
 
 class AsDictMixin:
     def as_dict(self) -> Dict:
+        """
+        Convert fields to dictionary
+        """
         rt = {}
         for field_name in [x.name for x in fields(self)]:
             value = getattr(self, field_name)
@@ -50,6 +86,44 @@ class InitialWaterlevels(AsDictMixin):
     predefined_1d: Optional[OneDWaterLevelPredefined] = None
     raster_2d: Optional[TwoDWaterRaster] = None
     raster_gw: Optional[GroundWaterRaster] = None
+
+    async def save_to_api(self, client: V3BetaApi, simulation: Simulation):
+        """
+        :param: client = ThreediApi(async=True)
+
+        Save initial waterlevels to the API on the given simulation
+        """
+        tasks = []
+        if self.constant_1d is not None:
+            tasks.append(
+                client.simulations_initial1d_water_level_constant_create(
+                    simulation_pk=simulation.id, data=self.constant_1d
+                )
+            )
+        if self.constant_2d is not None:
+            tasks.append(
+                client.simulations_initial2d_water_level_constant_create(
+                    simulation_pk=simulation.id, data=self.constant_2d
+                )
+            )
+        if self.constant_gw is not None:
+            tasks.append(
+                client.simulations_initial_groundwater_level_constant_create(
+                    simulation_pk=simulation.id, data=self.constant_gw
+                )
+            )
+        if self.predefined_1d is not None:
+            tasks.append(
+                client.simulations_initial1d_water_level_predefined_create(
+                    simulation_pk=simulation.id, data=self.predefined_1d
+                )
+            )
+
+        # TODO: figure out rasters, probably these need to
+        # be processed in a seperate worker before adding them here
+
+        if tasks:
+            await asyncio.gather(*tasks)
 
     @classmethod
     def from_dict(cls, dict: Dict) -> "InitialWaterlevels":
@@ -77,11 +151,124 @@ class StructureControls(AsDictMixin):
 
     @classmethod
     def from_dict(cls, dict: Dict) -> "StructureControls":
+        def convert_measure_specs(data: Dict):
+            """
+            Convert measure specification on tables/memory from dict to OpenAPI models
+            """
+            rt = {}
+            for k, v in data.items():
+                if k == "measure_specification":
+                    v = MeasureSpecification(**data[k])
+                    v.locations = [MeasureLocation(**x) for x in data[k]["locations"]]
+
+                rt[k] = v
+            return rt
+
         return StructureControls(
-            memory=[MemoryStructureControl(**x) for x in dict["memory"]],
-            table=[TableStructureControl(**x) for x in dict["table"]],
+            memory=[
+                MemoryStructureControl(**convert_measure_specs(x))
+                for x in dict["memory"]
+            ],
+            table=[
+                TableStructureControl(**convert_measure_specs(x)) for x in dict["table"]
+            ],
             timed=[TimedStructureControl(**x) for x in dict["timed"]],
         )
+
+    @property
+    def use_file_upload(self) -> bool:
+        return (
+            len(self.memory) + len(self.table) + len(self.timed)
+            <= STRUCTURE_CONTROL_FILE_UPLOAD_LIMIT
+        )
+
+    @property
+    def has_controls(self) -> bool:
+        return len(self.memory) + len(self.table) + len(self.timed) > 0
+
+    async def _save_to_api_individual(self, client: V3BetaApi, simulation: Simulation):
+        """
+        :param: client = ThreediApi(async=True)
+
+        Save structure controls via file upload on the given simulation
+        """
+        if not self.has_controls:
+            return
+
+        if not self.use_file_upload:
+            raise StructureControlLimit(
+                "To many structure controls, use _save_to_api_file_upload instead"
+            )
+
+        tasks = []
+
+        for memory_control in self.memory:
+            tasks.append(
+                client.simulations_events_structure_control_memory_create(
+                    simulation_pk=simulation.id, data=memory_control
+                )
+            )
+        for table_control in self.table:
+            tasks.append(
+                client.simulations_events_structure_control_table_create(
+                    simulation_pk=simulation.id, data=table_control
+                )
+            )
+        for timed_control in self.timed:
+            tasks.append(
+                client.simulations_events_structure_control_timed_create(
+                    simulation_pk=simulation.id, data=timed_control
+                )
+            )
+
+        if tasks:
+            # Add all structure controls
+            await asyncio.gather(*tasks)
+
+    async def _save_to_api_file_upload(self, client: V3BetaApi, simulation: Simulation):
+        """
+        :param: client = ThreediApi(async=True)
+
+        Save structure controls via file upload on the given simulation
+        """
+        if not self.has_controls:
+            return
+
+        data: Dict = {"memory": [], "table": [], "timed": []}
+        for memory_control in self.memory:
+            data["memory"].append(openapi_to_dict(memory_control))
+        for table_control in self.table:
+            data["table"].append(openapi_to_dict(table_control))
+        for timed_control in self.timed:
+            data["timed"].append(openapi_to_dict(timed_control))
+
+        upload: UploadEventFile = (
+            await client.simulations_events_structure_control_file_create(
+                simulation_pk=simulation.id,
+                data=UploadEventFile(filename="structure_controls.json", offset=0),
+            )
+        )
+
+        await upload_fileobj(
+            upload.put_url, AsyncBytesIO(BytesIO(json.dumps(data).encode()))
+        )
+
+    async def save_to_api(self, client: V3BetaApi, simulation: Simulation):
+        """
+        :param: client = ThreediApi(async=True)
+
+        Save structure controls to API on the given simulation
+
+        Saves them individual if the total count <= 30, else saves
+        them using file upload.
+        """
+        if not self.has_controls:
+            return
+
+        if self.use_file_upload:
+            await self._save_to_api_file_upload(client, simulation)
+        else:
+            await self._save_to_api_individual(client, simulation)
 
 
 @dataclass
@@ -101,12 +288,89 @@ class Settings(AsDictMixin):
             aggregations=[AggregationSettings(**x) for x in dict["aggregations"]],
         )
 
+    async def save_to_api(self, client: V3BetaApi, simulation: Simulation):
+        """
+        :param: client = ThreediApi(async=True)
+
+        Save settings to API on given simulation
+        """
+        tasks = [
+            client.simulations_settings_numerical_create(
+                simulation_pk=simulation.id, data=self.numerical
+            ),
+            client.simulations_settings_physical_create(
+                simulation_pk=simulation.id, data=self.physical
+            ),
+            client.simulations_settings_time_step_create(
+                simulation_pk=simulation.id, data=self.timestep
+            ),
+        ]
+        for aggregation in self.aggregations:
+            tasks.append(
+                client.simulations_settings_aggregation_create(
+                    simulation_pk=simulation.id, data=aggregation
+                )
+            )
+
+        # Add aggregations
+        await asyncio.gather(*tasks)
+
 
 @dataclass
 class Events(AsDictMixin):
     laterals: List[Lateral]
     boundaries: List[Dict]
     structure_controls: StructureControls
+
+    async def save_to_api(self, client: V3BetaApi, simulation: Simulation):
+        """
+        :param: client = ThreediApi(async=True)
+
+        Save events to API on the given simulation
+        """
+        tasks = [
+            # Laterals
+            self.save_laterals_to_api(client, simulation),
+            # Boundaries
+            self.save_boundaries_to_api(client, simulation),
+            # Structure controls
+            self.structure_controls.save_to_api(client, simulation),
+        ]
+        await asyncio.gather(*tasks)
+
+    async def save_laterals_to_api(self, client: V3BetaApi, simulation: Simulation):
+        """
+        Save laterals to API on the given simulation as file upload.
+        """
+        if len(self.laterals) == 0:
+            return
+
+        data = [openapi_to_dict(x) for x in self.laterals]
+        data = AsyncBytesIO(BytesIO(json.dumps(data).encode()))
+
+        upload: UploadEventFile = await client.simulations_events_lateral_file_create(
+            simulation_pk=simulation.id,
+            data=UploadEventFile(filename="laterals.json", offset=0),
+        )
+        await upload_fileobj(upload.put_url, data)
+
+    async def save_boundaries_to_api(self, client: V3BetaApi, simulation: Simulation):
+        """
+        Save boundarie to API on the given simulation
+        """
+        if len(self.boundaries) == 0:
+            return
+
+        data = [openapi_to_dict(x) for x in self.boundaries]
+        data = AsyncBytesIO(BytesIO(json.dumps(data).encode()))
+
+        upload: UploadEventFile = (
+            await client.simulations_events_boundaryconditions_file_create(
+                simulation_pk=simulation.id,
+                data=UploadEventFile(filename="boundaries.json", offset=0),
+            )
+        )
+        await upload_fileobj(upload.put_url, data)
 
     @classmethod
     def from_dict(cls, dict: Dict) -> "Events":
@@ -122,6 +386,21 @@ class SimulationTemplate(AsDictMixin):
     settings: Settings
     events: Events
     initial_waterlevels: InitialWaterlevels
+
+    async def save_to_api(self, client: V3BetaApi, simulation: Simulation):
+        """
+        :param: client = ThreediApi(async=True)
+
+        Save this simulation-template data to the API on the given simulation
+        """
+        # Save events
+        await self.events.save_to_api(client, simulation)
+
+        # Save simulation settings
+        await self.settings.save_to_api(client, simulation)
+
+        # Save initial waterlevels
+        await self.initial_waterlevels.save_to_api(client, simulation)
 
     @classmethod
     def from_dict(cls, dict: Dict) -> "SimulationTemplate":
