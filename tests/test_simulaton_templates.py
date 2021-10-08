@@ -51,6 +51,12 @@ from threedi_modelchecker.threedi_model.models import (
     ControlTimed,
 )
 
+try:
+    from unittest.mock import AsyncMock
+except ImportError:
+    # Python 3.8 support
+    from asyncmock import AsyncMock
+
 
 @pytest.fixture
 async def upload_file_m():
@@ -75,7 +81,7 @@ async def simulation() -> Simulation:
 
 @pytest.fixture
 async def client():
-    api = mock.AsyncMock()
+    api = AsyncMock()
     yield api.return_value
 
 
@@ -91,8 +97,8 @@ def measure_group(session):
 @pytest.mark.asyncio
 async def test_save_to_api(
     session,
-    client: mock.AsyncMock,
-    upload_file_m: mock.AsyncMock,
+    client: AsyncMock,
+    upload_file_m: AsyncMock,
     simulation: Simulation,
     measure_group,
 ):
