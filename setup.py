@@ -20,6 +20,7 @@ tests_require = [
     "shapely",
     "aiofiles",
     "aiohttp",
+    "pytest-asyncio",
 ]
 
 simulation_templates_require = [
