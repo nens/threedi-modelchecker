@@ -20,6 +20,13 @@ tests_require = [
     "shapely"
 ]
 
+
+simulation_templates_require = [
+    "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master",
+    "shapely"   
+]
+
+
 setup(
     name="threedi-modelchecker",
     version=version,
@@ -45,8 +52,9 @@ setup(
     extras_require={
         "test": tests_require,
         "postgis": ["psycopg2"],
+        "simulation_templates": simulation_templates_require,
     },
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     entry_points={
         "console_scripts": [
             "threedi_modelchecker = threedi_modelchecker.scripts:threedi_modelchecker"
