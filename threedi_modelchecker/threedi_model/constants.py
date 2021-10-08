@@ -5,7 +5,7 @@ LATEST_SOUTH_MIGRATION_ID = 174
 #  Migration 174 deletes some fields, which were already not present in the
 #  models of the threedi-modelchecker. Therefore we can both accept migration
 #  173 and 174.
-MIN_SCHEMA_VERSION = 173
+MIN_SCHEMA_VERSION = 201
 VERSION_TABLE_NAME = "schema_version"
 
 
@@ -13,6 +13,7 @@ class BoundaryType(Enum):
     WATERLEVEL = 1
     VELOCITY = 2
     DISCHARGE = 3
+    RIEMANN = 4
     SOMMERFELD = 5
 
 
@@ -41,10 +42,10 @@ class AggregationMethod(Enum):
     MINIMUM = "min"
     MAXIMUM = "max"
     CUMULATIVE = "cum"
-    MEDIAN = "med"
     CUMULATIVE_NEGATIVE = "cum_negative"
     CUMULATIVE_POSITIVE = "cum_positive"
     CURRENT = "current"
+    SUMMATION = "sum"
 
 
 class CalculationType(Enum):
@@ -71,6 +72,7 @@ class CalculationTypeNode(Enum):
 
 
 class CrossSectionShape(Enum):
+    CLOSED_RECTANGLE = 0
     RECTANGLE = 1
     CIRCLE = 2
     EGG = 3
@@ -165,3 +167,9 @@ class ZoomCategories(Enum):
     MEDIUM_VISIBILITY = 3
     HIGH_VISIBILITY = 4
     HIGHEST_VISIBILITY = 5
+
+
+class InflowType(Enum):
+    NO_INFLOW = 0
+    IMPERVIOUS_SURFACE = 1
+    SURFACE = 2

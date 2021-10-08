@@ -1,21 +1,28 @@
-import pytest
-from sqlalchemy.orm import Query, aliased
-from geoalchemy2 import functions as geo_func
-
-from threedi_modelchecker.checks.other import BankLevelCheck, valid_egg, \
-    valid_rectangle, valid_circle, ConnectionNodesLength, \
-    OpenChannelsWithNestedNewton, ConnectionNodesDistance
-from threedi_modelchecker.checks.other import CrossSectionShapeCheck
-from threedi_modelchecker.checks.other import TimeseriesCheck
-from threedi_modelchecker.checks.other import valid_tabulated_shape
-from threedi_modelchecker.threedi_model import models, constants
 from . import factories
 from .factories import BoundaryConditions2DFactory
+from geoalchemy2 import functions as geo_func
+from sqlalchemy.orm import aliased
+from sqlalchemy.orm import Query
+from threedi_modelchecker.checks.other import BankLevelCheck
+from threedi_modelchecker.checks.other import ConnectionNodesDistance
+from threedi_modelchecker.checks.other import ConnectionNodesLength
+from threedi_modelchecker.checks.other import CrossSectionShapeCheck
+from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton
+from threedi_modelchecker.checks.other import TimeseriesCheck
+from threedi_modelchecker.checks.other import valid_circle
+from threedi_modelchecker.checks.other import valid_closed_rectangle
+from threedi_modelchecker.checks.other import valid_egg
+from threedi_modelchecker.checks.other import valid_rectangle
+from threedi_modelchecker.checks.other import valid_tabulated_shape
+from threedi_modelchecker.threedi_model import constants
+from threedi_modelchecker.threedi_model import models
+
+import pytest
 
 
 def test_check_cross_section_location_bank_levels(session):
     """Check 'CrossSectionLocation.bank_level' is not null if
-        calculation_type is CONNECTED or DOUBLE_CONNECTED.
+    calculation_type is CONNECTED or DOUBLE_CONNECTED.
     """
     if session.bind.name == "postgresql":
         pytest.skip(
@@ -26,12 +33,8 @@ def test_check_cross_section_location_bank_levels(session):
     channel = factories.ChannelFactory(
         calculation_type=constants.CalculationType.CONNECTED
     )
-    wrong = factories.CrossSectionLocationFactory(
-        channel=channel, bank_level=None
-    )
-    factories.CrossSectionLocationFactory(
-        channel=channel, bank_level=1.0
-    )
+    wrong = factories.CrossSectionLocationFactory(channel=channel, bank_level=None)
+    factories.CrossSectionLocationFactory(channel=channel, bank_level=1.0)
     factories.CrossSectionLocationFactory(
         channel=factories.ChannelFactory(
             calculation_type=constants.CalculationType.EMBEDDED
@@ -53,8 +56,7 @@ def test_get_invalid_cross_section_shapes(session):
         width="1", height=None, shape=constants.CrossSectionShape.CIRCLE
     )
     factories.CrossSectionDefinitionFactory(
-        width="1 2", height="0 2",
-        shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM
+        width="1 2", height="0 2", shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM
     )
 
     coss_section_check = CrossSectionShapeCheck()
@@ -92,6 +94,18 @@ def test_valid_rectangle_negative_value():
     assert not valid_rectangle(width="-1", height="2")
 
 
+def test_valid_closed_rectangle():
+    assert valid_closed_rectangle(width="1", height="2")
+
+
+def test_valid_closed_rectangle_none_value():
+    assert not valid_closed_rectangle(width="1", height=None)
+
+
+def test_valid_closed_rectangle_negative_value():
+    assert not valid_closed_rectangle(width="-1", height="2")
+
+
 def test_valid_circle():
     assert valid_circle("3")
 
@@ -123,49 +137,64 @@ def test_valid_egg_positive_value():
 def test_valid_tabulated_shape():
     width = "0 1 2 3"
     height = "0 1 2 3"
-    assert valid_tabulated_shape(width, height)
+    assert valid_tabulated_shape(width, height, is_rectangle=False)
 
 
 def test_valid_tabulated_shape_none():
-    assert not valid_tabulated_shape(None, None)
+    assert not valid_tabulated_shape(None, None, is_rectangle=True)
 
 
 def test_valid_tabulated_shape_empty():
-    assert not valid_tabulated_shape("", "")
+    assert not valid_tabulated_shape("", "", is_rectangle=True)
 
 
 def test_valid_tabulated_shape_unequal_length():
     width = "1 2"
     height = "1 2 3"
-    assert not valid_tabulated_shape(width, height)
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
 
 
 def test_valid_tabulated_shape_invalid_char():
     width = "1 2"
     height = "1 a"
-    assert not valid_tabulated_shape(width, height)
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
 
 
 def test_tabulated_shape_valid123():
     width = "7 7 0"
     height = "0 2.25 2.25"
-    assert valid_tabulated_shape(width, height)
+    assert valid_tabulated_shape(width, height, is_rectangle=True)
 
 
 def test_tabulated_shape_invalid_height_not_start_0():
-    width = "0.5106338 0.8793753 1.109911 1.279277 1.409697 1.511286 1.589584 " \
-            "1.647911 1.688341 1.71214 1.72 1.72"
+    width = (
+        "0.5106338 0.8793753 1.109911 1.279277 1.409697 1.511286 1.589584 "
+        "1.647911 1.688341 1.71214 1.72 1.72"
+    )
     height = "0.831 0.749 0.667 0.585 0.503 0.421 0.338 0.256 0.174 0.092 0 0.01"
-    assert not valid_tabulated_shape(width, height)
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
 
 
 def test_tabulated_shape_invalid_non_increasing_height():
     width = "1 2 3"
     height = "0 2 1"
-    assert not valid_tabulated_shape(width, height)
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
 
 
-def test_timeseries_check(session):
+def test_tabulated_rectangle_invalid_first_width():
+    width = "0 2 3"
+    height = "0 1 2"
+    assert not valid_tabulated_shape(width, height, is_rectangle=True)
+
+
+def test_tabulated_trapezium_valid_first_width():
+    width = "0 2 3"
+    height = "0 1 2"
+    assert valid_tabulated_shape(width, height, is_rectangle=False)
+
+
+@pytest.mark.parametrize("timeseries", ["0,-0.5", "0,-0.5 \n59, -0.5\n60 ,-0.5\n   "])
+def test_timeseries_check(session, timeseries):
     BoundaryConditions2DFactory()
 
     check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
@@ -182,9 +211,7 @@ def test_timeseries_check_multiple(session):
 
 
 def test_timeseries_check_different_timesteps(session):
-    BoundaryConditions2DFactory(
-        timeseries="0,-0.5\n1,1.4\n2,4.0"
-    )
+    BoundaryConditions2DFactory(timeseries="0,-0.5\n1,1.4\n2,4.0")
     boundary_condition2 = BoundaryConditions2DFactory(
         timeseries="0,-0.5\n1,1.4\n3,4.0"  # Note the last timestep is 3 instead of 2
     )
@@ -205,7 +232,7 @@ def test_connection_nodes_length(session):
         ),
         connection_node_end=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.3822292515698168 -0.1387223869163263)"
-        )
+        ),
     )
     weir_too_short = factories.WeirFactory(
         connection_node_start=factories.ConnectionNodeFactory(
@@ -213,14 +240,14 @@ def test_connection_nodes_length(session):
         ),
         connection_node_end=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-        )
+        ),
     )
 
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
         start_node=models.Weir.connection_node_start,
         end_node=models.Weir.connection_node_end,
-        min_distance=0.05
+        min_distance=0.05,
     )
 
     errors = check_length.get_invalid(session)
@@ -237,14 +264,14 @@ def test_connection_nodes_length_missing_epsg_code(session):
         ),
         connection_node_end=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-        )
+        ),
     )
 
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
         start_node=models.Weir.connection_node_start,
         end_node=models.Weir.connection_node_end,
-        min_distance=0.05
+        min_distance=0.05,
     )
 
     errors = check_length.get_invalid(session)
@@ -259,14 +286,14 @@ def test_connection_nodes_length_missing_start_node(session):
         connection_node_start=None,
         connection_node_end=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-        )
+        ),
     )
 
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
         start_node=models.Weir.connection_node_start,
         end_node=models.Weir.connection_node_end,
-        min_distance=0.05
+        min_distance=0.05,
     )
 
     errors = check_length.get_invalid(session)
@@ -281,14 +308,14 @@ def test_connection_nodes_length_missing_end_node(session):
         connection_node_start=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
         ),
-        connection_node_end=None
+        connection_node_end=None,
     )
 
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
         start_node=models.Weir.connection_node_start,
         end_node=models.Weir.connection_node_end,
-        min_distance=0.05
+        min_distance=0.05,
     )
 
     errors = check_length.get_invalid(session)
@@ -307,12 +334,12 @@ def test_open_channels_with_nested_newton(session):
         the_geom="SRID=28992;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
     open_definition = factories.CrossSectionDefinitionFactory(
-        shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-        width="1 0"
+        shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM, width="1 0"
     )
     factories.CrossSectionLocationFactory(
-        channel=channel, definition=open_definition,
-        the_geom="SRID=28992;POINT(-71.0645 42.287)"
+        channel=channel,
+        definition=open_definition,
+        the_geom="SRID=28992;POINT(-71.0645 42.287)",
     )
 
     channel2 = factories.ChannelFactory(
@@ -328,8 +355,9 @@ def test_open_channels_with_nested_newton(session):
         shape=constants.CrossSectionShape.EGG,
     )
     factories.CrossSectionLocationFactory(
-        channel=channel2, definition=open_definition_egg,
-        the_geom="SRID=28992;POINT(-71.0645 42.287)"
+        channel=channel2,
+        definition=open_definition_egg,
+        the_geom="SRID=28992;POINT(-71.0645 42.287)",
     )
 
     check = OpenChannelsWithNestedNewton()
@@ -356,9 +384,7 @@ def test_node_distance(session):
     node_a = aliased(models.ConnectionNode)
     node_b = aliased(models.ConnectionNode)
     distances_query = Query(
-        geo_func.ST_Distance(
-            node_a.the_geom, node_b.the_geom, 1
-        )
+        geo_func.ST_Distance(node_a.the_geom, node_b.the_geom, 1)
     ).filter(node_a.id != node_b.id)
     # Shows the distances between all 3 nodes: node 1 and 2 are too close
     distances_query.with_session(session).all()
