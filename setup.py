@@ -15,7 +15,7 @@ tests_require = [
     "factory_boy",
     "pytest",
     "mock",
-    "pytest-cov"
+    "pytest-cov",
     "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master"
 ]
 
