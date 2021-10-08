@@ -22,10 +22,10 @@ tests_require = [
 
 
 simulation_templates_require = [
+    # Note: Change when threedi-api-client has been released
     "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master",
-    "shapely"   
+    "shapely"
 ]
-
 
 setup(
     name="threedi-modelchecker",
