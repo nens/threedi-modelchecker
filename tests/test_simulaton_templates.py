@@ -1,6 +1,5 @@
 import pytest
 from sqlalchemy.sql.expression import extract, table
-from threedi_api_client.openapi.models import ground_water_raster
 from threedi_api_client.openapi.models.aggregation_settings import AggregationSettings
 from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
 from threedi_api_client.openapi.models.lateral import Lateral
@@ -9,7 +8,6 @@ from threedi_api_client.openapi.models.one_d_water_level import OneDWaterLevel
 from threedi_api_client.openapi.models.one_d_water_level_predefined import OneDWaterLevelPredefined
 from threedi_api_client.openapi.models.physical_settings import PhysicalSettings
 from threedi_api_client.openapi.models.time_step_settings import TimeStepSettings
-from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
 from threedi_api_client.openapi.models.two_d_water_raster import TwoDWaterRaster
 from tests import factories
 from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
@@ -21,7 +19,7 @@ from threedi_modelchecker.simulation_templates.settings.extractor import Setting
 from threedi_modelchecker.simulation_templates.structure_controls.extractor import StructureControlExtractor
 from threedi_modelchecker.threedi_model.constants import InitializationType
 from threedi_modelchecker.simulation_templates.models import Settings
-from threedi_modelchecker.threedi_model.models import Control, ControlGroup, ControlMeasureGroup, ControlMeasureMap, ControlMemory, ControlTable, ControlTimed
+from threedi_modelchecker.threedi_model.models import ControlGroup, ControlMeasureGroup, ControlMemory, ControlTable, ControlTimed
 
 
 def test_boundary_conditions(session):
@@ -251,4 +249,44 @@ def test_structure_controls(session, measure_group):
 
     assert extractor.all_controls().as_dict() == to_check.as_dict()
 
-    
+
+def test_table_control_incorrect_timeseries(session, measure_group):
+    control_group: ControlGroup = factories.ControlGroupFactory.create(id=1, name="test group")
+    table_control: ControlTable = factories.ControlTableFactory.create(id=1, action_table="0.0,-1.0")
+
+    factories.ControlFactory.create(
+        control_group_id=control_group.id, measure_group_id=measure_group.id,
+        control_type="table", control_id=table_control.id)
+
+    extractor = StructureControlExtractor(session, control_group_id=control_group.id)
+
+    with pytest.raises(SchematisationError):
+        extractor.all_controls()
+
+
+def test_memory_control_incorrect_timeseries(session, measure_group):
+    control_group: ControlGroup = factories.ControlGroupFactory.create(id=1, name="test group")
+    memory_control: ControlMemory = factories.ControlMemoryFactory.create(id=1, action_value="0.0;1.0")
+    factories.ControlFactory.create(
+        control_group_id=control_group.id, measure_group_id=measure_group.id,
+        control_type="memory", control_id=memory_control.id)
+
+    extractor = StructureControlExtractor(session, control_group_id=control_group.id)
+
+    with pytest.raises(SchematisationError):
+        extractor.all_controls()
+
+
+def test_timed_control_incorrect_timeseries(session, measure_group):
+    control_group: ControlGroup = factories.ControlGroupFactory.create(id=1, name="test group")
+    timed_control: ControlTimed = factories.ControlTimedFactory.create(id=1, action_table="0.0,1.0")
+
+    factories.ControlFactory.create(
+        control_group_id=control_group.id, measure_group_id=None,
+        control_type="timed", control_id=timed_control.id)
+
+    extractor = StructureControlExtractor(session, control_group_id=control_group.id)
+
+    with pytest.raises(SchematisationError):
+        extractor.all_controls()
+

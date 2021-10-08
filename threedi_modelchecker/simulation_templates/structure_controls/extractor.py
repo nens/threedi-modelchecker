@@ -1,11 +1,13 @@
 from typing import List, Dict, Union
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
+from sqlalchemy.sql.sqltypes import VARBINARY
 from threedi_api_client.openapi.models.timed_structure_control import TimedStructureControl
 from threedi_api_client.openapi.models.measure_location import MeasureLocation
 from threedi_api_client.openapi.models.measure_specification import MeasureSpecification
 from threedi_api_client.openapi.models.table_structure_control import TableStructureControl
 from threedi_api_client.openapi.models.memory_structure_control import MemoryStructureControl
+from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
 from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
 from threedi_modelchecker.threedi_model.models import Control, ControlGroup, ControlMeasureGroup, ControlMeasureMap, ControlMemory, ControlTimed, ControlTable
 from threedi_modelchecker.simulation_templates.models import StructureControls
@@ -45,8 +47,11 @@ def to_measure_specification(control: Union[ControlMemory, ControlTable], group:
     )
 
 def to_table_control(control: Control, table_control: ControlTable, measure_specification: MeasureSpecification) -> TableStructureControl:
-    # Note: Table control really uses # and ; 
-    values = [[float(y) for y in x.split(";")] for x in table_control.action_table.split('#')]
+    # Note: Yes, table control really uses # and ; 
+    try:
+        values = [[float(y) for y in x.split(";")] for x in table_control.action_table.split('#')]
+    except (ValueError, TypeError):
+        raise SchematisationError("Table control action_table incorrect format for v2_control_table.id = {table_control.id}")
 
     return TableStructureControl(
         offset=int(control.start),
@@ -60,7 +65,10 @@ def to_table_control(control: Control, table_control: ControlTable, measure_spec
 
 
 def to_memory_control(control: Control, memory_control: ControlMemory, measure_specification: MeasureSpecification) -> MemoryStructureControl:
-    value = [float(x) for x in memory_control.action_value.split(" ")]
+    try:
+        value = [float(x) for x in memory_control.action_value.split(" ")]
+    except (ValueError, TypeError):
+        raise SchematisationError("Memory control action_value incorrect format for v2_control_memory.id = {memory_control.id}")
 
     return MemoryStructureControl(
         offset=int(control.start),
@@ -78,8 +86,10 @@ def to_memory_control(control: Control, memory_control: ControlMemory, measure_s
 
 
 def to_timed_control(control: Control, timed_control: ControlTimed) -> TimedStructureControl:
-    # TODO: check this format
-    value = [float(x) for x in timed_control.action_table.split(" ")]
+    try:
+        value = [float(x) for x in timed_control.action_table.split(" ")]
+    except (ValueError, TypeError):
+        raise SchematisationError("Timed control action_value incorrect format for v2_control_timed.id = {timed_control.id}")
 
     return TimedStructureControl(
         offset=int(control.start),
