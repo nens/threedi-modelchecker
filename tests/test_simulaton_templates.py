@@ -51,10 +51,14 @@ from threedi_modelchecker.threedi_model.models import (
     ControlTimed,
 )
 
+
+is_python37 = False
+
 try:
     from unittest.mock import AsyncMock
 except ImportError:
-    # Python 3.8 support
+    # Python 3.7 support
+    is_python37 = True
     from asyncmock import AsyncMock
 
 
@@ -82,7 +86,11 @@ async def simulation() -> Simulation:
 @pytest.fixture
 async def client():
     api = AsyncMock()
-    yield api.return_value
+
+    if is_python37:
+        yield api
+    else:
+        yield api.return_value
 
 
 @pytest.fixture
