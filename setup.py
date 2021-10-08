@@ -16,7 +16,8 @@ tests_require = [
     "pytest",
     "mock",
     "pytest-cov",
-    "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master"
+    "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master",
+    "shapely"
 ]
 
 setup(
