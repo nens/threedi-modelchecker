@@ -40,7 +40,7 @@ def sqlite_boundary_to_dict(boundary: Union[BoundaryConditions2D, BoundaryCondit
         values = [[float(y) for y in x.split(",")] for x in boundary.timeseries.split('\n')]
     except (TypeError, ValueError) as e:
         boundary_1d2d: str = "1d"
-        if isinstance(boundary, BoundaryCondition1D):
+        if isinstance(boundary, BoundaryConditions2D):
             boundary_1d2d = "2d"
         raise SchematisationError(
             f"Incorrect formatted timeseries for {boundary_1d2d} boundary condition with id={boundary.id}")

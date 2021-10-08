@@ -254,7 +254,7 @@ class ControlMeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     object_type = "v2_connection_nodes"
     object_id = 101
-    weight = 10.0
+    weight = 0.1
 
 
 class ControlFactory(factory.alchemy.SQLAlchemyModelFactory):

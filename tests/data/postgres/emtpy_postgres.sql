@@ -886,8 +886,7 @@ CREATE TABLE public.v2_1d_boundary_conditions (
     id integer NOT NULL,
     connection_node_id integer NOT NULL,
     boundary_type integer,
-    timeseries text,
-    CONSTRAINT boundary_must_have_only_one_connection CHECK ((public.count_node(ARRAY['v2_channel'::text, 'v2_weir'::text, 'v2_orifice'::text, 'v2_culvert'::text, 'v2_pipe'::text, 'v2_pumpstation'::text], connection_node_id) = 1))
+    timeseries text
 );
 
 

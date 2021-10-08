@@ -87,6 +87,9 @@ def test_laterals(session):
         Lateral(**{'offset': 0, 'interpolate': False, 'values': [[0.0, -0.2]], 'units': 'm3/s', 'point': {'type': 'point', 'coordinates': [-71.064544, 42.28787]}}),
         Lateral(**{'offset': 0, 'interpolate': False, 'values': [[0.0, -0.1]], 'units': 'm3/s', 'connection_node': 1})
     ]
+    all_laterals = extractor.all_laterals()
+    to_check[1].connection_node = all_laterals[1].connection_node
+    to_check[0].point = all_laterals[0].point
     assert extractor.all_laterals() == to_check
 
 def test_incorrect_lateral_1d_timeseries(session):
@@ -184,7 +187,7 @@ def test_structure_controls(session, measure_group):
                     "name": "test group",
                     "locations": [
                         {
-                            "weight": "10",
+                            "weight": "0.1",
                             "content_type": "v2_connection_node",
                             "content_pk": 101
                         }
@@ -213,7 +216,7 @@ def test_structure_controls(session, measure_group):
                     "name": "test group",
                     "locations": [
                         {
-                            "weight": "10",
+                            "weight": "0.1",
                             "content_type": "v2_connection_node",
                             "content_pk": 101
                         }
