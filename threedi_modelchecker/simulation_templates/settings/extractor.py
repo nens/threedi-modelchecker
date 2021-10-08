@@ -5,10 +5,25 @@ from sqlalchemy.orm.session import Session
 from threedi_api_client.openapi.models.physical_settings import PhysicalSettings
 from threedi_modelchecker.simulation_templates.models import Settings
 from threedi_modelchecker.threedi_model.constants import FlowVariable
-from threedi_modelchecker.threedi_model.models import GlobalSetting, NumericalSettings as SQLNumericalSettings, AggregationSettings as SQLAggregationSettings
-from threedi_modelchecker.simulation_templates.settings.mappings import sqlalchemy_to_api_model
-from threedi_api_client.openapi.models import NumericalSettings, TimeStepSettings, AggregationSettings
-from threedi_modelchecker.simulation_templates.settings.mappings import time_step_settings_map, physical_settings_map, numerical_settings_map, aggregation_settings_map
+from threedi_modelchecker.threedi_model.models import (
+    GlobalSetting,
+    NumericalSettings as SQLNumericalSettings,
+    AggregationSettings as SQLAggregationSettings,
+)
+from threedi_modelchecker.simulation_templates.settings.mappings import (
+    sqlalchemy_to_api_model,
+)
+from threedi_api_client.openapi.models import (
+    NumericalSettings,
+    TimeStepSettings,
+    AggregationSettings,
+)
+from threedi_modelchecker.simulation_templates.settings.mappings import (
+    time_step_settings_map,
+    physical_settings_map,
+    numerical_settings_map,
+    aggregation_settings_map,
+)
 
 
 class SettingsExtractor(object):
@@ -22,10 +37,15 @@ class SettingsExtractor(object):
     @property
     def _sql_aggregation_settings(self) -> List[SQLAggregationSettings]:
         if self._aggregation_settings is None:
-            self._aggregation_settings = Query(
-                SQLAggregationSettings).with_session(
-                    self.session).filter(
-                        SQLAggregationSettings.global_settings_id==self.global_settings.numerical_settings_id).all()
+            self._aggregation_settings = (
+                Query(SQLAggregationSettings)
+                .with_session(self.session)
+                .filter(
+                    SQLAggregationSettings.global_settings_id
+                    == self.global_settings.numerical_settings_id
+                )
+                .all()
+            )
             if self._aggregation_settings is None:
                 self._aggregation_settings = []
         return self._aggregation_settings
@@ -33,10 +53,15 @@ class SettingsExtractor(object):
     @property
     def _sql_numerical_settings(self) -> SQLNumericalSettings:
         if self._numerical_settings is None:
-            self._numerical_settings = Query(
-                SQLNumericalSettings).with_session(
-                    self.session).filter(
-                        SQLNumericalSettings.id==self.global_settings.numerical_settings_id).first()
+            self._numerical_settings = (
+                Query(SQLNumericalSettings)
+                .with_session(self.session)
+                .filter(
+                    SQLNumericalSettings.id
+                    == self.global_settings.numerical_settings_id
+                )
+                .first()
+            )
         return self._numerical_settings
 
     @property
@@ -44,22 +69,28 @@ class SettingsExtractor(object):
         if self._global_settings is None:
             qr = Query(GlobalSetting).with_session(self.session)
             if self._global_settings_id is not None:
-                qr = qr.filter(GlobalSetting.id==self._global_settings_id)
+                qr = qr.filter(GlobalSetting.id == self._global_settings_id)
             self._global_settings = qr.first()
         return self._global_settings
 
     @property
     def timestep_settings(self) -> TimeStepSettings:
-        config_dict = {x.name: getattr(self.global_settings, x.name) for x in self.global_settings.__table__.columns}
+        config_dict = {
+            x.name: getattr(self.global_settings, x.name)
+            for x in self.global_settings.__table__.columns
+        }
         return sqlalchemy_to_api_model(
-            config_dict, TimeStepSettings, time_step_settings_map            
+            config_dict, TimeStepSettings, time_step_settings_map
         )
 
     @property
     def physical_settings(self) -> PhysicalSettings:
-        config_dict = {x.name: getattr(self.global_settings, x.name) for x in self.global_settings.__table__.columns}
+        config_dict = {
+            x.name: getattr(self.global_settings, x.name)
+            for x in self.global_settings.__table__.columns
+        }
         return sqlalchemy_to_api_model(
-            config_dict, PhysicalSettings, physical_settings_map            
+            config_dict, PhysicalSettings, physical_settings_map
         )
 
     @property
@@ -71,9 +102,10 @@ class SettingsExtractor(object):
                 # Mismatch between sqlite and API....
                 mapping = {
                     "waterlevel": "water_level",
-                    "wet_cross-section": "wet_cross_section"}
+                    "wet_cross-section": "wet_cross_section",
+                }
                 value = value.value
-                value = mapping.get(value, value)                
+                value = mapping.get(value, value)
             elif isinstance(value, Enum):
                 value = value.value
             return value
@@ -82,27 +114,40 @@ class SettingsExtractor(object):
             agg_setting: SQLAggregationSettings
             config_dict = {
                 x.name: convert_enum(getattr(agg_setting, x.name))
-                for x in agg_setting.__table__.columns}
-            agg_settings.append(sqlalchemy_to_api_model(
-                    config_dict, AggregationSettings, aggregation_settings_map, extra_exclude={"name", }
+                for x in agg_setting.__table__.columns
+            }
+            agg_settings.append(
+                sqlalchemy_to_api_model(
+                    config_dict,
+                    AggregationSettings,
+                    aggregation_settings_map,
+                    extra_exclude={
+                        "name",
+                    },
                 )
             )
         return agg_settings
 
     @property
     def numerical_settings(self) -> NumericalSettings:
-        config_dict = {x.name: getattr(self.global_settings, x.name) for x in self.global_settings.__table__.columns}
+        config_dict = {
+            x.name: getattr(self.global_settings, x.name)
+            for x in self.global_settings.__table__.columns
+        }
         config_dict.update(
-            {x.name: getattr(self._sql_numerical_settings, x.name) for x in self._sql_numerical_settings.__table__.columns}
+            {
+                x.name: getattr(self._sql_numerical_settings, x.name)
+                for x in self._sql_numerical_settings.__table__.columns
+            }
         )
         return sqlalchemy_to_api_model(
-            config_dict, NumericalSettings, numerical_settings_map            
+            config_dict, NumericalSettings, numerical_settings_map
         )
-    
+
     def all_settings(self) -> Settings:
         return Settings(
             numerical=self.numerical_settings,
             physical=self.physical_settings,
-            timestep=self.timestep_settings, 
-            aggregations=self.aggregation_settings
+            timestep=self.timestep_settings,
+            aggregations=self.aggregation_settings,
         )

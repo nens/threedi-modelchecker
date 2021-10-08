@@ -17,7 +17,7 @@ jobs:
         include:
           # 2017
           - python: 3.6
-            pins: "sqlalchemy==1.2.* geoalchemy2==0.6.* alembic==0.9.*"
+            pins: "sqlalchemy==1.2.* geoalchemy2==0.6.* alembic==0.9.* dataclasses==0.8"
             extras: "test,postgis"
           # 2018
           - python: 3.7

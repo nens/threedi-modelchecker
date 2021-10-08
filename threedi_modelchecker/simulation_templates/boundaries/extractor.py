@@ -1,5 +1,8 @@
 from typing import List, Dict, Union
-from threedi_modelchecker.threedi_model.models import BoundaryConditions2D, BoundaryCondition1D
+from threedi_modelchecker.threedi_model.models import (
+    BoundaryConditions2D,
+    BoundaryCondition1D,
+)
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
@@ -35,20 +38,23 @@ from threedi_modelchecker.simulation_templates.exceptions import SchematisationE
 # 1D boundaries need to be in order of connectionnode id's.
 # 2D boundaries need to be in order of id (of the boundary).
 
-def sqlite_boundary_to_dict(boundary: Union[BoundaryConditions2D, BoundaryCondition1D]) -> Dict:
+
+def sqlite_boundary_to_dict(
+    boundary: Union[BoundaryConditions2D, BoundaryCondition1D]
+) -> Dict:
     try:
-        values = [[float(y) for y in x.split(",")] for x in boundary.timeseries.split('\n')]
-    except (TypeError, ValueError) as e:
+        values = [
+            [float(y) for y in x.split(",")] for x in boundary.timeseries.split("\n")
+        ]
+    except (TypeError, ValueError):
         boundary_1d2d: str = "1d"
         if isinstance(boundary, BoundaryConditions2D):
             boundary_1d2d = "2d"
         raise SchematisationError(
-            f"Incorrect formatted timeseries for {boundary_1d2d} boundary condition with id={boundary.id}")
+            f"Incorrect formatted timeseries for {boundary_1d2d} boundary condition with id={boundary.id}"
+        )
 
-    return {
-        "interpolate": False,
-        "values": values
-    }
+    return {"interpolate": False, "values": values}
 
 
 class BoundariesExtractor(object):
@@ -60,8 +66,12 @@ class BoundariesExtractor(object):
     @property
     def boundaries_2d(self) -> List[Dict]:
         if self._boundaries_2d is None:
-            boundaries_2d = Query(BoundaryConditions2D).with_session(
-                self.session).order_by(BoundaryConditions2D.id).all()
+            boundaries_2d = (
+                Query(BoundaryConditions2D)
+                .with_session(self.session)
+                .order_by(BoundaryConditions2D.id)
+                .all()
+            )
 
             self._boundaries_2d = [sqlite_boundary_to_dict(x) for x in boundaries_2d]
 
@@ -70,12 +80,16 @@ class BoundariesExtractor(object):
     @property
     def boundaries_1d(self) -> List[Dict]:
         if self._boundaries_1d is None:
-            boundaries_1d = Query(BoundaryCondition1D).with_session(
-                self.session).order_by(BoundaryCondition1D.connection_node_id).all()
+            boundaries_1d = (
+                Query(BoundaryCondition1D)
+                .with_session(self.session)
+                .order_by(BoundaryCondition1D.connection_node_id)
+                .all()
+            )
             self._boundaries_1d = [sqlite_boundary_to_dict(x) for x in boundaries_1d]
 
         return self._boundaries_1d
-     
+
     def as_list(self) -> List[Dict]:
         """
         Returns: list with dict's for every boundary, 2d boundaries before 1d boundaries

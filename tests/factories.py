@@ -183,14 +183,14 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     use_of_cg = 0
     use_of_nested_newton = 0
 
-    
+
 class Lateral1dFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Lateral1d
         sqlalchemy_session = Session
 
     timeseries = "0.0,-0.1"
-    connection_node = factory.SubFactory(ConnectionNodeFactory)  
+    connection_node = factory.SubFactory(ConnectionNodeFactory)
 
 
 class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -200,6 +200,7 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     timeseries = "0.0,-0.2"
     the_geom = "SRID=28992;POINT(-71.064544 42.28787)"
+
 
 class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
@@ -245,7 +246,7 @@ class ControlMeasureGroupFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.ControlMeasureGroup
         sqlalchemy_session = Session
-    
+
 
 class ControlMeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
@@ -266,7 +267,7 @@ class ControlFactory(factory.alchemy.SQLAlchemyModelFactory):
     end = "300"
     measure_frequency = 10
 
-    
+
 class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Culvert

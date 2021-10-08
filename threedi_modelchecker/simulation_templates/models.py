@@ -4,18 +4,24 @@ from threedi_api_client.openapi.models import TimeStepSettings
 from threedi_api_client.openapi.models import PhysicalSettings
 from threedi_api_client.openapi.models import NumericalSettings, AggregationSettings
 from threedi_api_client.openapi.models import Lateral
-from threedi_api_client.openapi.models import TableStructureControl, MemoryStructureControl, TimedStructureControl
+from threedi_api_client.openapi.models import (
+    TableStructureControl,
+    MemoryStructureControl,
+    TimedStructureControl,
+)
 from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
 from threedi_api_client.openapi.models.ground_water_raster import GroundWaterRaster
 from threedi_api_client.openapi.models.one_d_water_level import OneDWaterLevel
-from threedi_api_client.openapi.models.one_d_water_level_predefined import OneDWaterLevelPredefined
+from threedi_api_client.openapi.models.one_d_water_level_predefined import (
+    OneDWaterLevelPredefined,
+)
 from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
 from threedi_api_client.openapi.models.two_d_water_raster import TwoDWaterRaster
 from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
 
 
 def openapi_to_dict(value):
-    if hasattr(value, 'openapi_types') and hasattr(value, 'to_dict'):
+    if hasattr(value, "openapi_types") and hasattr(value, "to_dict"):
         value = value.to_dict()
         strip_dict_none_values(value)
     return value
@@ -30,16 +36,17 @@ class AsDictMixin:
                 value = value.as_dict()
             elif isinstance(value, list):
                 value = [openapi_to_dict(x) for x in value]
-            else: 
+            else:
                 value = openapi_to_dict(value)
             rt[field_name] = value
         return rt
+
 
 @dataclass
 class InitialWaterlevels(AsDictMixin):
     constant_2d: Optional[TwoDWaterLevel] = None
     constant_1d: Optional[OneDWaterLevel] = None
-    constant_gw: Optional[GroundWaterLevel] =  None
+    constant_gw: Optional[GroundWaterLevel] = None
     predefined_1d: Optional[OneDWaterLevelPredefined] = None
     raster_2d: Optional[TwoDWaterRaster] = None
     raster_gw: Optional[GroundWaterRaster] = None
@@ -52,13 +59,13 @@ class InitialWaterlevels(AsDictMixin):
             "constant_gw": GroundWaterLevel,
             "predefined_1d": OneDWaterLevelPredefined,
             "raster_2d": TwoDWaterRaster,
-            "raster_gw": GroundWaterRaster
+            "raster_gw": GroundWaterRaster,
         }
 
         data = {}
         for key, klass in map.items():
             data[key] = None if dict[key] is None else klass(**dict[key])
-    
+
         return InitialWaterlevels(**data)
 
 
@@ -73,8 +80,9 @@ class StructureControls(AsDictMixin):
         return StructureControls(
             memory=[MemoryStructureControl(**x) for x in dict["memory"]],
             table=[TableStructureControl(**x) for x in dict["table"]],
-            timed=[TimedStructureControl(**x) for x in dict["timed"]]
+            timed=[TimedStructureControl(**x) for x in dict["timed"]],
         )
+
 
 @dataclass
 class Settings(AsDictMixin):
@@ -93,6 +101,7 @@ class Settings(AsDictMixin):
             aggregations=[AggregationSettings(**x) for x in dict["aggregations"]],
         )
 
+
 @dataclass
 class Events(AsDictMixin):
     laterals: List[Lateral]
@@ -104,7 +113,7 @@ class Events(AsDictMixin):
         return Events(
             laterals=[Lateral(**x) for x in dict["laterals"]],
             boundaries=dict["boundaries"],
-            structure_controls=StructureControls.from_dict(dict["structure_controls"])
+            structure_controls=StructureControls.from_dict(dict["structure_controls"]),
         )
 
 
@@ -113,11 +122,13 @@ class SimulationTemplate(AsDictMixin):
     settings: Settings
     events: Events
     initial_waterlevels: InitialWaterlevels
-        
+
     @classmethod
     def from_dict(cls, dict: Dict) -> "SimulationTemplate":
         return SimulationTemplate(
             settings=Settings.from_dict(dict["settings"]),
             events=Events.from_dict(dict["events"]),
-            initial_waterlevels=InitialWaterlevels.from_dict(dict["initial_waterlevels"]),
+            initial_waterlevels=InitialWaterlevels.from_dict(
+                dict["initial_waterlevels"]
+            ),
         )

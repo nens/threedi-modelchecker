@@ -1,60 +1,64 @@
-from typing import List, Any, Dict, Type
+from typing import List
 from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
 from threedi_modelchecker.threedi_model.models import Lateral1d, Lateral2D
 from sqlalchemy.orm import Query
-from geoalchemy2 import func
-from geoalchemy2.shape import to_shape 
+from geoalchemy2.shape import to_shape
 from threedi_api_client.openapi.models.lateral import Lateral
 from sqlalchemy.orm.session import Session
 from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
 
+
 def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:
     try:
-        values = [[float(y) for y in x.split(",")] for x in lateral_1d.timeseries.split('\n')]
+        values = [
+            [float(y) for y in x.split(",")] for x in lateral_1d.timeseries.split("\n")
+        ]
     except (ValueError, TypeError):
-        raise SchematisationError(f"Incorrect timeseries format for lateral 1D with id: {lateral_1d.id}")
+        raise SchematisationError(
+            f"Incorrect timeseries format for lateral 1D with id: {lateral_1d.id}"
+        )
 
     offset = values[0][0]
 
     if offset > 0:
-        # Shift timeseries to start at t=0 
+        # Shift timeseries to start at t=0
         values = [[x[0] - offset, x[1]] for x in values]
-
 
     return Lateral(
         connection_node=int(lateral_1d.connection_node_id),
         offset=int(values[0][0]),
         values=values,
         units="m3/s",
-        interpolate=False
+        interpolate=False,
     )
 
 
 def lateral_2d_to_api_lateral(lateral_2d: Lateral2D) -> Lateral:
     try:
-        values = [[float(y) for y in x.split(",")] for x in lateral_2d.timeseries.split(' ')]
+        values = [
+            [float(y) for y in x.split(",")] for x in lateral_2d.timeseries.split(" ")
+        ]
     except (ValueError, TypeError):
-        raise SchematisationError(f"Incorrect timeseries format for lateral 2D with id: {lateral_2d.id}")
+        raise SchematisationError(
+            f"Incorrect timeseries format for lateral 2D with id: {lateral_2d.id}"
+        )
 
     offset = values[0][0]
 
     if offset > 0:
-        # Shift timeseries to start at t=0 
+        # Shift timeseries to start at t=0
         values = [[x[0] - offset, x[1]] for x in values]
 
     # x,y is correct (4.294348493375471, 52.033176579129936) until we alter the API
     shp = to_shape(lateral_2d.the_geom)
-    point = {
-        "type": "point",
-        "coordinates": [shp.x, shp.y]
-    }
+    point = {"type": "point", "coordinates": [shp.x, shp.y]}
 
     return Lateral(
         offset=int(values[0][0]),
         values=values,
         point=point,
         units="m3/s",
-        interpolate=False
+        interpolate=False,
     )
 
 
