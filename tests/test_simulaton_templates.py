@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 from threedi_api_client.openapi.models.aggregation_settings import AggregationSettings
 from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
 from threedi_api_client.openapi.models.lateral import Lateral
@@ -15,6 +16,7 @@ from threedi_modelchecker.simulation_templates.exceptions import SchematisationE
 from threedi_modelchecker.simulation_templates.boundaries.extractor import (
     BoundariesExtractor,
 )
+from threedi_modelchecker.simulation_templates.extractor import SimulationTemplateExtractor
 from threedi_modelchecker.simulation_templates.initial_waterlevels.extractor import (
     InitialWaterlevelExtractor,
 )
@@ -32,7 +34,7 @@ from threedi_modelchecker.simulation_templates.structure_controls.extractor impo
     StructureControlExtractor,
 )
 from threedi_modelchecker.threedi_model.constants import InitializationType
-from threedi_modelchecker.simulation_templates.models import Settings
+from threedi_modelchecker.simulation_templates.models import Settings, SimulationTemplate
 from threedi_modelchecker.threedi_model.models import (
     ControlGroup,
     ControlMeasureGroup,
@@ -40,6 +42,19 @@ from threedi_modelchecker.threedi_model.models import (
     ControlTable,
     ControlTimed,
 )
+
+
+def test_simulation_template_extractor(session):
+    num_settings = factories.NumericalSettingsFactory.create(id=1)
+    global_settings = factories.GlobalSettingsFactory.create(
+        id=1, numerical_settings_id=num_settings.id
+    )
+    factories.AggregationSettingsFactory.create(global_settings_id=global_settings.id)
+    extractor = SimulationTemplateExtractor(Path("/tmp/nothing.sqlite"))
+
+    simulation_template: SimulationTemplate = extractor._extract_simulation_template(session)
+
+    assert isinstance(simulation_template, SimulationTemplate)
 
 
 def test_boundary_conditions(session):
