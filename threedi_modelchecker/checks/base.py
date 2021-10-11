@@ -253,7 +253,7 @@ class TypeCheck(BaseCheck):
         return invalid_type_query.all()
 
     def description(self):
-        return f"{self.column} is not of type {self.expected_type}"
+        return f"{self.column} is not of type {self.expected_types}"
 
 
 def _sqlalchemy_to_sqlite_types(column_type):

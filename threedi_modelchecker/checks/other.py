@@ -189,7 +189,7 @@ def valid_tabulated_shape(width, height, is_rectangle):
         #     f"Cross section definitions of tabulated type must have increasing heights "
         #     f"(got: {height})."
         # )
-    if is_rectangle and abs(widths[0]) < 1E-7:
+    if is_rectangle and abs(widths[0]) < 1e-7:
         return False
 
     return True

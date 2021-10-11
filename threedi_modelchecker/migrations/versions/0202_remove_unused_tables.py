@@ -1,6 +1,6 @@
-"""Removed unused columns.
+"""Removed unused v1 tables.
 
-Revision ID: 0201
+Revision ID: 0202
 Revises:
 Create Date: 2021-09-29 13:50:19.544275
 
