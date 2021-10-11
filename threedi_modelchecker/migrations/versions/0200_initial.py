@@ -26,7 +26,7 @@ def _get_existing_tables():
     global existing_tables
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
-    existing_tables = inspector.get_table_names(schema="main")
+    existing_tables = inspector.get_table_names()
 
 
 def create_table_if_not_exists(table_name, *args, **kwargs):
