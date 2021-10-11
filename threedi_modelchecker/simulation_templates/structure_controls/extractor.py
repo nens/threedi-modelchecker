@@ -64,17 +64,29 @@ def to_measure_specification(
     )
 
 
+TYPE_MAPPING = {"set_capacity": "set_pump_capacity"}
+CAPACITY_FACTOR: float = 0.001
+
+
 def to_table_control(
     control: Control,
     table_control: ControlTable,
     measure_specification: MeasureSpecification,
 ) -> TableStructureControl:
+
+    action_type: str = TYPE_MAPPING.get(
+        table_control.action_type, table_control.action_type
+    )
+
     # Note: Yes, table control really uses # and ;
     try:
         values = [
             [float(y) for y in x.split(";")]
             for x in table_control.action_table.split("#")
         ]
+        if table_control.action_type == "set_capacity":
+            values[1] = [x * CAPACITY_FACTOR for x in values[1]]
+
     except (ValueError, TypeError):
         raise SchematisationError(
             "Table control action_table incorrect format for v2_control_table.id = {table_control.id}"
@@ -86,7 +98,7 @@ def to_table_control(
         measure_specification=measure_specification,
         structure_id=table_control.target_id,
         structure_type=table_control.target_type,
-        type=table_control.action_type,
+        type=action_type,
         values=values,
     )
 
@@ -96,6 +108,11 @@ def to_memory_control(
     memory_control: ControlMemory,
     measure_specification: MeasureSpecification,
 ) -> MemoryStructureControl:
+
+    action_type: str = TYPE_MAPPING.get(
+        memory_control.action_type, memory_control.action_type
+    )
+
     try:
         value = [float(x) for x in memory_control.action_value.split(" ")]
     except (ValueError, TypeError):
@@ -109,7 +126,7 @@ def to_memory_control(
         measure_specification=measure_specification,
         structure_id=memory_control.target_id,
         structure_type=memory_control.target_type,
-        type=memory_control.action_type,
+        type=action_type,
         value=value,
         upper_threshold=float(memory_control.upper_threshold),
         lower_threshold=float(memory_control.lower_threshold),
@@ -121,18 +138,33 @@ def to_memory_control(
 def to_timed_control(
     control: Control, timed_control: ControlTimed
 ) -> TimedStructureControl:
+
+    action_type: str = TYPE_MAPPING.get(
+        timed_control.action_type, timed_control.action_type
+    )
+
     try:
-        value = [float(x) for x in timed_control.action_table.split(" ")]
+        values = [
+            [float(y) for y in x.split(";")]
+            for x in timed_control.action_table.split("#")
+        ]
+
+        if timed_control.action_type == "set_capacity":
+            values[1] = [x * CAPACITY_FACTOR for x in values[1]]
+
     except (ValueError, TypeError):
         raise SchematisationError(
-            "Timed control action_value incorrect format for v2_control_timed.id = {timed_control.id}"
+            "Timed control action_table incorrect format for v2_control_timed.id = {timed_control.id}"
         )
+
+    # Pick first two values
+    value = values[0]
 
     return TimedStructureControl(
         offset=int(control.start),
         duration=int(control.end) - int(control.start),
         value=value,
-        type=timed_control.action_type,
+        type=action_type,
         structure_id=timed_control.target_id,
         structure_type=timed_control.target_type,
     )

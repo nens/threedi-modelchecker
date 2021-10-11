@@ -237,7 +237,7 @@ class ControlTimedFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     action_type = "set_discharge_coefficients"
-    action_table = "0.0 -1.0"
+    action_table = "0.0;-1.0"
     target_type = "v2_channel"
     target_id = 10
 
