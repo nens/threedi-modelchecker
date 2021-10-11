@@ -25,42 +25,54 @@ def generate_foreign_key_checks(table, custom_level_map=None, **kwargs):
     return foreign_key_checks
 
 
-def generate_unique_checks(table, **kwargs):
+def generate_unique_checks(table, custom_level_map=None, **kwargs):
+    custom_level_map = custom_level_map or {}
     unique_checks = []
     for column in table.columns:
         if column.unique or column.primary_key:
-            unique_checks.append(UniqueCheck(column, **kwargs))
+            level = custom_level_map.get(column.name, "ERROR")
+            unique_checks.append(UniqueCheck(column, level=level, **kwargs))
     return unique_checks
 
 
-def generate_not_null_checks(table, **kwargs):
+def generate_not_null_checks(table, custom_level_map=None, **kwargs):
+    custom_level_map = custom_level_map or {}
     not_null_checks = []
     for column in table.columns:
         if not column.nullable:
-            not_null_checks.append(NotNullCheck(column, **kwargs))
+            level = custom_level_map.get(column.name, "ERROR")
+            not_null_checks.append(NotNullCheck(column, level=level, **kwargs))
     return not_null_checks
 
 
-def generate_type_checks(table, **kwargs):
+def generate_type_checks(table, custom_level_map=None, **kwargs):
+    custom_level_map = custom_level_map or {}
     data_type_checks = []
     for column in table.columns:
-        data_type_checks.append(TypeCheck(column, **kwargs))
+        level = custom_level_map.get(column.name, "ERROR")
+        data_type_checks.append(TypeCheck(column, level=level, **kwargs))
     return data_type_checks
 
 
-def generate_geometry_checks(table, **kwargs):
+def generate_geometry_checks(table, custom_level_map=None, **kwargs):
+    custom_level_map = custom_level_map or {}
     geometry_checks = []
     for column in table.columns:
         if type(column.type) == Geometry:
-            geometry_checks.append(GeometryCheck(column, **kwargs))
+            level = custom_level_map.get(column.name, "ERROR")
+            geometry_checks.append(GeometryCheck(column, level=level, **kwargs))
     return geometry_checks
 
 
-def generate_geometry_type_checks(table, **kwargs):
+def generate_geometry_type_checks(table, custom_level_map=None, **kwargs):
+    custom_level_map = custom_level_map or {}
     geometry_type_checks = []
     for column in table.columns:
         if type(column.type) == Geometry:
-            geometry_type_checks.append(GeometryTypeCheck(column, **kwargs))
+            level = custom_level_map.get(column.name, "ERROR")
+            geometry_type_checks.append(
+                GeometryTypeCheck(column, level=level, **kwargs)
+            )
     return geometry_type_checks
 
 

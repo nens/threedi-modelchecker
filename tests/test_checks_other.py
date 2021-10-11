@@ -331,12 +331,12 @@ def test_open_channels_with_nested_newton(session):
     factories.NumericalSettingsFactory(use_of_nested_newton=0)
     channel = factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(-71.064544 42.28787)"
+            the_geom="SRID=4326;POINT(-71.064544 42.28787)"
         ),
         connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(-71.0645 42.287)"
+            the_geom="SRID=4326;POINT(-71.0645 42.287)"
         ),
-        the_geom="SRID=28992;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
+        the_geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
     open_definition = factories.CrossSectionDefinitionFactory(
         shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM, width="1 0"
@@ -344,17 +344,17 @@ def test_open_channels_with_nested_newton(session):
     factories.CrossSectionLocationFactory(
         channel=channel,
         definition=open_definition,
-        the_geom="SRID=28992;POINT(-71.0645 42.287)",
+        the_geom="SRID=4326;POINT(-71.0645 42.287)",
     )
 
     channel2 = factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(-71.064544 42.28787)"
+            the_geom="SRID=4326;POINT(-71.064544 42.28787)"
         ),
         connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(-71.0645 42.287)"
+            the_geom="SRID=4326;POINT(-71.0645 42.287)"
         ),
-        the_geom="SRID=28992;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
+        the_geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
     open_definition_egg = factories.CrossSectionDefinitionFactory(
         shape=constants.CrossSectionShape.EGG,
@@ -362,7 +362,7 @@ def test_open_channels_with_nested_newton(session):
     factories.CrossSectionLocationFactory(
         channel=channel2,
         definition=open_definition_egg,
-        the_geom="SRID=28992;POINT(-71.0645 42.287)",
+        the_geom="SRID=4326;POINT(-71.0645 42.287)",
     )
 
     check = OpenChannelsWithNestedNewton()

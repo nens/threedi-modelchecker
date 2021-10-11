@@ -70,7 +70,7 @@ def upgrade_single(fk):
     op.execute(
         table.update()
         .where(column.notin_(sa.orm.Query(referring)) & (column != None))
-        .values({fk["column"]: op.inline_literal(None)})
+        .values({fk["column"]: sa.null()})
     )
 
 

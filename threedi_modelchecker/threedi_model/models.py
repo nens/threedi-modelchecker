@@ -311,6 +311,11 @@ class ConnectionNode(Base):
         Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
         nullable=False,
     )
+    the_geom_linestring = Column(
+        Geometry(
+            geometry_type="LINESTRING", srid=4326, spatial_index=False, management=True
+        )
+    )
     code = Column(String(100))
 
     manholes = relationship("Manhole", back_populates="connection_node")

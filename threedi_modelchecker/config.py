@@ -28,6 +28,7 @@ from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
+from threedi_modelchecker.threedi_model.constants import CalculationTypeNode
 from typing import List
 
 
@@ -430,7 +431,10 @@ CHECKS += [
     QueryCheck(
         error_code=251,
         column=models.ConnectionNode.id,
-        invalid=Query(models.ConnectionNode).filter(
+        invalid=Query(models.ConnectionNode)
+        .join(models.Manhole)
+        .filter(
+            models.Manhole.calculation_type == constants.CalculationTypeNode.ISOLATED,
             models.ConnectionNode.id.notin_(
                 Query(models.Pipe.connection_node_start_id).union_all(
                     Query(models.Pipe.connection_node_end_id),
@@ -445,9 +449,9 @@ CHECKS += [
                     Query(models.Orifice.connection_node_start_id),
                     Query(models.Orifice.connection_node_end_id),
                 )
-            )
+            ),
         ),
-        message="This is an individual ConnectionNode. Connect it to either a pipe, "
+        message="This is an isolated ConnectionNode without connections. Connect it to either a pipe, "
         "channel, culvert, weir, orifice or pumpstation.",
     ),
     QueryCheck(
@@ -854,7 +858,7 @@ CHECKS += [
         min_value=0,
         filters=filters,
     ),
-    Use0DFlowCheck(error_code=611),
+    Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING),
 ]
 
 
@@ -979,6 +983,17 @@ CHECKS += [
         models.Lateral2D.timeseries,
     ]
 ]
+CHECKS += [
+    FileExistsCheck(
+        error_code=1109,
+        column=models.GlobalSetting.initial_waterlevel_file,
+    ),
+    FileExistsCheck(
+        error_code=1110,
+        column=models.GlobalSetting.initial_groundwater_level_file,
+        filters=(models.GlobalSetting.groundwater_settings_id != None),
+    ),
+]
 
 
 class Config:
@@ -999,19 +1014,27 @@ class Config:
             self.checks += generate_foreign_key_checks(
                 model.__table__,
                 error_code=1,
-                custom_level_map={
-                    "interflow_settings_id": "warning",
-                    "control_group_id": "warning",
-                    "simple_infiltration_settings_id": "warning",
-                    "groundwater_settings_id": "warning",
-                    "global_settings_id": "warning",
-                },
             )
             self.checks += generate_unique_checks(model.__table__, error_code=2)
             self.checks += generate_not_null_checks(model.__table__, error_code=3)
-            self.checks += generate_type_checks(model.__table__, error_code=4)
-            self.checks += generate_geometry_checks(model.__table__, error_code=5)
-            self.checks += generate_geometry_type_checks(model.__table__, error_code=6)
+            self.checks += generate_type_checks(
+                model.__table__,
+                error_code=4,
+                custom_level_map={
+                    "sewerage": "INFO",
+                    "external": "INFO",
+                },
+            )
+            self.checks += generate_geometry_checks(
+                model.__table__,
+                custom_level_map={"the_geom_linestring": "info"},
+                error_code=5,
+            )
+            self.checks += generate_geometry_type_checks(
+                model.__table__,
+                custom_level_map={"the_geom_linestring": "info"},
+                error_code=6,
+            )
             self.checks += generate_enum_checks(
                 model.__table__,
                 error_code=7,
