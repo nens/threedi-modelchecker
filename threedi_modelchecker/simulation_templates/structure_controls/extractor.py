@@ -122,11 +122,16 @@ def to_timed_control(
     control: Control, timed_control: ControlTimed
 ) -> TimedStructureControl:
     try:
-        value = [float(x) for x in timed_control.action_table.split(" ")]
+        value = [
+            [float(y) for y in x.split(";")]
+            for x in timed_control.action_table.split("#")]
     except (ValueError, TypeError):
         raise SchematisationError(
-            "Timed control action_value incorrect format for v2_control_timed.id = {timed_control.id}"
+            "Timed control action_table incorrect format for v2_control_timed.id = {timed_control.id}"
         )
+
+    # Pick first two values
+    value = value[0]
 
     return TimedStructureControl(
         offset=int(control.start),
