@@ -28,7 +28,6 @@ from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.orm import Query
-from threedi_modelchecker.threedi_model.constants import CalculationTypeNode
 from typing import List
 
 
