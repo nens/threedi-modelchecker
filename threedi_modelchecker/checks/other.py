@@ -410,10 +410,9 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         super().__init__(
             column=models.CrossSectionDefinition.id,
             level=CheckLevel.WARNING,
-            run_condition=(
-                models.NumericalSettings,
-                models.NumericalSettings.use_of_nested_newton == 0,
-            ),
+            filters=Query(models.NumericalSettings)
+            .filter(models.NumericalSettings.use_of_nested_newton == 0)
+            .exists(),
             *args,
             **kwargs,
         )

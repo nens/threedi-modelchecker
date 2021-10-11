@@ -36,18 +36,17 @@ def is_none_or_empty(col):
 
 
 CONDITIONS = {
-    "has_dem": (models.GlobalSetting, ~is_none_or_empty(models.GlobalSetting.dem_file)),
-    "has_no_dem": (
-        models.GlobalSetting,
-        is_none_or_empty(models.GlobalSetting.dem_file),
+    "has_dem": Query(models.GlobalSetting).filter(
+        ~is_none_or_empty(models.GlobalSetting.dem_file)
     ),
-    "0d_surf": (
-        models.GlobalSetting,
-        models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+    "has_no_dem": Query(models.GlobalSetting).filter(
+        is_none_or_empty(models.GlobalSetting.dem_file)
     ),
-    "0d_imp": (
-        models.GlobalSetting,
-        models.GlobalSetting.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE,
+    "0d_surf": Query(models.GlobalSetting).filter(
+        models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE
+    ),
+    "0d_imp": Query(models.GlobalSetting).filter(
+        models.GlobalSetting.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE
     ),
 }
 
@@ -134,7 +133,7 @@ CHECKS += [
     QueryCheck(
         error_code=31,
         column=models.Channel.calculation_type,
-        run_condition=CONDITIONS["has_no_dem"],
+        filters=CONDITIONS["has_no_dem"].exists(),
         invalid=Query(models.Channel).filter(
             models.Channel.calculation_type.in_(
                 [
@@ -176,7 +175,7 @@ CHECKS += [
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
     )
-    for table in [models.GlobalSetting, models.Channel, models.Pipe, models.Culvert]
+    for table in [models.Channel, models.Pipe, models.Culvert]
 ]
 CHECKS += [
     QueryCheck(
@@ -367,11 +366,9 @@ CHECKS += [
         level=CheckLevel.WARNING,
         error_code=107,
         column=models.Manhole.drain_level,
-        run_condition=(
-            models.GlobalSetting,
-            is_none_or_empty(models.GlobalSetting.dem_file)
-            & (models.GlobalSetting.manhole_storage_area > 0),
-        ),
+        filters=CONDITIONS["has_no_dem"]
+        .filter(models.GlobalSetting.manhole_storage_area > 0)
+        .exists(),
         invalid=Query(models.Manhole).filter(
             models.Manhole.calculation_type.in_(
                 [constants.CalculationTypeNode.CONNECTED]
@@ -547,6 +544,18 @@ CHECKS += [
         column=models.GlobalSetting.kmax,
         min_value=0,
         left_inclusive=False,  # 0 is not allowed
+    ),
+    RangeCheck(
+        error_code=306,
+        column=models.GlobalSetting.dist_calc_points,
+        filters=or_(
+            *[
+                Query(table).filter(table.dist_calc_points == None).exists()
+                for table in [models.Channel, models.Pipe, models.Culvert]
+            ]
+        ),
+        min_value=0,
+        left_inclusive=False,  # 0 itself is not allowed
     ),
 ]
 
@@ -758,48 +767,52 @@ CHECKS += [
 
 
 ## 06xx: INFLOW
-for (surface, surface_map, run_condition) in [
-    (models.Surface, models.SurfaceMap, CONDITIONS["0d_surf"]),
-    (models.ImperviousSurface, models.ImperviousSurfaceMap, CONDITIONS["0d_imp"]),
+for (surface, surface_map, filters) in [
+    (models.Surface, models.SurfaceMap, CONDITIONS["0d_surf"].exists()),
+    (
+        models.ImperviousSurface,
+        models.ImperviousSurfaceMap,
+        CONDITIONS["0d_imp"].exists(),
+    ),
 ]:
     CHECKS += [
         RangeCheck(
             error_code=601,
             column=surface.area,
             min_value=0,
-            run_condition=run_condition,
+            filters=filters,
         ),
         RangeCheck(
             level=CheckLevel.WARNING,
             error_code=602,
             column=surface.dry_weather_flow,
             min_value=0,
-            run_condition=run_condition,
+            filters=filters,
         ),
         RangeCheck(
             error_code=603,
             column=surface_map.percentage,
             min_value=0,
-            run_condition=run_condition,
+            filters=filters,
         ),
         RangeCheck(
             error_code=604,
             level=CheckLevel.WARNING,
             column=surface_map.percentage,
             max_value=100,
-            run_condition=run_condition,
+            filters=filters,
         ),
         RangeCheck(
             error_code=605,
             column=surface.nr_of_inhabitants,
             min_value=0,
-            run_condition=run_condition,
+            filters=filters,
         ),
         QueryCheck(
             level=CheckLevel.WARNING,
             error_code=612,
             column=surface_map.connection_node_id,
-            run_condition=run_condition,
+            filters=filters,
             invalid=Query(surface_map).filter(
                 surface_map.connection_node_id.in_(
                     Query(models.BoundaryCondition1D.connection_node_id)
@@ -815,31 +828,31 @@ CHECKS += [
         error_code=606,
         column=models.SurfaceParameter.outflow_delay,
         min_value=0,
-        run_condition=run_condition,
+        filters=filters,
     ),
     RangeCheck(
         error_code=607,
         column=models.SurfaceParameter.max_infiltration_capacity,
         min_value=0,
-        run_condition=run_condition,
+        filters=filters,
     ),
     RangeCheck(
         error_code=608,
         column=models.SurfaceParameter.min_infiltration_capacity,
         min_value=0,
-        run_condition=run_condition,
+        filters=filters,
     ),
     RangeCheck(
         error_code=609,
         column=models.SurfaceParameter.infiltration_decay_constant,
         min_value=0,
-        run_condition=run_condition,
+        filters=filters,
     ),
     RangeCheck(
         error_code=610,
         column=models.SurfaceParameter.infiltration_recovery_constant,
         min_value=0,
-        run_condition=run_condition,
+        filters=filters,
     ),
     Use0DFlowCheck(error_code=611),
 ]
