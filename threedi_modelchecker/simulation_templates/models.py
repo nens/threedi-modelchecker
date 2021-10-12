@@ -88,7 +88,8 @@ async def get_upload_instance(
             found = results[0]
             break
 
-        next = res.next
+        # Make sure AsyncMock used in unit-tests are not evaluated as true
+        next = res.next is not None and isinstance(res.next, str) and len(res.next) != 0
         offset += 10
         limit += 10
 
@@ -289,6 +290,8 @@ class StructureControls(AsDictMixin):
         for timed_control in self.timed:
             data["timed"].append(openapi_to_dict(timed_control))
 
+        filename: str = f"controls{uuid4().hex[0:8]}.json"
+
         upload: UploadEventFile = (
             await client.simulations_events_structure_control_file_create(
                 simulation_pk=simulation.id,
@@ -299,6 +302,19 @@ class StructureControls(AsDictMixin):
         await upload_fileobj(
             upload.put_url, AsyncBytesIO(BytesIO(json.dumps(data).encode()))
         )
+
+        # Try to find structure control resource
+        controls_upload: Optional[FileStructureControl] = await get_upload_instance(
+            client.simulations_events_structure_control_file_list,
+            simulation.id,
+            filename,
+        )
+
+        if controls_upload is None:
+            raise TemplateValidationError(
+                "Could not find uploaded structure controls file resource"
+            )
+        self._controls_upload = controls_upload
 
 
 @dataclass
