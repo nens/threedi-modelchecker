@@ -5,6 +5,10 @@ Changelog of threedi-modelchecker
 0.15 (unreleased)
 -----------------
 
+- Added support for extracting simulation template information from
+  an sqlite file. This information includes: settings, boundary conditions,
+  laterals, structure controls and initial waterlevels.
+
 - Added log levels (INFO, WARNING, ERROR). The level of the checker can be
   adjusted through ThreediModelChecker().errors and .checks. The command-line
   interface also supports the --level parameter.
