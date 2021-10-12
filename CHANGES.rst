@@ -5,6 +5,8 @@ Changelog of threedi-modelchecker
 0.15 (unreleased)
 -----------------
 
+- Simulation templates can be saved (asynchroniously) to the API
+
 - Added support for extracting simulation template information from
   an sqlite file. This information includes: settings, boundary conditions,
   laterals, structure controls and initial waterlevels.
