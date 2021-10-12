@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy.orm.session import Session
 from threedi_modelchecker.simulation_templates.initial_waterlevels.extractor import (
@@ -11,7 +11,7 @@ from threedi_modelchecker.simulation_templates.laterals.extractor import (
 from threedi_modelchecker.simulation_templates.boundaries.extractor import (
     BoundariesExtractor,
 )
-from threedi_modelchecker.simulation_templates.models import SimulationTemplate, Events
+from threedi_modelchecker.simulation_templates.models import GlobalSettingOption, SimulationTemplate, Events
 from threedi_modelchecker.simulation_templates.settings.extractor import (
     SettingsExtractor,
 )
@@ -61,6 +61,16 @@ class SimulationTemplateExtractor(object):
             settings=settings.all_settings(),
             initial_waterlevels=initial_waterlevels.all_initial_waterlevels(),
         )
+
+    def _get_global_settings_options(self, session: Session) -> List[GlobalSettingOption]:
+        return [GlobalSettingOption(x.id, x.name) for x in Query(GlobalSetting).with_session(session)]
+
+    def global_settings_options(self) -> List[GlobalSettingOption]:
+        try:
+            session = self.database.get_session()
+            return self._get_global_settings_options(session)
+        finally:
+            session.close()
 
     def extract(self) -> SimulationTemplate:
         """

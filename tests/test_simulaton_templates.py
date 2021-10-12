@@ -172,6 +172,9 @@ def simulation_template(session, measure_group):
 
     extractor = SimulationTemplateExtractor(Path("/tmp/nothing.sqlite"))
 
+    global_settings_options = extractor._get_global_settings_options(session)
+    assert len(global_settings_options) == 1
+
     simulation_template: SimulationTemplate = extractor._extract_simulation_template(
         session
     )

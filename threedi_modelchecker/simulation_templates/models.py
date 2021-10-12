@@ -50,6 +50,15 @@ class ValidationStatus(Enum):
     invalid: str = "invalid"
 
 
+@dataclass
+class GlobalSettingOption:
+    """
+    Derived global setting option from v2_global_settings table
+    """
+    id: int  # v2_global_settings.id
+    name: str
+
+
 class AsyncBytesIO:
     """
     Simple wrapper class to make BytesIO async
