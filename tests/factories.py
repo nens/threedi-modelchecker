@@ -55,7 +55,7 @@ class ConnectionNodeFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     code = Faker("name")
-    the_geom = "SRID=28992;POINT(-71.064544 42.28787)"
+    the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
 class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -90,7 +90,7 @@ class LeveeFactory(factory.alchemy.SQLAlchemyModelFactory):
     crest_level = 4
     max_breach_depth = 4
     material = 1
-    the_geom = "SRID=28992;LINESTRING(-71.160281 42.258729,-71.160837 42.259113,-71.161144 42.25932)"  # noqa
+    the_geom = "SRID=4326;LINESTRING(-71.160281 42.258729,-71.160837 42.259113,-71.161144 42.25932)"  # noqa
 
 
 class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -159,6 +159,7 @@ class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     reference_level = 0.0
     friction_type = constants.FrictionType.CHEZY
     friction_value = 0.0
+    the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
     channel = factory.SubFactory(ChannelFactory)
     definition = factory.SubFactory(CrossSectionDefinitionFactory)
 

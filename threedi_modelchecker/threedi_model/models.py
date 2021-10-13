@@ -221,9 +221,9 @@ class Surface(Base):
     )
     the_geom = Column(
         Geometry(
-            geometry_type="POLYGON", srid=4326, spatial_index=True, management=True
+            geometry_type="GEOMETRY", srid=4326, spatial_index=True, management=True
         ),
-        nullable=False,
+        nullable=True,
     )
 
 
@@ -311,6 +311,11 @@ class ConnectionNode(Base):
         Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
         nullable=False,
     )
+    the_geom_linestring = Column(
+        Geometry(
+            geometry_type="LINESTRING", srid=4326, spatial_index=False, management=True
+        )
+    )
     code = Column(String(100))
 
     manholes = relationship("Manhole", back_populates="connection_node")
@@ -380,6 +385,8 @@ class NumericalSettings(Base):
     use_of_cg = Column(Integer, nullable=False)
     use_of_nested_newton = Column(Integer, nullable=False)
 
+    global_settings = relationship("GlobalSetting", back_populates="numerical_settings")
+
 
 class GlobalSetting(Base):
     __tablename__ = "v2_global_settings"
@@ -430,6 +437,11 @@ class GlobalSetting(Base):
 
     numerical_settings_id = Column(
         Integer, ForeignKey(NumericalSettings.__tablename__ + ".id"), nullable=False
+    )
+    numerical_settings = relationship(
+        NumericalSettings,
+        foreign_keys=numerical_settings_id,
+        back_populates="global_settings",
     )
     interflow_settings_id = Column(Integer, ForeignKey(Interflow.__tablename__ + ".id"))
     interflow_settings = relationship(
@@ -824,9 +836,9 @@ class ImperviousSurface(Base):
     dry_weather_flow = Column(Float)
     the_geom = Column(
         Geometry(
-            geometry_type="POLYGON", srid=4326, spatial_index=True, management=True
+            geometry_type="GEOMETRY", srid=4326, spatial_index=True, management=True
         ),
-        nullable=False,
+        nullable=True,
     )
     impervious_surface_maps = relationship(
         "ImperviousSurfaceMap", back_populates="impervious_surface"
