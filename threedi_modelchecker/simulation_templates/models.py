@@ -623,23 +623,18 @@ class SimulationTemplate(AsDictMixin):
 
         # Check validity of everything
         async def wait_for_validation(client: V3BetaApi) -> None:
-            processing: bool = True
-
             # increase sleep time, in steps to 8 sec
             SLEEPTIME: int = [2, 3, 5, 8]
             index: int = 0
 
-            while processing:
-                if await self.is_valid_in_api(client) == ValidationStatus.valid:
-                    processing = False
-                    break
-
+            while await self.is_valid_in_api(client) == ValidationStatus.processing:
                 if index < len(SLEEPTIME) - 2:
                     index += 1
                 await asyncio.sleep(SLEEPTIME[index])
 
         try:
-            await asyncio.wait_for(wait_for_validation(client), timeout=timeout)
+            await asyncio.wait_for(
+                wait_for_validation(client), timeout=timeout)
         except TimeoutError:
             raise TemplateValidationTimeoutError(
                 "Template validating timed out, please try again later."
