@@ -128,9 +128,9 @@ def simulation_template(session, measure_group):
     factories.Lateral1dFactory.create()
     factories.Lateral2DFactory.create()
 
-    factories.BoundaryConditions2DFactory.create(timeseries="0.0,-0.1\n0.1,-0.2")
+    factories.BoundaryConditions2DFactory.create(timeseries="0,-0.1\n1,-0.2")
 
-    factories.BoundaryConditions1DFactory.create(timeseries="0.0,-0.3\n0.1,-0.4")
+    factories.BoundaryConditions1DFactory.create(timeseries="0,-0.3\n1,-0.4")
 
     control_group: ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"

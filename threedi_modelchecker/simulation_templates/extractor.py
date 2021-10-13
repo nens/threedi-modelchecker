@@ -24,28 +24,27 @@ from sqlalchemy.orm import Query
 
 
 class SimulationTemplateExtractor(object):
-    def __init__(self, sqlite_path: Path, global_settings_id: Optional[int] = None):
+    def __init__(self, sqlite_path: Path):
         """
         param global_settings_id: if None the first global setting entry is taken (default)
         """
         self.sqlite_path = sqlite_path
-        self.global_settings_id = global_settings_id
         self.database = ThreediDatabase(
             connection_settings={"db_path": self.sqlite_path.as_posix()},
             db_type="spatialite",
         )
 
-    def _extract_simulation_template(self, session: Session) -> SimulationTemplate:
+    def _extract_simulation_template(self, session: Session, global_settings_id: Optional[int] = None) -> SimulationTemplate:
         """
         Extract a SimulationTemplate instance using the given database session
         """
         qr = Query(GlobalSetting).with_session(session)
-        if self.global_settings_id is not None:
-            qr = qr.filter(GlobalSetting.id == self.global_settings_id)
+        if global_settings_id is not None:
+            qr = qr.filter(GlobalSetting.id == global_settings_id)
         global_settings: GlobalSetting = qr.first()
 
         initial_waterlevels = InitialWaterlevelExtractor(
-            session, self.global_settings_id
+            session, global_settings_id
         )
 
         settings = SettingsExtractor(session, global_settings.id)
@@ -72,12 +71,12 @@ class SimulationTemplateExtractor(object):
         finally:
             session.close()
 
-    def extract(self) -> SimulationTemplate:
+    def extract(self, global_settings_id: Optional[int] = None) -> SimulationTemplate:
         """
         Return simulation template for
         """
         try:
             session = self.database.get_session()
-            return self._extract_simulation_template(session)
+            return self._extract_simulation_template(session, global_settings_id)
         finally:
             session.close()
