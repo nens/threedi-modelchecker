@@ -6,6 +6,7 @@ from threedi_modelchecker.threedi_model.models import (
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
+from threedi_modelchecker.simulation_templates.utils import parse_timeseries
 
 # JSON format example:
 # [
@@ -43,9 +44,7 @@ def sqlite_boundary_to_dict(
     boundary: Union[BoundaryConditions2D, BoundaryCondition1D]
 ) -> Dict:
     try:
-        values = [
-            [float(y) for y in x.split(",")] for x in boundary.timeseries.split("\n")
-        ]
+        values = parse_timeseries(boundary.timeseries)
     except (TypeError, ValueError):
         boundary_1d2d: str = "1d"
         if isinstance(boundary, BoundaryConditions2D):

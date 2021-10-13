@@ -2,17 +2,15 @@ from typing import List
 from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
 from threedi_modelchecker.threedi_model.models import Lateral1d, Lateral2D
 from sqlalchemy.orm import Query
-from geoalchemy2.shape import to_shape
 from threedi_api_client.openapi.models.lateral import Lateral
 from sqlalchemy.orm.session import Session
 from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
+from threedi_modelchecker.simulation_templates.utils import parse_timeseries
 
 
 def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:
     try:
-        values = [
-            [float(y) for y in x.split(",")] for x in lateral_1d.timeseries.split("\n")
-        ]
+        values = parse_timeseries(lateral_1d.timeseries)
     except (ValueError, TypeError):
         raise SchematisationError(
             f"Incorrect timeseries format for lateral 1D with id: {lateral_1d.id}"
@@ -33,11 +31,9 @@ def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:
     )
 
 
-def lateral_2d_to_api_lateral(lateral_2d: Lateral2D) -> Lateral:
+def lateral_2d_to_api_lateral(lateral_2d: Lateral2D, session: Session) -> Lateral:
     try:
-        values = [
-            [float(y) for y in x.split(",")] for x in lateral_2d.timeseries.split(" ")
-        ]
+        values = parse_timeseries(lateral_2d.timeseries)
     except (ValueError, TypeError):
         raise SchematisationError(
             f"Incorrect timeseries format for lateral 2D with id: {lateral_2d.id}"
@@ -50,8 +46,7 @@ def lateral_2d_to_api_lateral(lateral_2d: Lateral2D) -> Lateral:
         values = [[x[0] - offset, x[1]] for x in values]
 
     # x,y is correct (4.294348493375471, 52.033176579129936) until we alter the API
-    shp = to_shape(lateral_2d.the_geom)
-    point = {"type": "point", "coordinates": [shp.x, shp.y]}
+    point = session.scalar(lateral_2d.the_geom.ST_AsGeoJSON())
 
     return Lateral(
         offset=int(values[0][0]),
@@ -72,7 +67,7 @@ class LateralsExtractor(object):
     def laterals_2d(self) -> List[Lateral]:
         if self._laterals_2d is None:
             laterals_2d = Query(Lateral2D).with_session(self.session).all()
-            self._laterals_2d = [lateral_2d_to_api_lateral(x) for x in laterals_2d]
+            self._laterals_2d = [lateral_2d_to_api_lateral(x, self.session) for x in laterals_2d]
 
         return self._laterals_2d
 

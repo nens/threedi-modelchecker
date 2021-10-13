@@ -60,26 +60,26 @@ def test_simulation_template_extractor(session):
 def test_boundary_conditions(session):
     for i in range(1, 3):
         factories.BoundaryConditions2DFactory.create(
-            timeseries=f"0.0,-0.{i}\n0.1,-0.{i+1}"
+            timeseries=f"0,-0.{i}\n1,-0.{i+1}"
         )
 
     for i in range(3, 5):
         factories.BoundaryConditions1DFactory.create(
-            timeseries=f"0.0,-0.{i}\n0.1,-0.{i+1}"
+            timeseries=f"0,-0.{i}\n1,-0.{i+1}"
         )
 
     extractor = BoundariesExtractor(session)
     values_check = [x["values"] for x in extractor.as_list()]
     assert values_check == [
-        [[0.0, -0.1], [0.1, -0.2]],
-        [[0.0, -0.2], [0.1, -0.3]],
-        [[0.0, -0.3], [0.1, -0.4]],
-        [[0.0, -0.4], [0.1, -0.5]],
+        [[0, -0.1], [60, -0.2]],
+        [[0, -0.2], [60, -0.3]],
+        [[0, -0.3], [60, -0.4]],
+        [[0, -0.4], [60, -0.5]],
     ]
 
 
 def test_boundary_conditions_incorrect_timeseries(session):
-    factories.BoundaryConditions1DFactory.create(timeseries="0.0;-0.1")
+    factories.BoundaryConditions1DFactory.create(timeseries="0;-0.1")
     extractor = BoundariesExtractor(session)
 
     with pytest.raises(SchematisationError):
@@ -135,7 +135,7 @@ def test_laterals(session):
             **{
                 "offset": 0,
                 "interpolate": False,
-                "values": [[0.0, -0.2]],
+                "values": [[0, -0.2]],
                 "units": "m3/s",
                 "point": {"type": "point", "coordinates": [-71.064544, 42.28787]},
             }
@@ -144,7 +144,7 @@ def test_laterals(session):
             **{
                 "offset": 0,
                 "interpolate": False,
-                "values": [[0.0, -0.1]],
+                "values": [[0, -0.1]],
                 "units": "m3/s",
                 "connection_node": 1,
             }

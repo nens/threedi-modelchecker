@@ -189,7 +189,7 @@ class Lateral1dFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.Lateral1d
         sqlalchemy_session = Session
 
-    timeseries = "0.0,-0.1"
+    timeseries = "0,-0.1"
     connection_node = factory.SubFactory(ConnectionNodeFactory)
 
 
@@ -198,7 +198,7 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.Lateral2D
         sqlalchemy_session = Session
 
-    timeseries = "0.0,-0.2"
+    timeseries = "0,-0.2"
     the_geom = "SRID=28992;POINT(-71.064544 42.28787)"
 
 
