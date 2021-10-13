@@ -1,0 +1,2 @@
+class SchematisationError(Exception):
+    pass

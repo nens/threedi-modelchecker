@@ -170,7 +170,7 @@ class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     var_name = Faker("name")
-    flow_variable = "max_timestep"
+    flow_variable = "waterlevel"
     aggregation_method = "avg"
     timestep = 10
 
@@ -183,6 +183,90 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     max_degree = 1
     use_of_cg = 0
     use_of_nested_newton = 0
+
+
+class Lateral1dFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Lateral1d
+        sqlalchemy_session = Session
+
+    timeseries = "0,-0.1"
+    connection_node = factory.SubFactory(ConnectionNodeFactory)
+
+
+class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Lateral2D
+        sqlalchemy_session = Session
+
+    timeseries = "0,-0.2"
+    the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
+
+
+class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ControlTable
+        sqlalchemy_session = Session
+
+    action_type = "set_discharge_coefficients"
+    action_table = "0.0;-1.0"
+    measure_operator = ">"
+    measure_variable = "waterlevel"
+    target_type = "v2_channel"
+    target_id = 10
+
+
+class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ControlMemory
+        sqlalchemy_session = Session
+
+    action_type = "set_discharge_coefficients"
+    action_value = "0.0 -1.0"
+    measure_variable = "waterlevel"
+    target_type = "v2_channel"
+    target_id = 10
+    is_inverse = False
+    is_active = True
+    upper_threshold = 1.0
+    lower_threshold = -1.0
+
+
+class ControlTimedFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ControlTimed
+        sqlalchemy_session = Session
+
+    action_type = "set_discharge_coefficients"
+    action_table = "0.0;-1.0"
+    target_type = "v2_channel"
+    target_id = 10
+
+
+class ControlMeasureGroupFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ControlMeasureGroup
+        sqlalchemy_session = Session
+
+
+class ControlMeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ControlMeasureMap
+        sqlalchemy_session = Session
+
+    object_type = "v2_connection_nodes"
+    object_id = 101
+    weight = 0.1
+
+
+class ControlFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Control
+        sqlalchemy_session = Session
+
+    start = "0"
+    end = "300"
+    measure_frequency = 10
 
 
 class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
