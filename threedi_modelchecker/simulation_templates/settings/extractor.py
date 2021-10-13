@@ -42,7 +42,7 @@ class SettingsExtractor(object):
                 .with_session(self.session)
                 .filter(
                     SQLAggregationSettings.global_settings_id
-                    == self.global_settings.numerical_settings_id
+                    == self.global_settings.id
                 )
                 .all()
             )
