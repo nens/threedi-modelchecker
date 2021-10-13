@@ -159,6 +159,7 @@ class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     reference_level = 0.0
     friction_type = constants.FrictionType.CHEZY
     friction_value = 0.0
+    the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
     channel = factory.SubFactory(ChannelFactory)
     definition = factory.SubFactory(CrossSectionDefinitionFactory)
 

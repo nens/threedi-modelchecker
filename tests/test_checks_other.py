@@ -49,15 +49,18 @@ def test_check_cross_section_location_bank_levels(session):
 
 
 def test_get_invalid_cross_section_shapes(session):
-    factories.CrossSectionDefinitionFactory(
+    definition1 = factories.CrossSectionDefinitionFactory(
         width="1", height="1", shape=constants.CrossSectionShape.RECTANGLE
     )
-    factories.CrossSectionDefinitionFactory(
+    definition2 = factories.CrossSectionDefinitionFactory(
         width="1", height=None, shape=constants.CrossSectionShape.CIRCLE
     )
-    factories.CrossSectionDefinitionFactory(
+    definition3 = factories.CrossSectionDefinitionFactory(
         width="1 2", height="0 2", shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM
     )
+    factories.CrossSectionLocationFactory(definition=definition1)
+    factories.CrossSectionLocationFactory(definition=definition2)
+    factories.CrossSectionLocationFactory(definition=definition3)
 
     coss_section_check = CrossSectionShapeCheck()
     invalid_rows = coss_section_check.get_invalid(session)
@@ -65,18 +68,20 @@ def test_get_invalid_cross_section_shapes(session):
 
 
 def test_get_invalid_cross_section_shapes_egg_with_none_height_width(session):
-    factories.CrossSectionDefinitionFactory(
+    definition = factories.CrossSectionDefinitionFactory(
         width=None, height=None, shape=constants.CrossSectionShape.EGG
     )
+    factories.CrossSectionLocationFactory(definition=definition)
     cross_section_check = CrossSectionShapeCheck()
     invalid_rows = cross_section_check.get_invalid(session)
     assert len(invalid_rows) == 1
 
 
 def test_get_invalid_cross_section_shapes_rectangle_with_null(session):
-    factories.CrossSectionDefinitionFactory(
+    definition = factories.CrossSectionDefinitionFactory(
         width=None, height=None, shape=constants.CrossSectionShape.RECTANGLE
     )
+    factories.CrossSectionLocationFactory(definition=definition)
     cross_section_check = CrossSectionShapeCheck()
     invalid_rows = cross_section_check.get_invalid(session)
     assert len(invalid_rows) == 1
@@ -326,12 +331,12 @@ def test_open_channels_with_nested_newton(session):
     factories.NumericalSettingsFactory(use_of_nested_newton=0)
     channel = factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(-71.064544 42.28787)"
+            the_geom="SRID=4326;POINT(-71.064544 42.28787)"
         ),
         connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(-71.0645 42.287)"
+            the_geom="SRID=4326;POINT(-71.0645 42.287)"
         ),
-        the_geom="SRID=28992;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
+        the_geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
     open_definition = factories.CrossSectionDefinitionFactory(
         shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM, width="1 0"
@@ -339,17 +344,17 @@ def test_open_channels_with_nested_newton(session):
     factories.CrossSectionLocationFactory(
         channel=channel,
         definition=open_definition,
-        the_geom="SRID=28992;POINT(-71.0645 42.287)",
+        the_geom="SRID=4326;POINT(-71.0645 42.287)",
     )
 
     channel2 = factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(-71.064544 42.28787)"
+            the_geom="SRID=4326;POINT(-71.064544 42.28787)"
         ),
         connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(-71.0645 42.287)"
+            the_geom="SRID=4326;POINT(-71.0645 42.287)"
         ),
-        the_geom="SRID=28992;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
+        the_geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
     open_definition_egg = factories.CrossSectionDefinitionFactory(
         shape=constants.CrossSectionShape.EGG,
@@ -357,7 +362,7 @@ def test_open_channels_with_nested_newton(session):
     factories.CrossSectionLocationFactory(
         channel=channel2,
         definition=open_definition_egg,
-        the_geom="SRID=28992;POINT(-71.0645 42.287)",
+        the_geom="SRID=4326;POINT(-71.0645 42.287)",
     )
 
     check = OpenChannelsWithNestedNewton()

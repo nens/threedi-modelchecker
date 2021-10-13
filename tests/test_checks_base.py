@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy import Integer
 from sqlalchemy.orm import Query
 from tests import factories
-from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_type
+from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_types
 from threedi_modelchecker.checks.base import EnumCheck
 from threedi_modelchecker.checks.base import FileExistsCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
@@ -250,7 +250,7 @@ def test_type_check_boolean(session):
 
 
 def test_geometry_check(session):
-    factories.ConnectionNodeFactory(the_geom="SRID=28992;POINT(-371.064544 42.28787)")
+    factories.ConnectionNodeFactory(the_geom="SRID=4326;POINT(-371.064544 42.28787)")
 
     geometry_check = GeometryCheck(models.ConnectionNode.the_geom)
     invalid_rows = geometry_check.get_invalid(session)
@@ -267,7 +267,7 @@ def test_geometry_check_with_invalid_geoms(session):
     VALUES (2, 'the_code', 'invalid_geom')
     """
     session.execute(inser_invalid_geom_q)
-    factories.ConnectionNodeFactory(the_geom="SRID=28992;POINT(-71.064544 42.28787)")
+    factories.ConnectionNodeFactory(the_geom="SRID=4326;POINT(-71.064544 42.28787)")
 
     geometry_check = GeometryCheck(models.ConnectionNode.the_geom)
     invalid_rows = geometry_check.get_invalid(session)
@@ -276,7 +276,7 @@ def test_geometry_check_with_invalid_geoms(session):
 
 def test_geometry_type_check(session):
     factories.ConnectionNodeFactory.create_batch(
-        2, the_geom="SRID=28992;POINT(-71.064544 42.28787)"
+        2, the_geom="SRID=4326;POINT(-71.064544 42.28787)"
     )
 
     geometry_type_check = GeometryTypeCheck(models.ConnectionNode.the_geom)
@@ -287,9 +287,9 @@ def test_geometry_type_check(session):
 def test_geometry_type_check_invalid_geom_type(session):
     if session.bind.name == "postgresql":
         pytest.skip("Not sure how to insert invalid geometry types in postgresql")
-    factories.ConnectionNodeFactory(the_geom="SRID=28992;POINT(-71.064544 42.28787)")
+    factories.ConnectionNodeFactory(the_geom="SRID=4326;POINT(-71.064544 42.28787)")
     invalid_geom_type = factories.ConnectionNodeFactory(
-        the_geom="SRID=28992;LINESTRING(71.0 42.2, 71.3 42.3)"
+        the_geom="SRID=4326;LINESTRING(71.0 42.2, 71.3 42.3)"
     )
 
     geometry_type_check = GeometryTypeCheck(models.ConnectionNode.the_geom)
@@ -347,7 +347,7 @@ def test_enum_check_string_with_invalid_value(session):
 
 def test_sqlalchemy_to_sqlite_type_with_custom_type():
     customIntegerEnum = custom_types.IntegerEnum(constants.BoundaryType)
-    assert _sqlalchemy_to_sqlite_type(customIntegerEnum) == "integer"
+    assert _sqlalchemy_to_sqlite_types(customIntegerEnum) == ["integer"]
 
 
 def test_conditional_checks(session):
@@ -720,7 +720,7 @@ def test_length_geom_linestring_in_28992(session):
         pytest.skip("Postgres already has a constrain that checks on the length")
     # around 0.109m
     factories.ChannelFactory(
-        the_geom="SRID=28992;LINESTRING("
+        the_geom="SRID=4326;LINESTRING("
         "122829.98048471771471668 473589.68720115750329569, "
         "122830.00490918199648149 473589.68720115750329569, "
         "122829.95687440223991871 473589.70983449439518154, "
@@ -728,7 +728,7 @@ def test_length_geom_linestring_in_28992(session):
     )
     # around 0.001m
     channel_too_short = factories.ChannelFactory(
-        the_geom="SRID=28992;LINESTRING("
+        the_geom="SRID=4326;LINESTRING("
         "122829.98185859377554152 473589.69248294795397669, "
         "122829.98260150455462281 473589.69248294795397669)",
     )

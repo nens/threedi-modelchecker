@@ -43,19 +43,25 @@ class BankLevelCheck(BaseCheck):
 
 
 class CrossSectionLocationCheck(BaseCheck):
-    """Check if cross section locations intersect with their channel."""
+    """Check if cross section locations are within {max_distance} of their channel."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, max_distance, *args, **kwargs):
         super().__init__(column=models.CrossSectionLocation.the_geom, *args, **kwargs)
+        self.max_distance = max_distance
 
     def get_invalid(self, session):
+        epsg_code = Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code")
         return (
             self.to_check(session)
             .join(models.Channel)
             .filter(
-                geo_func.ST_Disjoint(
-                    models.CrossSectionLocation.the_geom, models.Channel.the_geom
+                geo_func.ST_Distance(
+                    geo_func.ST_Transform(
+                        models.CrossSectionLocation.the_geom, epsg_code
+                    ),
+                    geo_func.ST_Transform(models.Channel.the_geom, epsg_code),
                 )
+                > self.max_distance
             )
             .all()
         )
@@ -71,7 +77,16 @@ class CrossSectionShapeCheck(BaseCheck):
         super().__init__(column=models.CrossSectionDefinition.shape, *args, **kwargs)
 
     def get_invalid(self, session):
-        cross_section_definitions = session.query(self.table)
+        cross_section_definitions = self.to_check(session).filter(
+            models.CrossSectionDefinition.id.in_(
+                Query(models.CrossSectionLocation.definition_id).union_all(
+                    Query(models.Pipe.cross_section_definition_id),
+                    Query(models.Culvert.cross_section_definition_id),
+                    Query(models.Weir.cross_section_definition_id),
+                    Query(models.Orifice.cross_section_definition_id),
+                )
+            ),
+        )
         invalid_cross_section_shapes = []
 
         for cross_section_definition in cross_section_definitions.all():
@@ -99,7 +114,7 @@ class CrossSectionShapeCheck(BaseCheck):
         return invalid_cross_section_shapes
 
     def description(self):
-        return "Invalid CrossSectionShape"
+        return f"{self.table.name} contains an invalid width or height"
 
 
 def valid_closed_rectangle(width, height):
@@ -115,12 +130,7 @@ def valid_closed_rectangle(width, height):
 def valid_rectangle(width, height):
     if width is None:  # width is required
         return False
-    width_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
-    if height is not None:  # height is not required
-        height_match = patterns.POSITIVE_FLOAT_REGEX.fullmatch(height)
-    else:
-        height_match = True
-    return width_match and height_match
+    return patterns.POSITIVE_FLOAT_REGEX.fullmatch(width)
 
 
 def valid_circle(width):
@@ -150,42 +160,38 @@ def valid_tabulated_shape(width, height, is_rectangle):
     :param height: string of heights
     :return: True if the shape if valid
     """
-    if width is None or height is None:
-        return False
-    height_string_list = height.split(" ")
-    width_string_list = width.split(" ")
-    if len(height_string_list) != len(width_string_list):
+    if height is None or width is None:
         return False
     try:
-        # first height must be 0
-        first_height = float(height_string_list[0])
-        if first_height != 0:
-            return False
+        heights = [float(x) for x in height.split(" ")]
+        widths = [float(x) for x in width.split(" ")]
     except ValueError:
         return False
-    if is_rectangle:
-        try:
-            # first width must larger than 0
-            first_width = float(width_string_list[0])
-            if first_width <= 0:
-                return False
-        except ValueError:
-            return False
-    previous_height = -1
-    for h_string, w_string in zip(height_string_list, width_string_list):
-        try:
-            h = float(h_string)
-            w = float(w_string)
-        except ValueError:
-            return False
-        if h < 0:
-            return False
-        if w < 0:
-            return False
-        if h < previous_height:
-            # height must be increasing
-            return False
-        previous_height = h
+        # raise SchematisationError(
+        #     f"Unable to parse cross section definition width and/or height "
+        #     f"(got: '{width}', '{height}')."
+        # )
+    if len(heights) == 0:
+        return False
+        # raise SchematisationError(
+        #     f"Cross section definitions of tabulated type must have at least one "
+        #     f"height element (got: {height})."
+        # )
+    if len(heights) != len(widths):
+        return False
+        # raise SchematisationError(
+        #     f"Cross section definitions of tabulated type must have equal number of "
+        #     f"height and width elements (got: {height}, {width})."
+        # )
+    if len(heights) > 1 and any(x > y for (x, y) in zip(heights[:-1], heights[1:])):
+        return False
+        # raise SchematisationError(
+        #     f"Cross section definitions of tabulated type must have increasing heights "
+        #     f"(got: {height})."
+        # )
+    if is_rectangle and abs(widths[0]) < 1e-7:
+        return False
+
     return True
 
 
@@ -309,24 +315,15 @@ class ConnectionNodesLength(BaseCheck):
     def get_invalid(self, session):
         start_node = aliased(models.ConnectionNode)
         end_node = aliased(models.ConnectionNode)
+        epsg_code = Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code")
         q = (
             Query(self.column.class_)
             .join(start_node, self.start_node)
             .join(end_node, self.end_node)
             .filter(
                 geo_func.ST_Distance(
-                    geo_func.ST_Transform(
-                        start_node.the_geom,
-                        Query(models.GlobalSetting.epsg_code)
-                        .limit(1)
-                        .label("epsg_code"),
-                    ),
-                    geo_func.ST_Transform(
-                        end_node.the_geom,
-                        Query(models.GlobalSetting.epsg_code)
-                        .limit(1)
-                        .label("epsg_code"),
-                    ),
+                    geo_func.ST_Transform(start_node.the_geom, epsg_code),
+                    geo_func.ST_Transform(end_node.the_geom, epsg_code),
                 )
                 < self.min_distance
             )
@@ -413,10 +410,9 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         super().__init__(
             column=models.CrossSectionDefinition.id,
             level=CheckLevel.WARNING,
-            run_condition=(
-                models.NumericalSettings,
-                models.NumericalSettings.use_of_nested_newton == 0,
-            ),
+            filters=Query(models.NumericalSettings)
+            .filter(models.NumericalSettings.use_of_nested_newton == 0)
+            .exists(),
             *args,
             **kwargs,
         )

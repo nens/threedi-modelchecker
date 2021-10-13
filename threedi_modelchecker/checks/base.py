@@ -42,14 +42,12 @@ class BaseCheck(ABC):
         self,
         column,
         filters=None,
-        run_condition=None,
         level=CheckLevel.ERROR,
         error_code=0,
     ):
         self.column = column
         self.table = column.table
         self.filters = filters
-        self.run_condition = run_condition
         self.error_code = int(error_code)
         self.level = CheckLevel.get(level)
 
@@ -87,10 +85,6 @@ class BaseCheck(ABC):
         :return: sqlalchemy.Query
         """
         query = session.query(self.table)
-        if self.run_condition is not None:
-            table, _filter = self.run_condition
-            if session.query(table).filter(_filter).count() == 0:
-                return query.filter(false())
         if self.filters is not None:
             query = query.filter(self.filters)
         return query
@@ -157,21 +151,19 @@ class QueryCheck(BaseCheck):
         column,
         invalid,
         message,
-        run_condition=None,
+        filters=None,
         level=CheckLevel.ERROR,
         error_code=0,
     ):
         super().__init__(column, level=level, error_code=error_code)
         self.invalid = invalid
         self.message = message
-        self.run_condition = run_condition
+        self.filters = filters
 
     def get_invalid(self, session):
         query = self.invalid.with_session(session)
-        if self.run_condition is not None:
-            table, _filter = self.run_condition
-            if session.query(table).filter(_filter).count() == 0:
-                return query.filter(false())
+        if self.filters is not None:
+            query = query.filter(self.filters)
         return query.all()
 
     def description(self):
@@ -240,24 +232,24 @@ class TypeCheck(BaseCheck):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.expected_type = _sqlalchemy_to_sqlite_type(self.column.type)
+        self.expected_types = _sqlalchemy_to_sqlite_types(self.column.type)
 
     def get_invalid(self, session):
         if "sqlite" not in session.bind.dialect.dialect_description:
             return []
         q_invalid = self.to_check(session)
         invalid_type_query = q_invalid.filter(
-            func.typeof(self.column) != self.expected_type,
+            func.typeof(self.column).notin_(self.expected_types),
             func.typeof(self.column) != "null",
         )
         return invalid_type_query.all()
 
     def description(self):
-        return f"{self.column} is not of type {self.expected_type}"
+        return f"{self.column} is not of type {self.expected_types}"
 
 
-def _sqlalchemy_to_sqlite_type(column_type):
-    """Convert the sqlalchemy column type to sqlite data type
+def _sqlalchemy_to_sqlite_types(column_type):
+    """Convert the sqlalchemy column type to allowed sqlite data types
 
     Returns the value similar as the sqlite 'typeof' function.
     Raises TypeError if the column type is unknown.
@@ -270,21 +262,19 @@ def _sqlalchemy_to_sqlite_type(column_type):
         column_type = column_type.impl
 
     if isinstance(column_type, types.String):
-        return "text"
-    elif isinstance(column_type, types.Float):
-        return "real"
+        return ["text"]
+    elif isinstance(column_type, (types.Float, types.Numeric)):
+        return ["integer", "numeric", "real"]
     elif isinstance(column_type, types.Integer):
-        return "integer"
+        return ["integer"]
     elif isinstance(column_type, types.Boolean):
-        return "integer"
-    elif isinstance(column_type, types.Numeric):
-        return "numeric"
+        return ["integer"]
     elif isinstance(column_type, types.Date):
-        return "text"
+        return ["text"]
     elif isinstance(column_type, Geometry):
-        return "blob"
+        return ["blob"]
     elif isinstance(column_type, types.TIMESTAMP):
-        return "text"
+        return ["text"]
     else:
         raise TypeError("Unknown column type: %s" % column_type)
 
@@ -316,6 +306,9 @@ class GeometryTypeCheck(BaseCheck):
             self.column, dialect=session.bind.dialect.name
         )
         q_invalid = self.to_check(session)
+        if expected_geometry_type is None:
+            # skip in case of generic GEOMETRY column
+            return q_invalid.filter(false())
         invalid_geometry_types_q = q_invalid.filter(
             geo_func.ST_GeometryType(self.column) != expected_geometry_type,
             self.column != None,
@@ -330,6 +323,8 @@ class GeometryTypeCheck(BaseCheck):
 
 
 def _get_geometry_type(column, dialect):
+    if column.type.geometry_type == "GEOMETRY":
+        return  # should skip the check
     if dialect == "sqlite":
         return column.type.geometry_type
     elif dialect == "postgresql":
