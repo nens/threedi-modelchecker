@@ -1,6 +1,6 @@
-"""Removed unused columns.
+"""Removed unused v1 tables.
 
-Revision ID: 0201
+Revision ID: 0202
 Revises:
 Create Date: 2021-09-29 13:50:19.544275
 
@@ -99,19 +99,19 @@ def upgrade():
     # first list views that refer to V1 TABLES
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
-    view_names = inspector.get_view_names(schema="main")
+    view_names = inspector.get_view_names()
     for view_name in view_names:
         if view_name.startswith("v2_") or view_name in SPATIALITE_VIEWS:
             continue
-        defn = inspector.get_view_definition(view_name, schema="main")
+        defn = inspector.get_view_definition(view_name)
         if VIEW_REGEX.match(defn):
             op.execute(f"DROP VIEW {view_name}")
 
     # then delete the actual tables if they exist
-    existing = set(inspector.get_table_names(schema="main"))
+    existing = set(inspector.get_table_names())
     to_delete = set(existing).intersection(V1_TABLES)
     for table_name in to_delete:
-        op.drop_table(table_name, schema="main")
+        op.drop_table(table_name)
 
 
 def downgrade():

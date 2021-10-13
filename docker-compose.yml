@@ -23,7 +23,3 @@ services:
       - POSTGRES_PASSWORD=mysecret
     volumes:
       - ./tests/data/postgres:/docker-entrypoint-initdb.d
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  pgdata:
