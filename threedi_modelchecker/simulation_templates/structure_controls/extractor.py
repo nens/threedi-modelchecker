@@ -89,7 +89,7 @@ def to_table_control(
 
     except (ValueError, TypeError):
         raise SchematisationError(
-            "Table control action_table incorrect format for v2_control_table.id = {table_control.id}"
+            f"Table control action_table incorrect format for v2_control_table.id = {table_control.id}"
         )
 
     return TableStructureControl(
@@ -117,7 +117,7 @@ def to_memory_control(
         value = [float(x) for x in memory_control.action_value.split(" ")]
     except (ValueError, TypeError):
         raise SchematisationError(
-            "Memory control action_value incorrect format for v2_control_memory.id = {memory_control.id}"
+            f"Memory control action_value incorrect format for v2_control_memory.id = {memory_control.id}"
         )
 
     return MemoryStructureControl(
@@ -154,7 +154,7 @@ def to_timed_control(
 
     except (ValueError, TypeError):
         raise SchematisationError(
-            "Timed control action_table incorrect format for v2_control_timed.id = {timed_control.id}"
+            f"Timed control action_table incorrect format for v2_control_timed.id = {timed_control.id}"
         )
 
     # Pick first two values
