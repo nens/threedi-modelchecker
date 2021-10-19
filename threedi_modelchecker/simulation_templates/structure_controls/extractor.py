@@ -77,7 +77,6 @@ def to_table_control(
     action_type: str = TYPE_MAPPING.get(
         table_control.action_type, table_control.action_type
     )
-
     # Note: Yes, table control really uses # and ;
     try:
         values = [
@@ -86,15 +85,26 @@ def to_table_control(
         ]
         if table_control.action_type == "set_capacity":
             values[1] = [x * CAPACITY_FACTOR for x in values[1]]
-
     except (ValueError, TypeError):
         raise SchematisationError(
             f"Table control action_table incorrect format for v2_control_table.id = {table_control.id}"
         )
 
+    try:
+        control_start = int(control.start)
+    except (ValueError, TypeError):
+        control_start = 0
+
+    try:
+        int(control.end)
+    except (ValueError, TypeError):
+        raise SchematisationError(
+            f"Timed control control.end not set for v2_control_table.id = {table_control.id}"
+        )
+
     return TableStructureControl(
-        offset=int(control.start),
-        duration=int(control.end) - int(control.start),
+        offset=control_start,
+        duration=int(control.end) - control_start,
         measure_specification=measure_specification,
         structure_id=table_control.target_id,
         structure_type=table_control.target_type,
@@ -120,9 +130,21 @@ def to_memory_control(
             f"Memory control action_value incorrect format for v2_control_memory.id = {memory_control.id}"
         )
 
+    try:
+        control_start = int(control.start)
+    except (ValueError, TypeError):
+        control_start = 0
+
+    try:
+        int(control.end)
+    except (ValueError, TypeError):
+        raise SchematisationError(
+            f"Timed control control.end not set for v2_control_memory.id = {memory_control.id}"
+        )
+
     return MemoryStructureControl(
-        offset=int(control.start),
-        duration=int(control.end) - int(control.start),
+        offset=control_start,
+        duration=int(control.end) - control_start,
         measure_specification=measure_specification,
         structure_id=memory_control.target_id,
         structure_type=memory_control.target_type,
@@ -157,12 +179,24 @@ def to_timed_control(
             f"Timed control action_table incorrect format for v2_control_timed.id = {timed_control.id}"
         )
 
+    try:
+        control_start = int(control.start)
+    except (ValueError, TypeError):
+        control_start = 0
+
+    try:
+        int(control.end)
+    except (ValueError, TypeError):
+        raise SchematisationError(
+            f"Timed control control.end not set for v2_control_timed.id = {timed_control.id}"
+        )
+
     # Pick first two values
     value = values[0]
 
     return TimedStructureControl(
-        offset=int(control.start),
-        duration=int(control.end) - int(control.start),
+        offset=control_start,
+        duration=int(control.end) - control_start,
         value=value,
         type=action_type,
         structure_id=timed_control.target_id,
