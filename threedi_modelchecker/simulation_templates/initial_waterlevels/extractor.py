@@ -48,6 +48,8 @@ class InitialWaterlevelExtractor(object):
             return None
         if self.has_connection_nodes_with_initial_waterlevels:
             return None
+        if float(self.global_settings.initial_waterlevel) == -9999:
+            return None
         return OneDWaterLevel(value=float(self.global_settings.initial_waterlevel))
 
     @property
@@ -56,11 +58,15 @@ class InitialWaterlevelExtractor(object):
             return None
         if self.global_settings.initial_waterlevel_file is not None:
             return None
+        if float(self.global_settings.initial_waterlevel) == -9999:
+            return None
         return TwoDWaterLevel(value=float(self.global_settings.initial_waterlevel))
 
     @property
     def constant_waterlevel_groundwater(self) -> Optional[GroundWaterLevel]:
         if self.global_settings.initial_groundwater_level is None:
+            return None
+        if float(self.global_settings.initial_groundwater_level) == -9999:
             return None
         return GroundWaterLevel(
             value=float(self.global_settings.initial_groundwater_level)
@@ -74,7 +80,10 @@ class InitialWaterlevelExtractor(object):
 
     @property
     def waterlevel_2d_raster(self) -> Optional[TwoDWaterRaster]:
-        if self.global_settings.initial_waterlevel_file is None:
+        if (
+            self.global_settings.initial_waterlevel_file is None
+            or self.global_settings.water_level_ini_type is None
+        ):
             return None
         return TwoDWaterRaster(
             aggregation_method=sqlite_agg_method_to_api_map[
@@ -85,13 +94,16 @@ class InitialWaterlevelExtractor(object):
 
     @property
     def waterlevel_groundwater_raster(self) -> Optional[GroundWaterRaster]:
-        if self.global_settings.initial_groundwater_level_file is None:
+        if (
+            self.global_settings.initial_groundwater_level_file is None
+            or self.global_settings.initial_groundwater_level_type is None
+        ):
             return None
         return GroundWaterRaster(
             aggregation_method=sqlite_agg_method_to_api_map[
                 self.global_settings.initial_groundwater_level_type.value
             ],
-            initial_waterlevel=self.global_settings.initial_waterlevel_file,
+            initial_waterlevel=self.global_settings.initial_groundwater_level_file,
         )
 
     def all_initial_waterlevels(self) -> InitialWaterlevels:

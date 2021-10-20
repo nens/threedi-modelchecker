@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy.orm.session import Session
 from threedi_modelchecker.simulation_templates.initial_waterlevels.extractor import (
@@ -11,7 +11,11 @@ from threedi_modelchecker.simulation_templates.laterals.extractor import (
 from threedi_modelchecker.simulation_templates.boundaries.extractor import (
     BoundariesExtractor,
 )
-from threedi_modelchecker.simulation_templates.models import SimulationTemplate, Events
+from threedi_modelchecker.simulation_templates.models import (
+    GlobalSettingOption,
+    SimulationTemplate,
+    Events,
+)
 from threedi_modelchecker.simulation_templates.settings.extractor import (
     SettingsExtractor,
 )
@@ -21,32 +25,40 @@ from threedi_modelchecker.simulation_templates.structure_controls.extractor impo
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.threedi_model.models import GlobalSetting
 from sqlalchemy.orm import Query
+from .exceptions import SchematisationError
+
+
+__all__ = ["SimulationTemplateExtractor"]
 
 
 class SimulationTemplateExtractor(object):
-    def __init__(self, sqlite_path: Path, global_settings_id: Optional[int] = None):
+    def __init__(self, sqlite_path: Path):
         """
         param global_settings_id: if None the first global setting entry is taken (default)
         """
         self.sqlite_path = sqlite_path
-        self.global_settings_id = global_settings_id
         self.database = ThreediDatabase(
             connection_settings={"db_path": self.sqlite_path.as_posix()},
             db_type="spatialite",
         )
 
-    def _extract_simulation_template(self, session: Session) -> SimulationTemplate:
+    def _extract_simulation_template(
+        self, session: Session, global_settings_id: Optional[int] = None
+    ) -> SimulationTemplate:
         """
         Extract a SimulationTemplate instance using the given database session
         """
         qr = Query(GlobalSetting).with_session(session)
-        if self.global_settings_id is not None:
-            qr = qr.filter(GlobalSetting.id == self.global_settings_id)
+        if global_settings_id is not None:
+            qr = qr.filter(GlobalSetting.id == global_settings_id)
         global_settings: GlobalSetting = qr.first()
 
-        initial_waterlevels = InitialWaterlevelExtractor(
-            session, self.global_settings_id
-        )
+        if global_settings is None:
+            raise SchematisationError(
+                f"Global settings with id: {global_settings_id} not found."
+            )
+
+        initial_waterlevels = InitialWaterlevelExtractor(session, global_settings_id)
 
         settings = SettingsExtractor(session, global_settings.id)
 
@@ -62,12 +74,27 @@ class SimulationTemplateExtractor(object):
             initial_waterlevels=initial_waterlevels.all_initial_waterlevels(),
         )
 
-    def extract(self) -> SimulationTemplate:
+    def _get_global_settings_options(
+        self, session: Session
+    ) -> List[GlobalSettingOption]:
+        return [
+            GlobalSettingOption(x.id, x.name)
+            for x in Query(GlobalSetting).with_session(session)
+        ]
+
+    def global_settings_options(self) -> List[GlobalSettingOption]:
+        try:
+            session = self.database.get_session()
+            return self._get_global_settings_options(session)
+        finally:
+            session.close()
+
+    def extract(self, global_settings_id: Optional[int] = None) -> SimulationTemplate:
         """
         Return simulation template for
         """
         try:
             session = self.database.get_session()
-            return self._extract_simulation_template(session)
+            return self._extract_simulation_template(session, global_settings_id)
         finally:
             session.close()

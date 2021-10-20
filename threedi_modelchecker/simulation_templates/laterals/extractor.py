@@ -67,7 +67,9 @@ class LateralsExtractor(object):
     def laterals_2d(self) -> List[Lateral]:
         if self._laterals_2d is None:
             laterals_2d = Query(Lateral2D).with_session(self.session).all()
-            self._laterals_2d = [lateral_2d_to_api_lateral(x, self.session) for x in laterals_2d]
+            self._laterals_2d = [
+                lateral_2d_to_api_lateral(x, self.session) for x in laterals_2d
+            ]
 
         return self._laterals_2d
 

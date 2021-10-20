@@ -17,12 +17,16 @@ tests_require = [
     "mock",
     "pytest-cov",
     "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master",
+    "aiofiles",
+    "aiohttp",
+    "pytest-asyncio",
 ]
-
 
 simulation_templates_require = [
     # Note: Change when threedi-api-client has been released
     "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master",
+    "aiofiles",
+    "aiohttp",
 ]
 
 setup(
