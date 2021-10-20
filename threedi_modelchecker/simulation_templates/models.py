@@ -34,14 +34,18 @@ from threedi_modelchecker.simulation_templates.utils import strip_dict_none_valu
 from threedi_api_client.openapi.models import Simulation, UploadEventFile, Template
 from threedi_api_client.versions import V3BetaApi
 from threedi_api_client.aio.files import upload_fileobj
+from .exceptions import TemplateValidationError, TemplateValidationTimeoutError
 
 
-class TemplateValidationError(Exception):
-    pass
-
-
-class TemplateValidationTimeoutError(Exception):
-    pass
+__all__ = [
+    "ValidationStatus",
+    "GlobalSettingOption",
+    "InitialWaterlevels",
+    "StructureControls",
+    "Settings",
+    "Events",
+    "SimulationTemplate",
+]
 
 
 class ValidationStatus(Enum):
@@ -55,6 +59,7 @@ class GlobalSettingOption:
     """
     Derived global setting option from v2_global_settings table
     """
+
     id: int  # v2_global_settings.id
     name: str
 
@@ -633,8 +638,7 @@ class SimulationTemplate(AsDictMixin):
                 await asyncio.sleep(SLEEPTIME[index])
 
         try:
-            await asyncio.wait_for(
-                wait_for_validation(client), timeout=timeout)
+            await asyncio.wait_for(wait_for_validation(client), timeout=timeout)
         except TimeoutError:
             raise TemplateValidationTimeoutError(
                 "Template validating timed out, please try again later."

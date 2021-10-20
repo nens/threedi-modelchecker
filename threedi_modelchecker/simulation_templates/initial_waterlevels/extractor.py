@@ -80,7 +80,10 @@ class InitialWaterlevelExtractor(object):
 
     @property
     def waterlevel_2d_raster(self) -> Optional[TwoDWaterRaster]:
-        if self.global_settings.initial_waterlevel_file is None or self.global_settings.water_level_ini_type is None:
+        if (
+            self.global_settings.initial_waterlevel_file is None
+            or self.global_settings.water_level_ini_type is None
+        ):
             return None
         return TwoDWaterRaster(
             aggregation_method=sqlite_agg_method_to_api_map[
@@ -91,7 +94,10 @@ class InitialWaterlevelExtractor(object):
 
     @property
     def waterlevel_groundwater_raster(self) -> Optional[GroundWaterRaster]:
-        if self.global_settings.initial_groundwater_level_file is None or self.global_settings.initial_groundwater_level_type is None:
+        if (
+            self.global_settings.initial_groundwater_level_file is None
+            or self.global_settings.initial_groundwater_level_type is None
+        ):
             return None
         return GroundWaterRaster(
             aggregation_method=sqlite_agg_method_to_api_map[

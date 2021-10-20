@@ -11,7 +11,11 @@ from threedi_modelchecker.simulation_templates.laterals.extractor import (
 from threedi_modelchecker.simulation_templates.boundaries.extractor import (
     BoundariesExtractor,
 )
-from threedi_modelchecker.simulation_templates.models import GlobalSettingOption, SimulationTemplate, Events
+from threedi_modelchecker.simulation_templates.models import (
+    GlobalSettingOption,
+    SimulationTemplate,
+    Events,
+)
 from threedi_modelchecker.simulation_templates.settings.extractor import (
     SettingsExtractor,
 )
@@ -21,6 +25,10 @@ from threedi_modelchecker.simulation_templates.structure_controls.extractor impo
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.threedi_model.models import GlobalSetting
 from sqlalchemy.orm import Query
+from .exceptions import SchematisationError
+
+
+__all__ = ["SimulationTemplateExtractor"]
 
 
 class SimulationTemplateExtractor(object):
@@ -34,7 +42,9 @@ class SimulationTemplateExtractor(object):
             db_type="spatialite",
         )
 
-    def _extract_simulation_template(self, session: Session, global_settings_id: Optional[int] = None) -> SimulationTemplate:
+    def _extract_simulation_template(
+        self, session: Session, global_settings_id: Optional[int] = None
+    ) -> SimulationTemplate:
         """
         Extract a SimulationTemplate instance using the given database session
         """
@@ -43,9 +53,12 @@ class SimulationTemplateExtractor(object):
             qr = qr.filter(GlobalSetting.id == global_settings_id)
         global_settings: GlobalSetting = qr.first()
 
-        initial_waterlevels = InitialWaterlevelExtractor(
-            session, global_settings_id
-        )
+        if global_settings is None:
+            raise SchematisationError(
+                f"Global settings with id: {global_settings_id} not found."
+            )
+
+        initial_waterlevels = InitialWaterlevelExtractor(session, global_settings_id)
 
         settings = SettingsExtractor(session, global_settings.id)
 
@@ -61,8 +74,13 @@ class SimulationTemplateExtractor(object):
             initial_waterlevels=initial_waterlevels.all_initial_waterlevels(),
         )
 
-    def _get_global_settings_options(self, session: Session) -> List[GlobalSettingOption]:
-        return [GlobalSettingOption(x.id, x.name) for x in Query(GlobalSetting).with_session(session)]
+    def _get_global_settings_options(
+        self, session: Session
+    ) -> List[GlobalSettingOption]:
+        return [
+            GlobalSettingOption(x.id, x.name)
+            for x in Query(GlobalSetting).with_session(session)
+        ]
 
     def global_settings_options(self) -> List[GlobalSettingOption]:
         try:

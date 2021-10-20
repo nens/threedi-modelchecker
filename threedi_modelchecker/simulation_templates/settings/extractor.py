@@ -41,8 +41,7 @@ class SettingsExtractor(object):
                 Query(SQLAggregationSettings)
                 .with_session(self.session)
                 .filter(
-                    SQLAggregationSettings.global_settings_id
-                    == self.global_settings.id
+                    SQLAggregationSettings.global_settings_id == self.global_settings.id
                 )
                 .all()
             )
