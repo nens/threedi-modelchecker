@@ -2,6 +2,12 @@ Changelog of threedi-modelchecker
 =================================
 
 
+0.16 (unreleased)
+-----------------
+
+- Nothing changed yet.
+
+
 0.15 (2021-10-25)
 -----------------
 
