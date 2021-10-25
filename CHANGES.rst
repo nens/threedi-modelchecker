@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.15 (unreleased)
+0.15 (2021-10-25)
 -----------------
 
 - Simulation templates can be saved (asynchroniously) to the API
