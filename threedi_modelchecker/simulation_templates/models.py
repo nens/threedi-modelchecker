@@ -6,7 +6,7 @@ from dataclasses import dataclass, fields, InitVar
 from uuid import uuid4
 from typing import Dict, List, Optional, Any
 from threedi_api_client.openapi.models import TimeStepSettings
-from threedi_api_client.openapi.models import PhysicalSettings
+from threedi_api_client.openapi.models import PhysicalSettings, InitialWaterlevel
 from threedi_api_client.openapi.models import NumericalSettings, AggregationSettings
 from threedi_api_client.openapi.models import Lateral, FileLateral
 from threedi_api_client.openapi.models import (
@@ -190,8 +190,76 @@ class InitialWaterlevels(AsDictMixin):
                 )
             )
 
-        # TODO: figure out 2D and GW rasters, probably these need to
-        # be processed in a seperate worker before adding them here
+        initial_waterlevels: List[InitialWaterlevel] = []
+        rasters_lookup: Dict = {}
+
+        if self.raster_2d is not None or self.raster_gw is not None:
+            # Fetch initial waterlevels
+            initial_waterlevels = (
+                await client.threedimodels_initial_waterlevels_list(
+                    simulation.threedimodel_id
+                )
+            ).results
+            rasters_lookup = dict(
+                [
+                    (x.id, x)
+                    for x in (
+                        await client.threedimodels_rasters_list(
+                            simulation.threedimodel_id
+                        )
+                    ).results
+                ]
+            )
+
+            for initial_waterlevel in initial_waterlevels:
+                initial_waterlevel._raster = rasters_lookup.get(
+                    initial_waterlevel.source_raster_id, None
+                )
+
+        if self.raster_2d is not None:
+            # use first found initial waterlevel resource with:
+            #   - dimension = "two_d"
+            #   - source_raster.type = "initial_waterlevel_file"
+            found = [
+                x
+                for x in initial_waterlevels
+                if x.dimension == "two_d"
+                and x._raster
+                and x._raster.type == "initial_waterlevel_file"
+            ]
+            if not found:
+                raise TemplateValidationError(
+                    "Could not find aggregation file for 2D initial waterlevel raster"
+                )
+            self.raster_2d.initial_waterlevel = found[0].id
+            tasks.append(
+                client.simulations_initial2d_water_level_raster_create(
+                    simulation_pk=simulation.id, data=self.raster_2d
+                )
+            )
+
+        if self.raster_gw is not None:
+            # use first found initial waterlevel resource with:
+            #   - dimension = "two_d"
+            #   - source_raster.type = "initial_groundwater_level_file"
+            found = [
+                x
+                for x in initial_waterlevels
+                if x.dimension == "two_d"
+                and x._raster
+                and x._raster.type == "initial_groundwater_level_file"
+            ]
+            if not found:
+                raise TemplateValidationError(
+                    "Could not find aggregation file for initial groundwaterlevel raster"
+                )
+
+            self.raster_gw.initial_waterlevel = found[0].id
+            tasks.append(
+                client.simulations_initial_groundwater_level_raster_create(
+                    simulation_pk=simulation.id, data=self.raster_gw
+                )
+            )
 
         if tasks:
             await asyncio.gather(*tasks)

@@ -6,7 +6,9 @@ from threedi_api_client.openapi.models.aggregation_settings import AggregationSe
 from threedi_api_client.openapi.models.file_structure_control import (
     FileStructureControl,
 )
+from threedi_api_client.openapi.models.initial_waterlevel import InitialWaterlevel
 from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
+from threedi_api_client.openapi.models.raster import Raster
 from threedi_api_client.openapi.models.lateral import Lateral
 from threedi_api_client.openapi.models import FileLateral, FileBoundaryCondition
 from threedi_api_client.openapi.models.numerical_settings import NumericalSettings
@@ -165,7 +167,8 @@ def simulation_template(session, measure_group):
         initial_waterlevel=-10,
         initial_waterlevel_file="test.tif",
         water_level_ini_type=InitializationType.MAX,
-        initial_groundwater_level=-12,
+        initial_groundwater_level_file="test2.tif",
+        initial_groundwater_level_type=InitializationType.MIN,
         control_group_id=control_group.id,
     )
     factories.AggregationSettingsFactory.create(global_settings_id=global_settings.id)
@@ -233,6 +236,21 @@ async def test_save_to_api(
         FileStructureControl(id=12, simulation=1, offset=9, file=None, state="valid")
     )
 
+    initial_waterlevels = mock.Mock()
+    initial_waterlevels.results = [
+        InitialWaterlevel(id=11, source_raster_id=1, dimension="two_d"),
+        InitialWaterlevel(id=12, source_raster_id=2, dimension="two_d"),
+    ]
+
+    rasters = mock.Mock()
+    rasters.results = [
+        Raster(id=1, name="raster.tif", type="initial_waterlevel_file"),
+        Raster(id=2, name="raster2.tif", type="initial_groundwater_level_file"),
+    ]
+
+    client.threedimodels_initial_waterlevels_list.return_value = initial_waterlevels
+    client.threedimodels_rasters_list.return_value = rasters
+
     await simulation_template.save_to_api(client, "my_template", simulation)
 
     # Settings
@@ -261,13 +279,10 @@ async def test_save_to_api(
             "data": simulation_template.initial_waterlevels.constant_1d,
         }
     )
-    assert (
-        client.simulations_initial_groundwater_level_constant_create.await_args.kwargs
-        == {
-            "simulation_pk": simulation.id,
-            "data": simulation_template.initial_waterlevels.constant_gw,
-        }
-    )
+    assert client.simulations_initial2d_water_level_raster_create.await_args.kwargs == {
+        "simulation_pk": simulation.id,
+        "data": simulation_template.initial_waterlevels.raster_2d,
+    }
 
     # Laterals
     assert client.simulations_events_lateral_file_create.await_args.kwargs == {
@@ -381,14 +396,10 @@ def test_simulation_template_extractor(session):
 
 def test_boundary_conditions(session):
     for i in range(1, 3):
-        factories.BoundaryConditions2DFactory.create(
-            timeseries=f"0,-0.{i}\n1,-0.{i+1}"
-        )
+        factories.BoundaryConditions2DFactory.create(timeseries=f"0,-0.{i}\n1,-0.{i+1}")
 
     for i in range(3, 5):
-        factories.BoundaryConditions1DFactory.create(
-            timeseries=f"0,-0.{i}\n1,-0.{i+1}"
-        )
+        factories.BoundaryConditions1DFactory.create(timeseries=f"0,-0.{i}\n1,-0.{i+1}")
 
     extractor = BoundariesExtractor(session)
     values_check = [x["values"] for x in extractor.as_list()]
