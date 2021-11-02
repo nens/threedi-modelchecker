@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.16 (unreleased)
+0.16 (2021-11-02)
 -----------------
 
 - Added support for saving 1D initial waterlevel (from file), 2D initial waterlevel and initial groundwaterlevel in API. 
