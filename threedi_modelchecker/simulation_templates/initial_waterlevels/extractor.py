@@ -2,9 +2,7 @@ from typing import Optional
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
-from threedi_api_client.openapi.models.one_d_water_level_predefined import (
-    OneDWaterLevelPredefined,
-)
+from threedi_api_client.openapi.models.one_d_water_level_file import OneDWaterLevelFile
 from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
 from threedi_api_client.openapi.models import TwoDWaterRaster, GroundWaterRaster
 from threedi_api_client.openapi.models import OneDWaterLevel
@@ -73,10 +71,10 @@ class InitialWaterlevelExtractor(object):
         )
 
     @property
-    def predefined_1d(self) -> Optional[OneDWaterLevelPredefined]:
+    def waterlevel_1d_file(self) -> Optional[OneDWaterLevelFile]:
         if not self.has_connection_nodes_with_initial_waterlevels:
             return None
-        return OneDWaterLevelPredefined()
+        return OneDWaterLevelFile(initial_waterlevel="resolved_during_saving")
 
     @property
     def waterlevel_2d_raster(self) -> Optional[TwoDWaterRaster]:
@@ -111,7 +109,7 @@ class InitialWaterlevelExtractor(object):
             self.constant_waterlevel_2d,
             self.constant_waterlevel_1d,
             self.constant_waterlevel_groundwater,
-            self.predefined_1d,
+            self.waterlevel_1d_file,
             self.waterlevel_2d_raster,
             self.waterlevel_groundwater_raster,
         )
