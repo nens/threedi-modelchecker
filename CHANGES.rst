@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.17 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added `id` (boundary sqlite id)  and `type` (1D or 2D)  field to generated boundaries JSON file. 
 
 
 0.16 (2021-11-02)

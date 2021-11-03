@@ -1,4 +1,5 @@
 from typing import List, Dict, Union
+from enum import Enum
 from threedi_modelchecker.threedi_model.models import (
     BoundaryConditions2D,
     BoundaryCondition1D,
@@ -11,6 +12,8 @@ from threedi_modelchecker.simulation_templates.utils import parse_timeseries
 # JSON format example:
 # [
 #     {
+#         "id": 1,  (spatialite id from boundary table)
+#         "type": "2D"
 #         "interpolate": false,
 #         "values": [
 #             [0, 0.5],
@@ -19,6 +22,8 @@ from threedi_modelchecker.simulation_templates.utils import parse_timeseries
 #         ]
 #     },
 #     {
+#         "id": 2, (spatialite id from boundary table)
+#         "type": "1D",
 #         "interpolate": false,
 #         "values": [
 #             [0, 0,3],
@@ -26,6 +31,8 @@ from threedi_modelchecker.simulation_templates.utils import parse_timeseries
 #         ]
 #     },
 #     {
+#         "id": 3, (spatialite id from boundary table)
+#         "type": "1D",
 #         "interpolate": false,
 #         "values": [
 #             [0, -2.4],
@@ -35,25 +42,34 @@ from threedi_modelchecker.simulation_templates.utils import parse_timeseries
 #         ]
 #     }
 # ]
-# 2D boundaries need to be provided before 1D boundaries.
-# 1D boundaries need to be in order of connectionnode id's.
-# 2D boundaries need to be in order of id (of the boundary).
+
+
+class BoundaryType(Enum):
+    one_d = "1D"
+    two_d = "2D"
 
 
 def sqlite_boundary_to_dict(
     boundary: Union[BoundaryConditions2D, BoundaryCondition1D]
 ) -> Dict:
+
+    boundary_1d2d: BoundaryType = BoundaryType.one_d
+    if isinstance(boundary, BoundaryConditions2D):
+        boundary_1d2d = BoundaryType.two_d
+
     try:
         values = parse_timeseries(boundary.timeseries)
     except (TypeError, ValueError):
-        boundary_1d2d: str = "1d"
-        if isinstance(boundary, BoundaryConditions2D):
-            boundary_1d2d = "2d"
         raise SchematisationError(
-            f"Incorrect formatted timeseries for {boundary_1d2d} boundary condition with id={boundary.id}"
+            f"Incorrect formatted timeseries for {boundary_1d2d.value} boundary condition with id={boundary.id}"
         )
 
-    return {"interpolate": False, "values": values}
+    return {
+        "id": boundary.id,
+        "type": boundary_1d2d.value,
+        "interpolate": False,
+        "values": values,
+    }
 
 
 class BoundariesExtractor(object):
@@ -82,7 +98,7 @@ class BoundariesExtractor(object):
             boundaries_1d = (
                 Query(BoundaryCondition1D)
                 .with_session(self.session)
-                .order_by(BoundaryCondition1D.connection_node_id)
+                .order_by(BoundaryCondition1D.id)
                 .all()
             )
             self._boundaries_1d = [sqlite_boundary_to_dict(x) for x in boundaries_1d]
