@@ -173,3 +173,13 @@ class InflowType(Enum):
     NO_INFLOW = 0
     IMPERVIOUS_SURFACE = 1
     SURFACE = 2
+
+
+class Advection1D(Enum):
+    OFF = 0
+    STANDARD = 1
+
+
+class Advection2D(Enum):
+    OFF = 0
+    STANDARD = 1

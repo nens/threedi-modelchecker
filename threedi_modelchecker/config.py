@@ -725,7 +725,7 @@ CHECKS += [
         column=models.Interflow.porosity_layer_thickness,
         invalid=Query(models.Interflow).filter(
             models.Interflow.global_settings != None,
-            models.Interflow.porosity_layer_thickness > 0,
+            (models.Interflow.porosity_layer_thickness == None) | (models.Interflow.porosity_layer_thickness <= 0),
             models.Interflow.interflow_type
             in [
                 constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
@@ -919,7 +919,7 @@ CHECKS += [
 ]
 
 
-## 11xx: SIMULATION SETTINGS
+## 11xx: SIMULATION SETTINGS - model preparation
 
 CHECKS += [
     GeneralCheck(
