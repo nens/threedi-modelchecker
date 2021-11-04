@@ -919,7 +919,7 @@ CHECKS += [
 ]
 
 
-## 11xx: SIMULATION SETTINGS - model preparation
+## 11xx: SIMULATION SETTINGS
 
 CHECKS += [
     GeneralCheck(
