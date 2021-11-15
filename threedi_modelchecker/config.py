@@ -1067,7 +1067,7 @@ CHECKS += [
         column=models.NumericalSettings.convergence_eps,
         filters=models.NumericalSettings.global_settings != None,
         min_value=1e-7,
-        max_value=1e-5,
+        max_value=1e-4,
     ),
     RangeCheck(
         error_code=1113,
