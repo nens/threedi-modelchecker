@@ -80,13 +80,13 @@ def upgrade():
     )
     op.execute(
         table.update()
-        .where(table.c.minimum_time_step.is_(None))
-        .values({"minimum_time_step": table.c.sim_time_step})
+        .where(table.c.minimum_sim_time_step.is_(None))
+        .values({"minimum_sim_time_step": table.c.sim_time_step})
     )
     op.execute(
         table.update()
-        .where(table.c.maximum_time_step.is_(None) & table.c.timestep_plus.is_(True))
-        .values({"maximum_time_step": table.c.sim_time_step})
+        .where(table.c.maximum_sim_time_step.is_(None) & table.c.timestep_plus.is_(True))
+        .values({"maximum_sim_time_step": table.c.sim_time_step})
     )
     op.execute(
         table.update()
@@ -95,7 +95,7 @@ def upgrade():
     )
     op.execute(
         table.update()
-        .where(table.c.frict_avg.not_in((0, 1)))
+        .where(table.c.frict_avg.notin_((0, 1)))
         .values({"frict_avg": op.inline_literal(1)})
     )
     op.execute(
