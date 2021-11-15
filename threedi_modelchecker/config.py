@@ -1121,7 +1121,6 @@ CHECKS += [
         column=models.NumericalSettings.preissmann_slot,
         filters=models.NumericalSettings.global_settings != None,
         min_value=0,
-        left_inclusive=False,
     ),
     RangeCheck(
         error_code=1121,

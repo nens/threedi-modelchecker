@@ -365,36 +365,36 @@ class Manhole(Base):
 class NumericalSettings(Base):
     __tablename__ = "v2_numerical_settings"
     id = Column(Integer, primary_key=True)
-    cfl_strictness_factor_1d = Column(Float)
-    cfl_strictness_factor_2d = Column(Float)
-    convergence_cg = Column(Float)
-    convergence_eps = Column(Float)
-    flow_direction_threshold = Column(Float)
+    cfl_strictness_factor_1d = Column(Float, nullable=False)
+    cfl_strictness_factor_2d = Column(Float, nullable=False)
+    convergence_cg = Column(Float, nullable=False)
+    convergence_eps = Column(Float, nullable=False)
+    flow_direction_threshold = Column(Float, nullable=False)
     frict_shallow_water_correction = Column(
-        IntegerEnum(constants.FrictionShallowWaterDepthCorrection)
+        IntegerEnum(constants.FrictionShallowWaterDepthCorrection), nullable=False
     )
-    general_numerical_threshold = Column(Float)
+    general_numerical_threshold = Column(Float, nullable=False)
     integration_method = Column(
-        IntegerEnum(constants.IntegrationMethod)
+        IntegerEnum(constants.IntegrationMethod), nullable=False
     )
-    limiter_grad_1d = Column(IntegerEnum(constants.OffOrStandard))
-    limiter_grad_2d = Column(IntegerEnum(constants.OffOrStandard))
+    limiter_grad_1d = Column(IntegerEnum(constants.OffOrStandard), nullable=False)
+    limiter_grad_2d = Column(IntegerEnum(constants.OffOrStandard), nullable=False)
     limiter_slope_crossectional_area_2d = Column(
-        IntegerEnum(constants.LimiterSlopeXArea)
+        IntegerEnum(constants.LimiterSlopeXArea), nullable=False
     )
     limiter_slope_friction_2d = Column(
-        IntegerEnum(constants.OffOrStandard)
+        IntegerEnum(constants.OffOrStandard), nullable=False
     )
-    max_nonlin_iterations = Column(Integer)
-    max_degree = Column(Integer)
-    minimum_friction_velocity = Column(Float)
-    minimum_surface_area = Column(Float)
-    precon_cg = Column(Integer)
-    preissmann_slot = Column(Float)
-    pump_implicit_ratio = Column(Float)
-    thin_water_layer_definition = Column(Float)
-    use_of_cg = Column(IntegerEnum(constants.OffOrStandard))
-    use_of_nested_newton = Column(Boolean)
+    max_nonlin_iterations = Column(Integer, nullable=False)
+    max_degree = Column(Integer, nullable=False)
+    minimum_friction_velocity = Column(Float, nullable=False)
+    minimum_surface_area = Column(Float, nullable=False)
+    precon_cg = Column(IntegerEnum(constants.OffOrStandard), nullable=False)
+    preissmann_slot = Column(Float, nullable=False)
+    pump_implicit_ratio = Column(Float, nullable=False)
+    thin_water_layer_definition = Column(Float, nullable=False)
+    use_of_cg = Column(Integer, nullable=False)
+    use_of_nested_newton = Column(IntegerEnum(constants.OffOrStandard), nullable=False)
 
     global_settings = relationship("GlobalSetting", back_populates="numerical_settings")
 

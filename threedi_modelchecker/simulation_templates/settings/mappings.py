@@ -116,7 +116,7 @@ numerical_settings_map = {
     ],
     "convergence_eps": [
         FieldInfoIni("convergence_eps", float, "numerics"),
-        FieldInfoAPI("convergence_eps", float, 1.0e-9),
+        FieldInfoAPI("convergence_eps", float, 1.0e-5),
         FieldInfoSqlite(
             "convergence_eps", float, SettingsTables.numerical_settings.value
         ),
