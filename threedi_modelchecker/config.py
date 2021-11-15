@@ -504,15 +504,6 @@ CHECKS += [
 
 CHECKS += [
     QueryCheck(
-        error_code=301,
-        level=CheckLevel.WARNING,
-        column=models.GlobalSetting.frict_type,
-        invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.frict_type == None
-        ),
-        message="The global friction type (v2_global_settings.friction_type) is not defined. In the future, this will lead to an error.",
-    ),
-    QueryCheck(
         error_code=302,
         column=models.GlobalSetting.dem_obstacle_height,
         invalid=Query(models.GlobalSetting).filter(
@@ -551,14 +542,66 @@ CHECKS += [
     RangeCheck(
         error_code=306,
         column=models.GlobalSetting.dist_calc_points,
-        filters=or_(
-            *[
-                Query(table).filter(table.dist_calc_points == None).exists()
-                for table in [models.Channel, models.Pipe, models.Culvert]
-            ]
-        ),
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
+    ),
+    RangeCheck(
+        error_code=307,
+        column=models.GlobalSetting.grid_space,
+        min_value=0,
+        left_inclusive=False,  # 0 itself is not allowed
+    ),
+    RangeCheck(
+        error_code=308,
+        column=models.GlobalSetting.embedded_cutoff_threshold,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=309,
+        column=models.GlobalSetting.max_angle_1d_advection,
+        min_value=0,
+        max_value=0.5 * 3.14159,
+    ),
+    RangeCheck(
+        error_code=310,
+        column=models.GlobalSetting.table_step_size,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=311,
+        column=models.GlobalSetting.table_step_size_1d,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=312,
+        column=models.GlobalSetting.table_step_size_volume_2d,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=313,
+        column=models.GlobalSetting.frict_coef,
+        filters=models.GlobalSetting.frict_type == constants.FrictionType.MANNING,
+        min_value=0,
+        max_value=1,
+    ),
+    RangeCheck(
+        error_code=314,
+        column=models.GlobalSetting.frict_coef,
+        filters=models.GlobalSetting.frict_type == constants.FrictionType.CHEZY,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=315,
+        column=models.GlobalSetting.interception_global,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=316,
+        column=models.GlobalSetting.manhole_storage_area,
+        min_value=0,
     ),
 ]
 
@@ -598,12 +641,13 @@ CHECKS += [
         column=models.GroundWater.equilibrium_infiltration_rate,
         invalid=Query(models.GroundWater).filter(
             models.GroundWater.global_settings != None,
-            models.GroundWater.equilibrium_infiltration_rate == None,
+            (models.GroundWater.equilibrium_infiltration_rate == None)
+            | (models.GroundWater.equilibrium_infiltration_rate <= 0),
             is_none_or_empty(
                 models.GroundWater.equilibrium_infiltration_rate_file,
             ),
         ),
-        message="a global equilibrium infiltration rate (v2_groundwater.equilibrium_infiltration_rate) should be defined when not using an equilibrium infiltration rate file.",
+        message="a global equilibrium infiltration rate (v2_groundwater.equilibrium_infiltration_rate) should be defined and >0 when not using an equilibrium infiltration rate file.",
     ),
     QueryCheck(
         error_code=406,
@@ -620,10 +664,11 @@ CHECKS += [
         column=models.GroundWater.infiltration_decay_period,
         invalid=Query(models.GroundWater).filter(
             models.GroundWater.global_settings != None,
-            models.GroundWater.infiltration_decay_period == None,
+            (models.GroundWater.infiltration_decay_period == None)
+            | (models.GroundWater.infiltration_decay_period <= 0),
             is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
         ),
-        message="a global infiltration decay period (v2_groundwater.infiltration_decay_period) should be defined when not using an infiltration decay period file.",
+        message="a global infiltration decay period (v2_groundwater.infiltration_decay_period) should be defined and >0 when not using an infiltration decay period file.",
     ),
     QueryCheck(
         error_code=408,
@@ -674,10 +719,11 @@ CHECKS += [
         column=models.GroundWater.initial_infiltration_rate,
         invalid=Query(models.GroundWater).filter(
             models.GroundWater.global_settings != None,
-            models.GroundWater.initial_infiltration_rate == None,
+            (models.GroundWater.initial_infiltration_rate == None)
+            | (models.GroundWater.initial_infiltration_rate <= 0),
             is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
         ),
-        message="a global initial infiltration rate (v2_groundwater.initial_infiltration_rate) should be defined when not using an initial infiltration rate file.",
+        message="a global initial infiltration rate (v2_groundwater.initial_infiltration_rate) should be defined and >0 when not using an initial infiltration rate file.",
     ),
     QueryCheck(
         error_code=413,
@@ -725,7 +771,8 @@ CHECKS += [
         column=models.Interflow.porosity_layer_thickness,
         invalid=Query(models.Interflow).filter(
             models.Interflow.global_settings != None,
-            (models.Interflow.porosity_layer_thickness == None) | (models.Interflow.porosity_layer_thickness <= 0),
+            (models.Interflow.porosity_layer_thickness == None)
+            | (models.Interflow.porosity_layer_thickness <= 0),
             models.Interflow.interflow_type
             in [
                 constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
@@ -753,11 +800,12 @@ CHECKS += [
         column=models.Interflow.hydraulic_conductivity,
         invalid=Query(models.Interflow).filter(
             models.Interflow.global_settings != None,
-            models.Interflow.hydraulic_conductivity == None,
+            (models.Interflow.hydraulic_conductivity == None)
+            | (models.Interflow.hydraulic_conductivity <= 0),
             is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message="v2_interflow.hydraulic_conductivity cannot be null when no hydraulic conductivity file is supplied.",
+        message="v2_interflow.hydraulic_conductivity cannot be null or 0 when no hydraulic conductivity file is supplied.",
     ),
     RangeCheck(
         error_code=420,
@@ -765,6 +813,16 @@ CHECKS += [
         filters=models.GroundWater.global_settings != None,
         min_value=0,
         max_value=1,
+    ),
+    QueryCheck(
+        error_code=421,
+        column=models.GroundWater.groundwater_hydro_connectivity,
+        invalid=Query(models.GroundWater).filter(
+            models.GroundWater.global_settings != None,
+            (models.GroundWater.groundwater_hydro_connectivity <= 0),
+            is_none_or_empty(models.GroundWater.groundwater_hydro_connectivity_file),
+        ),
+        message="the global hydro connectivity (v2_groundwater.groundwater_hydro_connectivity) should be >0 when not using an hydro connectivity file.",
     ),
 ]
 
@@ -939,17 +997,19 @@ CHECKS += [
         error_code=1101,
         column=models.GlobalSetting.maximum_sim_time_step,
         invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.maximum_sim_time_step < models.GlobalSetting.sim_time_step
+            models.GlobalSetting.maximum_sim_time_step
+            < models.GlobalSetting.sim_time_step
         ),
-        message="v2_global_settings.maximum_sim_time_step must be greater than or equal to v2_global_settings.sim_time_step"
+        message="v2_global_settings.maximum_sim_time_step must be greater than or equal to v2_global_settings.sim_time_step",
     ),
     QueryCheck(
         error_code=1102,
         column=models.GlobalSetting.sim_time_step,
         invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.minimum_sim_time_step >= models.GlobalSetting.sim_time_step
+            models.GlobalSetting.minimum_sim_time_step
+            >= models.GlobalSetting.sim_time_step
         ),
-        message="v2_global_settings.minimum_sim_time_step must be less than v2_global_settings.sim_time_step"
+        message="v2_global_settings.minimum_sim_time_step must be less than v2_global_settings.sim_time_step",
     ),
     QueryCheck(
         error_code=1103,
@@ -957,7 +1017,7 @@ CHECKS += [
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.output_time_step < models.GlobalSetting.sim_time_step
         ),
-        message="v2_global_settings.output_time_step must be greater than or equal to v2_global_settings.sim_time_step"
+        message="v2_global_settings.output_time_step must be greater than or equal to v2_global_settings.sim_time_step",
     ),
     QueryCheck(
         error_code=1104,
@@ -976,7 +1036,13 @@ CHECKS += [
         column=getattr(models.GlobalSetting, name),
         min_value=0,
         left_inclusive=False,
-    ) for name in ("sim_time_step", "minimum_sim_time_step", "maximum_sim_time_step", "output_time_step")
+    )
+    for name in (
+        "sim_time_step",
+        "minimum_sim_time_step",
+        "maximum_sim_time_step",
+        "output_time_step",
+    )
 ]
 
 ## 111x - 114x: SIMULATION SETTINGS, numerical
@@ -1000,29 +1066,29 @@ CHECKS += [
         error_code=1112,
         column=models.NumericalSettings.convergence_eps,
         filters=models.NumericalSettings.global_settings != None,
-        min_value=1E-7,
-        max_value=1E-5,
+        min_value=1e-7,
+        max_value=1e-5,
     ),
     RangeCheck(
         error_code=1113,
         column=models.NumericalSettings.convergence_cg,
         filters=models.NumericalSettings.global_settings != None,
-        min_value=1E-12,
-        max_value=1E-7,
+        min_value=1e-12,
+        max_value=1e-7,
     ),
     RangeCheck(
         error_code=1114,
         column=models.NumericalSettings.flow_direction_threshold,
         filters=models.NumericalSettings.global_settings != None,
-        min_value=1E-13,
-        max_value=1E-2,
+        min_value=1e-13,
+        max_value=1e-2,
     ),
     RangeCheck(
         error_code=1115,
         column=models.NumericalSettings.general_numerical_threshold,
         filters=models.NumericalSettings.global_settings != None,
-        min_value=1E-13,
-        max_value=1E-7,
+        min_value=1e-13,
+        max_value=1e-7,
     ),
     RangeCheck(
         error_code=1116,
@@ -1047,8 +1113,8 @@ CHECKS += [
         error_code=1119,
         column=models.NumericalSettings.minimum_surface_area,
         filters=models.NumericalSettings.global_settings != None,
-        min_value=1E-13,
-        max_value=1E-7,
+        min_value=1e-13,
+        max_value=1e-7,
     ),
     RangeCheck(
         error_code=1120,
@@ -1090,7 +1156,7 @@ CHECKS += [
             & (models.NumericalSettings.frict_shallow_water_correction == 3)
             & (models.NumericalSettings.thin_water_layer_definition <= 0)
         ),
-        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using frict_shallow_water_correction option 3."
+        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using frict_shallow_water_correction option 3.",
     ),
     QueryCheck(
         error_code=1126,
@@ -1100,7 +1166,7 @@ CHECKS += [
             & (models.NumericalSettings.limiter_slope_crossectional_area_2d == 3)
             & (models.NumericalSettings.thin_water_layer_definition <= 0)
         ),
-        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using limiter_slope_crossectional_area_2d option 3."
+        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using limiter_slope_crossectional_area_2d option 3.",
     ),
     QueryCheck(
         error_code=1127,
@@ -1110,7 +1176,7 @@ CHECKS += [
             & (models.NumericalSettings.limiter_slope_friction_2d == 0)
             & (models.NumericalSettings.limiter_slope_crossectional_area_2d != 0)
         ),
-        message="v2_numerical_settings.limiter_slope_friction_2d may not be 0 when using limiter_slope_crossectional_area_2d."
+        message="v2_numerical_settings.limiter_slope_friction_2d may not be 0 when using limiter_slope_crossectional_area_2d.",
     ),
 ]
 
@@ -1124,9 +1190,13 @@ CHECKS += [
         invalid=Query(models.AggregationSettings).filter(
             (models.AggregationSettings.global_settings_id != None)
             & (models.AggregationSettings.aggregation_method == "current")
-            & (models.AggregationSettings.flow_variable.notin_(("volume", "interception")))
+            & (
+                models.AggregationSettings.flow_variable.notin_(
+                    ("volume", "interception")
+                )
+            )
         ),
-        message="v2_aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables."
+        message="v2_aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables.",
     )
 ]
 
