@@ -916,26 +916,51 @@ CHECKS += [
         column=models.GroundWater.groundwater_hydro_connectivity_file,
         filters=models.GroundWater.global_settings != None,
     ),
+    FileExistsCheck(
+        error_code=714,
+        column=models.GroundWater.leakage_file,
+        filters=(models.GroundWater.global_settings != None),
+    ),
+    FileExistsCheck(
+        error_code=715,
+        column=models.GlobalSetting.initial_waterlevel_file,
+    ),
+    FileExistsCheck(
+        error_code=716,
+        column=models.GlobalSetting.initial_groundwater_level_file,
+        filters=(models.GlobalSetting.groundwater_settings_id != None),
+    ),
 ]
 
 
-## 11xx: SIMULATION SETTINGS
-
+## 110x: SIMULATION SETTINGS, timestep
 CHECKS += [
-    GeneralCheck(
+    QueryCheck(
         error_code=1101,
         column=models.GlobalSetting.maximum_sim_time_step,
-        criterion_valid=models.GlobalSetting.maximum_sim_time_step
-        >= models.GlobalSetting.sim_time_step,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.maximum_sim_time_step < models.GlobalSetting.sim_time_step
+        ),
+        message="v2_global_settings.maximum_sim_time_step must be greater than or equal to v2_global_settings.sim_time_step"
     ),
-    GeneralCheck(
+    QueryCheck(
         error_code=1102,
         column=models.GlobalSetting.sim_time_step,
-        criterion_valid=models.GlobalSetting.sim_time_step
-        >= models.GlobalSetting.minimum_sim_time_step,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.minimum_sim_time_step >= models.GlobalSetting.sim_time_step
+        ),
+        message="v2_global_settings.minimum_sim_time_step must be less than v2_global_settings.sim_time_step"
     ),
     QueryCheck(
         error_code=1103,
+        column=models.GlobalSetting.output_time_step,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.output_time_step < models.GlobalSetting.sim_time_step
+        ),
+        message="v2_global_settings.output_time_step must be greater than or equal to v2_global_settings.sim_time_step"
+    ),
+    QueryCheck(
+        error_code=1104,
         column=models.GlobalSetting.maximum_sim_time_step,
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.timestep_plus == True,
@@ -944,54 +969,176 @@ CHECKS += [
         message="v2_global_settings.maximum_sim_time_step cannot be null when "
         "v2_global_settings.timestep_plus is True",
     ),
-    RangeCheck(
-        error_code=1104,
-        column=models.NumericalSettings.convergence_eps,
-        filters=models.NumericalSettings.global_settings != None,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    RangeCheck(
-        error_code=1105,
-        column=models.NumericalSettings.convergence_cg,
-        filters=models.NumericalSettings.global_settings != None,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    RangeCheck(
-        error_code=1106,
-        column=models.NumericalSettings.general_numerical_threshold,
-        filters=models.NumericalSettings.global_settings != None,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    RangeCheck(
-        error_code=1107,
-        column=models.NumericalSettings.flow_direction_threshold,
-        filters=models.NumericalSettings.global_settings != None,
-        min_value=0,
-        left_inclusive=False,
-    ),
 ]
 CHECKS += [
-    TimeseriesCheck(col, error_code=1108)
+    RangeCheck(
+        error_code=1105,
+        column=getattr(models.GlobalSetting, name),
+        min_value=0,
+        left_inclusive=False,
+    ) for name in ("sim_time_step", "minimum_sim_time_step", "maximum_sim_time_step", "output_time_step")
+]
+
+## 111x - 114x: SIMULATION SETTINGS, numerical
+
+CHECKS += [
+    RangeCheck(
+        error_code=1110,
+        column=models.NumericalSettings.cfl_strictness_factor_1d,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=1111,
+        column=models.NumericalSettings.cfl_strictness_factor_2d,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=1112,
+        column=models.NumericalSettings.convergence_eps,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=1E-7,
+        max_value=1E-5,
+    ),
+    RangeCheck(
+        error_code=1113,
+        column=models.NumericalSettings.convergence_cg,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=1E-12,
+        max_value=1E-7,
+    ),
+    RangeCheck(
+        error_code=1114,
+        column=models.NumericalSettings.flow_direction_threshold,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=1E-13,
+        max_value=1E-2,
+    ),
+    RangeCheck(
+        error_code=1115,
+        column=models.NumericalSettings.general_numerical_threshold,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=1E-13,
+        max_value=1E-7,
+    ),
+    RangeCheck(
+        error_code=1116,
+        column=models.NumericalSettings.max_nonlin_iterations,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=1,
+    ),
+    RangeCheck(
+        error_code=1117,
+        column=models.NumericalSettings.max_degree,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=1,
+    ),
+    RangeCheck(
+        error_code=1118,
+        column=models.NumericalSettings.minimum_friction_velocity,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=0,
+        max_value=1,
+    ),
+    RangeCheck(
+        error_code=1119,
+        column=models.NumericalSettings.minimum_surface_area,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=1E-13,
+        max_value=1E-7,
+    ),
+    RangeCheck(
+        error_code=1120,
+        column=models.NumericalSettings.preissmann_slot,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=1121,
+        column=models.NumericalSettings.pump_implicit_ratio,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=0,
+        max_value=1,
+    ),
+    RangeCheck(
+        error_code=1122,
+        column=models.NumericalSettings.thin_water_layer_definition,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=1123,
+        column=models.NumericalSettings.use_of_cg,
+        filters=models.NumericalSettings.global_settings != None,
+        min_value=1,
+    ),
+    RangeCheck(
+        error_code=1124,
+        column=models.GlobalSetting.flooding_threshold,
+        min_value=0,
+        max_value=0.05,
+    ),
+    QueryCheck(
+        error_code=1125,
+        column=models.NumericalSettings.thin_water_layer_definition,
+        invalid=Query(models.NumericalSettings).filter(
+            (models.NumericalSettings.global_settings != None)
+            & (models.NumericalSettings.frict_shallow_water_correction == 3)
+            & (models.NumericalSettings.thin_water_layer_definition <= 0)
+        ),
+        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using frict_shallow_water_correction option 3."
+    ),
+    QueryCheck(
+        error_code=1126,
+        column=models.NumericalSettings.thin_water_layer_definition,
+        invalid=Query(models.NumericalSettings).filter(
+            (models.NumericalSettings.global_settings != None)
+            & (models.NumericalSettings.limiter_slope_crossectional_area_2d == 3)
+            & (models.NumericalSettings.thin_water_layer_definition <= 0)
+        ),
+        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using limiter_slope_crossectional_area_2d option 3."
+    ),
+    QueryCheck(
+        error_code=1127,
+        column=models.NumericalSettings.thin_water_layer_definition,
+        invalid=Query(models.NumericalSettings).filter(
+            (models.NumericalSettings.global_settings != None)
+            & (models.NumericalSettings.limiter_slope_friction_2d == 0)
+            & (models.NumericalSettings.limiter_slope_crossectional_area_2d != 0)
+        ),
+        message="v2_numerical_settings.limiter_slope_friction_2d may not be 0 when using limiter_slope_crossectional_area_2d."
+    ),
+]
+
+
+## 115x SIMULATION SETTINGS, aggregation
+
+CHECKS += [
+    QueryCheck(
+        error_code=1150,
+        column=models.AggregationSettings.aggregation_method,
+        invalid=Query(models.AggregationSettings).filter(
+            (models.AggregationSettings.global_settings_id != None)
+            & (models.AggregationSettings.aggregation_method == "current")
+            & (models.AggregationSettings.flow_variable.notin_(("volume", "interception")))
+        ),
+        message="v2_aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables."
+    )
+]
+
+## 12xx  SIMULATION, timeseries
+CHECKS += [
+    TimeseriesCheck(col, error_code=1200)
     for col in [
         models.BoundaryCondition1D.timeseries,
         models.BoundaryConditions2D.timeseries,
         models.Lateral1d.timeseries,
         models.Lateral2D.timeseries,
     ]
-]
-CHECKS += [
-    FileExistsCheck(
-        error_code=1109,
-        column=models.GlobalSetting.initial_waterlevel_file,
-    ),
-    FileExistsCheck(
-        error_code=1110,
-        column=models.GlobalSetting.initial_groundwater_level_file,
-        filters=(models.GlobalSetting.groundwater_settings_id != None),
-    ),
 ]
 
 
