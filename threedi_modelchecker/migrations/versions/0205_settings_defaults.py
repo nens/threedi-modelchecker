@@ -24,9 +24,7 @@ GLOBAL_SETTINGS_DEFAULTS = {
 
 
 def upgrade():
-    op.execute(
-        "UPDATE v2_global_settings SET frict_type = 2 WHERE frict_type IS NULL"
-    )
+    op.execute("UPDATE v2_global_settings SET frict_type = 2 WHERE frict_type IS NULL")
     op.execute(
         "UPDATE v2_global_settings SET use_0d_inflow = 0 WHERE use_0d_inflow IS NULL"
     )
@@ -66,9 +64,7 @@ def upgrade():
     op.execute(
         "UPDATE v2_simple_infiltration SET infiltration_rate = 0 WHERE infiltration_rate < 0"
     )
-    op.execute(
-        "UPDATE v2_numerical_settings SET precon_cg = 1 WHERE precon_cg > 1"
-    )
+    op.execute("UPDATE v2_numerical_settings SET precon_cg = 1 WHERE precon_cg > 1")
 
 
 def downgrade():
