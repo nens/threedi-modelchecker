@@ -73,7 +73,7 @@ UPDATE v2_numerical_settings SET limiter_slope_friction_2d = 1 WHERE limiter_slo
 
 UPDATE v2_numerical_settings SET integration_method = NULL WHERE integration_method = 1;
 
-DELETE FROM v2_aggregation_settings WHERE aggregation_method = 'med';
+DELETE FROM v2_aggregation_settings WHERE aggregation_method = 'med' OR aggregation_method IS NULL;
 
 UPDATE v2_aggregation_settings SET flow_variable = 'discharge'
   WHERE (flow_variable = 'discharge_negative' AND aggregation_method = 'cum_negative')
@@ -84,6 +84,23 @@ UPDATE v2_aggregation_settings SET flow_variable = 'discharge'
 def upgrade():
     for q in MIGRATION_QUERIES.split(";"):
         op.execute(q)
+
+    with op.batch_alter_table("v2_global_settings") as batch_op:
+        batch_op.alter_column("output_time_step", nullable=False)
+        batch_op.alter_column("nr_timesteps", nullable=True)
+        batch_op.alter_column("start_date", nullable=True)
+        batch_op.alter_column("frict_type", nullable=False)
+        batch_op.alter_column("minimum_sim_time_step", nullable=False)
+        batch_op.alter_column("frict_avg", nullable=False)
+        batch_op.alter_column("use_0d_inflow", nullable=False)
+
+    with op.batch_alter_table("v2_numerical_settings") as batch_op:
+        batch_op.alter_column("max_degree", nullable=True)
+        batch_op.alter_column("use_of_cg", nullable=True)
+        batch_op.alter_column("use_of_nested_newton", nullable=True)
+
+    with op.batch_alter_table("v2_aggregation_settings") as batch_op:
+        batch_op.alter_column("aggregation_method", nullable=False)
 
 
 def downgrade():

@@ -373,17 +373,13 @@ class NumericalSettings(Base):
         IntegerEnum(constants.FrictionShallowWaterDepthCorrection)
     )
     general_numerical_threshold = Column(Float)
-    integration_method = Column(
-        IntegerEnum(constants.IntegrationMethod)
-    )
+    integration_method = Column(IntegerEnum(constants.IntegrationMethod))
     limiter_grad_1d = Column(IntegerEnum(constants.OffOrStandard))
     limiter_grad_2d = Column(IntegerEnum(constants.OffOrStandard))
     limiter_slope_crossectional_area_2d = Column(
         IntegerEnum(constants.LimiterSlopeXArea)
     )
-    limiter_slope_friction_2d = Column(
-        IntegerEnum(constants.OffOrStandard)
-    )
+    limiter_slope_friction_2d = Column(IntegerEnum(constants.OffOrStandard))
     max_nonlin_iterations = Column(Integer)
     max_degree = Column(Integer)
     minimum_friction_velocity = Column(Float)
