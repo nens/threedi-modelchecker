@@ -603,6 +603,11 @@ CHECKS += [
         column=models.GlobalSetting.manhole_storage_area,
         min_value=0,
     ),
+    NotNullCheck(
+        error_code=317,
+        column=models.GlobalSetting.epsg_code,
+        filters=CONDITIONS["has_no_dem"],
+    ),
 ]
 
 ## 04xx: Groundwater, Interflow & Infiltration
@@ -642,12 +647,12 @@ CHECKS += [
         invalid=Query(models.GroundWater).filter(
             models.GroundWater.global_settings != None,
             (models.GroundWater.equilibrium_infiltration_rate == None)
-            | (models.GroundWater.equilibrium_infiltration_rate <= 0),
+            | (models.GroundWater.equilibrium_infiltration_rate < 0),
             is_none_or_empty(
                 models.GroundWater.equilibrium_infiltration_rate_file,
             ),
         ),
-        message="a global equilibrium infiltration rate (v2_groundwater.equilibrium_infiltration_rate) should be defined and >0 when not using an equilibrium infiltration rate file.",
+        message="a global equilibrium infiltration rate (v2_groundwater.equilibrium_infiltration_rate) should be defined and >=0 when not using an equilibrium infiltration rate file.",
     ),
     QueryCheck(
         error_code=406,
@@ -720,10 +725,10 @@ CHECKS += [
         invalid=Query(models.GroundWater).filter(
             models.GroundWater.global_settings != None,
             (models.GroundWater.initial_infiltration_rate == None)
-            | (models.GroundWater.initial_infiltration_rate <= 0),
+            | (models.GroundWater.initial_infiltration_rate < 0),
             is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
         ),
-        message="a global initial infiltration rate (v2_groundwater.initial_infiltration_rate) should be defined and >0 when not using an initial infiltration rate file.",
+        message="a global initial infiltration rate (v2_groundwater.initial_infiltration_rate) should be defined and >=0 when not using an initial infiltration rate file.",
     ),
     QueryCheck(
         error_code=413,
@@ -801,11 +806,11 @@ CHECKS += [
         invalid=Query(models.Interflow).filter(
             models.Interflow.global_settings != None,
             (models.Interflow.hydraulic_conductivity == None)
-            | (models.Interflow.hydraulic_conductivity <= 0),
+            | (models.Interflow.hydraulic_conductivity < 0),
             is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message="v2_interflow.hydraulic_conductivity cannot be null or 0 when no hydraulic conductivity file is supplied.",
+        message="v2_interflow.hydraulic_conductivity cannot be null or negative when no hydraulic conductivity file is supplied.",
     ),
     RangeCheck(
         error_code=420,
@@ -819,10 +824,10 @@ CHECKS += [
         column=models.GroundWater.groundwater_hydro_connectivity,
         invalid=Query(models.GroundWater).filter(
             models.GroundWater.global_settings != None,
-            (models.GroundWater.groundwater_hydro_connectivity <= 0),
+            (models.GroundWater.groundwater_hydro_connectivity < 0),
             is_none_or_empty(models.GroundWater.groundwater_hydro_connectivity_file),
         ),
-        message="the global hydro connectivity (v2_groundwater.groundwater_hydro_connectivity) should be >0 when not using an hydro connectivity file.",
+        message="the global hydro connectivity (v2_groundwater.groundwater_hydro_connectivity) should be >=0 when not using an hydro connectivity file.",
     ),
 ]
 
@@ -1007,9 +1012,9 @@ CHECKS += [
         column=models.GlobalSetting.sim_time_step,
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.minimum_sim_time_step
-            >= models.GlobalSetting.sim_time_step
+            > models.GlobalSetting.sim_time_step
         ),
-        message="v2_global_settings.minimum_sim_time_step must be less than v2_global_settings.sim_time_step",
+        message="v2_global_settings.minimum_sim_time_step must be less than or equal to v2_global_settings.sim_time_step",
     ),
     QueryCheck(
         error_code=1103,
@@ -1143,6 +1148,13 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=1124,
+        column=models.GlobalSetting.flooding_threshold,
+        min_value=0,
+        max_value=0.3,
+    ),
+    RangeCheck(
+        error_code=1124,
+        level=CheckLevel.WARNING,
         column=models.GlobalSetting.flooding_threshold,
         min_value=0,
         max_value=0.05,

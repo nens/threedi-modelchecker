@@ -58,7 +58,7 @@ time_step_settings_map = {
     ],
     "min_time_step": [
         FieldInfoIni("minimum_timestep", float, "simulation"),
-        FieldInfoAPI("min_time_step", float, 0.1),
+        FieldInfoAPI("min_time_step", float, 0.01),
         FieldInfoSqlite(
             "minimum_sim_time_step", float, SettingsTables.global_settings.value
         ),
