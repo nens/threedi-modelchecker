@@ -603,10 +603,11 @@ CHECKS += [
         column=models.GlobalSetting.manhole_storage_area,
         min_value=0,
     ),
-    NotNullCheck(
+    QueryCheck(
         error_code=317,
         column=models.GlobalSetting.epsg_code,
-        filters=CONDITIONS["has_no_dem"],
+        invalid=CONDITIONS["has_no_dem"].filter(models.GlobalSetting.epsg_code == None),
+        message="v2_global_settings.epsg_code may not be NULL if no dem file is provided",
     ),
 ]
 
