@@ -7,8 +7,6 @@ Create Date: 2021-11-15 16:41:43.316599
 """
 from alembic import op
 
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision = "0205"
@@ -81,6 +79,7 @@ UPDATE v2_aggregation_settings SET flow_variable = 'discharge'
   WHERE (flow_variable = 'discharge_negative' AND aggregation_method = 'cum_negative')
     OR (flow_variable = 'discharge_positive' AND aggregation_method = 'cum_positive');
 """
+
 
 def upgrade():
     for q in MIGRATION_QUERIES.split(";"):
