@@ -17,32 +17,6 @@ branch_labels = None
 depends_on = None
 
 
-NUMERICAL_SETTINGS_DEFAULTS = {
-    "cfl_strictness_factor_1d": 1.0,
-    "cfl_strictness_factor_2d": 1.0,
-    "flow_direction_threshold": 1e-05,
-    "convergence_cg": 1e-09,
-    "convergence_eps": 1e-05,
-    "frict_shallow_water_correction": 0,
-    "general_numerical_threshold": 1e-08,
-    "integration_method": 0,
-    "limiter_grad_1d": 1,
-    "limiter_grad_2d": 1,
-    "limiter_slope_crossectional_area_2d": 0,
-    "limiter_slope_friction_2d": 0,
-    "max_nonlin_iterations": 20,
-    "max_degree": 20,
-    "minimum_friction_velocity": 0.01,
-    "minimum_surface_area": 1e-08,
-    "precon_cg": 1,
-    "preissmann_slot": 0.0,
-    "pump_implicit_ratio": 1.0,
-    "thin_water_layer_definition": 0.01,
-    "use_of_cg": 20,
-    "use_of_nested_newton": 1,
-}
-
-
 GLOBAL_SETTINGS_DEFAULTS = {
     "frict_type": 2,
     "use_0d_inflow": 0,
@@ -50,19 +24,17 @@ GLOBAL_SETTINGS_DEFAULTS = {
 
 
 def upgrade():
-    for c, v in GLOBAL_SETTINGS_DEFAULTS.items():
-        op.execute(
-            f"UPDATE v2_global_settings SET {c} = {v} WHERE {c} IS NULL OR {c} < 0"
-        )
-
-    for c, v in NUMERICAL_SETTINGS_DEFAULTS.items():
-        op.execute(f"UPDATE v2_numerical_settings SET {c} = {v} WHERE {c} IS NULL")
-
     op.execute(
-        "UPDATE v2_global_settings SET minimum_sim_time_step = min(0.1, sim_time_step) WHERE minimum_sim_time_step IS NULL"
+        "UPDATE v2_global_settings SET frict_type = 2 WHERE frict_type IS NULL"
     )
     op.execute(
-        "UPDATE v2_global_settings SET maximum_sim_time_step = max(1, sim_time_step) WHERE maximum_sim_time_step IS NULL"
+        "UPDATE v2_global_settings SET use_0d_inflow = 0 WHERE use_0d_inflow IS NULL"
+    )
+    op.execute(
+        "UPDATE v2_global_settings SET minimum_sim_time_step = min(0.1, sim_time_step) WHERE minimum_sim_time_step IS NULL OR minimum_time_step <= 0"
+    )
+    op.execute(
+        "UPDATE v2_global_settings SET maximum_sim_time_step = max(1, sim_time_step) WHERE maximum_sim_time_step IS NULL AND timestep_plus = 1"
     )
     op.execute(
         "UPDATE v2_global_settings SET output_time_step = max(1, sim_time_step) WHERE output_time_step IS NULL"
@@ -78,6 +50,24 @@ def upgrade():
     )
     op.execute(
         "UPDATE v2_global_settings SET dist_calc_points = 100 WHERE dist_calc_points <= 0"
+    )
+    op.execute(
+        "UPDATE v2_global_settings SET dem_obstacle_detection = 0 WHERE dem_obstacle_detection = ''"
+    )
+    op.execute(
+        "UPDATE v2_global_settings SET table_step_size_1d = NULL WHERE table_step_size_1d <= 0"
+    )
+    op.execute(
+        "UPDATE v2_global_settings SET table_step_size_volume_2d = NULL WHERE table_step_size_volume_2d <= 0"
+    )
+    op.execute(
+        "UPDATE v2_simple_infiltration SET infiltration_surface_option = 0 WHERE infiltration_surface_option IS NULL"
+    )
+    op.execute(
+        "UPDATE v2_simple_infiltration SET infiltration_rate = 0 WHERE infiltration_rate < 0"
+    )
+    op.execute(
+        "UPDATE v2_numerical_settings SET precon_cg = 1 WHERE precon_cg > 1"
     )
 
 

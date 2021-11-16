@@ -203,7 +203,7 @@ CHECKS += [
             models.CrossSectionLocation.reference_level
             > models.CrossSectionLocation.bank_level,
         ),
-        message="CrossSectionLocation.reference_level should be below the CrossSectionLocation.bank_level"
+        message="CrossSectionLocation.reference_level should be below the CrossSectionLocation.bank_level "
         "when CrossSectionLocation.bank_level is not null",
     ),
     QueryCheck(
