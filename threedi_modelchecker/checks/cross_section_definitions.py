@@ -46,7 +46,7 @@ class CrossSectionNullCheck(CrossSectionBaseCheck):
     def get_invalid(self, session):
         return self.to_check(session).filter(
             (self.column == None) | (self.column == "")
-        )
+        ).all()
 
     def description(self):
         return f"{self.column_name} cannot be null or empty"
@@ -62,7 +62,7 @@ class CrossSectionFloatCheck(CrossSectionBaseCheck):
         ):
             try:
                 value = float(getattr(record, self.column.name))
-            except TypeError:
+            except ValueError:
                 invalids.append(record)
             else:
                 if value <= 0:
