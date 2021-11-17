@@ -3,16 +3,6 @@ from .base import BaseCheck
 from sqlalchemy.orm import Query
 
 
-__all__ = [
-    "CrossSectionNullCheck",
-    "CrossSectionFloatCheck",
-    "CrossSectionFloatListCheck",
-    "CrossSectionEqualElementsCheck",
-    "CrossSectionIncreasingCheck",
-    "CrossSectionFirstElementNotZeroCheck",
-]
-
-
 class CrossSectionBaseCheck(BaseCheck):
     """Base class for all cross section definition checks."""
 
@@ -44,9 +34,11 @@ class CrossSectionNullCheck(CrossSectionBaseCheck):
     """Check if width / height is not NULL or empty"""
 
     def get_invalid(self, session):
-        return self.to_check(session).filter(
-            (self.column == None) | (self.column == "")
-        ).all()
+        return (
+            self.to_check(session)
+            .filter((self.column == None) | (self.column == ""))
+            .all()
+        )
 
     def description(self):
         return f"{self.column_name} cannot be null or empty"

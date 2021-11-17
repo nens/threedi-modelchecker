@@ -5,7 +5,14 @@ from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
 from .checks.base import RangeCheck
-from .checks.cross_section_definitions import *
+from .checks.cross_section_definitions import CrossSectionEqualElementsCheck
+from .checks.cross_section_definitions import (
+    CrossSectionFirstElementNotZeroCheck,
+)
+from .checks.cross_section_definitions import CrossSectionFloatCheck
+from .checks.cross_section_definitions import CrossSectionFloatListCheck
+from .checks.cross_section_definitions import CrossSectionIncreasingCheck
+from .checks.cross_section_definitions import CrossSectionNullCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks

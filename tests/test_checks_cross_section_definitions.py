@@ -1,9 +1,5 @@
 from . import factories
-from .factories import BoundaryConditions2DFactory
-from geoalchemy2 import functions as geo_func
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm import Query
-from threedi_modelchecker.checks.cross_section_definitions import *
+from .checks.cross_section_definitions import CrossSectionNullCheck, CrossSectionFirstElementNotZeroCheck, CrossSectionIncreasingCheck, CrossSectionEqualElementsCheck, CrossSectionFloatCheck, CrossSectionFloatListCheck
 from threedi_modelchecker.threedi_model.constants import CrossSectionShape
 from threedi_modelchecker.threedi_model.models import CrossSectionDefinition
 import pytest
