@@ -76,7 +76,7 @@ def test_check_null_valid(session, width):
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.parametrize("width", [" ", "foo", "0,1", " 0.1", "1e-2e8"])
+@pytest.mark.parametrize("width", [" ", "foo", "0,1", "1e-2e8", "0", "-0.1"])
 def test_check_float_invalid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
@@ -94,15 +94,6 @@ def test_check_float_valid(session, width):
     check = CrossSectionFloatCheck(column=CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
-
-
-@pytest.mark.parametrize("width", [" ", "foo", "0,1", "1e-2e8", "0", "-0.1"])
-def test_check_float_invalid(session, width):
-    definition = factories.CrossSectionDefinitionFactory(width=width)
-    factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionFloatCheck(column=CrossSectionDefinition.width)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
 
 
 @pytest.mark.parametrize("width", [" ", "0,1,2", "3;5;7", "foo"])
