@@ -517,7 +517,7 @@ def test_simulation_settings(session):
                 "cfl_strictness_factor_1d": 1.0,
                 "cfl_strictness_factor_2d": 1.0,
                 "convergence_cg": 1e-09,
-                "convergence_eps": 1e-09,
+                "convergence_eps": 1e-05,
                 "flooding_threshold": 0.01,
                 "flow_direction_threshold": 1e-05,
                 "friction_shallow_water_depth_correction": 0,
@@ -545,7 +545,7 @@ def test_simulation_settings(session):
         timestep=TimeStepSettings(
             **{
                 "max_time_step": 1.0,
-                "min_time_step": 0.1,
+                "min_time_step": 0.01,
                 "output_time_step": 1.0,
                 "time_step": 30.0,
                 "use_time_step_stretch": False,

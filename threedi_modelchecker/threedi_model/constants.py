@@ -173,3 +173,26 @@ class InflowType(Enum):
     NO_INFLOW = 0
     IMPERVIOUS_SURFACE = 1
     SURFACE = 2
+
+
+class OffOrStandard(Enum):
+    OFF = 0
+    STANDARD = 1
+
+
+class FrictionShallowWaterDepthCorrection(Enum):
+    OFF = 0
+    MAX_AVERAGE_CHANNEL_BASED = 1
+    LINEARIZED = 2
+    LINEARIZED_WEIGHTED_AVERAGED = 3
+
+
+class LimiterSlopeXArea(Enum):
+    OFF = 0
+    HIGHER_ORDER_SCHEME = 1
+    UPWIND = 2
+    DEPTH_DEPENDED = 3
+
+
+class IntegrationMethod(Enum):
+    EULER_IMPLICIT = 0
