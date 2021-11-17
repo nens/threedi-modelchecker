@@ -41,6 +41,7 @@ def test_check_cross_section_location_bank_levels(session):
     assert len(invalid_bank_levels) == 1
     assert invalid_bank_levels[0].id == wrong.id
 
+
 @pytest.mark.parametrize("timeseries", ["0,-0.5", "0,-0.5 \n59, -0.5\n60 ,-0.5\n   "])
 def test_timeseries_check(session, timeseries):
     BoundaryConditions2DFactory()

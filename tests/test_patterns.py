@@ -1,5 +1,6 @@
 from threedi_modelchecker.checks.patterns import TIMESERIES_REGEX
 
+
 def test_TIMESERIES():
     text = "0,-0.5\n59,-0.5\n60,-0.5\n61,-0.5\n9999,-0.5"
     assert TIMESERIES_REGEX.fullmatch(text)
