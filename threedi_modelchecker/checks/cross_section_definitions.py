@@ -45,7 +45,7 @@ class CrossSectionNullCheck(CrossSectionBaseCheck):
 
 
 class CrossSectionFloatCheck(CrossSectionBaseCheck):
-    """Check that width / height is a float and >0"""
+    """Check that width / height is a valid non-negative float"""
 
     def get_invalid(self, session):
         invalids = []
@@ -57,13 +57,34 @@ class CrossSectionFloatCheck(CrossSectionBaseCheck):
             except ValueError:
                 invalids.append(record)
             else:
-                if value <= 0:
+                if value < 0:
                     invalids.append(record)
 
         return invalids
 
     def description(self):
-        return f"{self.column_name} is should be a positive number for shapes {self.shape_msg}"
+        return f"{self.column_name} should be a positive number for shapes {self.shape_msg}"
+
+
+class CrossSectionNonZeroCheck(CrossSectionBaseCheck):
+    """Check that width / height is larger than >0"""
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            try:
+                value = float(getattr(record, self.column.name))
+            except ValueError:
+                continue
+
+            if value == 0:
+                invalids.append(record)
+        return invalids
+
+    def description(self):
+        return f"{self.column_name} should be nonzero for shapes {self.shape_msg}"
 
 
 class CrossSectionFloatListCheck(CrossSectionBaseCheck):
@@ -137,10 +158,10 @@ class CrossSectionIncreasingCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
-        return f"{self.column_name} should be monotonically increasing for shapes {self.shape_msg}"
+        return f"{self.column_name} should be monotonically increasing for shapes {self.shape_msg}. Maybe the width and height have been interchanged?"
 
 
-class CrossSectionFirstElementNotZeroCheck(CrossSectionBaseCheck):
+class CrossSectionFirstElementNonZeroCheck(CrossSectionBaseCheck):
     """Tabulated definitions should have an increasing list of heights."""
 
     def get_invalid(self, session):
@@ -155,10 +176,10 @@ class CrossSectionFirstElementNotZeroCheck(CrossSectionBaseCheck):
             except ValueError:
                 continue  # other check catches this
 
-            if abs(values[0]) < 1e-7:
+            if abs(values[0]) <= 0:
                 invalids.append(record)
 
         return invalids
 
     def description(self):
-        return f"the first element of {self.column_name} should be larger than 1e-7 for shapes {self.shape_msg}"
+        return f"The first element of {self.column_name} should be larger than 0 for shapes {self.shape_msg}. Zero as first value may lead to numerical issues."

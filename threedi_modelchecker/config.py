@@ -7,11 +7,12 @@ from .checks.base import QueryCheck
 from .checks.base import RangeCheck
 from .checks.cross_section_definitions import CrossSectionEqualElementsCheck
 from .checks.cross_section_definitions import (
-    CrossSectionFirstElementNotZeroCheck,
+    CrossSectionFirstElementNonZeroCheck,
 )
 from .checks.cross_section_definitions import CrossSectionFloatCheck
 from .checks.cross_section_definitions import CrossSectionFloatListCheck
 from .checks.cross_section_definitions import CrossSectionIncreasingCheck
+from .checks.cross_section_definitions import CrossSectionNonZeroCheck
 from .checks.cross_section_definitions import CrossSectionNullCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
@@ -312,8 +313,25 @@ CHECKS += [
         column=models.CrossSectionDefinition.height,
         shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
     ),
-    CrossSectionFloatListCheck(
+    CrossSectionNonZeroCheck(
         error_code=85,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionDefinition.width,
+        shapes=(
+            constants.CrossSectionShape.RECTANGLE,
+            constants.CrossSectionShape.CIRCLE,
+            constants.CrossSectionShape.CLOSED_RECTANGLE,
+            constants.CrossSectionShape.EGG,
+        ),
+    ),
+    CrossSectionNonZeroCheck(
+        error_code=86,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionDefinition.height,
+        shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
+    ),
+    CrossSectionFloatListCheck(
+        error_code=87,
         column=models.CrossSectionDefinition.width,
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
@@ -321,7 +339,7 @@ CHECKS += [
         ),
     ),
     CrossSectionFloatListCheck(
-        error_code=86,
+        error_code=88,
         column=models.CrossSectionDefinition.height,
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
@@ -329,22 +347,23 @@ CHECKS += [
         ),
     ),
     CrossSectionEqualElementsCheck(
-        error_code=87,
+        error_code=89,
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
         ),
     ),
     CrossSectionIncreasingCheck(
-        error_code=87,
+        error_code=90,
         column=models.CrossSectionDefinition.height,
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
         ),
     ),
-    CrossSectionFirstElementNotZeroCheck(
-        error_code=88,
+    CrossSectionFirstElementNonZeroCheck(
+        error_code=91,
+        level=CheckLevel.WARNING,
         column=models.CrossSectionDefinition.width,
         shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
     ),
