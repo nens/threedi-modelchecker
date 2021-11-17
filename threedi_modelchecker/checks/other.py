@@ -69,6 +69,7 @@ class CrossSectionLocationCheck(BaseCheck):
     def description(self):
         return "v2_cross_section_location.the_geom is invalid: the cross-section location should be located on the channel geometry"
 
+
 class TimeseriesCheck(BaseCheck):
     """Check that `column` has the time series pattern: digit,float\n
 

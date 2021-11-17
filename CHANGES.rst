@@ -5,7 +5,10 @@ Changelog of threedi-modelchecker
 0.18 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Make cross section definition checks more informative.
+
+- Display the table name instead of the internal model name in the error
+  description.
 
 
 0.17 (2021-11-03)

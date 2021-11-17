@@ -5,6 +5,7 @@ from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
 from .checks.base import RangeCheck
+from .checks.cross_section_definitions import *
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks
@@ -17,7 +18,6 @@ from .checks.other import BoundaryCondition1DObjectNumberCheck
 from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionLocationCheck
-from .checks.other import CrossSectionShapeCheck
 from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
@@ -192,7 +192,6 @@ CHECKS += [
 ## 005x: CROSS SECTIONS
 
 CHECKS += [
-    CrossSectionShapeCheck(error_code=51),
     CrossSectionLocationCheck(max_distance=1.0, error_code=52),
     OpenChannelsWithNestedNewton(error_code=53),
     QueryCheck(
@@ -272,6 +271,76 @@ CHECKS += [
     ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),
+]
+
+## 008x: CROSS SECTION DEFINITIONS
+
+CHECKS += [
+    CrossSectionNullCheck(
+        error_code=81,
+        column=models.CrossSectionDefinition.width,
+        shapes=None,  # all shapes
+    ),
+    CrossSectionNullCheck(
+        error_code=82,
+        column=models.CrossSectionDefinition.height,
+        shapes=(
+            constants.CrossSectionShape.CLOSED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
+    ),
+    CrossSectionFloatCheck(
+        error_code=83,
+        column=models.CrossSectionDefinition.width,
+        shapes=(
+            constants.CrossSectionShape.RECTANGLE,
+            constants.CrossSectionShape.CIRCLE,
+            constants.CrossSectionShape.CLOSED_RECTANGLE,
+            constants.CrossSectionShape.EGG,
+        ),
+    ),
+    CrossSectionFloatCheck(
+        error_code=84,
+        column=models.CrossSectionDefinition.height,
+        shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
+    ),
+    CrossSectionFloatListCheck(
+        error_code=85,
+        column=models.CrossSectionDefinition.width,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
+    ),
+    CrossSectionFloatListCheck(
+        error_code=86,
+        column=models.CrossSectionDefinition.height,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
+    ),
+    CrossSectionEqualElementsCheck(
+        error_code=87,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
+    ),
+    CrossSectionIncreasingCheck(
+        error_code=87,
+        column=models.CrossSectionDefinition.height,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
+    ),
+    CrossSectionFirstElementNotZeroCheck(
+        error_code=88,
+        column=models.CrossSectionDefinition.width,
+        shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
+    ),
 ]
 
 
