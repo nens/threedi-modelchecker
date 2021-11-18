@@ -89,16 +89,20 @@ class BaseCheck(ABC):
             query = query.filter(self.filters)
         return query
 
+    @property
+    def column_name(self) -> str:
+        return f"{self.table.name}.{self.column.name}"
+
     def description(self) -> str:
         """Return a string explaining why rows are invalid according to this
         check.
 
         :return: string
         """
-        return "Invalid value in column '%s'" % self.column
+        return "Invalid value in column '%s'" % self.column_name
 
     def __repr__(self) -> str:
-        return "<%s: %s.%s>" % (self.__tablename__, self.table.name, self.column.name)
+        return "<%s: %s>" % (self.__class__.__name__, self.column_name)
 
 
 class GeneralCheck(BaseCheck):
@@ -189,7 +193,7 @@ class ForeignKeyCheck(BaseCheck):
 
     def description(self):
         return "%s refers to a non-existing %s" % (
-            self.column,
+            self.column_name,
             self.reference_column.table,
         )
 
@@ -210,7 +214,7 @@ class UniqueCheck(BaseCheck):
         return invalid_uniques_query.all()
 
     def description(self):
-        return "%s should to be unique" % self.column
+        return f"{self.column_name} should to be unique"
 
 
 class NotNullCheck(BaseCheck):
@@ -222,7 +226,7 @@ class NotNullCheck(BaseCheck):
         return not_null_query.all()
 
     def description(self):
-        return "%s cannot be null" % self.column
+        return f"{self.column_name} cannot be null"
 
 
 class TypeCheck(BaseCheck):
@@ -245,7 +249,7 @@ class TypeCheck(BaseCheck):
         return invalid_type_query.all()
 
     def description(self):
-        return f"{self.column} is not of type {self.expected_types}"
+        return f"{self.column_name} is not of type {self.expected_types}"
 
 
 def _sqlalchemy_to_sqlite_types(column_type):
@@ -292,7 +296,7 @@ class GeometryCheck(BaseCheck):
         return invalid_geometries.all()
 
     def description(self):
-        return "%s is an invalid geometry" % self.column
+        return f"{self.column_name} is an invalid geometry"
 
 
 class GeometryTypeCheck(BaseCheck):
@@ -317,7 +321,7 @@ class GeometryTypeCheck(BaseCheck):
 
     def description(self):
         return "%s has invalid geometry type, expected %s" % (
-            self.column,
+            self.column_name,
             self.column.type.geometry_type,
         )
 
@@ -351,7 +355,7 @@ class EnumCheck(BaseCheck):
 
     def description(self):
         allowed = {x.value for x in self.column.type.enum_class}
-        return f"{self.column} is not one of {allowed}"
+        return f"{self.column_name} is not one of {allowed}"
 
 
 class RangeCheck(BaseCheck):
@@ -401,7 +405,7 @@ class RangeCheck(BaseCheck):
         else:
             # no room for 'left_inclusive' / 'right_inclusive' info
             msg = f"is not between {self.min_value} and {self.max_value}"
-        return f"{self.column} {msg}"
+        return f"{self.column_name} {msg}"
 
 
 class FileExistsCheck(BaseCheck):
@@ -460,4 +464,4 @@ class FileExistsCheck(BaseCheck):
         return self.to_check(session).filter(self.column.in_(invalid)).all()
 
     def description(self):
-        return f"The file in {self.column} is not present"
+        return f"The file in {self.column_name} is not present"
