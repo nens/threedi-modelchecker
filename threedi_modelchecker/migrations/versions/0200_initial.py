@@ -21,12 +21,16 @@ depends_on = None
 existing_tables = []
 
 
-def _get_existing_tables():
+def _get_existing_tables(inspector):
     """Fill the global 'existing_tables'"""
     global existing_tables
-    conn = op.get_bind()
-    inspector = Inspector.from_engine(conn)
+
     existing_tables = inspector.get_table_names()
+
+
+def _get_column_lookup(inspector, table_name):
+    columns = inspector.get_columns(table_name)
+    return {c["name"]: c for c in columns}
 
 
 def create_table_if_not_exists(table_name, *args, **kwargs):
@@ -37,13 +41,53 @@ def create_table_if_not_exists(table_name, *args, **kwargs):
         return op.create_table(table_name, *args, **kwargs)
 
 
+def drop_field_if_exists(inspector, table_name, field_name):
+    if field_name not in _get_column_lookup(inspector, table_name):
+        return  # field doesn't exist: do nothing
+
+    with op.batch_alter_table(table_name) as batch_op:
+        batch_op.drop_column(field_name)
+
+
+def make_field_nullable(inspector, table_name, field_name):
+    if _get_column_lookup(inspector, table_name)[field_name]["nullable"]:
+        return  # column is nullable: do nothing
+
+    with op.batch_alter_table(table_name) as batch_op:
+        batch_op.alter_column(field_name, nullable=True)
+
+
+def upgrade_173(inspector):
+    if "v2_initial_waterlevel" not in existing_tables:
+        return  # skip this migration
+
+    # this duplicates the last migration from the old stack:
+    # 0172_auto__del_v2initialwaterlevel__del_field_v2orifice_max_capacity__del_f
+    op.drop_table("v2_initial_waterlevel")
+
+    drop_field_if_exists(inspector, "v2_orifice", "max_capacity")
+    drop_field_if_exists(inspector, "v2_impervious_surface", "function")
+    drop_field_if_exists(inspector, "v2_pipe", "pipe_quality")
+    drop_field_if_exists(inspector, "v2_orifice", "max_capacity")
+    make_field_nullable(inspector, "v2_culvert", "discharge_coefficient_negative")
+    make_field_nullable(inspector, "v2_culvert", "discharge_coefficient_positive")
+
+
 def upgrade():
-    # Setup the global 'existing_tables'
-    _get_existing_tables()
-    # Initialize the Spatialite if necessary:
     conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
+
+    # Setup the global 'existing_tables'
+    _get_existing_tables(inspector)
+
+    # Initialize the Spatialite if necessary:
     if conn.dialect.name == "sqlite" and "spatial_ref_sys" not in existing_tables:
         op.execute("SELECT InitSpatialMetadata()")
+
+    # Check if migration 173 should be done
+    upgrade_173(inspector)
+
+
     create_table_if_not_exists(
         "v2_2d_boundary_conditions",
         sa.Column("id", sa.Integer(), nullable=False),
