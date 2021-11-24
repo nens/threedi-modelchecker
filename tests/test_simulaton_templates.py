@@ -535,7 +535,7 @@ def test_simulation_settings(session):
                 "pump_implicit_ratio": 1.0,
                 "time_integration_method": 0,
                 "use_nested_newton": False,
-                "use_of_cg": 0,
+                "use_of_cg": 20,
                 "use_preconditioner_cg": 1,
             },
         ),

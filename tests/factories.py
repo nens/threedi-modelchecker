@@ -181,7 +181,7 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     max_degree = 1
-    use_of_cg = 0
+    use_of_cg = 20
     use_of_nested_newton = 0
 
 

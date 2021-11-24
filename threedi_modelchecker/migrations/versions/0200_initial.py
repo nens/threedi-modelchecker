@@ -18,14 +18,14 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
+
 existing_tables = []
 
 
-def _get_existing_tables():
+def _get_existing_tables(inspector):
     """Fill the global 'existing_tables'"""
     global existing_tables
-    conn = op.get_bind()
-    inspector = Inspector.from_engine(conn)
+
     existing_tables = inspector.get_table_names()
 
 
@@ -37,13 +37,43 @@ def create_table_if_not_exists(table_name, *args, **kwargs):
         return op.create_table(table_name, *args, **kwargs)
 
 
+def upgrade_173():
+    """This implements the latest migration from the old stack:
+
+    0172_auto__del_v2initialwaterlevel__del_field_v2orifice_max_capacity__del_f
+    """
+    if "v2_initial_waterlevel" not in existing_tables:
+        return  # skip this migration (probably already done)
+
+    op.drop_table("v2_initial_waterlevel")
+
+    with op.batch_alter_table("v2_orifice") as batch_op:
+        batch_op.drop_column("max_capacity")
+
+    with op.batch_alter_table("v2_impervious_surface") as batch_op:
+        batch_op.drop_column("function")
+
+    with op.batch_alter_table("v2_pipe") as batch_op:
+        batch_op.drop_column("pipe_quality")
+
+    with op.batch_alter_table("v2_culvert") as batch_op:
+        batch_op.alter_column("discharge_coefficient_negative", nullable=True)
+        batch_op.alter_column("discharge_coefficient_positive", nullable=True)
+
+
 def upgrade():
-    # Setup the global 'existing_tables'
-    _get_existing_tables()
-    # Initialize the Spatialite if necessary:
     conn = op.get_bind()
+    inspector = Inspector.from_engine(conn)
+
+    # Setup the global 'existing_tables'
+    _get_existing_tables(inspector)
+
+    # Initialize the Spatialite if necessary:
     if conn.dialect.name == "sqlite" and "spatial_ref_sys" not in existing_tables:
         op.execute("SELECT InitSpatialMetadata()")
+
+    upgrade_173()
+
     create_table_if_not_exists(
         "v2_2d_boundary_conditions",
         sa.Column("id", sa.Integer(), nullable=False),
