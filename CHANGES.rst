@@ -10,6 +10,9 @@ Changelog of threedi-modelchecker
 - Display the table name instead of the internal model name in the error
   description.
 
+- Accept schematisations with version 173 by re-implementing the last migration from
+  the old stack.
+
 
 0.17 (2021-11-03)
 -----------------
