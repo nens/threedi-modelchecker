@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.18 (unreleased)
+0.18 (2021-11-25)
 -----------------
 
 - Make cross section definition checks more informative.
