@@ -13,6 +13,8 @@ Changelog of threedi-modelchecker
 - Accept schematisations with version 173 by re-implementing the last migration from
   the old stack.
 
+- Updated settings checks to match the current API.
+
 
 0.17 (2021-11-03)
 -----------------
