@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.19 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Set maximum_time_step to NULL where timestep_plus is not used.
 
 
 0.18 (2021-11-25)

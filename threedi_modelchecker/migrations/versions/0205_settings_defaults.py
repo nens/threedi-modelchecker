@@ -29,6 +29,8 @@ UPDATE v2_global_settings SET maximum_sim_time_step = sim_time_step
   WHERE timestep_plus = 1
     AND (maximum_sim_time_step IS NULL OR maximum_sim_time_step < sim_time_step);
 
+UPDATE v2_global_settings SET maximum_sim_time_step = NULL WHERE timestep_plus <> 1;
+
 UPDATE v2_global_settings SET output_time_step = max(1, sim_time_step)
   WHERE output_time_step IS NULL OR output_time_step < sim_time_step;
 
