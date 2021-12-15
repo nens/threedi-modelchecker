@@ -1,3 +1,4 @@
+from datetime import timedelta
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_api_client.openapi.models.measure_location import MeasureLocation
@@ -30,6 +31,9 @@ from threedi_modelchecker.threedi_model.models import ControlTimed
 from typing import Dict
 from typing import List
 from typing import Union
+
+
+INFINITE_SIM_DURATION = int((timedelta(days=365) * 100).total_seconds())
 
 
 def control_measure_map_to_measure_location(
@@ -104,15 +108,13 @@ def to_table_control(
         control_start = 0
 
     try:
-        int(control.end)
+        control_end = int(control.end)
     except (ValueError, TypeError):
-        raise SchematisationError(
-            f"Timed control control.end not set for v2_control_table.id = {table_control.id}"
-        )
+        control_end = INFINITE_SIM_DURATION
 
     return TableStructureControl(
         offset=control_start,
-        duration=int(control.end) - control_start,
+        duration=control_end - control_start,
         measure_specification=measure_specification,
         structure_id=table_control.target_id,
         structure_type=table_control.target_type,
@@ -144,15 +146,13 @@ def to_memory_control(
         control_start = 0
 
     try:
-        int(control.end)
+        control_end = int(control.end)
     except (ValueError, TypeError):
-        raise SchematisationError(
-            f"Timed control control.end not set for v2_control_memory.id = {memory_control.id}"
-        )
+        control_end = INFINITE_SIM_DURATION
 
     return MemoryStructureControl(
         offset=control_start,
-        duration=int(control.end) - control_start,
+        duration=control_end - control_start,
         measure_specification=measure_specification,
         structure_id=memory_control.target_id,
         structure_type=memory_control.target_type,
@@ -193,18 +193,16 @@ def to_timed_control(
         control_start = 0
 
     try:
-        int(control.end)
+        control_end = int(control.end)
     except (ValueError, TypeError):
-        raise SchematisationError(
-            f"Timed control control.end not set for v2_control_timed.id = {timed_control.id}"
-        )
+        control_end = INFINITE_SIM_DURATION
 
     # Pick first two values
     value = values[0]
 
     return TimedStructureControl(
         offset=control_start,
-        duration=int(control.end) - control_start,
+        duration=control_end - control_start,
         value=value,
         type=action_type,
         structure_id=timed_control.target_id,
