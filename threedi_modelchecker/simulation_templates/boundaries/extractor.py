@@ -1,13 +1,16 @@
-from typing import List, Dict, Union
 from enum import Enum
-from threedi_modelchecker.threedi_model.models import (
-    BoundaryConditions2D,
-    BoundaryCondition1D,
-)
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
-from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
+from threedi_modelchecker.simulation_templates.exceptions import (
+    SchematisationError,
+)
 from threedi_modelchecker.simulation_templates.utils import parse_timeseries
+from threedi_modelchecker.threedi_model.models import BoundaryCondition1D
+from threedi_modelchecker.threedi_model.models import BoundaryConditions2D
+from typing import Dict
+from typing import List
+from typing import Union
+
 
 # JSON format example:
 # [

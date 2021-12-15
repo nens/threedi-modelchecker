@@ -27,8 +27,11 @@ from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
-from .checks.other import TimeseriesCheck
 from .checks.other import Use0DFlowCheck
+from .checks.timeseries import TimeseriesIncreasingCheck
+from .checks.timeseries import TimeseriesRowCheck
+from .checks.timeseries import TimeseriesTimestepCheck
+from .checks.timeseries import TimeseriesValueCheck
 from .threedi_model import models
 from .threedi_model.models import constants
 from geoalchemy2 import functions as geo_func
@@ -1309,7 +1312,34 @@ CHECKS += [
 
 ## 12xx  SIMULATION, timeseries
 CHECKS += [
-    TimeseriesCheck(col, error_code=1200)
+    TimeseriesRowCheck(col, error_code=1200)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+        models.Lateral1d.timeseries,
+        models.Lateral2D.timeseries,
+    ]
+]
+CHECKS += [
+    TimeseriesTimestepCheck(col, error_code=1201)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+        models.Lateral1d.timeseries,
+        models.Lateral2D.timeseries,
+    ]
+]
+CHECKS += [
+    TimeseriesValueCheck(col, error_code=1202)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+        models.Lateral1d.timeseries,
+        models.Lateral2D.timeseries,
+    ]
+]
+CHECKS += [
+    TimeseriesIncreasingCheck(col, error_code=1203)
     for col in [
         models.BoundaryCondition1D.timeseries,
         models.BoundaryConditions2D.timeseries,

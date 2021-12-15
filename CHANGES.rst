@@ -7,6 +7,10 @@ Changelog of threedi-modelchecker
 
 - Set maximum_time_step to NULL where timestep_plus is not used.
 
+- Replaced the generic timeseries check to more specific ones. The timeseries are
+  not required anymore to be of the same length. Added checks are: timesteps should be
+  >= 0 and increasing.
+
 
 0.18 (2021-11-25)
 -----------------

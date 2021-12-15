@@ -1,11 +1,16 @@
-from typing import List
-from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
-from threedi_modelchecker.threedi_model.models import Lateral1d, Lateral2D
 from sqlalchemy.orm import Query
-from threedi_api_client.openapi.models.lateral import Lateral
 from sqlalchemy.orm.session import Session
-from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
+from threedi_api_client.openapi.models.lateral import Lateral
+from threedi_modelchecker.simulation_templates.exceptions import (
+    SchematisationError,
+)
 from threedi_modelchecker.simulation_templates.utils import parse_timeseries
+from threedi_modelchecker.simulation_templates.utils import (
+    strip_dict_none_values,
+)
+from threedi_modelchecker.threedi_model.models import Lateral1d
+from threedi_modelchecker.threedi_model.models import Lateral2D
+from typing import List
 
 
 def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:

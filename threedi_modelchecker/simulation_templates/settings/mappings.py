@@ -1,8 +1,11 @@
-from enum import Enum
 from collections import defaultdict
-from typing import Dict, List
 from dataclasses import dataclass
-from typing import Any, Optional, Tuple
+from enum import Enum
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 
 @dataclass(frozen=True)

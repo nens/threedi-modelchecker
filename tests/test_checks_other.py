@@ -1,5 +1,4 @@
 from . import factories
-from .factories import BoundaryConditions2DFactory
 from geoalchemy2 import functions as geo_func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Query
@@ -7,7 +6,6 @@ from threedi_modelchecker.checks.other import BankLevelCheck
 from threedi_modelchecker.checks.other import ConnectionNodesDistance
 from threedi_modelchecker.checks.other import ConnectionNodesLength
 from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton
-from threedi_modelchecker.checks.other import TimeseriesCheck
 from threedi_modelchecker.threedi_model import constants
 from threedi_modelchecker.threedi_model import models
 
@@ -40,35 +38,6 @@ def test_check_cross_section_location_bank_levels(session):
     invalid_bank_levels = bank_level_check.get_invalid(session)
     assert len(invalid_bank_levels) == 1
     assert invalid_bank_levels[0].id == wrong.id
-
-
-@pytest.mark.parametrize("timeseries", ["0,-0.5", "0,-0.5 \n59, -0.5\n60 ,-0.5\n   "])
-def test_timeseries_check(session, timeseries):
-    BoundaryConditions2DFactory()
-
-    check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
-    invalid = check.get_invalid(session)
-    assert len(invalid) == 0
-
-
-def test_timeseries_check_multiple(session):
-    BoundaryConditions2DFactory.create_batch(3)
-
-    check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
-    invalid = check.get_invalid(session)
-    assert len(invalid) == 0
-
-
-def test_timeseries_check_different_timesteps(session):
-    BoundaryConditions2DFactory(timeseries="0,-0.5\n1,1.4\n2,4.0")
-    boundary_condition2 = BoundaryConditions2DFactory(
-        timeseries="0,-0.5\n1,1.4\n3,4.0"  # Note the last timestep is 3 instead of 2
-    )
-
-    check = TimeseriesCheck(models.BoundaryConditions2D.timeseries)
-    invalid = check.get_invalid(session)
-    assert len(invalid) == 1
-    assert invalid[0].id == boundary_condition2.id
 
 
 def test_connection_nodes_length(session):

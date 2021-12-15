@@ -8,7 +8,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import Session
-from threedi_modelchecker.checks import patterns
 from typing import List
 from typing import NamedTuple
 
@@ -68,45 +67,6 @@ class CrossSectionLocationCheck(BaseCheck):
 
     def description(self):
         return "v2_cross_section_location.the_geom is invalid: the cross-section location should be located on the channel geometry"
-
-
-class TimeseriesCheck(BaseCheck):
-    """Check that `column` has the time series pattern: digit,float\n
-
-    The first digit is the timestep in minutes, the float is a value depending
-    on the type of timeseries.
-
-    Example of a timeserie: 0,-0.5\n59,-0.5\n60,-0.5\n61,-0.5\n9999,-0.5
-
-    All timeseries in the table should contain the same timesteps.
-    """
-
-    def get_invalid(self, session):
-        invalid_timeseries = []
-        required_timesteps = {}
-        rows = session.query(self.table).all()
-
-        for row in rows:
-            timeserie = row.timeseries
-            if not patterns.TIMESERIES_REGEX.fullmatch(timeserie):
-                invalid_timeseries.append(row)
-                continue
-
-            timesteps = {
-                time for time, *_ in patterns.TIMESERIE_ENTRY_REGEX.findall(timeserie)
-            }
-            if not required_timesteps:
-                # Assume the first timeserie defines the required timesteps.
-                # All others should have the same timesteps.
-                required_timesteps = timesteps
-                continue
-            if timesteps != required_timesteps:
-                invalid_timeseries.append(row)
-
-        return invalid_timeseries
-
-    def description(self):
-        return f"{self.column} contains an invalid timeseries"
 
 
 class Use0DFlowCheck(BaseCheck):

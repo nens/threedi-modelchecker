@@ -1,29 +1,35 @@
-from typing import List, Dict, Union
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
-from threedi_api_client.openapi.models.timed_structure_control import (
-    TimedStructureControl,
-)
 from threedi_api_client.openapi.models.measure_location import MeasureLocation
-from threedi_api_client.openapi.models.measure_specification import MeasureSpecification
-from threedi_api_client.openapi.models.table_structure_control import (
-    TableStructureControl,
+from threedi_api_client.openapi.models.measure_specification import (
+    MeasureSpecification,
 )
 from threedi_api_client.openapi.models.memory_structure_control import (
     MemoryStructureControl,
 )
-from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
-from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
-from threedi_modelchecker.threedi_model.models import (
-    Control,
-    ControlGroup,
-    ControlMeasureGroup,
-    ControlMeasureMap,
-    ControlMemory,
-    ControlTimed,
-    ControlTable,
+from threedi_api_client.openapi.models.table_structure_control import (
+    TableStructureControl,
+)
+from threedi_api_client.openapi.models.timed_structure_control import (
+    TimedStructureControl,
+)
+from threedi_modelchecker.simulation_templates.exceptions import (
+    SchematisationError,
 )
 from threedi_modelchecker.simulation_templates.models import StructureControls
+from threedi_modelchecker.simulation_templates.utils import (
+    strip_dict_none_values,
+)
+from threedi_modelchecker.threedi_model.models import Control
+from threedi_modelchecker.threedi_model.models import ControlGroup
+from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
+from threedi_modelchecker.threedi_model.models import ControlMeasureMap
+from threedi_modelchecker.threedi_model.models import ControlMemory
+from threedi_modelchecker.threedi_model.models import ControlTable
+from threedi_modelchecker.threedi_model.models import ControlTimed
+from typing import Dict
+from typing import List
+from typing import Union
 
 
 def control_measure_map_to_measure_location(
