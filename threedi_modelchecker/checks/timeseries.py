@@ -35,8 +35,8 @@ class TimeseriesRowCheck(BaseCheck):
         )
 
 
-class TimeseriesIntCheck(BaseCheck):
-    """Check that each record in a timeserie starts with an integer"""
+class TimeseriesTimestepCheck(BaseCheck):
+    """Check that each record in a timeserie starts with an integer >= 0"""
 
     def get_invalid(self, session):
         invalid_timeseries = []
@@ -53,17 +53,23 @@ class TimeseriesIntCheck(BaseCheck):
                     continue  # checked elsewhere
 
                 try:
-                    int(elems[0].strip())
+                    timestep = int(elems[0].strip())
                 except ValueError:
+                    invalid_timeseries.append(row)
+                    continue
+
+                if timestep < 0:
                     invalid_timeseries.append(row)
 
         return invalid_timeseries
 
     def description(self):
-        return f"{self.column_name} contains an invalid timestep, expected an integer"
+        return (
+            f"{self.column_name} contains an invalid timestep, expected an integer >= 0"
+        )
 
 
-class TimeseriesFloatCheck(BaseCheck):
+class TimeseriesValueCheck(BaseCheck):
     """Check that each record in a timeserie ends with a float"""
 
     def get_invalid(self, session):
@@ -81,8 +87,12 @@ class TimeseriesFloatCheck(BaseCheck):
                     continue  # checked elsewhere
 
                 try:
-                    float(elems[1].strip())
+                    value = float(elems[1].strip())
                 except ValueError:
+                    invalid_timeseries.append(row)
+                    continue
+
+                if str(value) in {"nan", "inf", "-inf"}:
                     invalid_timeseries.append(row)
 
         return invalid_timeseries
