@@ -1,21 +1,21 @@
+from .exceptions import SchematisationError
 from pathlib import Path
-from typing import Optional, List
-
+from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
+from threedi_modelchecker.simulation_templates.boundaries.extractor import (
+    BoundariesExtractor,
+)
 from threedi_modelchecker.simulation_templates.initial_waterlevels.extractor import (
     InitialWaterlevelExtractor,
 )
 from threedi_modelchecker.simulation_templates.laterals.extractor import (
     LateralsExtractor,
 )
-from threedi_modelchecker.simulation_templates.boundaries.extractor import (
-    BoundariesExtractor,
-)
+from threedi_modelchecker.simulation_templates.models import Events
 from threedi_modelchecker.simulation_templates.models import (
     GlobalSettingOption,
-    SimulationTemplate,
-    Events,
 )
+from threedi_modelchecker.simulation_templates.models import SimulationTemplate
 from threedi_modelchecker.simulation_templates.settings.extractor import (
     SettingsExtractor,
 )
@@ -24,8 +24,8 @@ from threedi_modelchecker.simulation_templates.structure_controls.extractor impo
 )
 from threedi_modelchecker.threedi_database import ThreediDatabase
 from threedi_modelchecker.threedi_model.models import GlobalSetting
-from sqlalchemy.orm import Query
-from .exceptions import SchematisationError
+from typing import List
+from typing import Optional
 
 
 __all__ = ["SimulationTemplateExtractor"]

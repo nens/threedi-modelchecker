@@ -31,7 +31,6 @@ from .checks.other import Use0DFlowCheck
 from .checks.timeseries import TimeseriesFloatCheck
 from .checks.timeseries import TimeseriesIncreasingCheck
 from .checks.timeseries import TimeseriesIntCheck
-from .checks.timeseries import TimeseriesMaxLengthCheck
 from .checks.timeseries import TimeseriesRowCheck
 from .threedi_model import models
 from .threedi_model.models import constants
@@ -1344,13 +1343,6 @@ CHECKS += [
     for col in [
         models.BoundaryCondition1D.timeseries,
         models.BoundaryConditions2D.timeseries,
-        models.Lateral1d.timeseries,
-        models.Lateral2D.timeseries,
-    ]
-]
-CHECKS += [
-    TimeseriesMaxLengthCheck(300, col, error_code=1204)
-    for col in [
         models.Lateral1d.timeseries,
         models.Lateral2D.timeseries,
     ]

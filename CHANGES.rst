@@ -9,7 +9,7 @@ Changelog of threedi-modelchecker
 
 - Replaced the generic timeseries check to more specific ones. The timeseries are
   not required anymore to be of the same length, but timesteps have to be monotonically
-  increasing and their max length (for laterals) is 300 timesteps.
+  increasing.
 
 
 0.18 (2021-11-25)

@@ -1,38 +1,58 @@
+from .exceptions import TemplateValidationError
+from .exceptions import TemplateValidationTimeoutError
+from dataclasses import dataclass
+from dataclasses import fields
+from dataclasses import InitVar
 from enum import Enum
-import json
 from io import BytesIO
-import asyncio
-from dataclasses import dataclass, fields, InitVar
-from uuid import uuid4
-from typing import Dict, List, Optional, Any
+from threedi_api_client.aio.files import upload_fileobj
+from threedi_api_client.openapi.models import AggregationSettings
+from threedi_api_client.openapi.models import FileLateral
+from threedi_api_client.openapi.models import InitialWaterlevel
+from threedi_api_client.openapi.models import Lateral
+from threedi_api_client.openapi.models import MeasureLocation
+from threedi_api_client.openapi.models import MeasureSpecification
+from threedi_api_client.openapi.models import MemoryStructureControl
+from threedi_api_client.openapi.models import NumericalSettings
+from threedi_api_client.openapi.models import PhysicalSettings
+from threedi_api_client.openapi.models import Simulation
+from threedi_api_client.openapi.models import TableStructureControl
+from threedi_api_client.openapi.models import Template
+from threedi_api_client.openapi.models import TimedStructureControl
 from threedi_api_client.openapi.models import TimeStepSettings
-from threedi_api_client.openapi.models import PhysicalSettings, InitialWaterlevel
-from threedi_api_client.openapi.models import NumericalSettings, AggregationSettings
-from threedi_api_client.openapi.models import Lateral, FileLateral
-from threedi_api_client.openapi.models import (
-    TableStructureControl,
-    MemoryStructureControl,
-    TimedStructureControl,
-    MeasureSpecification,
-    MeasureLocation,
-)
-from threedi_api_client.openapi.models.one_d_water_level_file import OneDWaterLevelFile
+from threedi_api_client.openapi.models import UploadEventFile
 from threedi_api_client.openapi.models.file_boundary_condition import (
     FileBoundaryCondition,
 )
 from threedi_api_client.openapi.models.file_structure_control import (
     FileStructureControl,
 )
-from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
-from threedi_api_client.openapi.models.ground_water_raster import GroundWaterRaster
+from threedi_api_client.openapi.models.ground_water_level import (
+    GroundWaterLevel,
+)
+from threedi_api_client.openapi.models.ground_water_raster import (
+    GroundWaterRaster,
+)
 from threedi_api_client.openapi.models.one_d_water_level import OneDWaterLevel
+from threedi_api_client.openapi.models.one_d_water_level_file import (
+    OneDWaterLevelFile,
+)
 from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
-from threedi_api_client.openapi.models.two_d_water_raster import TwoDWaterRaster
-from threedi_modelchecker.simulation_templates.utils import strip_dict_none_values
-from threedi_api_client.openapi.models import Simulation, UploadEventFile, Template
+from threedi_api_client.openapi.models.two_d_water_raster import (
+    TwoDWaterRaster,
+)
 from threedi_api_client.versions import V3BetaApi
-from threedi_api_client.aio.files import upload_fileobj
-from .exceptions import TemplateValidationError, TemplateValidationTimeoutError
+from threedi_modelchecker.simulation_templates.utils import (
+    strip_dict_none_values,
+)
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from uuid import uuid4
+
+import asyncio
+import json
 
 
 __all__ = [

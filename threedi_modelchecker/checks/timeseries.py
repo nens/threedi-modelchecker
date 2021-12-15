@@ -114,29 +114,3 @@ class TimeseriesIncreasingCheck(BaseCheck):
 
     def description(self):
         return f"{self.column_name} should be monotonically increasing"
-
-
-class TimeseriesMaxLengthCheck(BaseCheck):
-    """The timesteps in a timeseries should increase"""
-
-    def __init__(self, max_length, *args, **kwargs):
-        self.max_length = max_length
-        super().__init__(*args, **kwargs)
-
-    def get_invalid(self, session):
-        invalid_timeseries = []
-
-        for row in self.to_check(session).all():
-            timeserie = row.timeseries
-            try:
-                timesteps = [x[0] for x in parse_timeseries(timeserie)]
-            except (ValueError, TypeError):
-                continue  # other checks will catch these
-
-            if len(timesteps) > self.max_length:
-                invalid_timeseries.append(row)
-
-        return invalid_timeseries
-
-    def description(self):
-        return f"{self.column_name} should not contain more than {self.max_length} timesteps"

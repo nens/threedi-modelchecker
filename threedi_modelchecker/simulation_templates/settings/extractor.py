@@ -1,29 +1,38 @@
-from typing import List, Optional
-from sqlalchemy.orm import Query
 from enum import Enum
+from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
-from threedi_api_client.openapi.models.physical_settings import PhysicalSettings
+from threedi_api_client.openapi.models import AggregationSettings
+from threedi_api_client.openapi.models import NumericalSettings
+from threedi_api_client.openapi.models import TimeStepSettings
+from threedi_api_client.openapi.models.physical_settings import (
+    PhysicalSettings,
+)
 from threedi_modelchecker.simulation_templates.models import Settings
-from threedi_modelchecker.threedi_model.constants import FlowVariable
-from threedi_modelchecker.threedi_model.models import (
-    GlobalSetting,
-    NumericalSettings as SQLNumericalSettings,
-    AggregationSettings as SQLAggregationSettings,
+from threedi_modelchecker.simulation_templates.settings.mappings import (
+    aggregation_settings_map,
+)
+from threedi_modelchecker.simulation_templates.settings.mappings import (
+    numerical_settings_map,
+)
+from threedi_modelchecker.simulation_templates.settings.mappings import (
+    physical_settings_map,
 )
 from threedi_modelchecker.simulation_templates.settings.mappings import (
     sqlalchemy_to_api_model,
 )
-from threedi_api_client.openapi.models import (
-    NumericalSettings,
-    TimeStepSettings,
-    AggregationSettings,
-)
 from threedi_modelchecker.simulation_templates.settings.mappings import (
     time_step_settings_map,
-    physical_settings_map,
-    numerical_settings_map,
-    aggregation_settings_map,
 )
+from threedi_modelchecker.threedi_model.constants import FlowVariable
+from threedi_modelchecker.threedi_model.models import (
+    AggregationSettings as SQLAggregationSettings,
+)
+from threedi_modelchecker.threedi_model.models import GlobalSetting
+from threedi_modelchecker.threedi_model.models import (
+    NumericalSettings as SQLNumericalSettings,
+)
+from typing import List
+from typing import Optional
 
 
 class SettingsExtractor(object):

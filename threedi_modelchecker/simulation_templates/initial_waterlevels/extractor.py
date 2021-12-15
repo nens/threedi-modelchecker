@@ -1,13 +1,20 @@
-from typing import Optional
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
-from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
-from threedi_api_client.openapi.models.one_d_water_level_file import OneDWaterLevelFile
-from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
-from threedi_api_client.openapi.models import TwoDWaterRaster, GroundWaterRaster
+from threedi_api_client.openapi.models import GroundWaterRaster
 from threedi_api_client.openapi.models import OneDWaterLevel
+from threedi_api_client.openapi.models import TwoDWaterRaster
+from threedi_api_client.openapi.models.ground_water_level import (
+    GroundWaterLevel,
+)
+from threedi_api_client.openapi.models.one_d_water_level_file import (
+    OneDWaterLevelFile,
+)
+from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
 from threedi_modelchecker.simulation_templates.models import InitialWaterlevels
-from threedi_modelchecker.threedi_model.models import ConnectionNode, GlobalSetting
+from threedi_modelchecker.threedi_model.models import ConnectionNode
+from threedi_modelchecker.threedi_model.models import GlobalSetting
+from typing import Optional
+
 
 sqlite_agg_method_to_api_map = {0: "max", 1: "min", 2: "mean"}
 
