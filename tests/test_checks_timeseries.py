@@ -1,11 +1,16 @@
 from .factories import BoundaryConditions2DFactory
-from threedi_modelchecker.checks.timeseries import TimeseriesValueCheck, TimeseriesIncreasingCheck, TimeseriesTimestepCheck, TimeseriesRowCheck
+from threedi_modelchecker.checks.timeseries import TimeseriesIncreasingCheck
+from threedi_modelchecker.checks.timeseries import TimeseriesRowCheck
+from threedi_modelchecker.checks.timeseries import TimeseriesTimestepCheck
+from threedi_modelchecker.checks.timeseries import TimeseriesValueCheck
 from threedi_modelchecker.threedi_model import models
 
 import pytest
 
 
-@pytest.mark.parametrize("timeseries", ["0,-0.5", "0,-0.5 \n59,-0.5\n60,-0.5\n   ", "", None])
+@pytest.mark.parametrize(
+    "timeseries", ["0,-0.5", "0,-0.5 \n59,-0.5\n60,-0.5\n   ", "", None]
+)
 def test_timeseries_row_check_ok(session, timeseries):
     BoundaryConditions2DFactory(timeseries=timeseries)
 
@@ -24,7 +29,9 @@ def test_timeseries_row_check_error(session, timeseries):
 
 
 # Note: Invalid rows are 'valid' for this check
-@pytest.mark.parametrize("timeseries", ["0,foo", "0,-0.5\n59,-0.5\n60,-0.5", "0,-0.5,14", "", None])
+@pytest.mark.parametrize(
+    "timeseries", ["0,foo", "0,-0.5\n59,-0.5\n60,-0.5", "0,-0.5,14", "", None]
+)
 def test_timeseries_timestep_check_ok(session, timeseries):
     BoundaryConditions2DFactory(timeseries=timeseries)
 
@@ -41,8 +48,21 @@ def test_timeseries_timestep_check_error(session, timeseries):
     invalid = check.get_invalid(session)
     assert len(invalid) == 1
 
+
 # Note: Invalid rows are 'valid' for this check
-@pytest.mark.parametrize("timeseries", ["foo,2.1", "foo,1E5", "foo,-2", "0,-0.5 \n59,-0.5\n 60,-0.5\n   ", "0,-0.5,14", "0,-0.5,14", "", None])
+@pytest.mark.parametrize(
+    "timeseries",
+    [
+        "foo,2.1",
+        "foo,1E5",
+        "foo,-2",
+        "0,-0.5 \n59,-0.5\n 60,-0.5\n   ",
+        "0,-0.5,14",
+        "0,-0.5,14",
+        "",
+        None,
+    ],
+)
 def test_timeseries_value_check_ok(session, timeseries):
     BoundaryConditions2DFactory(timeseries=timeseries)
 
@@ -60,8 +80,19 @@ def test_timeseries_value_check_error(session, timeseries):
     assert len(invalid) == 1
 
 
-
-@pytest.mark.parametrize("timeseries", ["0,2.1", "0,-0.5 \n59, -0.5\n60 ,-0.5\n   ", "0,-0.5,14", "0,-0.5,14", "foo,1.2", "1,foo", "", None])
+@pytest.mark.parametrize(
+    "timeseries",
+    [
+        "0,2.1",
+        "0,-0.5 \n59, -0.5\n60 ,-0.5\n   ",
+        "0,-0.5,14",
+        "0,-0.5,14",
+        "foo,1.2",
+        "1,foo",
+        "",
+        None,
+    ],
+)
 def test_timeseries_increasing_check_ok(session, timeseries):
     BoundaryConditions2DFactory(timeseries=timeseries)
 

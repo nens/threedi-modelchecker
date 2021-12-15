@@ -1,5 +1,4 @@
 from . import factories
-from .factories import BoundaryConditions2DFactory
 from geoalchemy2 import functions as geo_func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Query

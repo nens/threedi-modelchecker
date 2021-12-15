@@ -1,26 +1,44 @@
-import pytest
 from pathlib import Path
-from unittest import mock
+from tests import factories
+from threedi_api_client.openapi.models import FileBoundaryCondition
+from threedi_api_client.openapi.models import FileLateral
 from threedi_api_client.openapi.models import Simulation
-from threedi_api_client.openapi.models.aggregation_settings import AggregationSettings
+from threedi_api_client.openapi.models import UploadEventFile
+from threedi_api_client.openapi.models.aggregation_settings import (
+    AggregationSettings,
+)
 from threedi_api_client.openapi.models.file_structure_control import (
     FileStructureControl,
 )
-from threedi_api_client.openapi.models.initial_waterlevel import InitialWaterlevel
-from threedi_api_client.openapi.models.ground_water_level import GroundWaterLevel
-from threedi_api_client.openapi.models.raster import Raster
+from threedi_api_client.openapi.models.ground_water_level import (
+    GroundWaterLevel,
+)
+from threedi_api_client.openapi.models.initial_waterlevel import (
+    InitialWaterlevel,
+)
 from threedi_api_client.openapi.models.lateral import Lateral
-from threedi_api_client.openapi.models import FileLateral, FileBoundaryCondition
-from threedi_api_client.openapi.models.numerical_settings import NumericalSettings
+from threedi_api_client.openapi.models.numerical_settings import (
+    NumericalSettings,
+)
 from threedi_api_client.openapi.models.one_d_water_level import OneDWaterLevel
-from threedi_api_client.openapi.models.one_d_water_level_file import OneDWaterLevelFile
-from threedi_api_client.openapi.models.physical_settings import PhysicalSettings
-from threedi_api_client.openapi.models.time_step_settings import TimeStepSettings
-from threedi_api_client.openapi.models.two_d_water_raster import TwoDWaterRaster
-from tests import factories
-from threedi_modelchecker.simulation_templates.exceptions import SchematisationError
+from threedi_api_client.openapi.models.one_d_water_level_file import (
+    OneDWaterLevelFile,
+)
+from threedi_api_client.openapi.models.physical_settings import (
+    PhysicalSettings,
+)
+from threedi_api_client.openapi.models.raster import Raster
+from threedi_api_client.openapi.models.time_step_settings import (
+    TimeStepSettings,
+)
+from threedi_api_client.openapi.models.two_d_water_raster import (
+    TwoDWaterRaster,
+)
 from threedi_modelchecker.simulation_templates.boundaries.extractor import (
     BoundariesExtractor,
+)
+from threedi_modelchecker.simulation_templates.exceptions import (
+    SchematisationError,
 )
 from threedi_modelchecker.simulation_templates.extractor import (
     SimulationTemplateExtractor,
@@ -32,8 +50,13 @@ from threedi_modelchecker.simulation_templates.laterals.extractor import (
     LateralsExtractor,
 )
 from threedi_modelchecker.simulation_templates.models import (
-    InitialWaterlevels,
-    StructureControls,
+    get_upload_instance,
+)
+from threedi_modelchecker.simulation_templates.models import InitialWaterlevels
+from threedi_modelchecker.simulation_templates.models import Settings
+from threedi_modelchecker.simulation_templates.models import SimulationTemplate
+from threedi_modelchecker.simulation_templates.models import StructureControls
+from threedi_modelchecker.simulation_templates.models import (
     TemplateValidationError,
 )
 from threedi_modelchecker.simulation_templates.settings.extractor import (
@@ -42,27 +65,24 @@ from threedi_modelchecker.simulation_templates.settings.extractor import (
 from threedi_modelchecker.simulation_templates.structure_controls.extractor import (
     StructureControlExtractor,
 )
-from threedi_api_client.openapi.models import UploadEventFile
 from threedi_modelchecker.threedi_model.constants import InitializationType
-from threedi_modelchecker.simulation_templates.models import (
-    Settings,
-    SimulationTemplate,
-    get_upload_instance,
-)
-from threedi_modelchecker.threedi_model.models import (
-    ControlGroup,
-    ControlMeasureGroup,
-    ControlMemory,
-    ControlTable,
-    ControlTimed,
-)
+from threedi_modelchecker.threedi_model.models import ControlGroup
+from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
+from threedi_modelchecker.threedi_model.models import ControlMemory
+from threedi_modelchecker.threedi_model.models import ControlTable
+from threedi_modelchecker.threedi_model.models import ControlTimed
+from unittest import mock
+
+import pytest
 
 
 try:
-    from unittest.mock import AsyncMock, Mock
+    from unittest.mock import AsyncMock
+    from unittest.mock import Mock
 except ImportError:
     # Python 3.7
-    from mock.mock import AsyncMock, Mock
+    from mock.mock import AsyncMock
+    from mock.mock import Mock
 
 
 @pytest.fixture
