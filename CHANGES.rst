@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.20 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- **Bugfix: Correct parsing of discharge_coefficients in table control.
 
 
 0.19 (2021-12-15)

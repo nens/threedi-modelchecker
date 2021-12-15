@@ -89,7 +89,7 @@ def to_table_control(
     )
     # Note: Yes, table control really uses # and ;
     try:
-        values =[]
+        values = []
         for x in table_control.action_table.split("#"):
             y = x.split(";")
             for val in y:
