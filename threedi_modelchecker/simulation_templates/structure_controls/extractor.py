@@ -63,7 +63,7 @@ def to_measure_specification(
         operator = control.measure_operator
 
     return MeasureSpecification(
-        name=group.name[:50],
+        name=group.name[:50] if group.name else "",
         variable=VARIABLE_MAPPING[control.measure_variable],
         locations=locations,
         operator=operator,
@@ -156,8 +156,8 @@ def to_memory_control(
         structure_type=memory_control.target_type,
         type=action_type,
         value=value,
-        upper_threshold=float(memory_control.upper_threshold),
-        lower_threshold=float(memory_control.lower_threshold),
+        upper_threshold=memory_control.upper_threshold,
+        lower_threshold=memory_control.lower_threshold,
         is_inverse=bool(memory_control.is_inverse),
         is_active=bool(memory_control.is_active),
     )

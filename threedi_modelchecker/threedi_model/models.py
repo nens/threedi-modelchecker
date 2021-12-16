@@ -87,23 +87,23 @@ class ControlMeasureMap(Base):
     measure_group_id = Column(
         Integer, ForeignKey(ControlMeasureGroup.__tablename__ + ".id")
     )
-    object_type = Column(String(100))
-    object_id = Column(Integer)
-    weight = Column(Float)
+    object_type = Column(VarcharEnum(constants.MeasureLocationContentTypes), nullable=False)
+    object_id = Column(Integer, nullable=False)
+    weight = Column(Float, nullable=False)
 
 
 class ControlMemory(Base):
     __tablename__ = "v2_control_memory"
     id = Column(Integer, primary_key=True)
-    measure_variable = Column(String(50))
+    measure_variable = Column(VarcharEnum(constants.MeasureVariables), nullable=False)
     upper_threshold = Column(Float)
     lower_threshold = Column(Float)
-    action_type = Column(String(50))
-    action_value = Column(String(50))
-    target_type = Column(String(100))
-    target_id = Column(Integer)
-    is_active = Column(Boolean, nullable=False)
-    is_inverse = Column(Boolean, nullable=False)
+    action_type = Column(VarcharEnum(constants.ControlTableActionTypes), nullable=False)
+    action_value = Column(String(50), nullable=False)
+    target_type = Column(VarcharEnum(constants.StructureControlTypes), nullable=False)
+    target_id = Column(Integer, nullable=False)
+    is_active = Column(Boolean)
+    is_inverse = Column(Boolean)
 
 
 class ControlPID(Base):
@@ -123,12 +123,12 @@ class ControlPID(Base):
 class ControlTable(Base):
     __tablename__ = "v2_control_table"
     id = Column(Integer, primary_key=True)
-    action_table = Column(Text)
-    action_type = Column(String(50))
-    measure_variable = Column(String(50))
-    measure_operator = Column(String(2))
-    target_type = Column(String(100))
-    target_id = Column(Integer)
+    action_table = Column(Text, nullable=False)
+    action_type = Column(VarcharEnum(constants.ControlTableActionTypes), nullable=False)
+    measure_variable = Column(VarcharEnum(constants.MeasureVariables), nullable=False)
+    measure_operator = Column(VarcharEnum(constants.MeasureOperators))
+    target_type = Column(VarcharEnum(constants.StructureControlTypes), nullable=False)
+    target_id = Column(Integer, nullable=False)
 
 
 class ControlTimed(Base):
@@ -147,7 +147,7 @@ class Control(Base):
     measure_group_id = Column(
         Integer, ForeignKey(ControlMeasureGroup.__tablename__ + ".id")
     )
-    control_type = Column(String(15))
+    control_type = Column(VarcharEnum(constants.ControlType), nullable=False)
     control_id = Column(Integer)
     start = Column(String(50))
     end = Column(String(50))

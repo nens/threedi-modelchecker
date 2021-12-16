@@ -1,10 +1,11 @@
+from sqlalchemy.sql.schema import ForeignKey
 from .checks.base import BaseCheck
 from .checks.base import CheckLevel
 from .checks.base import FileExistsCheck
 from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
-from .checks.base import RangeCheck
+from .checks.base import RangeCheck, ForeignKeyCheck
 from .checks.cross_section_definitions import CrossSectionEqualElementsCheck
 from .checks.cross_section_definitions import (
     CrossSectionFirstElementNonZeroCheck,
@@ -1346,6 +1347,65 @@ CHECKS += [
         models.Lateral1d.timeseries,
         models.Lateral2D.timeseries,
     ]
+]
+
+## 122x Structure controls
+
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1220,
+        column=models.ControlMeasureMap.object_id,
+        reference_column=models.ConnectionNode.id,
+        filter=models.ControlMeasureMap.object_type == constants.MeasureLocationContentTypes.connection_node.value
+    )
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1221,
+        column=getattr(control_table, "target_id"),
+        reference_column=models.Channel.id,
+        filter=getattr(control_table, "target_type") == "v2_channel"
+    ) for control_table in (models.ControlMemory, models.ControlTable) 
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1222,
+        column=getattr(control_table, "target_id"),
+        reference_column=models.Pipe.id,
+        filter=getattr(control_table, "target_type") == "v2_pipe"
+    ) for control_table in (models.ControlMemory, models.ControlTable) 
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1223,
+        column=getattr(control_table, "target_id"),
+        reference_column=models.Orifice.id,
+        filter=getattr(control_table, "target_type") == "v2_orifice"
+    ) for control_table in (models.ControlMemory, models.ControlTable) 
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1224,
+        column=getattr(control_table, "target_id"),
+        reference_column=models.Culvert.id,
+        filter=getattr(control_table, "target_type") == "v2_culvert"
+    ) for control_table in (models.ControlMemory, models.ControlTable) 
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1225,
+        column=getattr(control_table, "target_id"),
+        reference_column=models.Weir.id,
+        filter=getattr(control_table, "target_type") == "v2_weir"
+    ) for control_table in (models.ControlMemory, models.ControlTable) 
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1226,
+        column=getattr(control_table, "target_id"),
+        reference_column=models.Pumpstation.id,
+        filter=getattr(control_table, "target_type") == "v2_pumpstation"
+    ) for control_table in (models.ControlMemory, models.ControlTable) 
 ]
 
 
