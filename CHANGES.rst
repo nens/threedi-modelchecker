@@ -2,8 +2,18 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.20 (unreleased)
+0.21 (unreleased)
 -----------------
+
+- Nothing changed yet.
+
+
+0.20 (2021-12-16)
+-----------------
+
+- Bugfix: Correct parsing of discharge_coefficients in table control.
+
+- Removed timed control parsing, there are no models using it.
 
 - Set maximum_time_step to sim_time_step if maximum_time_step is NULL or
   less than sim_time_step. Reverts change in 0.19.
