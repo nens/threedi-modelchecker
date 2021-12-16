@@ -98,9 +98,7 @@ def parse_action_table(table) -> List[List[float]]:
     Sometimes, the values are separated by a space and not a semicolon (;). This
     function also accepts those inputs.
     """
-    return [
-        parse_action_value(x) for x in table.split("#")
-    ]
+    return [parse_action_value(x) for x in table.split("#")]
 
 
 def to_table_control(
@@ -244,7 +242,6 @@ class StructureControlExtractor(object):
                 else:
                     continue
                 self._controls[control.control_type].append(api_control)
-
 
     def all_controls(self) -> StructureControls:
         self.__initialize_controls()
