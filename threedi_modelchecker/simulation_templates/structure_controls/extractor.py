@@ -39,8 +39,8 @@ def control_measure_map_to_measure_location(
     CONTENT_TYPE_MAP = {"v2_connection_nodes": "v2_connection_node"}
 
     return MeasureLocation(
-        weight=str(c_measure_map.weight),
-        content_type=CONTENT_TYPE_MAP[c_measure_map.object_type],
+        weight=f"{float(c_measure_map.weight):.2f}",
+        content_type=CONTENT_TYPE_MAP[c_measure_map.object_type.value],
         content_pk=c_measure_map.object_id,
     )
 
@@ -60,11 +60,11 @@ def to_measure_specification(
     # Use > as default for memory control
     operator = ">"
     if hasattr(control, "measure_operator"):
-        operator = control.measure_operator
+        operator = control.measure_operator.value
 
     return MeasureSpecification(
         name=group.name[:50] if group.name else "",
-        variable=VARIABLE_MAPPING[control.measure_variable],
+        variable=VARIABLE_MAPPING[control.measure_variable.value],
         locations=locations,
         operator=operator,
     )
@@ -81,7 +81,7 @@ def to_table_control(
 ) -> TableStructureControl:
 
     action_type: str = TYPE_MAPPING.get(
-        table_control.action_type, table_control.action_type
+        table_control.action_type.value, table_control.action_type.value
     )
     # Note: Yes, table control really uses # and ;
     try:
@@ -89,7 +89,7 @@ def to_table_control(
             [float(y) for y in x.split(";")]
             for x in table_control.action_table.split("#")
         ]
-        if table_control.action_type == "set_capacity":
+        if table_control.action_type.value == "set_capacity":
             values[1] = [x * CAPACITY_FACTOR for x in values[1]]
     except (ValueError, TypeError):
         raise SchematisationError(
@@ -113,7 +113,7 @@ def to_table_control(
         duration=int(control.end) - control_start,
         measure_specification=measure_specification,
         structure_id=table_control.target_id,
-        structure_type=table_control.target_type,
+        structure_type=table_control.target_type.value,
         type=action_type,
         values=values,
     )
@@ -126,7 +126,7 @@ def to_memory_control(
 ) -> MemoryStructureControl:
 
     action_type: str = TYPE_MAPPING.get(
-        memory_control.action_type, memory_control.action_type
+        memory_control.action_type.value, memory_control.action_type.value
     )
 
     try:
@@ -153,7 +153,7 @@ def to_memory_control(
         duration=int(control.end) - control_start,
         measure_specification=measure_specification,
         structure_id=memory_control.target_id,
-        structure_type=memory_control.target_type,
+        structure_type=memory_control.target_type.value,
         type=action_type,
         value=value,
         upper_threshold=memory_control.upper_threshold,
@@ -263,17 +263,17 @@ class StructureControlExtractor(object):
 
                 api_control = None
 
-                if control.control_type == "table":
+                if control.control_type.value == "table":
                     table: ControlTable = table_lookup[control.control_id]
                     measure_spec = to_measure_specification(table, group, maps)
                     api_control = to_table_control(control, table, measure_spec)
-                elif control.control_type == "memory":
+                elif control.control_type.value == "memory":
                     memory: ControlMemory = memory_lookup[control.control_id]
                     measure_spec = to_measure_specification(memory, group, maps)
                     api_control = to_memory_control(control, memory, measure_spec)
                 else:
-                    continue
-                self._controls[control.control_type].append(api_control)
+                    raise SchematisationError(f"Unknown control_type '{control.control_type.value}'")
+                self._controls[control.control_type.value].append(api_control)
 
             for control in (
                 Query(Control)

@@ -215,11 +215,12 @@ class StructureControlTypes(Enum):
 class ControlTableActionTypes(Enum):
     set_discharge_coefficients = "set_discharge_coefficients"  # not pump
     set_crest_level = "set_crest_level"  # orifice, weir only
-    set_pump_capacity = "set_capacity"  # only pump, in API: set_pump_capacity, 
+    set_pump_capacity = "set_pump_capacity"  # only pump, in API: set_pump_capacity
+    set_capacity = "set_capacity"  # old form, mapped to set_pump_capacity
 
 
 class MeasureLocationContentTypes(Enum):
-    connection_node = "v2_connection_node"
+    v2_connection_nodes = "v2_connection_nodes"  # in API: v2_connection_node (singular)
     # pipe = "v2_pipe"  # --> line cnode a-b
     # orifice = "v2_orifice"  # --> line cnode a-b
     # culvert = "v2_culvert"  # --> line cnode a-b
