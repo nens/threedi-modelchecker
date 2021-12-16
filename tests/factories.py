@@ -213,6 +213,7 @@ class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
     measure_operator = constants.MeasureOperators.greater_than
     measure_variable = constants.MeasureVariables.waterlevel
     target_type = constants.StructureControlTypes.channel
+    target_id = 10
 
 
 class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):

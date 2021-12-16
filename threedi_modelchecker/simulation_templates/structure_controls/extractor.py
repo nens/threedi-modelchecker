@@ -18,7 +18,13 @@ from threedi_modelchecker.simulation_templates.models import StructureControls
 from threedi_modelchecker.simulation_templates.utils import (
     strip_dict_none_values,
 )
-from threedi_modelchecker.threedi_model.constants import ControlTableActionTypes, ControlType, MeasureLocationContentTypes
+from threedi_modelchecker.threedi_model.constants import (
+    ControlTableActionTypes,
+)
+from threedi_modelchecker.threedi_model.constants import ControlType
+from threedi_modelchecker.threedi_model.constants import (
+    MeasureLocationContentTypes,
+)
 from threedi_modelchecker.threedi_model.models import Control
 from threedi_modelchecker.threedi_model.models import ControlGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
@@ -37,10 +43,12 @@ def control_measure_map_to_measure_location(
     c_measure_map: ControlMeasureMap,
 ) -> MeasureLocation:
     # Connection nodes should be only option here.
-    CONTENT_TYPE_MAP = {MeasureLocationContentTypes.v2_connection_nodes: "v2_connection_node"}
+    CONTENT_TYPE_MAP = {
+        MeasureLocationContentTypes.v2_connection_nodes: "v2_connection_node"
+    }
 
     return MeasureLocation(
-        weight=f"{float(c_measure_map.weight):.2f}",
+        weight=str(round(float(c_measure_map.weight), 2)),
         content_type=CONTENT_TYPE_MAP[c_measure_map.object_type],
         content_pk=c_measure_map.object_id,
     )
@@ -241,7 +249,9 @@ class StructureControlExtractor(object):
                     measure_spec = to_measure_specification(memory, group, maps)
                     api_control = to_memory_control(control, memory, measure_spec)
                 else:
-                    raise SchematisationError(f"Unknown control_type '{control.control_type.value}'")
+                    raise SchematisationError(
+                        f"Unknown control_type '{control.control_type.value}'"
+                    )
                 self._controls[control.control_type.value].append(api_control)
 
     def all_controls(self) -> StructureControls:

@@ -87,7 +87,9 @@ class ControlMeasureMap(Base):
     measure_group_id = Column(
         Integer, ForeignKey(ControlMeasureGroup.__tablename__ + ".id")
     )
-    object_type = Column(VarcharEnum(constants.MeasureLocationContentTypes), nullable=False)
+    object_type = Column(
+        VarcharEnum(constants.MeasureLocationContentTypes), nullable=False
+    )
     object_id = Column(Integer, nullable=False)
     weight = Column(Float, nullable=False)
 
