@@ -174,10 +174,12 @@ def to_timed_control(
     )
 
     try:
-        values = [
-            [float(y) for y in x.split(";")]
-            for x in timed_control.action_table.split("#")
-        ]
+        values = []
+        for x in timed_control.action_table.split("#"):
+            y = x.split(";")
+            for val in y:
+                values = values + val.split(" ")
+        values = [[float(value) for value in values]]
 
         if timed_control.action_type == "set_capacity":
             values[1] = [x * CAPACITY_FACTOR for x in values[1]]
@@ -190,12 +192,16 @@ def to_timed_control(
     try:
         control_start = int(control.start)
     except (ValueError, TypeError):
-        control_start = 0
+        raise SchematisationError(
+            f"Timed control control_start not set for v2_control_timed.id = {timed_control.id}"
+        )
 
     try:
         control_end = int(control.end)
     except (ValueError, TypeError):
-        control_end = INFINITE_SIM_DURATION
+        raise SchematisationError(
+            f"Timed control control_end not set for v2_control_timed.id = {timed_control.id}"
+        )
 
     # Pick first two values
     value = values[0]
