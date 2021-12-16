@@ -209,7 +209,7 @@ class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     action_type = "set_discharge_coefficients"
-    action_table = "0.0;-1.0 2.0#1.0;-1.1 2.1"
+    action_table = "0.0;-1.0;2.0#1.0;-1.1;2.1"
     measure_operator = ">"
     measure_variable = "waterlevel"
     target_type = "v2_channel"

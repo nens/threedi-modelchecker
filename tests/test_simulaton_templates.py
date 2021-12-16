@@ -652,12 +652,13 @@ def test_structure_controls(session, measure_group):
     assert extractor.all_controls().as_dict() == to_check.as_dict()
 
 
-def test_table_control_incorrect_timeseries(session, measure_group):
+@pytest.mark.parametrize("action_table", ["0.0;-1.0 2.0#1.0;-1.1  2.1", "0.0;-1.0,2.0#1.0;-1.1\t2.1"])
+def test_table_control_alternative_separators(session, measure_group, action_table):
     control_group: ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"
     )
     table_control: ControlTable = factories.ControlTableFactory.create(
-        id=1, action_table="0.0,-1.0"
+        id=1, action_table=action_table
     )
 
     factories.ControlFactory.create(
@@ -669,16 +670,16 @@ def test_table_control_incorrect_timeseries(session, measure_group):
 
     extractor = StructureControlExtractor(session, control_group_id=control_group.id)
 
-    with pytest.raises(SchematisationError):
-        extractor.all_controls()
+    assert extractor.all_controls().table[0].values == [[0.0, -1.0, 2.0], [1.0, -1.1, 2.1]]
 
 
-def test_memory_control_incorrect_timeseries(session, measure_group):
+@pytest.mark.parametrize("action_value", ["0.0;1.0", "0.0,1.0", "0.0  1.0", "0.0\t1.0"])
+def test_memory_control_alternative_separators(session, measure_group, action_value):
     control_group: ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"
     )
     memory_control: ControlMemory = factories.ControlMemoryFactory.create(
-        id=1, action_value="0.0;1.0"
+        id=1, action_value=action_value
     )
     factories.ControlFactory.create(
         control_group_id=control_group.id,
@@ -689,5 +690,43 @@ def test_memory_control_incorrect_timeseries(session, measure_group):
 
     extractor = StructureControlExtractor(session, control_group_id=control_group.id)
 
-    with pytest.raises(SchematisationError):
-        extractor.all_controls()
+    assert extractor.all_controls().memory[0].value == [0.0, 1.0]
+
+
+def test_table_control_capacity_factor(session, measure_group):
+    control_group: ControlGroup = factories.ControlGroupFactory.create(
+        id=1, name="test group"
+    )
+    table_control: ControlTable = factories.ControlTableFactory.create(
+        id=1, action_table="0.0;100#1.0;200", action_type="set_capacity",
+    )
+
+    factories.ControlFactory.create(
+        control_group_id=control_group.id,
+        measure_group_id=measure_group.id,
+        control_type="table",
+        control_id=table_control.id,
+    )
+
+    extractor = StructureControlExtractor(session, control_group_id=control_group.id)
+
+    assert extractor.all_controls().table[0].values == [[0.0, 0.1], [1.0, 0.2]]
+
+
+def test_memory_control_capacity_factor(session, measure_group):
+    control_group: ControlGroup = factories.ControlGroupFactory.create(
+        id=1, name="test group"
+    )
+    memory_control: ControlMemory = factories.ControlMemoryFactory.create(
+        id=1, action_value="100", action_type="set_capacity",
+    )
+    factories.ControlFactory.create(
+        control_group_id=control_group.id,
+        measure_group_id=measure_group.id,
+        control_type="memory",
+        control_id=memory_control.id,
+    )
+
+    extractor = StructureControlExtractor(session, control_group_id=control_group.id)
+
+    assert extractor.all_controls().memory[0].value == [0.1]

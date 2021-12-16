@@ -74,11 +74,12 @@ TYPE_MAPPING = {"set_capacity": "set_pump_capacity"}
 CAPACITY_FACTOR: float = 0.001
 
 
-def _parse_action_table_record(value) -> List[float]:
+def parse_action_value(value) -> List[float]:
     # First clean the input:
     # - remove whitespace at the start & end (strip)
     # - replace 'internal' whitespace with ;
-    value = ";".join(value.strip().split())
+    # - replace commas with ;
+    value = (";".join(value.strip().split())).replace(",", ";")
     # This could have yielded double semicolons (in case of <whitespace>;)
     while ";;" in value:
         value.replace(";;", ";")
@@ -98,7 +99,7 @@ def parse_action_table(table) -> List[List[float]]:
     function also accepts those inputs.
     """
     return [
-        _parse_action_table_record(x) for x in table.split("#")
+        parse_action_value(x) for x in table.split("#")
     ]
 
 
@@ -152,7 +153,7 @@ def to_memory_control(
     )
 
     try:
-        value = [float(x) for x in (memory_control.action_value.strip().split())]
+        value = parse_action_value(memory_control.action_value)
         if memory_control.action_type == "set_capacity":
             value = [value[0] * CAPACITY_FACTOR]
     except (ValueError, TypeError):
