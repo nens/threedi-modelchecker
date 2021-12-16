@@ -11,9 +11,6 @@ from threedi_api_client.openapi.models.memory_structure_control import (
 from threedi_api_client.openapi.models.table_structure_control import (
     TableStructureControl,
 )
-from threedi_api_client.openapi.models.timed_structure_control import (
-    TimedStructureControl,
-)
 from threedi_modelchecker.simulation_templates.exceptions import (
     SchematisationError,
 )
@@ -27,7 +24,6 @@ from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureMap
 from threedi_modelchecker.threedi_model.models import ControlMemory
 from threedi_modelchecker.threedi_model.models import ControlTable
-from threedi_modelchecker.threedi_model.models import ControlTimed
 from typing import Dict
 from typing import List
 from typing import Union
@@ -78,6 +74,34 @@ TYPE_MAPPING = {"set_capacity": "set_pump_capacity"}
 CAPACITY_FACTOR: float = 0.001
 
 
+def _parse_action_table_record(value) -> List[float]:
+    # First clean the input:
+    # - remove whitespace at the start & end (strip)
+    # - replace 'internal' whitespace with ;
+    value = ";".join(value.strip().split())
+    # This could have yielded double semicolons (in case of <whitespace>;)
+    while ";;" in value:
+        value.replace(";;", ";")
+    return [float(y) for y in value.split(";")]
+
+
+def parse_action_table(table) -> List[List[float]]:
+    """Parse an action table (for table controls)
+
+    For table controls, the action table consists of multiple records, with
+    2 or 3 values each, like:
+
+    - "1.2;2.3#1.3;2.1#1.5;5.6"
+    - "1.2;2.3;3.4#1.3;2.1;5.6#1.5;5.6;6.7"
+
+    Sometimes, the values are separated by a space and not a semicolon (;). This
+    function also accepts those inputs.
+    """
+    return [
+        _parse_action_table_record(x) for x in table.split("#")
+    ]
+
+
 def to_table_control(
     control: Control,
     table_control: ControlTable,
@@ -87,16 +111,10 @@ def to_table_control(
     action_type: str = TYPE_MAPPING.get(
         table_control.action_type, table_control.action_type
     )
-    # Note: Yes, table control really uses # and ;
     try:
-        values = []
-        for x in table_control.action_table.split("#"):
-            y = x.split(";")
-            for val in y:
-                values = values + val.split(" ")
-        values = [[float(value) for value in values]]
+        values = parse_action_table(table_control.action_table)
         if table_control.action_type == "set_capacity":
-            values[1] = [x * CAPACITY_FACTOR for x in values[1]]
+            values = [[x[0], x[1] * CAPACITY_FACTOR] for x in values]
     except (ValueError, TypeError):
         raise SchematisationError(
             f"Table control action_table incorrect format for v2_control_table.id = {table_control.id}"
@@ -134,7 +152,9 @@ def to_memory_control(
     )
 
     try:
-        value = [float(x) for x in memory_control.action_value.split(" ")]
+        value = [float(x) for x in (memory_control.action_value.strip().split())]
+        if memory_control.action_type == "set_capacity":
+            value = [value[0] * CAPACITY_FACTOR]
     except (ValueError, TypeError):
         raise SchematisationError(
             f"Memory control action_value incorrect format for v2_control_memory.id = {memory_control.id}"
@@ -165,57 +185,6 @@ def to_memory_control(
     )
 
 
-def to_timed_control(
-    control: Control, timed_control: ControlTimed
-) -> TimedStructureControl:
-
-    action_type: str = TYPE_MAPPING.get(
-        timed_control.action_type, timed_control.action_type
-    )
-
-    try:
-        values = []
-        for x in timed_control.action_table.split("#"):
-            y = x.split(";")
-            for val in y:
-                values = values + val.split(" ")
-        values = [[float(value) for value in values]]
-
-        if timed_control.action_type == "set_capacity":
-            values[1] = [x * CAPACITY_FACTOR for x in values[1]]
-
-    except (ValueError, TypeError):
-        raise SchematisationError(
-            f"Timed control action_table incorrect format for v2_control_timed.id = {timed_control.id}"
-        )
-
-    try:
-        control_start = int(control.start)
-    except (ValueError, TypeError):
-        raise SchematisationError(
-            f"Timed control control_start not set for v2_control_timed.id = {timed_control.id}"
-        )
-
-    try:
-        control_end = int(control.end)
-    except (ValueError, TypeError):
-        raise SchematisationError(
-            f"Timed control control_end not set for v2_control_timed.id = {timed_control.id}"
-        )
-
-    # Pick first two values
-    value = values[0]
-
-    return TimedStructureControl(
-        offset=control_start,
-        duration=control_end - control_start,
-        value=value,
-        type=action_type,
-        structure_id=timed_control.target_id,
-        structure_type=timed_control.target_type,
-    )
-
-
 class StructureControlExtractor(object):
     def __init__(self, session: Session, control_group_id: int):
         self.session = session
@@ -224,7 +193,7 @@ class StructureControlExtractor(object):
 
     def __initialize_controls(self):
         if self._controls is None:
-            self._controls = {"timed": [], "table": [], "memory": []}
+            self._controls = {"table": [], "memory": []}
             table_lookup = dict(
                 [
                     (x.id, x)
@@ -235,12 +204,6 @@ class StructureControlExtractor(object):
                 [
                     (x.id, x)
                     for x in Query(ControlMemory).with_session(self.session).all()
-                ]
-            )
-            timed_lookup = dict(
-                [
-                    (x.id, x)
-                    for x in Query(ControlTimed).with_session(self.session).all()
                 ]
             )
             maps_lookup = {}
@@ -281,19 +244,6 @@ class StructureControlExtractor(object):
                     continue
                 self._controls[control.control_type].append(api_control)
 
-            for control in (
-                Query(Control)
-                .filter(
-                    Control.control_type == "timed",
-                    Control.control_group_id == self._control_group_id,
-                )
-                .with_session(self.session)
-                .all()
-            ):
-
-                timed: ControlTimed = timed_lookup[control.control_id]
-                api_control = to_timed_control(control, timed)
-                self._controls[control.control_type].append(api_control)
 
     def all_controls(self) -> StructureControls:
         self.__initialize_controls()
@@ -303,11 +253,6 @@ class StructureControlExtractor(object):
     def memory_controls(self) -> List[MemoryStructureControl]:
         self.__initialize_controls()
         return self._controls["memory"]
-
-    @property
-    def timed_controls(self) -> List[TimedStructureControl]:
-        self.__initialize_controls()
-        return self._controls["timed"]
 
     @property
     def table_controls(self) -> List[TableStructureControl]:

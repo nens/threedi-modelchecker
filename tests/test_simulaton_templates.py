@@ -70,7 +70,6 @@ from threedi_modelchecker.threedi_model.models import ControlGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
 from threedi_modelchecker.threedi_model.models import ControlMemory
 from threedi_modelchecker.threedi_model.models import ControlTable
-from threedi_modelchecker.threedi_model.models import ControlTimed
 from unittest import mock
 
 import pytest
@@ -157,7 +156,6 @@ def simulation_template(session, measure_group):
     )
     table_control: ControlTable = factories.ControlTableFactory.create(id=1)
     memory_control: ControlMemory = factories.ControlMemoryFactory.create(id=1)
-    timed_control: ControlTimed = factories.ControlTimedFactory.create(id=1)
 
     factories.ControlFactory.create(
         control_group_id=control_group.id,
@@ -170,12 +168,6 @@ def simulation_template(session, measure_group):
         measure_group_id=measure_group.id,
         control_type="memory",
         control_id=memory_control.id,
-    )
-    factories.ControlFactory.create(
-        control_group_id=control_group.id,
-        measure_group_id=None,
-        control_type="timed",
-        control_id=timed_control.id,
     )
 
     num_settings = factories.NumericalSettingsFactory.create(id=1)
@@ -587,7 +579,6 @@ def test_structure_controls(session, measure_group):
     )
     table_control: ControlTable = factories.ControlTableFactory.create(id=1)
     memory_control: ControlMemory = factories.ControlMemoryFactory.create(id=1)
-    timed_control: ControlTimed = factories.ControlTimedFactory.create(id=1)
 
     factories.ControlFactory.create(
         control_group_id=control_group.id,
@@ -600,12 +591,6 @@ def test_structure_controls(session, measure_group):
         measure_group_id=measure_group.id,
         control_type="memory",
         control_id=memory_control.id,
-    )
-    factories.ControlFactory.create(
-        control_group_id=control_group.id,
-        measure_group_id=None,
-        control_type="timed",
-        control_id=timed_control.id,
     )
 
     extractor = StructureControlExtractor(session, control_group_id=control_group.id)
@@ -657,19 +642,10 @@ def test_structure_controls(session, measure_group):
                     "structure_id": 10,
                     "structure_type": "v2_channel",
                     "type": "set_discharge_coefficients",
-                    "values": [[0.0, -1.0]],
+                    "values": [[0.0, -1.0, 2.0], [1.0, -1.1, 2.1]],
                 }
             ],
-            "timed": [
-                {
-                    "offset": 0,
-                    "duration": 300,
-                    "value": [0.0, -1.0],
-                    "type": "set_discharge_coefficients",
-                    "structure_id": 10,
-                    "structure_type": "v2_channel",
-                }
-            ],
+            "timed": [],
         }
     )
 
@@ -709,27 +685,6 @@ def test_memory_control_incorrect_timeseries(session, measure_group):
         measure_group_id=measure_group.id,
         control_type="memory",
         control_id=memory_control.id,
-    )
-
-    extractor = StructureControlExtractor(session, control_group_id=control_group.id)
-
-    with pytest.raises(SchematisationError):
-        extractor.all_controls()
-
-
-def test_timed_control_incorrect_timeseries(session, measure_group):
-    control_group: ControlGroup = factories.ControlGroupFactory.create(
-        id=1, name="test group"
-    )
-    timed_control: ControlTimed = factories.ControlTimedFactory.create(
-        id=1, action_table="0.0,1.0"
-    )
-
-    factories.ControlFactory.create(
-        control_group_id=control_group.id,
-        measure_group_id=None,
-        control_type="timed",
-        control_id=timed_control.id,
     )
 
     extractor = StructureControlExtractor(session, control_group_id=control_group.id)

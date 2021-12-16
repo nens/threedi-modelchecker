@@ -7,6 +7,8 @@ Changelog of threedi-modelchecker
 
 - Bugfix: Correct parsing of discharge_coefficients in table control.
 
+- Removed timed control parsing, there are no models using it.
+
 
 0.19 (2021-12-15)
 -----------------

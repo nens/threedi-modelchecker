@@ -209,7 +209,7 @@ class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     action_type = "set_discharge_coefficients"
-    action_table = "0.0;-1.0"
+    action_table = "0.0;-1.0 2.0#1.0;-1.1 2.1"
     measure_operator = ">"
     measure_variable = "waterlevel"
     target_type = "v2_channel"
@@ -230,17 +230,6 @@ class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):
     is_active = True
     upper_threshold = 1.0
     lower_threshold = -1.0
-
-
-class ControlTimedFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.ControlTimed
-        sqlalchemy_session = Session
-
-    action_type = "set_discharge_coefficients"
-    action_table = "0.0;-1.0"
-    target_type = "v2_channel"
-    target_id = 10
 
 
 class ControlMeasureGroupFactory(factory.alchemy.SQLAlchemyModelFactory):
