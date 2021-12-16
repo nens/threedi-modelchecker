@@ -9,6 +9,9 @@ Changelog of threedi-modelchecker
 
 - Removed timed control parsing, there are no models using it.
 
+- Set maximum_time_step to sim_time_step if maximum_time_step is NULL or
+  less than sim_time_step. Reverts change in 0.19.
+
 
 0.19 (2021-12-15)
 -----------------
