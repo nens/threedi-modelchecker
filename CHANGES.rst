@@ -5,7 +5,8 @@ Changelog of threedi-modelchecker
 0.20 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Set maximum_time_step to sim_time_step if maximum_time_step is NULL or
+  less than sim_time_step. Reverts change in 0.19.
 
 
 0.19 (2021-12-15)
