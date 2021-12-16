@@ -18,7 +18,6 @@ from threedi_api_client.openapi.models import PhysicalSettings
 from threedi_api_client.openapi.models import Simulation
 from threedi_api_client.openapi.models import TableStructureControl
 from threedi_api_client.openapi.models import Template
-from threedi_api_client.openapi.models import TimedStructureControl
 from threedi_api_client.openapi.models import TimeStepSettings
 from threedi_api_client.openapi.models import UploadEventFile
 from threedi_api_client.openapi.models.file_boundary_condition import (
@@ -321,7 +320,6 @@ class InitialWaterlevels(AsDictMixin):
 class StructureControls(AsDictMixin):
     memory: List[MemoryStructureControl]
     table: List[TableStructureControl]
-    timed: List[TimedStructureControl]
 
     _controls_upload: InitVar[Optional[FileStructureControl]] = None
     _validation_status: InitVar[Optional[ValidationStatus]] = None
@@ -376,12 +374,11 @@ class StructureControls(AsDictMixin):
             table=[
                 TableStructureControl(**convert_measure_specs(x)) for x in dict["table"]
             ],
-            timed=[TimedStructureControl(**x) for x in dict["timed"]],
         )
 
     @property
     def has_controls(self) -> bool:
-        return len(self.memory) + len(self.table) + len(self.timed) > 0
+        return len(self.memory) + len(self.table) > 0
 
     async def save_to_api(self, client: V3BetaApi, simulation: Simulation):
         """
@@ -397,13 +394,12 @@ class StructureControls(AsDictMixin):
         if not self.has_controls:
             return
 
-        data: Dict = {"memory": [], "table": [], "timed": []}
+        data: Dict = {"memory": [], "table": []}
         for memory_control in self.memory:
             data["memory"].append(openapi_to_dict(memory_control))
         for table_control in self.table:
             data["table"].append(openapi_to_dict(table_control))
-        for timed_control in self.timed:
-            data["timed"].append(openapi_to_dict(timed_control))
+        data["timed"] = []  # not supported via sqlite
 
         filename: str = f"controls{uuid4().hex[0:8]}.json"
 
