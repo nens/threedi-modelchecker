@@ -23,7 +23,7 @@ from threedi_modelchecker.threedi_model.constants import (
 )
 from threedi_modelchecker.threedi_model.constants import ControlType
 from threedi_modelchecker.threedi_model.constants import (
-    MeasureLocationContentTypes,
+    MeasureLocationContentTypes, MeasureVariables
 )
 from threedi_modelchecker.threedi_model.models import Control
 from threedi_modelchecker.threedi_model.models import ControlGroup
@@ -60,10 +60,10 @@ def to_measure_specification(
     locations: List[MeasureLocation],
 ) -> MeasureSpecification:
     VARIABLE_MAPPING = {
-        "waterlevel": "s1",
-        "volume": "vol1",
-        "discharge": "q",
-        "velocity": "u1",
+        MeasureVariables.waterlevel: "s1",
+        MeasureVariables.volume: "vol1",
+        MeasureVariables.discharge: "q",
+        MeasureVariables.velocity: "u1",
     }
 
     # Use > as default for memory control
@@ -73,7 +73,7 @@ def to_measure_specification(
 
     return MeasureSpecification(
         name=group.name[:50] if group.name else "",
-        variable=VARIABLE_MAPPING[control.measure_variable.value],
+        variable=VARIABLE_MAPPING[control.measure_variable],
         locations=locations,
         operator=operator,
     )
