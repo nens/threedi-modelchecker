@@ -5,6 +5,8 @@ Changelog of threedi-modelchecker
 0.21 (unreleased)
 -----------------
 
+- Temporary patch: do not error if initial groundwaterlevel file is not present.
+
 - Bugfix: Structure controls upload in simulation template generation.
 
 
