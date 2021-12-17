@@ -21,5 +21,5 @@ def distance(col_1, col_2):
     return geo_func.ST_Distance(transform(col_1), transform(col_2))
 
 
-def lengh(col):
+def length(col):
     return geo_func.ST_Length(transform(col))
