@@ -2,8 +2,8 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.21 (unreleased)
------------------
+0.20.1 (2021-12-17)
+-------------------
 
 - Temporary patch: do not error if initial groundwaterlevel file is not present.
 
