@@ -406,7 +406,7 @@ class StructureControls(AsDictMixin):
         upload: UploadEventFile = (
             await client.simulations_events_structure_control_file_create(
                 simulation_pk=simulation.id,
-                data=UploadEventFile(filename="structure_controls.json", offset=0),
+                data=UploadEventFile(filename=filename, offset=0),
             )
         )
 

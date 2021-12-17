@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.21 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Bugfix: Structure controls upload in simulation template generation.
 
 
 0.20 (2021-12-16)
