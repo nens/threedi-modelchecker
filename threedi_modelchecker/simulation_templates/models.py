@@ -64,6 +64,8 @@ __all__ = [
     "SimulationTemplate",
 ]
 
+REQUIRE_GROUNDWATER = False
+
 
 class ValidationStatus(Enum):
     processing: str = "processing"
@@ -265,17 +267,19 @@ class InitialWaterlevels(AsDictMixin):
                 and x._raster
                 and x._raster.type == "initial_groundwater_level_file"
             ]
-            if not found:
+            # TODO: Remove when groundwater is fully implemented: silently pass if
+            # there is not initial groundwaterlevel file
+            if (not found) and REQUIRE_GROUNDWATER:
                 raise TemplateValidationError(
                     "Could not find aggregation file for initial groundwaterlevel raster"
                 )
-
-            self.raster_gw.initial_waterlevel = found[0].id
-            tasks.append(
-                client.simulations_initial_groundwater_level_raster_create(
-                    simulation_pk=simulation.id, data=self.raster_gw
+            elif found:
+                self.raster_gw.initial_waterlevel = found[0].id
+                tasks.append(
+                    client.simulations_initial_groundwater_level_raster_create(
+                        simulation_pk=simulation.id, data=self.raster_gw
+                    )
                 )
-            )
 
         if self.waterlevel_1d_file is not None:
             # use first found initial waterlevel resource with:
@@ -283,7 +287,7 @@ class InitialWaterlevels(AsDictMixin):
             found = [x for x in initial_waterlevels if x.dimension == "one_d"]
             if not found:
                 raise TemplateValidationError(
-                    "Could not find aggregation file for 1D initial groundwaterlevel from file"
+                    "Could not find aggregation file for 1D initial waterlevel from file"
                 )
 
             self.waterlevel_1d_file.initial_waterlevel = found[0].id
