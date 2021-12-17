@@ -707,6 +707,36 @@ CHECKS += [
         invalid=CONDITIONS["has_no_dem"].filter(models.GlobalSetting.epsg_code == None),
         message="v2_global_settings.epsg_code may not be NULL if no dem file is provided",
     ),
+    QueryCheck(
+        error_code=318,
+        column=models.GlobalSetting.use_2d_flow,
+        invalid=CONDITIONS["has_no_dem"].filter(
+            models.GlobalSetting.use_2d_flow == True
+        ),
+        message="v2_global_settings.use_2d_flow may not be TRUE if no dem file is provided",
+    ),
+    QueryCheck(
+        error_code=319,
+        column=models.GlobalSetting.use_2d_flow,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.use_1d_flow == False,
+            models.GlobalSetting.use_2d_flow == False,
+        ),
+        message="v2_global_settings.use_1d_flow and v2_global_settings.use_2d_flow cannot both be FALSE",
+    ),
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=320,
+        column=models.GlobalSetting.manhole_storage_area,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.manhole_storage_area > 0,
+            (
+                (models.GlobalSetting.use_2d_flow == True)
+                | (~is_none_or_empty(models.GlobalSetting.dem_file))
+            ),
+        ),
+        message="sub-basins (v2_global_settings.manhole_storage_area > 0) should only be used when there is DEM supplied and there is no 2D flow",
+    ),
 ]
 
 ## 04xx: Groundwater, Interflow & Infiltration
