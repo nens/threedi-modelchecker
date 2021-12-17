@@ -2,6 +2,7 @@ from ..threedi_model import constants
 from ..threedi_model import models
 from .base import BaseCheck
 from .base import CheckLevel
+from .geo_query import distance
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
 from sqlalchemy import text
@@ -49,17 +50,11 @@ class CrossSectionLocationCheck(BaseCheck):
         self.max_distance = max_distance
 
     def get_invalid(self, session):
-        epsg_code = Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code")
         return (
             self.to_check(session)
             .join(models.Channel)
             .filter(
-                geo_func.ST_Distance(
-                    geo_func.ST_Transform(
-                        models.CrossSectionLocation.the_geom, epsg_code
-                    ),
-                    geo_func.ST_Transform(models.Channel.the_geom, epsg_code),
-                )
+                distance(models.CrossSectionLocation.the_geom, models.Channel.the_geom)
                 > self.max_distance
             )
             .all()
@@ -150,17 +145,12 @@ class ConnectionNodesLength(BaseCheck):
     def get_invalid(self, session):
         start_node = aliased(models.ConnectionNode)
         end_node = aliased(models.ConnectionNode)
-        epsg_code = Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code")
         q = (
             Query(self.column.class_)
             .join(start_node, self.start_node)
             .join(end_node, self.end_node)
             .filter(
-                geo_func.ST_Distance(
-                    geo_func.ST_Transform(start_node.the_geom, epsg_code),
-                    geo_func.ST_Transform(end_node.the_geom, epsg_code),
-                )
-                < self.min_distance
+                distance(start_node.the_geom, end_node.the_geom) < self.min_distance
             )
         )
         return list(q.with_session(session).all())
@@ -302,6 +292,59 @@ class OpenChannelsWithNestedNewton(BaseCheck):
             f"NumericalSettings.use_of_nested_newton is switched off. "
             f"This gives convergence issues. We recommend setting use_of_nested_newton = 1."
         )
+
+
+class StartPointLocationCheck(BaseCheck):
+    """Check that linestring geometry starts are at least 0.01 m away from their connection nodes"""
+
+    def __init__(self, max_distance, *args, **kwargs):
+        self.max_distance = max_distance
+        super().__init__(*args, **kwargs)
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        start_point = geo_func.ST_PointN(self.column, 1)
+
+        return (
+            self.to_check(session)
+            .join(
+                models.ConnectionNode,
+                self.table.c.connection_node_start_id == models.ConnectionNode.id,
+            )
+            .filter(
+                distance(models.ConnectionNode.the_geom, start_point)
+                > self.max_distance
+            )
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"{self.column} does not start at its connection node (tolerance = {self.max_distance})"
+
+
+class EndPointLocationCheck(BaseCheck):
+    """Check that linestring geometry ends are at least 0.01 m away from their connection nodes"""
+
+    def __init__(self, max_distance, *args, **kwargs):
+        self.max_distance = max_distance
+        super().__init__(*args, **kwargs)
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        end_point = geo_func.ST_PointN(self.column, geo_func.ST_NumPoints(self.column))
+
+        return (
+            self.to_check(session)
+            .join(
+                models.ConnectionNode,
+                self.table.c.connection_node_end_id == models.ConnectionNode.id,
+            )
+            .filter(
+                distance(models.ConnectionNode.the_geom, end_point) > self.max_distance
+            )
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"{self.column} does not end at its connection node (tolerance = {self.max_distance})"
 
 
 class BoundaryCondition1DObjectNumberCheck(BaseCheck):

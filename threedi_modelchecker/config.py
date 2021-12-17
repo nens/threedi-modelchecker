@@ -1,3 +1,4 @@
+from .checks import geo_query
 from .checks.base import BaseCheck
 from .checks.base import CheckLevel
 from .checks.base import FileExistsCheck
@@ -26,7 +27,9 @@ from .checks.other import BoundaryCondition1DObjectNumberCheck
 from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionLocationCheck
+from .checks.other import EndPointLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
+from .checks.other import StartPointLocationCheck
 from .checks.other import Use0DFlowCheck
 from .checks.timeseries import TimeseriesIncreasingCheck
 from .checks.timeseries import TimeseriesRowCheck
@@ -34,7 +37,6 @@ from .checks.timeseries import TimeseriesTimestepCheck
 from .checks.timeseries import TimeseriesValueCheck
 from .threedi_model import models
 from .threedi_model.models import constants
-from geoalchemy2 import functions as geo_func
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import or_
@@ -485,15 +487,7 @@ CHECKS += [
         error_code=202,
         level=CheckLevel.WARNING,
         column=table.id,
-        invalid=Query(table).filter(
-            geo_func.ST_Length(
-                geo_func.ST_Transform(
-                    table.the_geom,
-                    Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code"),
-                )
-            )
-            < 0.05
-        ),
+        invalid=Query(table).filter(geo_query.length(table.the_geom) < 0.05),
         message=f"Length of a {table} is very short (< 0.05 m). A length of at least 1.0 m is recommended.",
     )
     for table in [models.Channel, models.Culvert]
@@ -519,6 +513,14 @@ CHECKS += [
         min_distance=0.05,
     )
     for table in [models.Orifice, models.Weir]
+]
+CHECKS += [
+    StartPointLocationCheck(error_code=205, column=table.the_geom, max_distance=0.01)
+    for table in [models.Channel, models.Culvert]
+]
+CHECKS += [
+    EndPointLocationCheck(error_code=206, column=table.the_geom, max_distance=0.01)
+    for table in [models.Channel, models.Culvert]
 ]
 
 
@@ -706,6 +708,13 @@ CHECKS += [
         column=models.GlobalSetting.epsg_code,
         invalid=CONDITIONS["has_no_dem"].filter(models.GlobalSetting.epsg_code == None),
         message="v2_global_settings.epsg_code may not be NULL if no dem file is provided",
+    ),
+    QueryCheck(
+        error_code=321,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.epsg_code,
+        invalid=CONDITIONS["has_dem"].filter(models.GlobalSetting.epsg_code == None),
+        message="if v2_global_settings.epsg_code is NULL, it will be extracted from the DEM later, however, the modelchecker will use ESPG:28992 for its spatial checks",
     ),
 ]
 

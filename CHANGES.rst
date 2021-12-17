@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.20.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Added checks for channel and culvert geometry distance to connection nodes.
 
 
 0.20.1 (2021-12-17)

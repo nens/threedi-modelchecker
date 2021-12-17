@@ -5,7 +5,7 @@ from sqlalchemy.orm import Query
 from threedi_modelchecker.checks.other import BankLevelCheck
 from threedi_modelchecker.checks.other import ConnectionNodesDistance
 from threedi_modelchecker.checks.other import ConnectionNodesLength
-from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton
+from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton, StartPointLocationCheck, EndPointLocationCheck
 from threedi_modelchecker.threedi_model import constants
 from threedi_modelchecker.threedi_model import models
 
@@ -71,30 +71,6 @@ def test_connection_nodes_length(session):
     errors = check_length.get_invalid(session)
     assert len(errors) == 1
     assert errors[0].id == weir_too_short.id
-
-
-def test_connection_nodes_length_missing_epsg_code(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Postgres only accepts coords in epsg 4326")
-    factories.WeirFactory(
-        connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-0.38222938832999598 -0.13872236685816669)"
-        ),
-        connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-        ),
-    )
-
-    check_length = ConnectionNodesLength(
-        column=models.Weir.id,
-        start_node=models.Weir.connection_node_start,
-        end_node=models.Weir.connection_node_end,
-        min_distance=0.05,
-    )
-
-    errors = check_length.get_invalid(session)
-    assert len(errors) == 0
-
 
 def test_connection_nodes_length_missing_start_node(session):
     if session.bind.name == "postgresql":
@@ -213,3 +189,85 @@ def test_node_distance(session):
     invalid_ids = [i.id for i in invalid]
     assert con1_too_close.id in invalid_ids
     assert con2_too_close.id in invalid_ids
+
+
+@pytest.mark.parametrize("channel_geom", [
+    "LINESTRING(155000 463000, 155000 463010)",
+    "LINESTRING(155000 463000, 155000 463999)",  # endpoint is wrong
+    "LINESTRING(155000 463001, 155000 463010)",  # startpoint within tolerance
+])
+def test_channels_start_point_check(session, channel_geom):
+    factories.NumericalSettingsFactory(use_of_nested_newton=0)
+    factories.ChannelFactory(
+        connection_node_start=factories.ConnectionNodeFactory(
+            the_geom="SRID=28992;POINT(155000 463000)"
+        ),
+        connection_node_end=factories.ConnectionNodeFactory(
+            the_geom="SRID=28992;POINT(155000 463010)"
+        ),
+        the_geom=f"SRID=28992;{channel_geom}",
+    )
+
+    errors = StartPointLocationCheck(column=models.Channel.the_geom, max_distance=1.01).get_invalid(session)
+    assert len(errors) == 0
+
+
+@pytest.mark.parametrize("channel_geom", [
+    "LINESTRING(155000 463002, 155000 463010)",
+    "LINESTRING(155002 463000, 155000 463010)",
+])
+def test_channels_start_point_check_invalid(session, channel_geom):
+    factories.NumericalSettingsFactory(use_of_nested_newton=0)
+    factories.ChannelFactory(
+        connection_node_start=factories.ConnectionNodeFactory(
+            the_geom="SRID=28992;POINT(155000 463000)"
+        ),
+        connection_node_end=factories.ConnectionNodeFactory(
+            the_geom="SRID=28992;POINT(155000 463010)"
+        ),
+        the_geom=f"SRID=28992;{channel_geom}",
+    )
+
+    errors = StartPointLocationCheck(column=models.Channel.the_geom, max_distance=1.01).get_invalid(session)
+    assert len(errors) == 1
+
+
+@pytest.mark.parametrize("channel_geom", [
+    "LINESTRING(155000 463000, 155000 463010)",
+    "LINESTRING(155000 463999, 155000 463010)",  # startpoint is wrong
+    "LINESTRING(155000 463000, 155000 463011)",  # endpoint within tolerance
+])
+def test_channels_end_point_check(session, channel_geom):
+    factories.NumericalSettingsFactory(use_of_nested_newton=0)
+    factories.ChannelFactory(
+        connection_node_start=factories.ConnectionNodeFactory(
+            the_geom="SRID=28992;POINT(155000 463000)"
+        ),
+        connection_node_end=factories.ConnectionNodeFactory(
+            the_geom="SRID=28992;POINT(155000 463010)"
+        ),
+        the_geom=f"SRID=28992;{channel_geom}",
+    )
+
+    errors = EndPointLocationCheck(column=models.Channel.the_geom, max_distance=1.01).get_invalid(session)
+    assert len(errors) == 0
+
+
+@pytest.mark.parametrize("channel_geom", [
+    "LINESTRING(155000 463000, 155002 463010)",
+    "LINESTRING(155000 463000, 155000 463012)",
+])
+def test_channels_end_point_check_invalid(session, channel_geom):
+    factories.NumericalSettingsFactory(use_of_nested_newton=0)
+    factories.ChannelFactory(
+        connection_node_start=factories.ConnectionNodeFactory(
+            the_geom="SRID=28992;POINT(155000 463000)"
+        ),
+        connection_node_end=factories.ConnectionNodeFactory(
+            the_geom="SRID=28992;POINT(155000 463010)"
+        ),
+        the_geom=f"SRID=28992;{channel_geom}",
+    )
+
+    errors = EndPointLocationCheck(column=models.Channel.the_geom, max_distance=1.01).get_invalid(session)
+    assert len(errors) == 1
