@@ -42,11 +42,8 @@ class BankLevelCheck(BaseCheck):
         )
 
 
-class CrossSectionLocationCheckSingle(BaseCheck):
-    """Check if cross section locations are within {max_distance} of their channel.
-    
-    This check only does channels with 1 cross section location.
-    """
+class CrossSectionLocationCheck(BaseCheck):
+    """Check if cross section locations are within {max_distance} of their channel."""
 
     def __init__(self, max_distance, *args, **kwargs):
         super().__init__(column=models.CrossSectionLocation.the_geom, *args, **kwargs)
@@ -54,40 +51,10 @@ class CrossSectionLocationCheckSingle(BaseCheck):
 
     def get_invalid(self, session):
         # get all channels with more than 1 cross section location
-        has_multiple = [x[0] for x in session.query(models.CrossSectionLocation.channel_id).group_by(models.CrossSectionLocation.channel_id).having(func.count(models.CrossSectionLocation.id) > 1).all()]
         return (
             self.to_check(session)
             .join(models.Channel)
             .filter(
-                models.CrossSectionLocation.channel_id.notin_(has_multiple),
-                distance(models.CrossSectionLocation.the_geom, models.Channel.the_geom)
-                > self.max_distance
-            )
-            .all()
-        )
-
-    def description(self):
-        return "v2_cross_section_location.the_geom is invalid: the cross-section location should be located on the channel geometry"
-
-
-class CrossSectionLocationCheckMultiple(BaseCheck):
-    """Check if cross section locations are within {max_distance} of their channel.
-    
-    This check only does channels with more than 1 cross section location.
-    """
-
-    def __init__(self, max_distance, *args, **kwargs):
-        super().__init__(column=models.CrossSectionLocation.the_geom, *args, **kwargs)
-        self.max_distance = max_distance
-
-    def get_invalid(self, session):
-        # get all channels with more than 1 cross section location
-        has_multiple = [x[0] for x in session.query(models.CrossSectionLocation.channel_id).group_by(models.CrossSectionLocation.channel_id).having(func.count(models.CrossSectionLocation.id) > 1).all()]
-        return (
-            self.to_check(session)
-            .join(models.Channel)
-            .filter(
-                models.CrossSectionLocation.channel_id.in_(has_multiple),
                 distance(models.CrossSectionLocation.the_geom, models.Channel.the_geom)
                 > self.max_distance
             )
@@ -328,57 +295,72 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         )
 
 
-class StartPointLocationCheck(BaseCheck):
-    """Check that linestring geometry starts are at least 0.01 m away from their connection nodes"""
+class LinestringGeomCheck(BaseCheck):
+    """Base class for checks that relate linear geometries to connection nodes (channels/culverts)"""
 
-    def __init__(self, max_distance, *args, **kwargs):
-        self.max_distance = max_distance
+    def __init__(self, *args, **kwargs):
+        self.max_distance = kwargs.pop("max_distance")
+        self.start_node = aliased(models.ConnectionNode)
+        self.end_node = aliased(models.ConnectionNode)
         super().__init__(*args, **kwargs)
 
-    def get_invalid(self, session: Session) -> List[NamedTuple]:
-        start_point = geo_func.ST_PointN(self.column, 1)
+    @property
+    def start_point(self):
+        return geo_func.ST_PointN(self.column, 1)
 
+    @property
+    def end_point(self):
+        return geo_func.ST_PointN(self.column, geo_func.ST_NumPoints(self.column))
+
+    def to_check(self, session):
+        return (
+            super()
+            .to_check(session)
+            .join(
+                self.start_node,
+                self.start_node.id == self.table.c.connection_node_start_id,
+            )
+            .join(
+                self.end_node, self.end_node.id == self.table.c.connection_node_end_id
+            )
+        )
+
+    @property
+    def start_ok(self):
+        return distance(self.start_point, self.start_node.the_geom) <= self.max_distance
+
+    @property
+    def end_ok(self):
+        return distance(self.end_point, self.end_node.the_geom) <= self.max_distance
+
+    @property
+    def start_ok_if_reversed(self):
+        return distance(self.end_point, self.start_node.the_geom) <= self.max_distance
+
+    @property
+    def end_ok_if_reversed(self):
+        return distance(self.start_point, self.end_node.the_geom) <= self.max_distance
+
+
+class LinestringLocationCheck(LinestringGeomCheck):
+    """Check that linestring geometry starts / ends are close to their connection nodes
+
+    This allows for reversing the geometries. threedi-gridbuilder will reverse the geometries if
+    that lowers the distance to the connection nodes.
+    """
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
         return (
             self.to_check(session)
-            .join(
-                models.ConnectionNode,
-                self.table.c.connection_node_start_id == models.ConnectionNode.id,
-            )
             .filter(
-                distance(models.ConnectionNode.the_geom, start_point)
-                > self.max_distance
+                ~(self.start_ok & self.end_ok),
+                ~(self.start_ok_if_reversed & self.end_ok_if_reversed),
             )
             .all()
         )
 
     def description(self) -> str:
-        return f"{self.column} does not start at its connection node (tolerance = {self.max_distance})"
-
-
-class EndPointLocationCheck(BaseCheck):
-    """Check that linestring geometry ends are at least 0.01 m away from their connection nodes"""
-
-    def __init__(self, max_distance, *args, **kwargs):
-        self.max_distance = max_distance
-        super().__init__(*args, **kwargs)
-
-    def get_invalid(self, session: Session) -> List[NamedTuple]:
-        end_point = geo_func.ST_PointN(self.column, geo_func.ST_NumPoints(self.column))
-
-        return (
-            self.to_check(session)
-            .join(
-                models.ConnectionNode,
-                self.table.c.connection_node_end_id == models.ConnectionNode.id,
-            )
-            .filter(
-                distance(models.ConnectionNode.the_geom, end_point) > self.max_distance
-            )
-            .all()
-        )
-
-    def description(self) -> str:
-        return f"{self.column} does not end at its connection node (tolerance = {self.max_distance})"
+        return f"{self.column} does not start or end at its connection node (tolerance = {self.max_distance})"
 
 
 class BoundaryCondition1DObjectNumberCheck(BaseCheck):

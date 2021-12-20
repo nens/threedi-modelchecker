@@ -10,6 +10,8 @@ Changelog of threedi-modelchecker
 - Added checks for illegal combinations of use_2d_flow, use_1d_flow, manhole_storage_area
   and dem file presence.
 
+- Changed cross section location geometry check to WARNING.
+
 
 0.20.1 (2021-12-17)
 -------------------
