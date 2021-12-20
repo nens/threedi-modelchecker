@@ -156,11 +156,11 @@ CHECKS += [
                 ]
             ),
         ),
-        message=f"Channel.calculation_type cannot be "
+        message=f"v2_channel.calculation_type cannot be "
         f"{constants.CalculationType.EMBEDDED}, "
         f"{constants.CalculationType.CONNECTED} or "
         f"{constants.CalculationType.DOUBLE_CONNECTED} when "
-        f"GlobalSetting.dem_file is null",
+        f"v2_global_settings.dem_file is null",
     )
 ]
 
@@ -197,7 +197,7 @@ CHECKS += [
         invalid=Query(models.ConnectionNode)
         .join(models.Manhole)
         .filter(models.ConnectionNode.storage_area < 0),
-        message="The ConnectionNode.storage_area should be >= 0 when the ConnectionNode is a Manhole",
+        message="v2_connection_nodes.storage_area is not greater than or equal to 0",
     ),
 ]
 
@@ -213,12 +213,10 @@ CHECKS += [
         error_code=54,
         column=models.CrossSectionLocation.reference_level,
         invalid=Query(models.CrossSectionLocation).filter(
-            models.CrossSectionLocation.bank_level != None,
             models.CrossSectionLocation.reference_level
             > models.CrossSectionLocation.bank_level,
         ),
-        message="CrossSectionLocation.reference_level should be below the CrossSectionLocation.bank_level "
-        "when CrossSectionLocation.bank_level is not null",
+        message="v2_cross_section_location.bank_level (if supplied) should be above the .reference_level",
     ),
     QueryCheck(
         error_code=55,
@@ -394,7 +392,7 @@ CHECKS += [
         .filter(
             table.invert_level_start_point < models.Manhole.bottom_level,
         ),
-        message=f"{table}.invert_level_start_point should be higher than or equal to Manhole.bottom_level. In the future, this will lead to an error.",
+        message=f"{table.__tablename__}.invert_level_start_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
     )
     for table in [models.Pipe, models.Culvert]
 ]
@@ -412,7 +410,7 @@ CHECKS += [
         .filter(
             table.invert_level_end_point < models.Manhole.bottom_level,
         ),
-        message=f"{table}.invert_level_end_point should be higher than or equal to Manhole.bottom_level. In the future, this will lead to an error.",
+        message=f"{table.__tablename__}.invert_level_end_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
     )
     for table in [models.Pipe, models.Culvert]
 ]
@@ -431,8 +429,8 @@ CHECKS += [
             models.Pumpstation.type_ == constants.PumpType.SUCTION_SIDE,
             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
         ),
-        message="Pumpstation.lower_stop_level should be higher than "
-        "Manhole.bottom_level. In the future, this will lead to an error.",
+        message="v2_pumpstation.lower_stop_level should be higher than "
+        "v2_manhole.bottom_level. In the future, this will lead to an error.",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
@@ -448,8 +446,8 @@ CHECKS += [
             models.Pumpstation.type_ == constants.PumpType.DELIVERY_SIDE,
             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
         ),
-        message="Pumpstation.lower_stop_level should be higher than "
-        "Manhole.bottom_level. In the future, this will lead to an error.",
+        message="v2_pumpstation.lower_stop_level should be higher than "
+        "v2_manhole.bottom_level. In the future, this will lead to an error.",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
@@ -461,8 +459,8 @@ CHECKS += [
                 [constants.CalculationTypeNode.CONNECTED]
             ),
         ),
-        message="Manhole.drain_level >= Manhole.bottom_level when "
-        "Manhole.calculation_type is CONNECTED. In the future, this will lead to an error.",
+        message="v2_manhole.drain_level >= v2_manhole.bottom_level when "
+        "v2_manhole.calculation_type is CONNECTED. In the future, this will lead to an error.",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
@@ -477,7 +475,7 @@ CHECKS += [
             ),
             models.Manhole.drain_level == None,
         ),
-        message="Manhole.drain_level cannot be null when using sub-basins (v2_global_settings.manhole_storage_area > 0) and no DEM is supplied.",
+        message="v2_manhole.drain_level cannot be null when using sub-basins (v2_global_settings.manhole_storage_area > 0) and no DEM is supplied.",
     ),
 ]
 
@@ -548,7 +546,7 @@ CHECKS += [
                 )
             ),
         ),
-        message="This is an isolated ConnectionNode without connections. Connect it to either a pipe, "
+        message="This is an isolated connection node without connections. Connect it to either a pipe, "
         "channel, culvert, weir, orifice or pumpstation.",
     ),
     QueryCheck(
@@ -608,8 +606,8 @@ CHECKS += [
             models.GlobalSetting.dem_obstacle_height <= 0,
             models.GlobalSetting.dem_obstacle_detection == True,
         ),
-        message="GlobalSetting.dem_obstacle_height should be larger than 0 when "
-        "GlobalSetting.dem_obstacle_detection == True",
+        message="v2_global_settings.dem_obstacle_height should be larger than 0 when "
+        "v2_global_settings.dem_obstacle_detection == True",
     ),
     QueryCheck(
         error_code=303,
