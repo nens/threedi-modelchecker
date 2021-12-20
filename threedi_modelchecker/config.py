@@ -26,7 +26,7 @@ from .checks.other import BankLevelCheck
 from .checks.other import BoundaryCondition1DObjectNumberCheck
 from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
-from .checks.other import CrossSectionLocationCheck
+from .checks.other import CrossSectionLocationCheckSingle, CrossSectionLocationCheckMultiple
 from .checks.other import EndPointLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import StartPointLocationCheck
@@ -205,7 +205,8 @@ CHECKS += [
 ## 005x: CROSS SECTIONS
 
 CHECKS += [
-    CrossSectionLocationCheck(max_distance=1.0, error_code=52),
+    CrossSectionLocationCheckSingle(level=CheckLevel.WARNING, max_distance=1.0, error_code=52),
+    CrossSectionLocationCheckMultiple(max_distance=1.0, error_code=52),
     OpenChannelsWithNestedNewton(error_code=53),
     QueryCheck(
         error_code=54,
@@ -515,11 +516,11 @@ CHECKS += [
     for table in [models.Orifice, models.Weir]
 ]
 CHECKS += [
-    StartPointLocationCheck(error_code=205, column=table.the_geom, max_distance=0.01)
+    StartPointLocationCheck(error_code=205, column=table.the_geom, max_distance=0.1)
     for table in [models.Channel, models.Culvert]
 ]
 CHECKS += [
-    EndPointLocationCheck(error_code=206, column=table.the_geom, max_distance=0.01)
+    EndPointLocationCheck(error_code=206, column=table.the_geom, max_distance=0.1)
     for table in [models.Channel, models.Culvert]
 ]
 

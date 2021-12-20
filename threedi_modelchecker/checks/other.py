@@ -42,8 +42,11 @@ class BankLevelCheck(BaseCheck):
         )
 
 
-class CrossSectionLocationCheck(BaseCheck):
-    """Check if cross section locations are within {max_distance} of their channel."""
+class CrossSectionLocationCheckSingle(BaseCheck):
+    """Check if cross section locations are within {max_distance} of their channel.
+    
+    This check only does channels with 1 cross section location.
+    """
 
     def __init__(self, max_distance, *args, **kwargs):
         super().__init__(column=models.CrossSectionLocation.the_geom, *args, **kwargs)
@@ -51,12 +54,40 @@ class CrossSectionLocationCheck(BaseCheck):
 
     def get_invalid(self, session):
         # get all channels with more than 1 cross section location
-        
-
+        has_multiple = [x[0] for x in session.query(models.CrossSectionLocation.channel_id).group_by(models.CrossSectionLocation.channel_id).having(func.count(models.CrossSectionLocation.id) > 1).all()]
         return (
             self.to_check(session)
             .join(models.Channel)
             .filter(
+                models.CrossSectionLocation.channel_id.notin_(has_multiple),
+                distance(models.CrossSectionLocation.the_geom, models.Channel.the_geom)
+                > self.max_distance
+            )
+            .all()
+        )
+
+    def description(self):
+        return "v2_cross_section_location.the_geom is invalid: the cross-section location should be located on the channel geometry"
+
+
+class CrossSectionLocationCheckMultiple(BaseCheck):
+    """Check if cross section locations are within {max_distance} of their channel.
+    
+    This check only does channels with more than 1 cross section location.
+    """
+
+    def __init__(self, max_distance, *args, **kwargs):
+        super().__init__(column=models.CrossSectionLocation.the_geom, *args, **kwargs)
+        self.max_distance = max_distance
+
+    def get_invalid(self, session):
+        # get all channels with more than 1 cross section location
+        has_multiple = [x[0] for x in session.query(models.CrossSectionLocation.channel_id).group_by(models.CrossSectionLocation.channel_id).having(func.count(models.CrossSectionLocation.id) > 1).all()]
+        return (
+            self.to_check(session)
+            .join(models.Channel)
+            .filter(
+                models.CrossSectionLocation.channel_id.in_(has_multiple),
                 distance(models.CrossSectionLocation.the_geom, models.Channel.the_geom)
                 > self.max_distance
             )
