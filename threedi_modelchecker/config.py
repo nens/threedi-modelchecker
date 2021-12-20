@@ -2,7 +2,6 @@ from .checks.base import BaseCheck
 from .checks.base import CheckLevel
 from .checks.base import FileExistsCheck
 from .checks.base import ForeignKeyCheck
-from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
 from .checks.base import RangeCheck
@@ -230,56 +229,49 @@ CHECKS += [
 ## 006x: PUMPSTATIONS
 
 CHECKS += [
-    GeneralCheck(
+    QueryCheck(
         error_code=61,
         column=models.Pumpstation.upper_stop_level,
-        criterion_valid=and_(
-            models.Pumpstation.upper_stop_level > models.Pumpstation.lower_stop_level,
-            models.Pumpstation.upper_stop_level > models.Pumpstation.start_level,
+        invalid=Query(models.Pumpstation).filter(
+            models.Pumpstation.upper_stop_level <= models.Pumpstation.start_level,
         ),
+        message="v2_pumpstation.upper_stop_level should be greater than v2_pumpstation.start_level",
     ),
-    GeneralCheck(
+    QueryCheck(
         error_code=62,
         column=models.Pumpstation.lower_stop_level,
-        criterion_valid=and_(
-            models.Pumpstation.lower_stop_level < models.Pumpstation.start_level,
-            models.Pumpstation.lower_stop_level < models.Pumpstation.upper_stop_level,
+        invalid=Query(models.Pumpstation).filter(
+            models.Pumpstation.lower_stop_level >= models.Pumpstation.start_level,
         ),
-    ),
-    GeneralCheck(
-        error_code=63,
-        column=models.Pumpstation.start_level,
-        criterion_valid=and_(
-            models.Pumpstation.start_level > models.Pumpstation.lower_stop_level,
-            models.Pumpstation.start_level < models.Pumpstation.upper_stop_level,
-        ),
+        message="v2_pumpstation.lower_stop_level should be less than v2_pumpstation.start_level",
     ),
     RangeCheck(
         error_code=64,
         column=models.Pumpstation.capacity,
         min_value=0,
     ),
-    GeneralCheck(
+    QueryCheck(
         error_code=65,
         level=CheckLevel.WARNING,
         column=models.Pumpstation.capacity,
-        criterion_invalid=models.Pumpstation.capacity == 0.0,
+        invalid=Query(models.Pumpstation).filter(
+            models.Pumpstation.capacity == 0.0
+        ),
+        message="v2_pumpstation.capacity should be be greater than 0",
     ),
 ]
 
 ## 007x: BOUNDARY CONDITIONS
 
 CHECKS += [
-    # 1d boundary conditions cannot be connected to a pumpstation
-    GeneralCheck(
+    QueryCheck(
         error_code=71,
         column=models.BoundaryCondition1D.connection_node_id,
-        criterion_invalid=or_(
-            models.BoundaryCondition1D.connection_node_id
-            == models.Pumpstation.connection_node_start_id,
-            models.BoundaryCondition1D.connection_node_id
-            == models.Pumpstation.connection_node_end_id,
+        invalid=Query(models.BoundaryCondition1D).filter(
+            (models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_start_id)
+                | (models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_end_id),
         ),
+        message="v2_1d_boundary_conditions cannot be connected to a pumpstation"
     ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),
