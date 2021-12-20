@@ -196,3 +196,47 @@ class LimiterSlopeXArea(Enum):
 
 class IntegrationMethod(Enum):
     EULER_IMPLICIT = 0
+
+
+class ControlType(Enum):
+    memory = "memory"
+    table = "table"
+
+
+class StructureControlTypes(Enum):
+    pumpstation = "v2_pumpstation"
+    pipe = "v2_pipe"
+    orifice = "v2_orifice"
+    culvert = "v2_culvert"
+    weir = "v2_weir"
+    channel = "v2_channel"
+
+
+class ControlTableActionTypes(Enum):
+    set_discharge_coefficients = "set_discharge_coefficients"  # not pump
+    set_crest_level = "set_crest_level"  # orifice, weir only
+    set_pump_capacity = "set_pump_capacity"  # only pump, in API: set_pump_capacity
+    set_capacity = "set_capacity"  # old form, mapped to set_pump_capacity
+
+
+class MeasureLocationContentTypes(Enum):
+    v2_connection_nodes = "v2_connection_nodes"  # in API: v2_connection_node (singular)
+    # pipe = "v2_pipe"  # --> line cnode a-b
+    # orifice = "v2_orifice"  # --> line cnode a-b
+    # culvert = "v2_culvert"  # --> line cnode a-b
+    # channel = "v2_channel"  # --> line cnode a-b
+    # weir = "v2_weir"  # --> line cnode a-b
+
+
+class MeasureVariables(Enum):
+    waterlevel = "waterlevel"  # in API: "s1"
+    volume = "volume"  # in API: "vol1"
+    discharge = "discharge"  # in API: "q"
+    velocity = "velocity"  # in API: "u1"
+
+
+class MeasureOperators(Enum):
+    greater_than = ">"
+    greater_than_equal = ">="
+    less_than = "<"
+    less_than_equal = "<="
