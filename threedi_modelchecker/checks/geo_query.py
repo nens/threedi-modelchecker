@@ -10,7 +10,8 @@ DEFAULT_EPSG = 28992
 
 def epsg_code_query():
     return func.coalesce(
-        Query(models.GlobalSetting.epsg_code).limit(1).scalar_subquery(), literal(DEFAULT_EPSG)
+        Query(models.GlobalSetting.epsg_code).limit(1).scalar_subquery(),
+        literal(DEFAULT_EPSG),
     ).label("epsg_code")
 
 

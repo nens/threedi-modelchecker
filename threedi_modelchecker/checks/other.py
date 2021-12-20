@@ -295,66 +295,36 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         )
 
 
-class LinestringGeomCheck(BaseCheck):
-    """Base class for checks that relate linear geometries to connection nodes (channels/culverts)"""
-
-    def __init__(self, *args, **kwargs):
-        self.max_distance = kwargs.pop("max_distance")
-        self.start_node = aliased(models.ConnectionNode)
-        self.end_node = aliased(models.ConnectionNode)
-        super().__init__(*args, **kwargs)
-
-    @property
-    def start_point(self):
-        return geo_func.ST_PointN(self.column, 1)
-
-    @property
-    def end_point(self):
-        return geo_func.ST_PointN(self.column, geo_func.ST_NumPoints(self.column))
-
-    def to_check(self, session):
-        return (
-            super()
-            .to_check(session)
-            .join(
-                self.start_node,
-                self.start_node.id == self.table.c.connection_node_start_id,
-            )
-            .join(
-                self.end_node, self.end_node.id == self.table.c.connection_node_end_id
-            )
-        )
-
-    @property
-    def start_ok(self):
-        return distance(self.start_point, self.start_node.the_geom) <= self.max_distance
-
-    @property
-    def end_ok(self):
-        return distance(self.end_point, self.end_node.the_geom) <= self.max_distance
-
-    @property
-    def start_ok_if_reversed(self):
-        return distance(self.end_point, self.start_node.the_geom) <= self.max_distance
-
-    @property
-    def end_ok_if_reversed(self):
-        return distance(self.start_point, self.end_node.the_geom) <= self.max_distance
-
-
-class LinestringLocationCheck(LinestringGeomCheck):
+class LinestringLocationCheck(BaseCheck):
     """Check that linestring geometry starts / ends are close to their connection nodes
 
     This allows for reversing the geometries. threedi-gridbuilder will reverse the geometries if
     that lowers the distance to the connection nodes.
     """
 
+    def __init__(self, *args, **kwargs):
+        self.max_distance = kwargs.pop("max_distance")
+        super().__init__(*args, **kwargs)
+
     def get_invalid(self, session: Session) -> List[NamedTuple]:
+        start_node = aliased(models.ConnectionNode)
+        end_node = aliased(models.ConnectionNode)
+
+        tol = self.max_distance
+        start_point = geo_func.ST_PointN(self.column, 1)
+        end_point = geo_func.ST_PointN(self.column, geo_func.ST_NumPoints(self.column))
+
+        start_ok = distance(start_point, start_node.the_geom) <= tol
+        end_ok = distance(end_point, end_node.the_geom) <= tol
+        start_ok_if_reversed = distance(end_point, start_node.the_geom) <= tol
+        end_ok_if_reversed = distance(start_point, end_node.the_geom) <= tol
         return (
             self.to_check(session)
+            .join(start_node, start_node.id == self.table.c.connection_node_start_id)
+            .join(end_node, end_node.id == self.table.c.connection_node_end_id)
             .filter(
-                ~(self.start_ok & self.end_ok),
-                ~(self.start_ok_if_reversed & self.end_ok_if_reversed),
+                ~(start_ok & end_ok),
+                ~(start_ok_if_reversed & end_ok_if_reversed),
             )
             .all()
         )
