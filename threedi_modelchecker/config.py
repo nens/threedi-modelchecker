@@ -28,8 +28,8 @@ from .checks.other import BoundaryCondition1DObjectNumberCheck
 from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionLocationCheck
-from .checks.other import LinestringLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
+from .checks.other import LinestringLocationCheck
 from .checks.other import Use0DFlowCheck
 from .checks.timeseries import TimeseriesIncreasingCheck
 from .checks.timeseries import TimeseriesRowCheck

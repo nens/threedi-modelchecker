@@ -2,6 +2,7 @@ from ..threedi_model import models
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
 from sqlalchemy.orm import Query
+from sqlalchemy.sql import literal
 
 
 DEFAULT_EPSG = 28992
@@ -9,7 +10,7 @@ DEFAULT_EPSG = 28992
 
 def epsg_code_query():
     return func.coalesce(
-        Query(models.GlobalSetting.epsg_code).limit(1).as_scalar(), DEFAULT_EPSG
+        Query(models.GlobalSetting.epsg_code).limit(1).scalar_subquery(), literal(DEFAULT_EPSG)
     ).label("epsg_code")
 
 
