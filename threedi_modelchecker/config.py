@@ -735,7 +735,7 @@ CHECKS += [
                 | (~is_none_or_empty(models.GlobalSetting.dem_file))
             ),
         ),
-        message="sub-basins (v2_global_settings.manhole_storage_area > 0) should only be used when there is DEM supplied and there is no 2D flow",
+        message="sub-basins (v2_global_settings.manhole_storage_area > 0) should only be used when there is no DEM supplied and there is no 2D flow",
     ),
 ]
 
