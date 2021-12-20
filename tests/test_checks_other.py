@@ -5,7 +5,7 @@ from sqlalchemy.orm import Query
 from threedi_modelchecker.checks.other import BankLevelCheck
 from threedi_modelchecker.checks.other import ConnectionNodesDistance
 from threedi_modelchecker.checks.other import ConnectionNodesLength
-from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton, StartPointLocationCheck, EndPointLocationCheck
+from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton, StartPointLocationCheck, EndPointLocationCheck, CrossSectionLocationCheck
 from threedi_modelchecker.threedi_model import constants
 from threedi_modelchecker.threedi_model import models
 
@@ -197,6 +197,8 @@ def test_node_distance(session):
     "LINESTRING(155000 463001, 155000 463010)",  # startpoint within tolerance
 ])
 def test_channels_start_point_check(session, channel_geom):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.NumericalSettingsFactory(use_of_nested_newton=0)
     factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
@@ -217,6 +219,8 @@ def test_channels_start_point_check(session, channel_geom):
     "LINESTRING(155002 463000, 155000 463010)",
 ])
 def test_channels_start_point_check_invalid(session, channel_geom):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.NumericalSettingsFactory(use_of_nested_newton=0)
     factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
@@ -238,6 +242,8 @@ def test_channels_start_point_check_invalid(session, channel_geom):
     "LINESTRING(155000 463000, 155000 463011)",  # endpoint within tolerance
 ])
 def test_channels_end_point_check(session, channel_geom):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.NumericalSettingsFactory(use_of_nested_newton=0)
     factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
@@ -258,6 +264,8 @@ def test_channels_end_point_check(session, channel_geom):
     "LINESTRING(155000 463000, 155000 463012)",
 ])
 def test_channels_end_point_check_invalid(session, channel_geom):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.NumericalSettingsFactory(use_of_nested_newton=0)
     factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
@@ -270,4 +278,31 @@ def test_channels_end_point_check_invalid(session, channel_geom):
     )
 
     errors = EndPointLocationCheck(column=models.Channel.the_geom, max_distance=1.01).get_invalid(session)
+    assert len(errors) == 1
+
+
+def test_cross_section_location(session):
+    if session.bind.name == "postgresql":
+        pytest.skip("Postgres only accepts coords in epsg 4326")
+    channel = factories.ChannelFactory(
+        the_geom=f"SRID=28992;LINESTRING(155000 463000, 155000 463010)",
+    )
+    factories.CrossSectionLocationFactory(
+        channel=channel,
+        the_geom=f"SRID=28992;POINT(155000 463002)"
+    )
+    factories.CrossSectionLocationFactory(
+        channel=channel,
+        the_geom=f"SRID=28992;POINT(155001 463008)"
+    )
+
+    # channel with only 1 cross section location; don't check
+    channel2 = factories.ChannelFactory(
+        the_geom=f"SRID=28992;LINESTRING(155010 463000, 155010 463010)",
+    )
+    factories.CrossSectionLocationFactory(
+        channel=channel2,
+        the_geom=f"SRID=28992;POINT(155000 463002)"
+    )
+    errors = CrossSectionLocationCheck(0.1).get_invalid(session)
     assert len(errors) == 1

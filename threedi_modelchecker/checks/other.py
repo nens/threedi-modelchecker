@@ -50,6 +50,9 @@ class CrossSectionLocationCheck(BaseCheck):
         self.max_distance = max_distance
 
     def get_invalid(self, session):
+        # get all channels with more than 1 cross section location
+        
+
         return (
             self.to_check(session)
             .join(models.Channel)
