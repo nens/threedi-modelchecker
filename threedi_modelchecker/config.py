@@ -2,6 +2,7 @@ from .checks import geo_query
 from .checks.base import BaseCheck
 from .checks.base import CheckLevel
 from .checks.base import FileExistsCheck
+from .checks.base import ForeignKeyCheck
 from .checks.base import GeneralCheck
 from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
@@ -711,11 +712,41 @@ CHECKS += [
         message="v2_global_settings.epsg_code may not be NULL if no dem file is provided",
     ),
     QueryCheck(
-        error_code=321,
+        error_code=318,
         level=CheckLevel.WARNING,
         column=models.GlobalSetting.epsg_code,
         invalid=CONDITIONS["has_dem"].filter(models.GlobalSetting.epsg_code == None),
         message="if v2_global_settings.epsg_code is NULL, it will be extracted from the DEM later, however, the modelchecker will use ESPG:28992 for its spatial checks",
+    ),
+    QueryCheck(
+        error_code=319,
+        column=models.GlobalSetting.use_2d_flow,
+        invalid=CONDITIONS["has_no_dem"].filter(
+            models.GlobalSetting.use_2d_flow == True
+        ),
+        message="v2_global_settings.use_2d_flow may not be TRUE if no dem file is provided",
+    ),
+    QueryCheck(
+        error_code=320,
+        column=models.GlobalSetting.use_2d_flow,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.use_1d_flow == False,
+            models.GlobalSetting.use_2d_flow == False,
+        ),
+        message="v2_global_settings.use_1d_flow and v2_global_settings.use_2d_flow cannot both be FALSE",
+    ),
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=321,
+        column=models.GlobalSetting.manhole_storage_area,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.manhole_storage_area > 0,
+            (
+                (models.GlobalSetting.use_2d_flow == True)
+                | (~is_none_or_empty(models.GlobalSetting.dem_file))
+            ),
+        ),
+        message="sub-basins (v2_global_settings.manhole_storage_area > 0) should only be used when there is no DEM supplied and there is no 2D flow",
     ),
 ]
 
@@ -1356,6 +1387,71 @@ CHECKS += [
         models.Lateral1d.timeseries,
         models.Lateral2D.timeseries,
     ]
+]
+
+## 122x Structure controls
+
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1220,
+        column=models.ControlMeasureMap.object_id,
+        reference_column=models.ConnectionNode.id,
+        filters=models.ControlMeasureMap.object_type == "v2_connection_node",
+    )
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1221,
+        column=control_table.target_id,
+        reference_column=models.Channel.id,
+        filters=control_table.target_type == "v2_channel",
+    )
+    for control_table in (models.ControlMemory, models.ControlTable)
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1222,
+        column=control_table.target_id,
+        reference_column=models.Pipe.id,
+        filters=control_table.target_type == "v2_pipe",
+    )
+    for control_table in (models.ControlMemory, models.ControlTable)
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1223,
+        column=control_table.target_id,
+        reference_column=models.Orifice.id,
+        filters=control_table.target_type == "v2_orifice",
+    )
+    for control_table in (models.ControlMemory, models.ControlTable)
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1224,
+        column=control_table.target_id,
+        reference_column=models.Culvert.id,
+        filters=control_table.target_type == "v2_culvert",
+    )
+    for control_table in (models.ControlMemory, models.ControlTable)
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1225,
+        column=control_table.target_id,
+        reference_column=models.Weir.id,
+        filters=control_table.target_type == "v2_weir",
+    )
+    for control_table in (models.ControlMemory, models.ControlTable)
+]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1226,
+        column=control_table.target_id,
+        reference_column=models.Pumpstation.id,
+        filters=control_table.target_type == "v2_pumpstation",
+    )
+    for control_table in (models.ControlMemory, models.ControlTable)
 ]
 
 

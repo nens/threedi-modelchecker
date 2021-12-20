@@ -18,6 +18,13 @@ from threedi_modelchecker.simulation_templates.models import StructureControls
 from threedi_modelchecker.simulation_templates.utils import (
     strip_dict_none_values,
 )
+from threedi_modelchecker.threedi_model.constants import (
+    ControlTableActionTypes,
+)
+from threedi_modelchecker.threedi_model.constants import ControlType
+from threedi_modelchecker.threedi_model.constants import (
+    MeasureLocationContentTypes, MeasureVariables
+)
 from threedi_modelchecker.threedi_model.models import Control
 from threedi_modelchecker.threedi_model.models import ControlGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
@@ -36,10 +43,12 @@ def control_measure_map_to_measure_location(
     c_measure_map: ControlMeasureMap,
 ) -> MeasureLocation:
     # Connection nodes should be only option here.
-    CONTENT_TYPE_MAP = {"v2_connection_nodes": "v2_connection_node"}
+    CONTENT_TYPE_MAP = {
+        MeasureLocationContentTypes.v2_connection_nodes: "v2_connection_node"
+    }
 
     return MeasureLocation(
-        weight=str(c_measure_map.weight),
+        weight=str(round(float(c_measure_map.weight), 2)),
         content_type=CONTENT_TYPE_MAP[c_measure_map.object_type],
         content_pk=c_measure_map.object_id,
     )
@@ -51,26 +60,26 @@ def to_measure_specification(
     locations: List[MeasureLocation],
 ) -> MeasureSpecification:
     VARIABLE_MAPPING = {
-        "waterlevel": "s1",
-        "volume": "vol1",
-        "discharge": "q",
-        "velocity": "u1",
+        MeasureVariables.waterlevel: "s1",
+        MeasureVariables.volume: "vol1",
+        MeasureVariables.discharge: "q",
+        MeasureVariables.velocity: "u1",
     }
 
     # Use > as default for memory control
     operator = ">"
     if hasattr(control, "measure_operator"):
-        operator = control.measure_operator
+        operator = control.measure_operator.value
 
     return MeasureSpecification(
-        name=group.name[:50],
+        name=group.name[:50] if group.name else "",
         variable=VARIABLE_MAPPING[control.measure_variable],
         locations=locations,
         operator=operator,
     )
 
 
-TYPE_MAPPING = {"set_capacity": "set_pump_capacity"}
+TYPE_MAPPING = {ControlTableActionTypes.set_capacity: "set_pump_capacity"}
 CAPACITY_FACTOR: float = 0.001
 
 
@@ -108,11 +117,11 @@ def to_table_control(
 ) -> TableStructureControl:
 
     action_type: str = TYPE_MAPPING.get(
-        table_control.action_type, table_control.action_type
+        table_control.action_type, table_control.action_type.value
     )
     try:
         values = parse_action_table(table_control.action_table)
-        if table_control.action_type == "set_capacity":
+        if table_control.action_type is ControlTableActionTypes.set_capacity:
             values = [[x[0], x[1] * CAPACITY_FACTOR] for x in values]
     except (ValueError, TypeError):
         raise SchematisationError(
@@ -134,7 +143,7 @@ def to_table_control(
         duration=control_end - control_start,
         measure_specification=measure_specification,
         structure_id=table_control.target_id,
-        structure_type=table_control.target_type,
+        structure_type=table_control.target_type.value,
         type=action_type,
         values=values,
     )
@@ -147,12 +156,12 @@ def to_memory_control(
 ) -> MemoryStructureControl:
 
     action_type: str = TYPE_MAPPING.get(
-        memory_control.action_type, memory_control.action_type
+        memory_control.action_type, memory_control.action_type.value
     )
 
     try:
         value = parse_action_value(memory_control.action_value)
-        if memory_control.action_type == "set_capacity":
+        if memory_control.action_type is ControlTableActionTypes.set_capacity:
             value = [value[0] * CAPACITY_FACTOR]
     except (ValueError, TypeError):
         raise SchematisationError(
@@ -174,11 +183,11 @@ def to_memory_control(
         duration=control_end - control_start,
         measure_specification=measure_specification,
         structure_id=memory_control.target_id,
-        structure_type=memory_control.target_type,
+        structure_type=memory_control.target_type.value,
         type=action_type,
         value=value,
-        upper_threshold=float(memory_control.upper_threshold),
-        lower_threshold=float(memory_control.lower_threshold),
+        upper_threshold=memory_control.upper_threshold,
+        lower_threshold=memory_control.lower_threshold,
         is_inverse=bool(memory_control.is_inverse),
         is_active=bool(memory_control.is_active),
     )
@@ -231,17 +240,19 @@ class StructureControlExtractor(object):
 
                 api_control = None
 
-                if control.control_type == "table":
+                if control.control_type is ControlType.table:
                     table: ControlTable = table_lookup[control.control_id]
                     measure_spec = to_measure_specification(table, group, maps)
                     api_control = to_table_control(control, table, measure_spec)
-                elif control.control_type == "memory":
+                elif control.control_type is ControlType.memory:
                     memory: ControlMemory = memory_lookup[control.control_id]
                     measure_spec = to_measure_specification(memory, group, maps)
                     api_control = to_memory_control(control, memory, measure_spec)
                 else:
-                    continue
-                self._controls[control.control_type].append(api_control)
+                    raise SchematisationError(
+                        f"Unknown control_type '{control.control_type.value}'"
+                    )
+                self._controls[control.control_type.value].append(api_control)
 
     def all_controls(self) -> StructureControls:
         self.__initialize_controls()
