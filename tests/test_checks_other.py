@@ -2,7 +2,6 @@ from . import factories
 from geoalchemy2 import functions as geo_func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Query
-from threedi_modelchecker.checks.other import BankLevelCheck
 from threedi_modelchecker.checks.other import ConnectionNodesDistance
 from threedi_modelchecker.checks.other import ConnectionNodesLength
 from threedi_modelchecker.checks.other import CrossSectionLocationCheck
@@ -12,34 +11,6 @@ from threedi_modelchecker.threedi_model import constants
 from threedi_modelchecker.threedi_model import models
 
 import pytest
-
-
-def test_check_cross_section_location_bank_levels(session):
-    """Check 'CrossSectionLocation.bank_level' is not null if
-    calculation_type is CONNECTED or DOUBLE_CONNECTED.
-    """
-    if session.bind.name == "postgresql":
-        pytest.skip(
-            "Postgis db has set constraints which make the "
-            "channelfactory fail. Furthermore, it expects an SRID "
-            "28992 while spatialite expects 4326."
-        )
-    channel = factories.ChannelFactory(
-        calculation_type=constants.CalculationType.CONNECTED
-    )
-    wrong = factories.CrossSectionLocationFactory(channel=channel, bank_level=None)
-    factories.CrossSectionLocationFactory(channel=channel, bank_level=1.0)
-    factories.CrossSectionLocationFactory(
-        channel=factories.ChannelFactory(
-            calculation_type=constants.CalculationType.EMBEDDED
-        ),
-        bank_level=None,
-    )
-
-    bank_level_check = BankLevelCheck()
-    invalid_bank_levels = bank_level_check.get_invalid(session)
-    assert len(invalid_bank_levels) == 1
-    assert invalid_bank_levels[0].id == wrong.id
 
 
 def test_connection_nodes_length(session):

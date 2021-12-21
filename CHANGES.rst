@@ -16,6 +16,8 @@ Changelog of threedi-modelchecker
 
 - Changed some nullability and geometry validity checks to WARNING.
 
+- Removed check 0101 (bank level not NULL check).
+
 
 0.20.1 (2021-12-17)
 -------------------

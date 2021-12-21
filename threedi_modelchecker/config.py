@@ -22,7 +22,6 @@ from .checks.factories import generate_geometry_type_checks
 from .checks.factories import generate_not_null_checks
 from .checks.factories import generate_type_checks
 from .checks.factories import generate_unique_checks
-from .checks.other import BankLevelCheck
 from .checks.other import BoundaryCondition1DObjectNumberCheck
 from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
@@ -371,7 +370,6 @@ CHECKS += [
 
 ## 01xx: LEVEL CHECKS
 
-CHECKS += [BankLevelCheck(error_code=101)]
 CHECKS += [
     QueryCheck(
         level=CheckLevel.WARNING,

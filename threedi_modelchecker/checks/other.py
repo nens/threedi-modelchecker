@@ -13,35 +13,6 @@ from typing import List
 from typing import NamedTuple
 
 
-class BankLevelCheck(BaseCheck):
-    """Check 'CrossSectionLocation.bank_level' is not null if
-    calculation_type is CONNECTED or DOUBLE_CONNECTED.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(column=models.CrossSectionLocation.bank_level, *args, **kwargs)
-
-    def get_invalid(self, session):
-        q = session.query(self.table).filter(
-            models.CrossSectionLocation.bank_level == None,
-            models.CrossSectionLocation.channel.has(
-                models.Channel.calculation_type.in_(
-                    [
-                        constants.CalculationType.CONNECTED,
-                        constants.CalculationType.DOUBLE_CONNECTED,
-                    ]
-                )
-            ),
-        )
-        return q.all()
-
-    def description(self):
-        return (
-            "CrossSectionLocation.bank_level cannot be NULL when calculation_type "
-            "is CONNECTED or DOUBLE_CONNECTED"
-        )
-
-
 class CrossSectionLocationCheck(BaseCheck):
     """Check if cross section locations are within {max_distance} of their channel."""
 
