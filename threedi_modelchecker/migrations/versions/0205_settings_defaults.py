@@ -38,8 +38,6 @@ UPDATE v2_global_settings SET frict_avg = 1 WHERE frict_avg NOT IN (0, 1);
 
 UPDATE v2_global_settings SET max_angle_1d_advection = 1.256637 WHERE max_angle_1d_advection = 90;
 
-UPDATE v2_global_settings SET dist_calc_points = 100 WHERE dist_calc_points <= 0;
-
 UPDATE v2_global_settings SET dem_obstacle_detection = 0 WHERE dem_obstacle_detection = '';
 
 UPDATE v2_global_settings SET table_step_size_1d = NULL WHERE table_step_size_1d <= 0;
