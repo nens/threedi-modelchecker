@@ -5,8 +5,14 @@ Changelog of threedi-modelchecker
 0.20.2 (unreleased)
 -------------------
 
+- Added checks for channel and culvert geometry distance to connection nodes.
+
 - Added checks for illegal combinations of use_2d_flow, use_1d_flow, manhole_storage_area
   and dem file presence.
+
+- Changed cross section location geometry check to WARNING.
+
+- This release requires at least geoalchemy2 0.9.0.
 
 
 0.20.1 (2021-12-17)
