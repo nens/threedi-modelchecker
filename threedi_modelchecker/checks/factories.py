@@ -25,7 +25,7 @@ def generate_foreign_key_checks(table, custom_level_map=None, **kwargs):
                 reference_column=fk_column.column,
                 column=fk_column.parent,
                 level=level,
-                **kwargs
+                **kwargs,
             )
         )
     return foreign_key_checks
