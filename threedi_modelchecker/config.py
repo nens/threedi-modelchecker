@@ -66,7 +66,6 @@ CHECKS += [
     RangeCheck(
         error_code=21,
         column=table.friction_value,
-        filters=table.friction_type == constants.FrictionType.CHEZY.value,
         min_value=0,
     )
     for table in [
@@ -79,8 +78,7 @@ CHECKS += [
     RangeCheck(
         error_code=21,
         column=table.friction_value,
-        filters=(table.friction_type == constants.FrictionType.CHEZY.value)
-        & (table.crest_type == constants.CrestType.BROAD_CRESTED.value),
+        filters=(table.crest_type == constants.CrestType.BROAD_CRESTED.value),
         min_value=0,
     )
     for table in [
@@ -91,11 +89,12 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=22,
+        level=CheckLevel.WARNING,
         column=table.friction_value,
         filters=table.friction_type == constants.FrictionType.MANNING.value,
-        min_value=0,
         max_value=1,
         right_inclusive=False,  # 1 is not allowed
+        message=f"{table.__tablename__}.friction_value is not less than 1 while MANNING friction is selected. CHEZY friction will be used instead. In the future this will lead to an error.",
     )
     for table in [
         models.CrossSectionLocation,
@@ -106,12 +105,13 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=23,
+        level=CheckLevel.WARNING,
         column=table.friction_value,
         filters=(table.friction_type == constants.FrictionType.MANNING.value)
         & (table.crest_type == constants.CrestType.BROAD_CRESTED.value),
-        min_value=0,
         max_value=1,
         right_inclusive=False,  # 1 is not allowed
+        message=f"{table.__tablename__}.friction_value is not less than 1 while MANNING friction is selected. CHEZY friction will be used instead. In the future this will lead to an error.",
     )
     for table in [
         models.Orifice,
@@ -180,9 +180,11 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=43,
+        level=CheckLevel.WARNING,
         column=table.dist_calc_points,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
+        message=f"{table.__tablename__}.dist_calc_points is not greater than 0, in the future this will lead to an error",
     )
     for table in [models.Channel, models.Pipe, models.Culvert]
 ]
@@ -629,9 +631,11 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=306,
+        level=CheckLevel.WARNING,
         column=models.GlobalSetting.dist_calc_points,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
+        message="v2_global_settings.dist_calc_points is not greater than 0, in the future this will lead to an error",
     ),
     RangeCheck(
         error_code=307,

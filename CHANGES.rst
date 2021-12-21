@@ -16,6 +16,8 @@ Changelog of threedi-modelchecker
 
 - Removed check 0101 (bank level not NULL check).
 
+- Only warn on dist_calc_points <= 0 and MANNING friction_value >= 1.
+
 
 0.20.1 (2021-12-17)
 -------------------

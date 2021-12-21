@@ -329,6 +329,7 @@ class RangeCheck(BaseCheck):
         max_value=None,
         left_inclusive=True,
         right_inclusive=True,
+        message=None,
         *args,
         **kwargs,
     ):
@@ -338,6 +339,7 @@ class RangeCheck(BaseCheck):
         self.max_value = max_value
         self.left_inclusive = left_inclusive
         self.right_inclusive = right_inclusive
+        self.message = message
         super().__init__(*args, **kwargs)
 
     def get_invalid(self, session):
@@ -355,6 +357,8 @@ class RangeCheck(BaseCheck):
         return self.to_check(session).filter(~and_(*conditions)).all()
 
     def description(self):
+        if self.message:
+            return self.message
         if self.min_value is None:
             msg = f"is not less than{' or equal to' if self.right_inclusive else ''} {self.max_value}"
         elif self.max_value is None:
