@@ -11,7 +11,7 @@ from geoalchemy2.types import Geometry
 
 def get_level(table, column, level_map):
     level = level_map.get(f"*.{column.name}")
-    level = level_map.get(f"{table.name}.{column.name}")
+    level = level_map.get(f"{table.name}.{column.name}", level)
     return level or "ERROR"
 
 
