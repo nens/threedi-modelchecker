@@ -1,8 +1,5 @@
 from geoalchemy2 import functions as geo_func
-from sqlalchemy import and_
-from sqlalchemy import cast
 from sqlalchemy import func
-from sqlalchemy import Integer
 from sqlalchemy.orm import Query
 from tests import factories
 from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_types
@@ -395,6 +392,7 @@ def test_conditional_check_storage_area(session):
     assert len(invalids) == 1
     assert invalids[0].id == conn_node_manhole_invalid.id
 
+
 def test_query_check_with_joins(session):
     connection_node1 = factories.ConnectionNodeFactory()
     connection_node2 = factories.ConnectionNodeFactory()
@@ -465,6 +463,7 @@ def test_query_check_on_pumpstation(session):
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
     assert invalids[0].id == pumpstation_wrong.id
+
 
 def test_query_check_manhole_drain_level_calc_type_2(session):
     # manhole.drain_level can be null, but if manhole.calculation_type == 2 (Connected)
