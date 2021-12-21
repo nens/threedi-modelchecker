@@ -54,7 +54,9 @@ def test_gen_enum_checks_varcharenum():
     assert models.AggregationSettings.flow_variable in enum_check_columns
 
 
-@pytest.mark.parametrize("name", ["*.aggregation_method", "v2_aggregation_settings.aggregation_method"])
+@pytest.mark.parametrize(
+    "name", ["*.aggregation_method", "v2_aggregation_settings.aggregation_method"]
+)
 def test_gen_enum_checks_custom_mapping(name):
     enum_checks = generate_enum_checks(
         models.AggregationSettings.__table__,
