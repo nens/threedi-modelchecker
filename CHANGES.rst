@@ -12,6 +12,8 @@ Changelog of threedi-modelchecker
 
 - Changed cross section location geometry check to WARNING.
 
+- This release requires at least geoalchemy2 0.9.0.
+
 
 0.20.1 (2021-12-17)
 -------------------
