@@ -6,7 +6,7 @@ long_description = "\n\n".join([open("README.rst").read()])
 
 install_requires = [
     "Click",
-    "GeoAlchemy2>=0.6",
+    "GeoAlchemy2>=0.9",
     "SQLAlchemy>=1.2",
     "alembic>=0.9",
 ]

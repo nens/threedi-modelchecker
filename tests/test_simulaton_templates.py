@@ -65,7 +65,10 @@ from threedi_modelchecker.simulation_templates.settings.extractor import (
 from threedi_modelchecker.simulation_templates.structure_controls.extractor import (
     StructureControlExtractor,
 )
-from threedi_modelchecker.threedi_model.constants import InitializationType, ControlTableActionTypes
+from threedi_modelchecker.threedi_model.constants import (
+    ControlTableActionTypes,
+)
+from threedi_modelchecker.threedi_model.constants import InitializationType
 from threedi_modelchecker.threedi_model.models import ControlGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
 from threedi_modelchecker.threedi_model.models import ControlMemory
@@ -652,7 +655,9 @@ def test_structure_controls(session, measure_group):
     assert extractor.all_controls().as_dict() == to_check.as_dict()
 
 
-@pytest.mark.parametrize("action_table", ["0.0;-1.0 2.0#1.0;-1.1  2.1", "0.0;-1.0,2.0#1.0;-1.1\t2.1"])
+@pytest.mark.parametrize(
+    "action_table", ["0.0;-1.0 2.0#1.0;-1.1  2.1", "0.0;-1.0,2.0#1.0;-1.1\t2.1"]
+)
 def test_table_control_alternative_separators(session, measure_group, action_table):
     control_group: ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"
@@ -670,7 +675,10 @@ def test_table_control_alternative_separators(session, measure_group, action_tab
 
     extractor = StructureControlExtractor(session, control_group_id=control_group.id)
 
-    assert extractor.all_controls().table[0].values == [[0.0, -1.0, 2.0], [1.0, -1.1, 2.1]]
+    assert extractor.all_controls().table[0].values == [
+        [0.0, -1.0, 2.0],
+        [1.0, -1.1, 2.1],
+    ]
 
 
 @pytest.mark.parametrize("action_value", ["0.0;1.0", "0.0,1.0", "0.0  1.0", "0.0\t1.0"])
@@ -698,7 +706,9 @@ def test_table_control_capacity_factor(session, measure_group):
         id=1, name="test group"
     )
     table_control: ControlTable = factories.ControlTableFactory.create(
-        id=1, action_table="0.0;100#1.0;200", action_type=ControlTableActionTypes.set_capacity,
+        id=1,
+        action_table="0.0;100#1.0;200",
+        action_type=ControlTableActionTypes.set_capacity,
     )
 
     factories.ControlFactory.create(
@@ -718,7 +728,9 @@ def test_memory_control_capacity_factor(session, measure_group):
         id=1, name="test group"
     )
     memory_control: ControlMemory = factories.ControlMemoryFactory.create(
-        id=1, action_value="100", action_type=ControlTableActionTypes.set_capacity,
+        id=1,
+        action_value="100",
+        action_type=ControlTableActionTypes.set_capacity,
     )
     factories.ControlFactory.create(
         control_group_id=control_group.id,

@@ -23,8 +23,9 @@ from threedi_modelchecker.threedi_model.constants import (
 )
 from threedi_modelchecker.threedi_model.constants import ControlType
 from threedi_modelchecker.threedi_model.constants import (
-    MeasureLocationContentTypes, MeasureVariables
+    MeasureLocationContentTypes,
 )
+from threedi_modelchecker.threedi_model.constants import MeasureVariables
 from threedi_modelchecker.threedi_model.models import Control
 from threedi_modelchecker.threedi_model.models import ControlGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureGroup

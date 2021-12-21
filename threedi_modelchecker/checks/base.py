@@ -105,8 +105,7 @@ class BaseCheck(ABC):
 
 
 class QueryCheck(BaseCheck):
-    """Specify a sqlalchemy.orm.Query object to return invalid instances
-    """
+    """Specify a sqlalchemy.orm.Query object to return invalid instances"""
 
     def __init__(
         self,

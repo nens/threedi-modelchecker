@@ -1,3 +1,4 @@
+from .checks import geo_query
 from .checks.base import BaseCheck
 from .checks.base import CheckLevel
 from .checks.base import FileExistsCheck
@@ -26,6 +27,7 @@ from .checks.other import BoundaryCondition1DObjectNumberCheck
 from .checks.other import ConnectionNodesDistance
 from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionLocationCheck
+from .checks.other import LinestringLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import Use0DFlowCheck
 from .checks.timeseries import TimeseriesIncreasingCheck
@@ -34,7 +36,6 @@ from .checks.timeseries import TimeseriesTimestepCheck
 from .checks.timeseries import TimeseriesValueCheck
 from .threedi_model import models
 from .threedi_model.models import constants
-from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
 from sqlalchemy.orm import Query
 from typing import List
@@ -152,11 +153,11 @@ CHECKS += [
                 ]
             ),
         ),
-        message=f"Channel.calculation_type cannot be "
+        message=f"v2_channel.calculation_type cannot be "
         f"{constants.CalculationType.EMBEDDED}, "
         f"{constants.CalculationType.CONNECTED} or "
         f"{constants.CalculationType.DOUBLE_CONNECTED} when "
-        f"GlobalSetting.dem_file is null",
+        f"v2_global_settings.dem_file is null",
     )
 ]
 
@@ -193,7 +194,7 @@ CHECKS += [
         invalid=Query(models.ConnectionNode)
         .join(models.Manhole)
         .filter(models.ConnectionNode.storage_area < 0),
-        message="The ConnectionNode.storage_area should be >= 0 when the ConnectionNode is a Manhole",
+        message="v2_connection_nodes.storage_area is not greater than or equal to 0",
     ),
 ]
 
@@ -201,18 +202,18 @@ CHECKS += [
 ## 005x: CROSS SECTIONS
 
 CHECKS += [
-    CrossSectionLocationCheck(max_distance=1.0, error_code=52),
+    CrossSectionLocationCheck(
+        level=CheckLevel.WARNING, max_distance=1.0, error_code=52
+    ),
     OpenChannelsWithNestedNewton(error_code=53),
     QueryCheck(
         error_code=54,
         column=models.CrossSectionLocation.reference_level,
         invalid=Query(models.CrossSectionLocation).filter(
-            models.CrossSectionLocation.bank_level != None,
             models.CrossSectionLocation.reference_level
             > models.CrossSectionLocation.bank_level,
         ),
-        message="CrossSectionLocation.reference_level should be below the CrossSectionLocation.bank_level "
-        "when CrossSectionLocation.bank_level is not null",
+        message="v2_cross_section_location.bank_level (if supplied) should be above the .reference_level",
     ),
     QueryCheck(
         error_code=55,
@@ -385,7 +386,7 @@ CHECKS += [
         .filter(
             table.invert_level_start_point < models.Manhole.bottom_level,
         ),
-        message=f"{table}.invert_level_start_point should be higher than or equal to Manhole.bottom_level. In the future, this will lead to an error.",
+        message=f"{table.__tablename__}.invert_level_start_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
     )
     for table in [models.Pipe, models.Culvert]
 ]
@@ -403,7 +404,7 @@ CHECKS += [
         .filter(
             table.invert_level_end_point < models.Manhole.bottom_level,
         ),
-        message=f"{table}.invert_level_end_point should be higher than or equal to Manhole.bottom_level. In the future, this will lead to an error.",
+        message=f"{table.__tablename__}.invert_level_end_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
     )
     for table in [models.Pipe, models.Culvert]
 ]
@@ -422,8 +423,8 @@ CHECKS += [
             models.Pumpstation.type_ == constants.PumpType.SUCTION_SIDE,
             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
         ),
-        message="Pumpstation.lower_stop_level should be higher than "
-        "Manhole.bottom_level. In the future, this will lead to an error.",
+        message="v2_pumpstation.lower_stop_level should be higher than "
+        "v2_manhole.bottom_level. In the future, this will lead to an error.",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
@@ -439,8 +440,8 @@ CHECKS += [
             models.Pumpstation.type_ == constants.PumpType.DELIVERY_SIDE,
             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
         ),
-        message="Pumpstation.lower_stop_level should be higher than "
-        "Manhole.bottom_level. In the future, this will lead to an error.",
+        message="v2_pumpstation.lower_stop_level should be higher than "
+        "v2_manhole.bottom_level. In the future, this will lead to an error.",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
@@ -452,8 +453,8 @@ CHECKS += [
                 [constants.CalculationTypeNode.CONNECTED]
             ),
         ),
-        message="Manhole.drain_level >= Manhole.bottom_level when "
-        "Manhole.calculation_type is CONNECTED. In the future, this will lead to an error.",
+        message="v2_manhole.drain_level >= v2_manhole.bottom_level when "
+        "v2_manhole.calculation_type is CONNECTED. In the future, this will lead to an error.",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
@@ -468,7 +469,7 @@ CHECKS += [
             ),
             models.Manhole.drain_level == None,
         ),
-        message="Manhole.drain_level cannot be null when using sub-basins (v2_global_settings.manhole_storage_area > 0) and no DEM is supplied.",
+        message="v2_manhole.drain_level cannot be null when using sub-basins (v2_global_settings.manhole_storage_area > 0) and no DEM is supplied.",
     ),
 ]
 
@@ -480,15 +481,7 @@ CHECKS += [
         error_code=202,
         level=CheckLevel.WARNING,
         column=table.id,
-        invalid=Query(table).filter(
-            geo_func.ST_Length(
-                geo_func.ST_Transform(
-                    table.the_geom,
-                    Query(models.GlobalSetting.epsg_code).limit(1).label("epsg_code"),
-                )
-            )
-            < 0.05
-        ),
+        invalid=Query(table).filter(geo_query.length(table.the_geom) < 0.05),
         message=f"Length of a {table} is very short (< 0.05 m). A length of at least 1.0 m is recommended.",
     )
     for table in [models.Channel, models.Culvert]
@@ -514,6 +507,10 @@ CHECKS += [
         min_distance=0.05,
     )
     for table in [models.Orifice, models.Weir]
+]
+CHECKS += [
+    LinestringLocationCheck(error_code=205, column=table.the_geom, max_distance=1)
+    for table in [models.Channel, models.Culvert]
 ]
 
 
@@ -543,7 +540,7 @@ CHECKS += [
                 )
             ),
         ),
-        message="This is an isolated ConnectionNode without connections. Connect it to either a pipe, "
+        message="This is an isolated connection node without connections. Connect it to either a pipe, "
         "channel, culvert, weir, orifice or pumpstation.",
     ),
     QueryCheck(
@@ -603,8 +600,8 @@ CHECKS += [
             models.GlobalSetting.dem_obstacle_height <= 0,
             models.GlobalSetting.dem_obstacle_detection == True,
         ),
-        message="GlobalSetting.dem_obstacle_height should be larger than 0 when "
-        "GlobalSetting.dem_obstacle_detection == True",
+        message="v2_global_settings.dem_obstacle_height should be larger than 0 when "
+        "v2_global_settings.dem_obstacle_detection == True",
     ),
     QueryCheck(
         error_code=303,
@@ -704,6 +701,13 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=318,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.epsg_code,
+        invalid=CONDITIONS["has_dem"].filter(models.GlobalSetting.epsg_code == None),
+        message="if v2_global_settings.epsg_code is NULL, it will be extracted from the DEM later, however, the modelchecker will use ESPG:28992 for its spatial checks",
+    ),
+    QueryCheck(
+        error_code=319,
         column=models.GlobalSetting.use_2d_flow,
         invalid=CONDITIONS["has_no_dem"].filter(
             models.GlobalSetting.use_2d_flow == True
@@ -711,7 +715,7 @@ CHECKS += [
         message="v2_global_settings.use_2d_flow may not be TRUE if no dem file is provided",
     ),
     QueryCheck(
-        error_code=319,
+        error_code=320,
         column=models.GlobalSetting.use_2d_flow,
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.use_1d_flow == False,
@@ -721,7 +725,7 @@ CHECKS += [
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
-        error_code=320,
+        error_code=321,
         column=models.GlobalSetting.manhole_storage_area,
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.manhole_storage_area > 0,
