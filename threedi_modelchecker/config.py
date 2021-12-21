@@ -35,9 +35,7 @@ from .checks.timeseries import TimeseriesValueCheck
 from .threedi_model import models
 from .threedi_model.models import constants
 from geoalchemy2 import functions as geo_func
-from sqlalchemy import and_
 from sqlalchemy import func
-from sqlalchemy import or_
 from sqlalchemy.orm import Query
 from typing import List
 
@@ -254,9 +252,7 @@ CHECKS += [
         error_code=65,
         level=CheckLevel.WARNING,
         column=models.Pumpstation.capacity,
-        invalid=Query(models.Pumpstation).filter(
-            models.Pumpstation.capacity == 0.0
-        ),
+        invalid=Query(models.Pumpstation).filter(models.Pumpstation.capacity == 0.0),
         message="v2_pumpstation.capacity should be be greater than 0",
     ),
 ]
@@ -268,10 +264,16 @@ CHECKS += [
         error_code=71,
         column=models.BoundaryCondition1D.connection_node_id,
         invalid=Query(models.BoundaryCondition1D).filter(
-            (models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_start_id)
-                | (models.BoundaryCondition1D.connection_node_id == models.Pumpstation.connection_node_end_id),
+            (
+                models.BoundaryCondition1D.connection_node_id
+                == models.Pumpstation.connection_node_start_id
+            )
+            | (
+                models.BoundaryCondition1D.connection_node_id
+                == models.Pumpstation.connection_node_end_id
+            ),
         ),
-        message="v2_1d_boundary_conditions cannot be connected to a pumpstation"
+        message="v2_1d_boundary_conditions cannot be connected to a pumpstation",
     ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),

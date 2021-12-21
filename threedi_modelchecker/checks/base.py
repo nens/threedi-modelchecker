@@ -7,7 +7,6 @@ from pathlib import Path
 from sqlalchemy import and_
 from sqlalchemy import false
 from sqlalchemy import func
-from sqlalchemy import not_
 from sqlalchemy import types
 from sqlalchemy.orm.session import Session
 from typing import List
