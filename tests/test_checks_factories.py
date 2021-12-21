@@ -6,6 +6,8 @@ from threedi_modelchecker.checks.factories import generate_not_null_checks
 from threedi_modelchecker.checks.factories import generate_unique_checks
 from threedi_modelchecker.threedi_model import models
 
+import pytest
+
 
 def test_gen_foreign_key_checks():
     foreign_key_checks = generate_foreign_key_checks(models.Manhole.__table__)
@@ -52,10 +54,13 @@ def test_gen_enum_checks_varcharenum():
     assert models.AggregationSettings.flow_variable in enum_check_columns
 
 
-def test_gen_enum_checks_custom_mapping():
+@pytest.mark.parametrize(
+    "name", ["*.aggregation_method", "v2_aggregation_settings.aggregation_method"]
+)
+def test_gen_enum_checks_custom_mapping(name):
     enum_checks = generate_enum_checks(
         models.AggregationSettings.__table__,
-        custom_level_map={"aggregation_method": "WARNING"},
+        custom_level_map={name: "WARNING"},
     )
 
     assert len(enum_checks) == 2

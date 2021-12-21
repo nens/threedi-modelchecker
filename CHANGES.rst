@@ -14,6 +14,8 @@ Changelog of threedi-modelchecker
 
 - This release requires at least geoalchemy2 0.9.0.
 
+- Changed some nullability and geometry validity checks to WARNING.
+
 - Removed check 0101 (bank level not NULL check).
 
 - Only warn on dist_calc_points <= 0 and MANNING friction_value >= 1.
