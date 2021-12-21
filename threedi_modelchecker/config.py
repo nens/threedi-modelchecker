@@ -1463,32 +1463,50 @@ class Config:
                 error_code=1,
             )
             self.checks += generate_unique_checks(model.__table__, error_code=2)
-            self.checks += generate_not_null_checks(model.__table__, error_code=3)
+            self.checks += generate_not_null_checks(
+                model.__table__,
+                error_code=3,
+                custom_level_map={
+                    "v2_grid_refinement.refinement_level": "warning",
+                    "v2_grid_refinement.the_geom": "warning",
+                    "v2_grid_refinement_area.refinement_level": "warning",
+                    "v2_grid_refinement_area.the_geom": "warning",
+                },
+            )
             self.checks += generate_type_checks(
                 model.__table__,
                 error_code=4,
                 custom_level_map={
-                    "sewerage": "INFO",
-                    "external": "INFO",
+                    "*.sewerage": "INFO",
+                    "v2_weir.external": "INFO",
                 },
             )
             self.checks += generate_geometry_checks(
                 model.__table__,
-                custom_level_map={"the_geom_linestring": "info"},
+                custom_level_map={
+                    "v2_connection_nodes.the_geom_linestring": "info",
+                    "v2_grid_refinement.the_geom": "warning",
+                    "v2_grid_refinement_area.the_geom": "warning",
+                    "v2_dem_average_area.the_geom": "warning",
+                    "v2_surface.the_geom": "warning",
+                    "v2_impervious_surface.the_geom": "warning",
+                },
                 error_code=5,
             )
             self.checks += generate_geometry_type_checks(
                 model.__table__,
-                custom_level_map={"the_geom_linestring": "info"},
+                custom_level_map={
+                    "v2_connection_nodes.the_geom_linestring": "info",
+                },
                 error_code=6,
             )
             self.checks += generate_enum_checks(
                 model.__table__,
                 error_code=7,
                 custom_level_map={
-                    "sewerage_type": "INFO",
-                    "zoom_category": "INFO",
-                    "material": "INFO",
+                    "*.zoom_category": "INFO",
+                    "v2_pipe.sewerage_type": "INFO",
+                    "v2_pipe.material": "INFO",
                 },
             )
 

@@ -14,6 +14,8 @@ Changelog of threedi-modelchecker
 
 - This release requires at least geoalchemy2 0.9.0.
 
+- Changed some nullability and geometry validity checks to WARNING.
+
 
 0.20.1 (2021-12-17)
 -------------------
