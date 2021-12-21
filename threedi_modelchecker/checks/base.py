@@ -7,7 +7,6 @@ from pathlib import Path
 from sqlalchemy import and_
 from sqlalchemy import false
 from sqlalchemy import func
-from sqlalchemy import not_
 from sqlalchemy import types
 from sqlalchemy.orm.session import Session
 from typing import List
@@ -105,50 +104,8 @@ class BaseCheck(ABC):
         return "<%s: %s>" % (self.__class__.__name__, self.column_name)
 
 
-class GeneralCheck(BaseCheck):
-    """Check to specify with an SQL expression what's valid/invalid.
-
-    Either specify what is valid with `criterion_valid` or what is invalid
-    with `criterion_invalid`.
-    The criterion should be a sqlalchemy.sql.expression.BinaryExpression (https://docs.sqlalchemy.org/en/13/core/sqlelement.html#sqlalchemy.sql.expression.BinaryExpression)
-    with operators being within `self.table.columns`
-    """
-
-    def __init__(self, criterion_invalid=None, criterion_valid=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.criterion_invalid = criterion_invalid
-        self.criterion_valid = criterion_valid
-
-    def get_invalid(self, session):
-        if self.criterion_invalid is not None:
-            q_invalid = self.to_check(session).filter(self.criterion_invalid)
-            return q_invalid.all()
-        elif self.criterion_valid is not None:
-            q_invalid = self.to_check(session).filter(~self.criterion_valid)
-            return q_invalid.all()
-        else:
-            raise AttributeError("No valid/invalid criterion has been specified")
-
-    def description(self):
-        if self.criterion_valid is not None:
-            condition = self.criterion_valid.compile(
-                compile_kwargs={"literal_binds": True}
-            )
-        elif self.criterion_invalid is not None:
-            condition = not_(self.criterion_invalid).compile(
-                compile_kwargs={"literal_binds": True}
-            )
-        else:
-            condition = "no condition specified"
-        return "'%s'" % condition
-
-
 class QueryCheck(BaseCheck):
-    """Specify a sqlalchemy.orm.Query object to return invalid instances
-
-    Provides more freedom than the GeneralCheck where you need to specify a
-    sqlalchemy.sql.expression.BinaryExpression. For example, QueryCheck allows joins
-    on multiple tables"""
+    """Specify a sqlalchemy.orm.Query object to return invalid instances"""
 
     def __init__(
         self,

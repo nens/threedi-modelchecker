@@ -1,15 +1,11 @@
 from geoalchemy2 import functions as geo_func
-from sqlalchemy import and_
-from sqlalchemy import cast
 from sqlalchemy import func
-from sqlalchemy import Integer
 from sqlalchemy.orm import Query
 from tests import factories
 from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_types
 from threedi_modelchecker.checks.base import EnumCheck
 from threedi_modelchecker.checks.base import FileExistsCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
-from threedi_modelchecker.checks.base import GeneralCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
 from threedi_modelchecker.checks.base import NotNullCheck
@@ -397,36 +393,6 @@ def test_conditional_check_storage_area(session):
     assert invalids[0].id == conn_node_manhole_invalid.id
 
 
-def test_conditional_check_joining_criterion_valid(session):
-    # Joining on criterion valid fails because it takes the complement (negation)
-    # of the joins (instead of only the where statement (joins are in the where
-    # statement)).
-    connection_node1 = factories.ConnectionNodeFactory()
-    connection_node2 = factories.ConnectionNodeFactory()
-    manhole1 = factories.ManholeFactory(
-        connection_node=connection_node1, bottom_level=1.0
-    )
-    factories.ManholeFactory(connection_node=connection_node2, bottom_level=-1.0)
-    factories.PumpstationFactory(
-        connection_node_start=connection_node1, lower_stop_level=0.0
-    )
-    factories.PumpstationFactory(
-        connection_node_start=connection_node2, lower_stop_level=2.0
-    )
-
-    check_lower_stop_level_gt_bottom_level_compliment = GeneralCheck(
-        column=models.Manhole.bottom_level,
-        criterion_valid=and_(
-            models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
-            models.Manhole.connection_node_id == models.ConnectionNode.id,
-            models.Pumpstation.lower_stop_level > models.Manhole.bottom_level,
-        ),
-    )
-    invalids = check_lower_stop_level_gt_bottom_level_compliment.get_invalid(session)
-    assert len(invalids) != 1  # Note that 1 is what we actually want!
-    assert invalids[0].id == manhole1.id
-
-
 def test_query_check_with_joins(session):
     connection_node1 = factories.ConnectionNodeFactory()
     connection_node2 = factories.ConnectionNodeFactory()
@@ -497,89 +463,6 @@ def test_query_check_on_pumpstation(session):
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
     assert invalids[0].id == pumpstation_wrong.id
-
-
-def test_get_valid(session):
-    factories.ConnectionNodeFactory(storage_area=1)
-    factories.ConnectionNodeFactory(storage_area=2)
-    factories.ConnectionNodeFactory(storage_area=3)
-
-    range_check = GeneralCheck(
-        column=models.ConnectionNode.storage_area,
-        criterion_valid=models.ConnectionNode.storage_area > 2,
-    )
-    to_check = range_check.to_check(session).all()
-    assert len(to_check) == 3
-    invalids = range_check.get_invalid(session)
-    valids = range_check.get_valid(session)
-    assert len(valids) + len(invalids) == 3
-
-
-def test_general_check_range(session):
-    w1 = factories.WeirFactory(friction_value=2)
-    factories.WeirFactory(friction_value=-1)
-
-    invalid_criterion = models.Weir.friction_value > 0
-    general_range_check = GeneralCheck(
-        column=models.Weir.friction_value, criterion_invalid=invalid_criterion
-    )
-
-    invalid = general_range_check.get_invalid(session)
-    assert len(invalid) == 1
-    assert invalid[0].id == w1.id
-
-
-def test_general_check_valid_criterion_range(session):
-    factories.WeirFactory(friction_value=2)
-    w2 = factories.WeirFactory(friction_value=-1)
-
-    valid_criterion = models.Weir.friction_value >= 0
-    general_range_check = GeneralCheck(
-        column=models.Weir.friction_value, criterion_valid=valid_criterion
-    )
-
-    invalid = general_range_check.get_invalid(session)
-    assert len(invalid) == 1
-    assert invalid[0].id == w2.id
-
-
-@pytest.mark.skip("Aggregate function not working for general checks")
-def test_general_check_aggregation_function(session):
-    # Aggregation functions need something different!
-
-    w1 = factories.WeirFactory(friction_value=2)
-    w2 = factories.WeirFactory(friction_value=-1)
-
-    invalid_criterion = func.count(models.Weir.friction_value) < 3
-    general_range_check = GeneralCheck(
-        column=models.Weir.friction_value, criterion_invalid=invalid_criterion
-    )
-
-    invalid = general_range_check.get_invalid(session)
-    assert len(invalid) == 2
-    invalid_ids = [row.id for row in invalid]
-    assert w1.id in invalid_ids
-    assert w2.id in invalid_ids
-
-
-def test_general_check_modulo_operator(session):
-    factories.GlobalSettingsFactory(nr_timesteps=120, output_time_step=20)
-    global_settings_remainder = factories.GlobalSettingsFactory(
-        nr_timesteps=125, output_time_step=20  # This is a FLOAT
-    )
-    # We cast to Integer because postgis modulo operator expects two of
-    # same type.
-
-    modulo_check = GeneralCheck(
-        column=models.GlobalSetting.nr_timesteps,
-        criterion_valid=models.GlobalSetting.nr_timesteps
-        % cast(models.GlobalSetting.output_time_step, Integer)
-        == 0,
-    )
-
-    invalid = modulo_check.get_invalid(session)
-    assert len(invalid) == 1
-    assert invalid[0].id == global_settings_remainder.id
 
 
 def test_query_check_manhole_drain_level_calc_type_2(session):
