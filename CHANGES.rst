@@ -5,6 +5,8 @@ Changelog of threedi-modelchecker
 0.20.2 (unreleased)
 -------------------
 
+- Convert v2_global settings enum values before using them in openapi models.
+
 - Added checks for channel and culvert geometry distance to connection nodes.
 
 - Added checks for illegal combinations of use_2d_flow, use_1d_flow, manhole_storage_area
