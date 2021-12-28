@@ -330,6 +330,10 @@ def sqlalchemy_to_api_model(
             continue
         _, api_field_info, field_info = mapping[name]
         value = config_dict[field_info.name]
+
+        if isinstance(value, Enum):
+            value = value.value
+
         try:
             value = field_info.type(value)
             if api_field_info.type != field_info.type:
