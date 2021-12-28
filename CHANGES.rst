@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.20.2 (unreleased)
+0.20.2 (2021-12-28)
 -------------------
 
 - Convert v2_global settings enum values before using them in openapi models.
