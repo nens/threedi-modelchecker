@@ -209,12 +209,13 @@ CHECKS += [
     OpenChannelsWithNestedNewton(error_code=53),
     QueryCheck(
         error_code=54,
+        level=CheckLevel.WARNING,
         column=models.CrossSectionLocation.reference_level,
         invalid=Query(models.CrossSectionLocation).filter(
             models.CrossSectionLocation.reference_level
             > models.CrossSectionLocation.bank_level,
         ),
-        message="v2_cross_section_location.bank_level (if supplied) should be above the .reference_level",
+        message="v2_cross_section_location.bank_level will be ignored if it is below the reference_level",
     ),
     QueryCheck(
         error_code=55,

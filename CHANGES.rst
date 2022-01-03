@@ -28,6 +28,9 @@ Changelog of threedi-modelchecker
 
 - Only warn on dist_calc_points <= 0 and MANNING friction_value >= 1.
 
+- Make the cross_section_location.bank_level >= reference_level check a WARNING. It will
+  be corrected anyway in make_tables.
+
 
 0.20.1 (2021-12-17)
 -------------------
