@@ -685,7 +685,6 @@ CHECKS += [
         column=models.GlobalSetting.frict_coef,
         filters=models.GlobalSetting.frict_type == constants.FrictionType.CHEZY,
         min_value=0,
-        
     ),
     RangeCheck(
         error_code=315,
