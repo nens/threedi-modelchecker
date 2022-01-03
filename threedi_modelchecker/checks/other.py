@@ -33,7 +33,7 @@ class CrossSectionLocationCheck(BaseCheck):
         )
 
     def description(self):
-        return "v2_cross_section_location.the_geom is invalid: the cross-section location should be located on the channel geometry"
+        return "v2_cross_section_location.the_geom is invalid: the cross-section location should be located on the channel geometry (tolerance = {self.max_distance} m)"
 
 
 class Use0DFlowCheck(BaseCheck):
@@ -260,7 +260,7 @@ class OpenChannelsWithNestedNewton(BaseCheck):
 
     def description(self) -> str:
         return (
-            f"{self.column} has a closed cross section definition while "
+            f"{self.column_name} has a closed cross section definition while "
             f"NumericalSettings.use_of_nested_newton is switched off. "
             f"This gives convergence issues. We recommend setting use_of_nested_newton = 1."
         )
@@ -301,7 +301,7 @@ class LinestringLocationCheck(BaseCheck):
         )
 
     def description(self) -> str:
-        return f"{self.column} does not start or end at its connection node (tolerance = {self.max_distance})"
+        return f"{self.column_name} does not start or end at its connection node (tolerance = {self.max_distance} m)"
 
 
 class BoundaryCondition1DObjectNumberCheck(BaseCheck):

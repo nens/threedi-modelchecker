@@ -2,10 +2,14 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.20.3 (unreleased)
+0.21 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Reduced level of bank level check to warning.
+
+- Reduced level of v2_connection_nodes.the_geom_linestring to info.
+
+- Minor typographic fixes.
 
 
 0.20.2 (2021-12-28)

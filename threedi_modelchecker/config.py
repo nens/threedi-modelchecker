@@ -685,6 +685,7 @@ CHECKS += [
         column=models.GlobalSetting.frict_coef,
         filters=models.GlobalSetting.frict_type == constants.FrictionType.CHEZY,
         min_value=0,
+        
     ),
     RangeCheck(
         error_code=315,
@@ -1482,6 +1483,7 @@ class Config:
                 custom_level_map={
                     "*.sewerage": "INFO",
                     "v2_weir.external": "INFO",
+                    "v2_connection_nodes.the_geom_linestring": "info",
                 },
             )
             self.checks += generate_geometry_checks(
