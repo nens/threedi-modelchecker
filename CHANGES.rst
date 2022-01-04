@@ -11,6 +11,8 @@ Changelog of threedi-modelchecker
 
 - Minor typographic fixes.
 
+- Added dry weather flow calculation.
+
 
 0.20.2 (2021-12-28)
 -------------------
