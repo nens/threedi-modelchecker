@@ -2,8 +2,8 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.21 (unreleased)
--------------------
+0.21 (2022-01-04)
+-----------------
 
 - Reduced level of bank level check to warning.
 
