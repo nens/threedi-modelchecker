@@ -34,10 +34,13 @@ def create_table_if_not_exists(table_name, *args, **kwargs):
     if table_name in existing_tables:
         return
     else:
+        existing_tables.append(table_name)
         return op.create_table(table_name, *args, **kwargs)
 
 
 def _get_version(connection):
+    if "south_migrationhistory" not in existing_tables:
+        return
     res = connection.execute(
         "SELECT id FROM south_migrationhistory ORDER BY id DESC LIMIT 1"
     )
@@ -158,7 +161,7 @@ def upgrade_164():
             db.send_create_signal(u'threedi_tools', ['V2GridRefinementArea'])
 
     """
-    op.create_table(
+    create_table_if_not_exists(
         "v2_grid_refinement_area",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
@@ -267,7 +270,7 @@ def upgrade_165():
                       keep_default=False)
 
     """
-    op.create_table(
+    create_table_if_not_exists(
         "v2_groundwater",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("groundwater_impervious_layer_level", sa.Float(), nullable=True),
@@ -310,7 +313,7 @@ def upgrade_165():
         sa.PrimaryKeyConstraint("id"),
     )
 
-    op.create_table(
+    create_table_if_not_exists(
         "v2_simple_infiltration",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("infiltration_rate", sa.Float(), nullable=True),
@@ -321,7 +324,7 @@ def upgrade_165():
         sa.PrimaryKeyConstraint("id"),
     )
 
-    op.create_table(
+    create_table_if_not_exists(
         "v2_interflow",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("interflow_type", sa.Integer(), nullable=False),
@@ -398,8 +401,8 @@ def upgrade_166():
         """
     INSERT INTO v2_interflow (id, interflow_type, porosity, porosity_file, porosity_layer_thickness,
                               impervious_layer_elevation, hydraulic_conductivity, hydraulic_conductivity_file)
-    SELECT (id, interflow_type, porosity, porosity_file, porosity_layer_thickness,
-            impervious_layer_elevation, hydraulic_conductivity, hydraulic_conductivity_file)
+    SELECT id, interflow_type, porosity, porosity_file, porosity_layer_thickness,
+           impervious_layer_elevation, hydraulic_conductivity, hydraulic_conductivity_file
     FROM v2_global_settings;
     """
     )
@@ -407,8 +410,8 @@ def upgrade_166():
         """
     INSERT INTO v2_simple_infiltration (id, infiltration_rate, infiltration_rate_file,
                                         infiltration_surface_option, max_infiltration_capacity_file)
-    SELECT (id, infiltration_rate, infiltration_rate_file,
-            infiltration_surface_option, max_infiltration_capacity_file)
+    SELECT id, infiltration_rate, infiltration_rate_file,
+           infiltration_surface_option, max_infiltration_capacity_file
     FROM v2_global_settings;
     """
     )
@@ -680,11 +683,10 @@ def upgrade():
     if conn.dialect.name == "sqlite" and "spatial_ref_sys" not in existing_tables:
         op.execute("SELECT InitSpatialMetadata()")
 
-    if "south_migrationhistory" in existing_tables:
-        version = _get_version(conn)
-
-    for i in range(version, 174):
-        UPGRADE_LOOKUP[i]()
+    version = _get_version(conn)
+    if version is not None:
+        for i in range(version, 174):
+            UPGRADE_LOOKUP[i]()
 
     create_table_if_not_exists(
         "v2_2d_boundary_conditions",
