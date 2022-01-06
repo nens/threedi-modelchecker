@@ -95,3 +95,11 @@ def south_latest_sqlite(tmp_path):
     tmp_sqlite = tmp_path / "south_latest.sqlite"
     shutil.copyfile(os.path.join(data_dir, "south_latest.sqlite"), tmp_sqlite)
     return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)
+
+
+@pytest.fixture
+def oldest_sqlite(tmp_path):
+    """A real SQLite that is in its oldest possible south migration state (160)"""
+    tmp_sqlite = tmp_path / "noordpolder.sqlite"
+    shutil.copyfile(os.path.join(data_dir, "noordpolder.sqlite"), tmp_sqlite)
+    return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)

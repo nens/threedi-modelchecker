@@ -37,14 +37,410 @@ def create_table_if_not_exists(table_name, *args, **kwargs):
         return op.create_table(table_name, *args, **kwargs)
 
 
+def _get_version(connection):
+    res = connection.execute("SELECT id FROM south_migrationhistory ORDER BY id DESC LIMIT 1")
+    results = res.fetchall()
+    if len(results) == 1:
+        return results[0][0]
+
+
+def upgrade_160():
+    """This implements a migration from the old stack:
+
+    0160_auto__add_field_v2controlpid_target_upper_limit__add_field_v2controlpi
+
+    Contents of forwards():
+
+        # Adding field 'V2ControlPID.target_upper_limit'
+        db.add_column(u'v2_control_pid', 'target_upper_limit',
+                      self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'V2ControlPID.target_lower_limit'
+        db.add_column(u'v2_control_pid', 'target_lower_limit',
+                      self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True),
+                      keep_default=False)
+    """
+
+def upgrade_161():
+    """This implements a migration from the old stack:
+
+    0161_auto__del_field_v2globalsettings_connected_advise_file
+
+    Contents of forwards():
+
+        # Deleting field 'V2GlobalSettings.connected_advise_file'
+        db.delete_column(u'v2_global_settings', 'connected_advise_file')
+
+    """
+
+def upgrade_162():
+    """This implements a migration from the old stack:
+
+    0162_auto__add_field_v2globalsettings_table_step_size_1d__add_field_v2globa
+
+    Contents of forwards():
+
+        # Adding field 'V2GlobalSettings.table_step_size_1d'
+        db.add_column(u'v2_global_settings', 'table_step_size_1d',
+                      self.gf('django.db.models.fields.FloatField')(null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'V2GlobalSettings.table_step_size_volume_2d'
+        db.add_column(u'v2_global_settings', 'table_step_size_volume_2d',
+                      self.gf('django.db.models.fields.FloatField')(null=True, blank=True),
+                      keep_default=False)
+
+    """
+
+def upgrade_163():
+    """This implements a migration from the old stack:
+
+    0163_auto__add_field_v2globalsettings_use_2d_rain
+
+    Contents of forwards():
+
+        # Adding field 'V2GlobalSettings.use_2d_rain'
+        db.add_column(u'v2_global_settings', 'use_2d_rain',
+                      self.gf('django.db.models.fields.IntegerField')(default=1),
+                      keep_default=False)
+
+    """
+
+def upgrade_164():
+    """This implements a migration from the old stack:
+
+    0164_auto__add_v2gridrefinementarea
+
+    Contents of forwards():
+
+        # Adding model 'V2GridRefinementArea'
+        if not db.dry_run:
+            statement = get_srid_statement(db.db_alias)
+            db_conn = DBConnector(db.db_alias)
+            result = db_conn.free_form(statement, fetch=True)
+            srid = result[0][0]
+
+            db.create_table(u'v2_grid_refinement_area', (
+                (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+                ('display_name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+                ('refinement_level', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
+                ('code', self.gf('django.db.models.fields.CharField')(max_length=100, blank=True)),
+                ('the_geom', self.gf('django.contrib.gis.db.models.fields.PolygonField')(srid=srid, null=True, blank=True)),
+            ))
+            db.send_create_signal(u'threedi_tools', ['V2GridRefinementArea'])
+
+    """
+
+def upgrade_165():
+    """This implements a migration from the old stack:
+
+    0165_auto__add_v2groundwater__add_v2simpleinfiltration__add_v2interflow__ad
+
+    Contents of forwards():
+
+        # Adding model 'V2Groundwater'
+        db.create_table(u'v2_groundwater', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('groundwater_impervious_layer_level', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('groundwater_impervious_layer_level_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('groundwater_impervious_layer_level_type', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
+            ('phreatic_storage_capacity', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('phreatic_storage_capacity_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('phreatic_storage_capacity_type', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
+            ('equilibrium_infiltration_rate', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('equilibrium_infiltration_rate_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('equilibrium_infiltration_rate_type', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
+            ('initial_infiltration_rate', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('initial_infiltration_rate_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('initial_infiltration_rate_type', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
+            ('infiltration_decay_period', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('infiltration_decay_period_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('infiltration_decay_period_type', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
+            ('groundwater_hydro_connectivity', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('groundwater_hydro_connectivity_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('groundwater_hydro_connectivity_type', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
+            ('display_name', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('seepage', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('seepage_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+        ))
+        db.send_create_signal(u'threedi_tools', ['V2Groundwater'])
+
+        # Adding model 'V2SimpleInfiltration'
+        db.create_table(u'v2_simple_infiltration', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('infiltration_rate', self.gf('django.db.models.fields.FloatField')()),
+            ('infiltration_rate_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('infiltration_surface_option', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
+            ('max_infiltration_capacity_file', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
+            ('display_name', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+        ))
+        db.send_create_signal(u'threedi_tools', ['V2SimpleInfiltration'])
+
+        # Adding model 'V2Interflow'
+        db.create_table(u'v2_interflow', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('interflow_type', self.gf('django.db.models.fields.IntegerField')(default=0)),
+            ('porosity', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('porosity_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('porosity_layer_thickness', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('impervious_layer_elevation', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('hydraulic_conductivity', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('hydraulic_conductivity_file', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('display_name', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+        ))
+        db.send_create_signal(u'threedi_tools', ['V2Interflow'])
+
+        # Adding field 'V2GlobalSettings.initial_groundwater_level'
+        db.add_column(u'v2_global_settings', 'initial_groundwater_level',
+                      self.gf('django.db.models.fields.FloatField')(null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'V2GlobalSettings.initial_groundwater_level_file'
+        db.add_column(u'v2_global_settings', 'initial_groundwater_level_file',
+                      self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'V2GlobalSettings.initial_groundwater_level_type'
+        db.add_column(u'v2_global_settings', 'initial_groundwater_level_type',
+                      self.gf('django.db.models.fields.IntegerField')(null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'V2GlobalSettings.groundwater_settings'
+        db.add_column(u'v2_global_settings', 'groundwater_settings',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['threedi_tools.V2Groundwater'], null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'V2GlobalSettings.simple_infiltration_settings'
+        db.add_column(u'v2_global_settings', 'simple_infiltration_settings',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['threedi_tools.V2SimpleInfiltration'], null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'V2GlobalSettings.interflow_settings'
+        db.add_column(u'v2_global_settings', 'interflow_settings',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['threedi_tools.V2Interflow'], null=True, blank=True),
+                      keep_default=False)
+
+    """
+
+def upgrade_166():
+    """This implements a migration from the old stack:
+
+    0166_fill_Groundwater_Interflow_SimpleInfiltration
+
+    Contents of forwards():
+
+        # Note: Don't use "from appname.models import ModelName". 
+        # Use orm.ModelName to refer to models in this application,
+        # and orm['appname.ModelName'] for models in other applications.
+
+        # Get all rows in the globalsettings
+        global_settings = orm.V2GlobalSettings.objects.all()
+        for gs in global_settings:
+            # create a new interflow entry
+            interflow = orm.V2Interflow()
+            interflow.interflow_type = gs.interflow_type
+            interflow.porosity = gs.porosity
+            interflow.porosity_file = gs.porosity_file
+            interflow.porosity_layer_thickness = gs.porosity_layer_thickness
+            interflow.impervious_layer_elevation = gs.impervious_layer_elevation
+            interflow.hydraulic_conductivity = gs.hydraulic_conductivity
+            interflow.hydraulic_conductivity_file = gs.hydraulic_conductivity_file
+            interflow.save()
+            # create a new simple_infiltration entry
+            simple_infiltration = orm.V2SimpleInfiltration()
+            simple_infiltration.infiltration_rate = gs.infiltration_rate
+            simple_infiltration.infiltration_rate_file = gs.infiltration_rate_file
+            simple_infiltration.infiltration_surface_option = gs.infiltration_surface_option
+            simple_infiltration.max_infiltration_capacity_file = gs.max_infiltration_capacity_file
+            simple_infiltration.save()
+            # link the global_setting to the new tables
+            gs.interflow_settings = interflow
+            gs.simple_infiltration_settings = simple_infiltration
+            gs.save()
+    """
+
+def upgrade_167():
+    """This implements a migration from the old stack:
+
+    0167_auto__del_field_v2globalsettings_infiltration_rate_file__del_field_v2g
+
+    Contents of forwards():
+
+        # Deleting field 'V2GlobalSettings.infiltration_rate_file'
+        db.delete_column(u'v2_global_settings', 'infiltration_rate_file')
+
+        # Deleting field 'V2GlobalSettings.infiltration_surface_option'
+        db.delete_column(u'v2_global_settings', 'infiltration_surface_option')
+
+        # Deleting field 'V2GlobalSettings.max_infiltration_capacity_file'
+        db.delete_column(u'v2_global_settings', 'max_infiltration_capacity_file')
+
+        # Deleting field 'V2GlobalSettings.porosity_layer_thickness'
+        db.delete_column(u'v2_global_settings', 'porosity_layer_thickness')
+
+        # Deleting field 'V2GlobalSettings.porosity_file'
+        db.delete_column(u'v2_global_settings', 'porosity_file')
+
+        # Deleting field 'V2GlobalSettings.hydraulic_conductivity_file'
+        db.delete_column(u'v2_global_settings', 'hydraulic_conductivity_file')
+
+        # Deleting field 'V2GlobalSettings.interflow_type'
+        db.delete_column(u'v2_global_settings', 'interflow_type')
+
+        # Deleting field 'V2GlobalSettings.porosity'
+        db.delete_column(u'v2_global_settings', 'porosity')
+
+        # Deleting field 'V2GlobalSettings.impervious_layer_elevation'
+        db.delete_column(u'v2_global_settings', 'impervious_layer_elevation')
+
+        # Deleting field 'V2GlobalSettings.infiltration_rate'
+        db.delete_column(u'v2_global_settings', 'infiltration_rate')
+
+        # Deleting field 'V2GlobalSettings.hydraulic_conductivity'
+        db.delete_column(u'v2_global_settings', 'hydraulic_conductivity')
+    """
+
+def upgrade_168():
+    """This implements a migration from the old stack:
+
+    0168_auto__del_field_v2groundwater_seepage_file__del_field_v2groundwater_se.py
+
+    Contents of forwards():
+
+        # Deleting field 'V2Groundwater.seepage_file'
+        db.delete_column(u'v2_groundwater', 'seepage_file')
+
+        # Deleting field 'V2Groundwater.seepage'
+        db.delete_column(u'v2_groundwater', 'seepage')
+
+        # Adding field 'V2Groundwater.leakage'
+        db.add_column(u'v2_groundwater', 'leakage',
+                      self.gf('django.db.models.fields.FloatField')(null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'V2Groundwater.leakage_file'
+        db.add_column(u'v2_groundwater', 'leakage_file',
+                      self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
+                      keep_default=False)
+
+        # Deleting field 'MduSettings.seepage_file'
+        db.delete_column(u'settings', 'seepage_file')
+
+        # Adding field 'MduSettings.leakage_file'
+        db.add_column(u'settings', 'leakage_file',
+                      self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
+                      keep_default=False)
+    """
+
+
+def upgrade_169():
+    """This implements a migration from the old stack:
+
+    0169_auto__del_field_mdusettings_leakage_file__add_field_mdusettings_seepag.py
+
+    Contents of forwards():
+
+        # Deleting field 'MduSettings.leakage_file'
+        db.delete_column(u'settings', 'leakage_file')
+
+        # Adding field 'MduSettings.seepage_file'
+        db.add_column(u'settings', 'seepage_file',
+                      self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
+                      keep_default=False)
+    """
+
+
+def upgrade_170():
+    """This implements a migration from the old stack:
+
+    0170_auto__chg_field_v2aggregationsettings_aggregation_method.py
+
+    Contents of forwards():
+
+        # Changing field 'V2AggregationSettings.aggregation_method'
+        db.alter_column(u'v2_aggregation_settings', 'aggregation_method',
+            self.gf('django.db.models.fields.CharField')(max_length=100))
+    """
+
+
+def upgrade_171():
+    """This implements a migration from the old stack:
+
+    0170_auto__chg_field_v2culvert_discharge_coefficient_negative__chg_field_v2.py
+
+    Contents of forwards():
+
+        # We need to drop the view because it it not possible to alter a column
+        # on a table with a view: https://www.postgresql.org/message-id/CAB7nPqTLmMn1LTb5WE0v0dO57iP0U73yKwzbZytAXDF1CAWLZg%40mail.gmail.com
+        if not db.db_alias == 'spatialite':
+            db.execute("DROP View IF EXISTS v2_culvert_view")
+
+        # Changing field 'V2Culvert.discharge_coefficient_negative'
+        db.alter_column(u'v2_culvert', 'discharge_coefficient_negative', self.gf('django.db.models.fields.FloatField')(default=1))
+
+        # Changing field 'V2Culvert.discharge_coefficient_positive'
+        db.alter_column(u'v2_culvert', 'discharge_coefficient_positive', self.gf('django.db.models.fields.FloatField')(default=1))
+
+        # recreate the view
+        if not db.db_alias == 'spatialite':
+            view_statements = get_threedi_core_view_statements(
+                flavor="postgresql")
+            db.execute(view_statements['v2_culvert_view'])
+    """
+
+
+def upgrade_172():
+    """This implements a migration from the old stack:
+
+    0171_auto__chg_field_v2aggregationsettings_aggregation_method__del_field_v2.py
+
+    Contents of forwards():
+
+        db.rename_column(u'v2_global_settings', 'max_interception_file', 'interception_file') 
+        db.rename_column(u'v2_global_settings', 'max_interception', 'interception_global') 
+    """
+    with op.batch_alter_table("v2_global_settings") as batch_op:
+        batch_op.alter_column("max_interception_file", new_column_name="interception_file")
+        batch_op.alter_column("max_interception", new_column_name="interception_global")
+
+
 def upgrade_173():
-    """This implements the latest migration from the old stack:
+    """This implements a migration from the old stack:
 
     0172_auto__del_v2initialwaterlevel__del_field_v2orifice_max_capacity__del_f
-    """
-    if "v2_initial_waterlevel" not in existing_tables:
-        return  # skip this migration (probably already done)
 
+    Contents of forwards():
+
+        # Deleting model 'V2InitialWaterlevel'
+        db.delete_table(u'v2_initial_waterlevel')
+
+        # Deleting field 'V2Orifice.max_capacity'
+        db.delete_column(u'v2_orifice', 'max_capacity')
+
+        # Deleting field 'V2ImperviousSurface.function'
+        db.delete_column(u'v2_impervious_surface', 'function')
+
+        # Deleting field 'V2Pipe.pipe_quality'
+        db.delete_column(u'v2_pipe', 'pipe_quality')
+
+        # We need to drop the view because it it not possible to alter a column
+        # on a table with a view: https://www.postgresql.org/message-id/CAB7nPqTLmMn1LTb5WE0v0dO57iP0U73yKwzbZytAXDF1CAWLZg%40mail.gmail.com
+        if not db.db_alias == 'spatialite':
+            db.execute("DROP View IF EXISTS v2_culvert_view")
+
+        # Changing field 'V2Culvert.discharge_coefficient_negative'
+        db.alter_column(u'v2_culvert', 'discharge_coefficient_negative', self.gf('django.db.models.fields.FloatField')())
+
+        # Changing field 'V2Culvert.discharge_coefficient_positive'
+        db.alter_column(u'v2_culvert', 'discharge_coefficient_positive', self.gf('django.db.models.fields.FloatField')())
+
+        # recreate the view
+        if not db.db_alias == 'spatialite':
+            view_statements = get_threedi_core_view_statements(
+                flavor="postgresql")
+            db.execute(view_statements['v2_culvert_view'])
+    """
     op.drop_table("v2_initial_waterlevel")
 
     with op.batch_alter_table("v2_orifice") as batch_op:
@@ -60,6 +456,23 @@ def upgrade_173():
         batch_op.alter_column("discharge_coefficient_negative", nullable=True)
         batch_op.alter_column("discharge_coefficient_positive", nullable=True)
 
+UPGRADE_LOOKUP = {
+    160: upgrade_160,
+    161: upgrade_161,
+    162: upgrade_162,
+    163: upgrade_163,
+    164: upgrade_164,
+    165: upgrade_165,
+    166: upgrade_166,
+    167: upgrade_167,
+    168: upgrade_168,
+    169: upgrade_169,
+    170: upgrade_170,
+    171: upgrade_171,
+    172: upgrade_172,
+    173: upgrade_173,
+}
+
 
 def upgrade():
     conn = op.get_bind()
@@ -72,7 +485,11 @@ def upgrade():
     if conn.dialect.name == "sqlite" and "spatial_ref_sys" not in existing_tables:
         op.execute("SELECT InitSpatialMetadata()")
 
-    upgrade_173()
+    if "south_migrationhistory" in existing_tables:
+        version = _get_version(conn)
+
+    for i in range(version, 174):
+        UPGRADE_LOOKUP[i]()
 
     create_table_if_not_exists(
         "v2_2d_boundary_conditions",
