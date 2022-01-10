@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.22 (unreleased)
+0.22 (2022-01-10)
 -----------------
 
 - Added legacy migrations down to version 160.
