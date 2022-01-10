@@ -34,17 +34,304 @@ def create_table_if_not_exists(table_name, *args, **kwargs):
     if table_name in existing_tables:
         return
     else:
+        existing_tables.append(table_name)
         return op.create_table(table_name, *args, **kwargs)
 
 
+def _get_version(connection):
+    if "south_migrationhistory" not in existing_tables:
+        return
+    res = connection.execute(
+        "SELECT id FROM south_migrationhistory ORDER BY id DESC LIMIT 1"
+    )
+    results = res.fetchall()
+    if len(results) == 1:
+        return results[0][0]
+
+
+def upgrade_160():
+    """This implements a migration from the old stack:
+
+    0160_auto__add_field_v2controlpid_target_upper_limit__add_field_v2controlpi
+    """
+    with op.batch_alter_table("v2_control_pid") as batch_op:
+        batch_op.add_column(
+            sa.Column("target_upper_limit", sa.String(length=50), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("target_lower_limit", sa.String(length=50), nullable=True)
+        )
+
+
+def upgrade_161():
+    """This implements a migration from the old stack:
+
+    0161_auto__del_field_v2globalsettings_connected_advise_file
+    """
+    with op.batch_alter_table("v2_global_settings") as batch_op:
+        batch_op.drop_column("connected_advise_file")
+
+
+def upgrade_162():
+    """This implements a migration from the old stack:
+
+    0162_auto__add_field_v2globalsettings_table_step_size_1d__add_field_v2globa
+    """
+    with op.batch_alter_table("v2_global_settings") as batch_op:
+        batch_op.add_column(sa.Column("table_step_size_1d", sa.Float(), nullable=True))
+        batch_op.add_column(
+            sa.Column("table_step_size_volume_2d", sa.Float(), nullable=True)
+        )
+
+
+def upgrade_163():
+    """This implements a migration from the old stack:
+
+    0163_auto__add_field_v2globalsettings_use_2d_rain
+    """
+    with op.batch_alter_table("v2_global_settings") as batch_op:
+        batch_op.add_column(sa.Column("use_2d_rain", sa.Integer(), nullable=True))
+
+    op.execute("UPDATE v2_global_settings SET use_2d_rain = 1")
+
+    with op.batch_alter_table("v2_global_settings") as batch_op:
+        batch_op.alter_column("use_2d_rain", nullable=False)
+
+
+def upgrade_164():
+    """This implements a migration from the old stack:
+
+    0164_auto__add_v2gridrefinementarea
+    """
+    create_table_if_not_exists(
+        "v2_grid_refinement_area",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("display_name", sa.String(length=255), nullable=True),
+        sa.Column("refinement_level", sa.Integer(), nullable=False),
+        sa.Column("code", sa.String(length=100), nullable=True),
+        sa.Column(
+            "the_geom",
+            geoalchemy2.types.Geometry(
+                geometry_type="POLYGON",
+                srid=4326,
+                management=True,
+            ),
+            nullable=False,
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+
+
+def upgrade_165():
+    """This implements a migration from the old stack:
+
+    0165_auto__add_v2groundwater__add_v2simpleinfiltration__add_v2interflow__ad
+    """
+    create_table_if_not_exists(
+        "v2_groundwater",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("groundwater_impervious_layer_level", sa.Float(), nullable=True),
+        sa.Column(
+            "groundwater_impervious_layer_level_file",
+            sa.String(length=255),
+            nullable=True,
+        ),
+        sa.Column(
+            "groundwater_impervious_layer_level_type", sa.Integer(), nullable=True
+        ),
+        sa.Column("phreatic_storage_capacity", sa.Float(), nullable=True),
+        sa.Column(
+            "phreatic_storage_capacity_file", sa.String(length=255), nullable=True
+        ),
+        sa.Column("phreatic_storage_capacity_type", sa.Integer(), nullable=True),
+        sa.Column("equilibrium_infiltration_rate", sa.Float(), nullable=True),
+        sa.Column(
+            "equilibrium_infiltration_rate_file", sa.String(length=255), nullable=True
+        ),
+        sa.Column("equilibrium_infiltration_rate_type", sa.Integer(), nullable=True),
+        sa.Column("initial_infiltration_rate", sa.Float(), nullable=True),
+        sa.Column(
+            "initial_infiltration_rate_file", sa.String(length=255), nullable=True
+        ),
+        sa.Column("initial_infiltration_rate_type", sa.Integer(), nullable=True),
+        sa.Column("infiltration_decay_period", sa.Float(), nullable=True),
+        sa.Column(
+            "infiltration_decay_period_file", sa.String(length=255), nullable=True
+        ),
+        sa.Column("infiltration_decay_period_type", sa.Integer(), nullable=True),
+        sa.Column("groundwater_hydro_connectivity", sa.Float(), nullable=True),
+        sa.Column(
+            "groundwater_hydro_connectivity_file", sa.String(length=255), nullable=True
+        ),
+        sa.Column("groundwater_hydro_connectivity_type", sa.Integer(), nullable=True),
+        sa.Column("display_name", sa.String(length=255), nullable=True),
+        sa.Column("seepage", sa.Float(), nullable=True),
+        sa.Column("seepage_file", sa.String(length=255), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+
+    create_table_if_not_exists(
+        "v2_simple_infiltration",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("infiltration_rate", sa.Float(), nullable=True),
+        sa.Column("infiltration_rate_file", sa.String(length=255), nullable=True),
+        sa.Column("infiltration_surface_option", sa.Integer(), nullable=True),
+        sa.Column("max_infiltration_capacity_file", sa.Text(), nullable=True),
+        sa.Column("display_name", sa.String(length=255), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+
+    create_table_if_not_exists(
+        "v2_interflow",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("interflow_type", sa.Integer(), nullable=False),
+        sa.Column("porosity", sa.Float(), nullable=True),
+        sa.Column("porosity_file", sa.String(length=255), nullable=True),
+        sa.Column("porosity_layer_thickness", sa.Float(), nullable=True),
+        sa.Column("impervious_layer_elevation", sa.Float(), nullable=True),
+        sa.Column("hydraulic_conductivity", sa.Float(), nullable=True),
+        sa.Column("hydraulic_conductivity_file", sa.String(length=255), nullable=True),
+        sa.Column("display_name", sa.String(length=255), nullable=True),
+        sa.PrimaryKeyConstraint("id"),
+    )
+
+    with op.batch_alter_table("v2_global_settings") as batch_op:
+        batch_op.add_column(
+            sa.Column("initial_groundwater_level", sa.Float(), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column(
+                "initial_groundwater_level_file", sa.String(length=255), nullable=True
+            )
+        )
+        batch_op.add_column(
+            sa.Column("initial_groundwater_level_type", sa.Integer(), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("groundwater_settings_id", sa.Integer(), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("simple_infiltration_settings_id", sa.Integer(), nullable=True)
+        )
+        batch_op.add_column(
+            sa.Column("interflow_settings_id", sa.Integer(), nullable=True)
+        )
+
+
+def upgrade_166():
+    """This implements a migration from the old stack:
+
+    0166_fill_Groundwater_Interflow_SimpleInfiltration
+    """
+    op.execute(
+        """
+    INSERT INTO v2_interflow (id, interflow_type, porosity, porosity_file, porosity_layer_thickness,
+                              impervious_layer_elevation, hydraulic_conductivity, hydraulic_conductivity_file)
+    SELECT id, interflow_type, porosity, porosity_file, porosity_layer_thickness,
+           impervious_layer_elevation, hydraulic_conductivity, hydraulic_conductivity_file
+    FROM v2_global_settings;
+    """
+    )
+    op.execute(
+        """
+    INSERT INTO v2_simple_infiltration (id, infiltration_rate, infiltration_rate_file,
+                                        infiltration_surface_option, max_infiltration_capacity_file)
+    SELECT id, infiltration_rate, infiltration_rate_file,
+           infiltration_surface_option, max_infiltration_capacity_file
+    FROM v2_global_settings;
+    """
+    )
+    op.execute(
+        """UPDATE v2_global_settings SET interflow_settings_id = id, simple_infiltration_settings_id = id"""
+    )
+
+
+def upgrade_167():
+    """This implements a migration from the old stack:
+
+    0167_auto__del_field_v2globalsettings_infiltration_rate_file__del_field_v2g
+    """
+    with op.batch_alter_table("v2_global_settings") as batch_op:
+        batch_op.drop_column("infiltration_rate_file")
+        batch_op.drop_column("infiltration_surface_option")
+        batch_op.drop_column("max_infiltration_capacity_file")
+        batch_op.drop_column("porosity_layer_thickness")
+        batch_op.drop_column("porosity_file")
+        batch_op.drop_column("hydraulic_conductivity_file")
+        batch_op.drop_column("interflow_type")
+        batch_op.drop_column("porosity")
+        batch_op.drop_column("impervious_layer_elevation")
+        batch_op.drop_column("infiltration_rate")
+        batch_op.drop_column("hydraulic_conductivity")
+
+
+def upgrade_168():
+    """This implements a migration from the old stack:
+
+    0168_auto__del_field_v2groundwater_seepage_file__del_field_v2groundwater_se.py
+    """
+    # Ignored settings table migrations, this table will be removed anyway
+
+    with op.batch_alter_table("v2_groundwater") as batch_op:
+        batch_op.drop_column("seepage_file")
+        batch_op.drop_column("seepage")
+        batch_op.add_column(sa.Column("leakage", sa.Float(), nullable=True))
+        batch_op.add_column(
+            sa.Column("leakage_file", sa.String(length=255), nullable=True)
+        )
+
+
+def upgrade_169():
+    """This implements a migration from the old stack:
+
+    0169_auto__del_field_mdusettings_leakage_file__add_field_mdusettings_seepag.py
+    """
+    # Ignored settings table migrations, this table will be removed anyway
+
+
+def upgrade_170():
+    """This implements a migration from the old stack:
+
+    0170_auto__chg_field_v2aggregationsettings_aggregation_method.py
+    """
+    with op.batch_alter_table("v2_aggregation_settings") as batch_op:
+        batch_op.alter_column("aggregation_method", type_=sa.String(length=100))
+
+
+def upgrade_171():
+    """This implements a migration from the old stack:
+
+    0170_auto__chg_field_v2culvert_discharge_coefficient_negative__chg_field_v2.py
+    """
+    op.execute(
+        "UPDATE v2_culvert SET discharge_coefficient_negative = 1.0 WHERE discharge_coefficient_negative IS NULL"
+    )
+    op.execute(
+        "UPDATE v2_culvert SET discharge_coefficient_positive = 1.0 WHERE discharge_coefficient_positive IS NULL"
+    )
+
+    with op.batch_alter_table("v2_culvert") as batch_op:
+        batch_op.alter_column("discharge_coefficient_negative", nullable=False)
+        batch_op.alter_column("discharge_coefficient_positive", nullable=False)
+
+
+def upgrade_172():
+    """This implements a migration from the old stack:
+
+    0171_auto__chg_field_v2aggregationsettings_aggregation_method__del_field_v2.py
+    """
+    with op.batch_alter_table("v2_global_settings") as batch_op:
+        batch_op.alter_column(
+            "max_interception_file", new_column_name="interception_file"
+        )
+        batch_op.alter_column("max_interception", new_column_name="interception_global")
+
+
 def upgrade_173():
-    """This implements the latest migration from the old stack:
+    """This implements a migration from the old stack:
 
     0172_auto__del_v2initialwaterlevel__del_field_v2orifice_max_capacity__del_f
     """
-    if "v2_initial_waterlevel" not in existing_tables:
-        return  # skip this migration (probably already done)
-
     op.drop_table("v2_initial_waterlevel")
 
     with op.batch_alter_table("v2_orifice") as batch_op:
@@ -61,6 +348,24 @@ def upgrade_173():
         batch_op.alter_column("discharge_coefficient_positive", nullable=True)
 
 
+UPGRADE_LOOKUP = {
+    160: upgrade_160,
+    161: upgrade_161,
+    162: upgrade_162,
+    163: upgrade_163,
+    164: upgrade_164,
+    165: upgrade_165,
+    166: upgrade_166,
+    167: upgrade_167,
+    168: upgrade_168,
+    169: upgrade_169,
+    170: upgrade_170,
+    171: upgrade_171,
+    172: upgrade_172,
+    173: upgrade_173,
+}
+
+
 def upgrade():
     conn = op.get_bind()
     inspector = Inspector.from_engine(conn)
@@ -72,7 +377,10 @@ def upgrade():
     if conn.dialect.name == "sqlite" and "spatial_ref_sys" not in existing_tables:
         op.execute("SELECT InitSpatialMetadata()")
 
-    upgrade_173()
+    version = _get_version(conn)
+    if version is not None:
+        for i in range(version, 174):
+            UPGRADE_LOOKUP[i]()
 
     create_table_if_not_exists(
         "v2_2d_boundary_conditions",

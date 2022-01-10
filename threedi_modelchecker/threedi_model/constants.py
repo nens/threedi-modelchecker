@@ -1,11 +1,8 @@
 from enum import Enum
 
 
-LATEST_SOUTH_MIGRATION_ID = 173
-#  Migration 174 deletes some fields, which were already not present in the
-#  models of the threedi-modelchecker. Therefore we can both accept migration
-#  173 and 174.
-MIN_SCHEMA_VERSION = 201
+LATEST_SOUTH_MIGRATION_ID = 160
+MIN_SCHEMA_VERSION = 206
 VERSION_TABLE_NAME = "schema_version"
 
 
