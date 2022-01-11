@@ -491,11 +491,13 @@ class Settings(AsDictMixin):
 @dataclass
 class Events(AsDictMixin):
     laterals: List[Lateral]
+    dwf_laterals: List[Lateral]
     boundaries: List[Dict]
     structure_controls: StructureControls
 
     _validation_status: InitVar[Optional[ValidationStatus]] = None
     _lateral_upload: InitVar[Optional[FileLateral]] = None
+    _dwf_lateral_upload: InitVar[Optional[FileLateral]] = None
     _boundary_upload: InitVar[Optional[FileBoundaryCondition]] = None
 
     # Simulation used to store events
@@ -523,6 +525,30 @@ class Events(AsDictMixin):
         if validation_status == ValidationStatus.invalid:
             raise TemplateValidationError(
                 f"Provided laterals could not be validated succesfully, {self._lateral_upload.state_detail}"
+            )
+
+        return validation_status
+    
+    async def _is_dwf_laterals_valid_in_api(self, client: V3BetaApi) -> ValidationStatus:
+        """
+        Return ValidationStatus of uploaded DWF lateral file
+        """
+        if self._dwf_lateral_upload is None:
+            return ValidationStatus.valid
+        
+        if ValidationStatus[self._dwf_lateral_upload.state] == ValidationStatus.processing:
+            # Refresh from API
+            self._dwf_lateral_upload: FileLateral = (
+                await client.simulations_events_lateral_read(
+                    id=self._dwf_lateral_upload.id, simulation_pk=self._simulation.id
+                )
+            )
+
+        validation_status = ValidationStatus[self._dwf_lateral_upload.state]
+
+        if validation_status == ValidationStatus.invalid:
+            raise TemplateValidationError(
+                f"Provided laterals could not be validated succesfully, {self._dwf_lateral_upload.state_detail}"
             )
 
         return validation_status
@@ -561,6 +587,9 @@ class Events(AsDictMixin):
         if await self._is_laterals_valid_in_api(client) == ValidationStatus.processing:
             return ValidationStatus.processing
 
+        if await self._is_dwf_laterals_valid_in_api(client) == ValidationStatus.processing:
+            return ValidationStatus.processing
+
         if (
             await self._is_boundaries_valid_in_api(client)
             == ValidationStatus.processing
@@ -587,6 +616,7 @@ class Events(AsDictMixin):
         tasks = [
             # Laterals
             self.save_laterals_to_api(client, simulation),
+            self.save_dwf_laterals_to_api(client, simulation),
             # Boundaries
             self.save_boundaries_to_api(client, simulation),
             # Structure controls
@@ -598,7 +628,6 @@ class Events(AsDictMixin):
         """
         Save laterals to API on the given simulation as file upload.
         """
-
         if self._simulation is None:
             self._simulation = simulation
 
@@ -626,10 +655,43 @@ class Events(AsDictMixin):
                 "Could not find uploaded lateral file resource"
             )
         self._lateral_upload = lateral_upload
+    
+    async def save_dwf_laterals_to_api(self, client: V3BetaApi, simulation: Simulation):
+        """
+        Save Dry Weather Flow (DWF) laterals to API on the given simulation as file upload.
+        """
+        if self._simulation is None:
+            self._simulation = simulation
+
+        if len(self.dwf_laterals) == 0:
+            return
+
+        data = [openapi_to_dict(x) for x in self.dwf_laterals]
+        data = AsyncBytesIO(BytesIO(json.dumps(data).encode()))
+
+        filename: str = f"dwf_laterals_{uuid4().hex[:8]}.json"
+
+        upload: UploadEventFile = await client.simulations_events_lateral_file_create(
+            simulation_pk=simulation.id,
+            data=UploadEventFile(filename=filename, offset=0),
+            period="daily",
+        )
+        await upload_fileobj(upload.put_url, data)
+
+        # Try to find lateral uploaded resource
+        dwf_lateral_upload: Optional[FileLateral] = await get_upload_instance(
+            client.simulations_events_lateral_file_list, simulation.id, filename
+        )
+
+        if dwf_lateral_upload is None:
+            raise TemplateValidationError(
+                "Could not find uploaded DWF lateral file resource"
+            )
+        self._dwf_lateral_upload = dwf_lateral_upload
 
     async def save_boundaries_to_api(self, client: V3BetaApi, simulation: Simulation):
         """
-        Save boundarie to API on the given simulation
+        Save boundary to API on the given simulation
         """
         if self._simulation is None:
             self._simulation = simulation
