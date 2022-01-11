@@ -9,6 +9,8 @@ Changelog of threedi-modelchecker
 
 - Added ThreediDatabase.check_integrity().
 
+- Disabled temporary patch: require initial groundwaterlevel files to be present.
+
 
 0.22 (2022-01-10)
 -----------------
