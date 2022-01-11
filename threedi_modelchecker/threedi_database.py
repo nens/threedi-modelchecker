@@ -29,6 +29,9 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, sqlite3.Connection):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA legacy_alter_table=ON")
+        # Some additional pragmas recommended in https://www.sqlite.org/security.html, paragraph 1.2
+        cursor.execute("PRAGMA cell_size_check=ON")
+        cursor.execute("PRAGMA mmap_size=0")
         cursor.close()
 
 
@@ -165,3 +168,8 @@ class ThreediDatabase:
         session = self.get_session()
         r = session.execute("select 1")
         return r.fetchone()
+
+    def check_integrity(self):
+        """Should be called before doing anything with an untrusted sqlite file."""
+        with self.session_scope() as session:
+            session.execute("PRAGMA integrity_check")

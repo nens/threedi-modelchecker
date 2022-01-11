@@ -5,7 +5,9 @@ Changelog of threedi-modelchecker
 0.23 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added security measures on connection for untrusted sqlite input.
+
+- Added ThreediDatabase.check_integrity().
 
 
 0.22 (2022-01-10)
