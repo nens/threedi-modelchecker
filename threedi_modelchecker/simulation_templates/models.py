@@ -528,15 +528,20 @@ class Events(AsDictMixin):
             )
 
         return validation_status
-    
-    async def _is_dwf_laterals_valid_in_api(self, client: V3BetaApi) -> ValidationStatus:
+
+    async def _is_dwf_laterals_valid_in_api(
+        self, client: V3BetaApi
+    ) -> ValidationStatus:
         """
         Return ValidationStatus of uploaded DWF lateral file
         """
         if self._dwf_lateral_upload is None:
             return ValidationStatus.valid
-        
-        if ValidationStatus[self._dwf_lateral_upload.state] == ValidationStatus.processing:
+
+        if (
+            ValidationStatus[self._dwf_lateral_upload.state]
+            == ValidationStatus.processing
+        ):
             # Refresh from API
             self._dwf_lateral_upload: FileLateral = (
                 await client.simulations_events_lateral_read(
@@ -587,7 +592,10 @@ class Events(AsDictMixin):
         if await self._is_laterals_valid_in_api(client) == ValidationStatus.processing:
             return ValidationStatus.processing
 
-        if await self._is_dwf_laterals_valid_in_api(client) == ValidationStatus.processing:
+        if (
+            await self._is_dwf_laterals_valid_in_api(client)
+            == ValidationStatus.processing
+        ):
             return ValidationStatus.processing
 
         if (
@@ -655,7 +663,7 @@ class Events(AsDictMixin):
                 "Could not find uploaded lateral file resource"
             )
         self._lateral_upload = lateral_upload
-    
+
     async def save_dwf_laterals_to_api(self, client: V3BetaApi, simulation: Simulation):
         """
         Save Dry Weather Flow (DWF) laterals to API on the given simulation as file upload.
