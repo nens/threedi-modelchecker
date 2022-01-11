@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.23 (unreleased)
+0.23 (2022-01-11)
 -----------------
 
 - Added security measures on connection for untrusted sqlite input.
