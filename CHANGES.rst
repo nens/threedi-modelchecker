@@ -5,6 +5,10 @@ Changelog of threedi-modelchecker
 0.23 (unreleased)
 -----------------
 
+- Added security measures on connection for untrusted sqlite input.
+
+- Added ThreediDatabase.check_integrity().
+
 - Disabled temporary patch: require initial groundwaterlevel files to be present.
 
 
