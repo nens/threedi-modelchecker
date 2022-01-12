@@ -1,11 +1,7 @@
-from threedi_api_client.openapi.models.lateral import Lateral
-from threedi_modelchecker.simulation_templates.utils import (
-    strip_dict_none_values,
-)
+from sqlalchemy.orm import Session
+from typing import Dict
 from typing import List
 from typing import Union
-
-import sqlite3
 
 
 # Default values
@@ -38,17 +34,14 @@ DWF_FACTORS = [
 ]
 
 
-def read_dwf_per_node(spatialite_path: str) -> List[Union[int, float]]:
+def read_dwf_per_node(session: Session) -> List[Union[int, float]]:
     """Obtains the DWF per connection node per second a 3Di model sqlite-file."""
-
-    conn = sqlite3.connect(spatialite_path)
-    cursor = conn.cursor()
 
     # Create empty list that holds total 24h dry weather flow per node
     dwf_per_node_per_second = []
 
     # Create a table that contains nr_of_inhabitants per connection_node and iterate over it
-    for row in cursor.execute(
+    for row in session.execute(
         """
         WITH imp_surface_count AS
             ( SELECT impsurf.id, impsurf.dry_weather_flow,
@@ -73,21 +66,19 @@ def read_dwf_per_node(spatialite_path: str) -> List[Union[int, float]]:
         )
         dwf_per_node_per_second.append([connection_node_id, dwf_per_node / 3600])
 
-    conn.close()
-
     return dwf_per_node_per_second
 
 
-def generate_dwf_laterals(spatialite_filepath: str) -> List[Lateral]:
+def generate_dwf_laterals(session: Session) -> List[Dict]:
     """Generate dry weather flow laterals from spatialite """
-    dwf_on_each_node = read_dwf_per_node(spatialite_filepath)
+    dwf_on_each_node = read_dwf_per_node(session)
     dwf_laterals = []
 
     # Generate lateral for each connection node
     for node_id, flow in dwf_on_each_node:
         values = [[hour * 3600, flow * factor] for hour, factor in DWF_FACTORS]
         dwf_laterals.append(
-            Lateral(
+            dict(
                 offset=0,
                 values=values,
                 units="m3/s",
@@ -102,26 +93,13 @@ def generate_dwf_laterals(spatialite_filepath: str) -> List[Lateral]:
 class DWFCalculator:
     """Calculate dry weather flow (DWF) from sqlite."""
 
-    def __init__(
-        self,
-        spatialite_path: str,
-    ) -> None:
-        self.spatialite_path = spatialite_path
+    def __init__(self, session: Session) -> None:
+        self.session = session
         self._laterals = None
 
     @property
-    def laterals(self) -> List[Lateral]:
+    def laterals(self) -> List[Dict]:
         if self._laterals is None:
-            self._laterals = generate_dwf_laterals(
-                spatialite_filepath=self.spatialite_path,
-            )
+            self._laterals = generate_dwf_laterals(self.session)
 
         return self._laterals
-
-    def as_list(self) -> List[dict]:
-        json_laterals = []
-        for lateral in self.laterals:
-            json_lateral = lateral.to_dict()
-            strip_dict_none_values(json_lateral)
-            json_laterals.append(json_lateral)
-        return json_laterals

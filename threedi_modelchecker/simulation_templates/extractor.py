@@ -61,6 +61,10 @@ class SimulationTemplateExtractor(object):
                 f"Global settings with id: {global_settings_id} not found."
             )
 
+        dwf_laterals = []
+        if global_settings.use_0d_inflow:
+            dwf_laterals = DWFCalculator(session).laterals
+
         initial_waterlevels = InitialWaterlevelExtractor(session, global_settings_id)
         settings = SettingsExtractor(session, global_settings.id)
 
@@ -70,7 +74,7 @@ class SimulationTemplateExtractor(object):
                     session, control_group_id=global_settings.control_group_id
                 ).all_controls(),
                 laterals=LateralsExtractor(session).as_list(),
-                dwf_laterals=DWFCalculator(self.sqlite_path).as_list(),
+                dwf_laterals=dwf_laterals,
                 boundaries=BoundariesExtractor(session).as_list(),
             ),
             settings=settings.all_settings(),

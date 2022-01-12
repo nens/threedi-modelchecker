@@ -491,7 +491,7 @@ class Settings(AsDictMixin):
 @dataclass
 class Events(AsDictMixin):
     laterals: List[Lateral]
-    dwf_laterals: List[Lateral]
+    dwf_laterals: List[Dict]
     boundaries: List[Dict]
     structure_controls: StructureControls
 
@@ -674,15 +674,13 @@ class Events(AsDictMixin):
         if len(self.dwf_laterals) == 0:
             return
 
-        data = [openapi_to_dict(x) for x in self.dwf_laterals]
-        data = AsyncBytesIO(BytesIO(json.dumps(data).encode()))
-
+        data = AsyncBytesIO(BytesIO(json.dumps(self.dwf_laterals).encode()))
         filename: str = f"dwf_laterals_{uuid4().hex[:8]}.json"
 
         upload: UploadEventFile = await client.simulations_events_lateral_file_create(
             simulation_pk=simulation.id,
             data=UploadEventFile(filename=filename, offset=0),
-            period="daily",
+            periodic="daily",
         )
         await upload_fileobj(upload.put_url, data)
 
