@@ -17,7 +17,7 @@ from typing import Union
 #     {
 #         "id": 1,  (spatialite id from boundary table)
 #         "type": "2D"
-#         "interpolate": false,
+#         "interpolate": true,
 #         "values": [
 #             [0, 0.5],
 #             [500, 0,8],
@@ -27,7 +27,7 @@ from typing import Union
 #     {
 #         "id": 2, (spatialite id from boundary table)
 #         "type": "1D",
-#         "interpolate": false,
+#         "interpolate": true,
 #         "values": [
 #             [0, 0,3],
 #             [400, 0.1]
@@ -36,7 +36,7 @@ from typing import Union
 #     {
 #         "id": 3, (spatialite id from boundary table)
 #         "type": "1D",
-#         "interpolate": false,
+#         "interpolate": true,
 #         "values": [
 #             [0, -2.4],
 #             [1300, 0,3],
@@ -70,7 +70,7 @@ def sqlite_boundary_to_dict(
     return {
         "id": boundary.id,
         "type": boundary_1d2d.value,
-        "interpolate": False,
+        "interpolate": True,
         "values": values,
     }
 

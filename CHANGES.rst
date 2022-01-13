@@ -7,6 +7,8 @@ Changelog of threedi-modelchecker
 
 - Add dem_obstacle_detection != True check.
 
+- Set interpolate flag for boundary conditions from extractor default to True.
+
 
 0.23 (2022-01-11)
 -----------------
