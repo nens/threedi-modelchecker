@@ -744,7 +744,7 @@ CHECKS += [
             ~is_none_or_empty(models.GlobalSetting.initial_waterlevel_file),
             models.GlobalSetting.water_level_ini_type == None,
         ),
-        message="an initial waterlevel type (v2_groundwater.water_level_ini_type) should be defined when using an initial waterlevel file.",
+        message="an initial waterlevel type (v2_global_settings.water_level_ini_type) should be defined when using an initial waterlevel file.",
     ),
 ]
 
