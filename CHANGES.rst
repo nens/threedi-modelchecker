@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.24 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Add dem_obstacle_detection != True check.
 
 
 0.23 (2022-01-11)

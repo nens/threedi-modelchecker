@@ -596,13 +596,11 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=302,
-        column=models.GlobalSetting.dem_obstacle_height,
+        column=models.GlobalSetting.dem_obstacle_detection,
         invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.dem_obstacle_height <= 0,
             models.GlobalSetting.dem_obstacle_detection == True,
         ),
-        message="v2_global_settings.dem_obstacle_height should be larger than 0 when "
-        "v2_global_settings.dem_obstacle_detection == True",
+        message="v2_global_settings.dem_obstacle_detection is True, while this feature is not supported",
     ),
     QueryCheck(
         error_code=303,
