@@ -543,7 +543,7 @@ class Events(AsDictMixin):
 
         if validation_status == ValidationStatus.invalid:
             raise TemplateValidationError(
-                f"Provided laterals could not be validated succesfully, {self._boundary_upload.state_detail}"
+                f"Provided boundary conditions could not be validated succesfully, {self._boundary_upload.state_detail}"
             )
 
         return validation_status
