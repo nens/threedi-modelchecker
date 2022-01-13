@@ -737,6 +737,15 @@ CHECKS += [
         ),
         message="sub-basins (v2_global_settings.manhole_storage_area > 0) should only be used when there is no DEM supplied and there is no 2D flow",
     ),
+    QueryCheck(
+        error_code=322,
+        column=models.GlobalSetting.water_level_ini_type,
+        invalid=Query(models.GroundWater).filter(
+            ~is_none_or_empty(models.GlobalSetting.initial_waterlevel_file),
+            models.GlobalSetting.water_level_ini_type == None,
+        ),
+        message="an initial waterlevel type (v2_groundwater.water_level_ini_type) should be defined when using an initial waterlevel file.",
+    ),
 ]
 
 ## 04xx: Groundwater, Interflow & Infiltration

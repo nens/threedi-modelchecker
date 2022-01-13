@@ -7,6 +7,11 @@ Changelog of threedi-modelchecker
 
 - Add dem_obstacle_detection != True check.
 
+- Added check on water_level_ini_type.
+
+- Interpret empty strings the same as NULL in initial (groundwater) level file
+  fields (simulation template worker).
+
 
 0.23 (2022-01-11)
 -----------------
