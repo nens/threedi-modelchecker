@@ -16,6 +16,8 @@ Changelog of threedi-modelchecker
 
 - Set interpolate flag for boundary conditions from extractor default to True.
 
+- Added dry weather flow calculation.
+
 
 0.23 (2022-01-11)
 -----------------
@@ -41,8 +43,6 @@ Changelog of threedi-modelchecker
 - Reduced level of v2_connection_nodes.the_geom_linestring to info.
 
 - Minor typographic fixes.
-
-- Added dry weather flow calculation.
 
 
 0.20.2 (2021-12-28)
