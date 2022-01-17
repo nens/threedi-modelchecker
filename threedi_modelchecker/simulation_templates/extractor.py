@@ -11,6 +11,9 @@ from threedi_modelchecker.simulation_templates.initial_waterlevels.extractor imp
 from threedi_modelchecker.simulation_templates.laterals.extractor import (
     LateralsExtractor,
 )
+from threedi_modelchecker.simulation_templates.laterals.dwf_calculator import (
+    DWFCalculator,
+)
 from threedi_modelchecker.simulation_templates.models import Events
 from threedi_modelchecker.simulation_templates.models import (
     GlobalSettingOption,
@@ -58,8 +61,11 @@ class SimulationTemplateExtractor(object):
                 f"Global settings with id: {global_settings_id} not found."
             )
 
-        initial_waterlevels = InitialWaterlevelExtractor(session, global_settings_id)
+        dwf_laterals = []
+        if global_settings.use_0d_inflow:
+            dwf_laterals = DWFCalculator(session).laterals
 
+        initial_waterlevels = InitialWaterlevelExtractor(session, global_settings_id)
         settings = SettingsExtractor(session, global_settings.id)
 
         return SimulationTemplate(
@@ -68,6 +74,7 @@ class SimulationTemplateExtractor(object):
                     session, control_group_id=global_settings.control_group_id
                 ).all_controls(),
                 laterals=LateralsExtractor(session).as_list(),
+                dwf_laterals=dwf_laterals,
                 boundaries=BoundariesExtractor(session).as_list(),
             ),
             settings=settings.all_settings(),
