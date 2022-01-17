@@ -2,8 +2,8 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.25 (unreleased)
------------------
+0.24.1 (unreleased)
+-------------------
 
 - Bugfix: DWF lateral upload fails due to incorrect function arguments.
 
