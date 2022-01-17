@@ -8,11 +8,11 @@ from threedi_modelchecker.simulation_templates.boundaries.extractor import (
 from threedi_modelchecker.simulation_templates.initial_waterlevels.extractor import (
     InitialWaterlevelExtractor,
 )
-from threedi_modelchecker.simulation_templates.laterals.extractor import (
-    LateralsExtractor,
-)
 from threedi_modelchecker.simulation_templates.laterals.dwf_calculator import (
     DWFCalculator,
+)
+from threedi_modelchecker.simulation_templates.laterals.extractor import (
+    LateralsExtractor,
 )
 from threedi_modelchecker.simulation_templates.models import Events
 from threedi_modelchecker.simulation_templates.models import (

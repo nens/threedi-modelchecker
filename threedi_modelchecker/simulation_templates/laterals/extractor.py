@@ -1,4 +1,3 @@
-import json
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_api_client.openapi.models.lateral import Lateral
@@ -12,6 +11,8 @@ from threedi_modelchecker.simulation_templates.utils import (
 from threedi_modelchecker.threedi_model.models import Lateral1d
 from threedi_modelchecker.threedi_model.models import Lateral2D
 from typing import List
+
+import json
 
 
 def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:

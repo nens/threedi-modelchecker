@@ -1,4 +1,5 @@
 from setuptools import setup
+
 import pathlib
 
 
@@ -43,7 +44,7 @@ def get_version():
 
 setup(
     name="threedi-modelchecker",
-    version=version,
+    version=get_version(),
     description="Checks validity of a threedi-model",
     long_description=long_description,
     # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
@@ -68,7 +69,7 @@ setup(
         "postgis": ["psycopg2"],
         "simulation_templates": simulation_templates_require,
     },
-    python_requires='>=3.7',
+    python_requires=">=3.7",
     entry_points={
         "console_scripts": [
             "threedi_modelchecker = threedi_modelchecker.scripts:threedi_modelchecker"

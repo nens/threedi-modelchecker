@@ -5,7 +5,11 @@ Changelog of threedi-modelchecker
 0.25 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added threedi_modelchecker.__version__.
+
+- Added automatic release to PyPI.
+
+- Use the threedi-api-client beta release instead of checking out from github.
 
 
 0.24 (2022-01-17)
