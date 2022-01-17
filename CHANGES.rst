@@ -12,6 +12,8 @@ Changelog of threedi-modelchecker
 - Interpret empty strings the same as NULL in initial (groundwater) level file
   fields (simulation template worker).
 
+- Set interpolate flag for boundary conditions from extractor default to True.
+
 
 0.23 (2022-01-11)
 -----------------
