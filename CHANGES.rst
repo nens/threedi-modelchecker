@@ -5,6 +5,8 @@ Changelog of threedi-modelchecker
 0.24 (unreleased)
 -----------------
 
+- Bugfix: Need to convert lateral geometry from str to dict representation.
+
 - Add dem_obstacle_detection != True check.
 
 - Added check on water_level_ini_type.
