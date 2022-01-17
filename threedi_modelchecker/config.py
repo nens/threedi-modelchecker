@@ -740,7 +740,7 @@ CHECKS += [
     QueryCheck(
         error_code=322,
         column=models.GlobalSetting.water_level_ini_type,
-        invalid=Query(models.GroundWater).filter(
+        invalid=Query(models.GlobalSetting).filter(
             ~is_none_or_empty(models.GlobalSetting.initial_waterlevel_file),
             models.GlobalSetting.water_level_ini_type == None,
         ),
