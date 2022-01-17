@@ -203,6 +203,24 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
+class ImperviousSurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ImperviousSurface
+        sqlalchemy_session = Session
+
+    surface_class = "pand"
+    surface_inclination = "vlak"
+    area = 0.0
+
+
+class ImperviousSurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ImperviousSurfaceMap
+        sqlalchemy_session = Session
+
+    percentage = 100.0
+
+
 class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.ControlTable
