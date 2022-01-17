@@ -39,10 +39,7 @@ def read_dwf_per_node(session: Session) -> List[Union[int, float]]:
 
     # Create empty list that holds total 24h dry weather flow per node
     dwf_per_node_per_second = []
-
-    # Create a table that contains nr_of_inhabitants per connection_node and iterate over it
-    for row in session.execute(
-        """
+    query = """
         WITH imp_surface_count AS
             ( SELECT impsurf.id, impsurf.dry_weather_flow,
                      impsurf.dry_weather_flow * impsurf.nr_of_inhabitants AS weighted_flow,
@@ -58,8 +55,11 @@ def read_dwf_per_node(session: Session) -> List[Union[int, float]]:
         SELECT ipn.connection_node_id, SUM(ipn.nr_of_inhabitants), SUM(ipn.weighted_flow)
         FROM inhibs_per_node ipn GROUP BY ipn.connection_node_id
         """
-    ):
+
+    # Create a table that contains nr_of_inhabitants per connection_node and iterate over it
+    for row in session.execute(query):
         connection_node_id, nr_of_inhabitants_sum, weighted_flow_sum = row
+        
         # DWF per person example: 120 l/inhabitant / 1000 = 0.12 m3/inhabitant
         dwf_per_node = (
             nr_of_inhabitants_sum * (weighted_flow_sum / nr_of_inhabitants_sum) / 1000
