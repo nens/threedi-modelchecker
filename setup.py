@@ -1,6 +1,6 @@
 from setuptools import setup
+import pathlib
 
-version = '0.25.dev0'
 
 long_description = "\n\n".join([open("README.rst").read()])
 
@@ -16,7 +16,7 @@ tests_require = [
     "pytest",
     "mock",
     "pytest-cov",
-    "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master",
+    "threedi-api-client>=4.0.0b2",
     "aiofiles",
     "aiohttp",
     "pytest-asyncio",
@@ -24,10 +24,22 @@ tests_require = [
 
 simulation_templates_require = [
     # Note: Change when threedi-api-client has been released
-    "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master",
+    "threedi-api-client>=4.0.0b2",
     "aiofiles",
     "aiohttp",
 ]
+
+
+def get_version():
+    # Edited from https://packaging.python.org/guides/single-sourcing-package-version/
+    init_path = pathlib.Path(__file__).parent / "threedi_modelchecker/__init__.py"
+    for line in init_path.open("r").readlines():
+        if line.startswith("__version__"):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
+
 
 setup(
     name="threedi-modelchecker",
