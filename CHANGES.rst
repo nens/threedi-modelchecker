@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.24 (unreleased)
+0.24 (2022-01-17)
 -----------------
 
 - Bugfix: Need to convert lateral geometry from str to dict representation.
