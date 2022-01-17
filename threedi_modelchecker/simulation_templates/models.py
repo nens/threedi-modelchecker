@@ -64,8 +64,6 @@ __all__ = [
     "SimulationTemplate",
 ]
 
-REQUIRE_GROUNDWATER = False
-
 
 class ValidationStatus(Enum):
     processing: str = "processing"
@@ -267,19 +265,16 @@ class InitialWaterlevels(AsDictMixin):
                 and x._raster
                 and x._raster.type == "initial_groundwater_level_file"
             ]
-            # TODO: Remove when groundwater is fully implemented: silently pass if
-            # there is not initial groundwaterlevel file
-            if (not found) and REQUIRE_GROUNDWATER:
+            if not found:
                 raise TemplateValidationError(
                     "Could not find aggregation file for initial groundwaterlevel raster"
                 )
-            elif found:
-                self.raster_gw.initial_waterlevel = found[0].id
-                tasks.append(
-                    client.simulations_initial_groundwater_level_raster_create(
-                        simulation_pk=simulation.id, data=self.raster_gw
-                    )
+            self.raster_gw.initial_waterlevel = found[0].id
+            tasks.append(
+                client.simulations_initial_groundwater_level_raster_create(
+                    simulation_pk=simulation.id, data=self.raster_gw
                 )
+            )
 
         if self.waterlevel_1d_file is not None:
             # use first found initial waterlevel resource with:
@@ -579,7 +574,7 @@ class Events(AsDictMixin):
 
         if validation_status == ValidationStatus.invalid:
             raise TemplateValidationError(
-                f"Provided laterals could not be validated succesfully, {self._boundary_upload.state_detail}"
+                f"Provided boundary conditions could not be validated succesfully, {self._boundary_upload.state_detail}"
             )
 
         return validation_status
@@ -679,8 +674,7 @@ class Events(AsDictMixin):
 
         upload: UploadEventFile = await client.simulations_events_lateral_file_create(
             simulation_pk=simulation.id,
-            data=UploadEventFile(filename=filename, offset=0),
-            periodic="daily",
+            data=UploadEventFile(filename=filename, offset=0, periodic="daily")
         )
         await upload_fileobj(upload.put_url, data)
 

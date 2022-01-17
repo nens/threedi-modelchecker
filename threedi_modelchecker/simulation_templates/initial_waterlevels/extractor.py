@@ -1,3 +1,4 @@
+from ..exceptions import SchematisationError
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_api_client.openapi.models import GroundWaterRaster
@@ -61,7 +62,7 @@ class InitialWaterlevelExtractor(object):
     def constant_waterlevel_2d(self) -> Optional[TwoDWaterLevel]:
         if self.global_settings.initial_waterlevel is None:
             return None
-        if self.global_settings.initial_waterlevel_file is not None:
+        if self.global_settings.initial_waterlevel_file:
             return None
         if float(self.global_settings.initial_waterlevel) == -9999:
             return None
@@ -70,6 +71,8 @@ class InitialWaterlevelExtractor(object):
     @property
     def constant_waterlevel_groundwater(self) -> Optional[GroundWaterLevel]:
         if self.global_settings.initial_groundwater_level is None:
+            return None
+        if self.global_settings.initial_groundwater_level_file:
             return None
         if float(self.global_settings.initial_groundwater_level) == -9999:
             return None
@@ -85,11 +88,12 @@ class InitialWaterlevelExtractor(object):
 
     @property
     def waterlevel_2d_raster(self) -> Optional[TwoDWaterRaster]:
-        if (
-            self.global_settings.initial_waterlevel_file is None
-            or self.global_settings.water_level_ini_type is None
-        ):
+        if not self.global_settings.initial_waterlevel_file:
             return None
+        if self.global_settings.water_level_ini_type is None:
+            raise SchematisationError(
+                "initial_waterlevel_file supplied without water_level_ini_type"
+            )
         return TwoDWaterRaster(
             aggregation_method=sqlite_agg_method_to_api_map[
                 self.global_settings.water_level_ini_type.value
@@ -99,11 +103,12 @@ class InitialWaterlevelExtractor(object):
 
     @property
     def waterlevel_groundwater_raster(self) -> Optional[GroundWaterRaster]:
-        if (
-            self.global_settings.initial_groundwater_level_file is None
-            or self.global_settings.initial_groundwater_level_type is None
-        ):
+        if not self.global_settings.initial_groundwater_level_file:
             return None
+        if self.global_settings.initial_groundwater_level_type is None:
+            raise SchematisationError(
+                "initial_groundwater_level_file supplied without initial_groundwater_level_type"
+            )
         return GroundWaterRaster(
             aggregation_method=sqlite_agg_method_to_api_map[
                 self.global_settings.initial_groundwater_level_type.value

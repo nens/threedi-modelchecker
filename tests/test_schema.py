@@ -125,6 +125,14 @@ def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
     assert south_latest_sqlite.get_engine().has_table("v2_connection_nodes")
 
 
+def test_full_upgrade_oldest(oldest_sqlite):
+    """Upgrade an empty database to the latest version"""
+    schema = ModelSchema(oldest_sqlite)
+    schema.upgrade(backup=False)
+    assert schema.get_version() == get_schema_version()
+    assert oldest_sqlite.get_engine().has_table("v2_connection_nodes")
+
+
 def test_upgrade_south_not_latest_errors(in_memory_sqlite):
     """Upgrading a database that is not at the latest south migration will error"""
     schema = ModelSchema(in_memory_sqlite)

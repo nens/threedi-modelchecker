@@ -1,3 +1,4 @@
+import json
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_api_client.openapi.models.lateral import Lateral
@@ -51,7 +52,7 @@ def lateral_2d_to_api_lateral(lateral_2d: Lateral2D, session: Session) -> Latera
         values = [[x[0] - offset, x[1]] for x in values]
 
     # x,y is correct (4.294348493375471, 52.033176579129936) until we alter the API
-    point = session.scalar(lateral_2d.the_geom.ST_AsGeoJSON())
+    point = json.loads(session.scalar(lateral_2d.the_geom.ST_AsGeoJSON()))
 
     return Lateral(
         offset=int(values[0][0]),

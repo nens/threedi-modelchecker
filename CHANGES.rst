@@ -2,16 +2,59 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.21 (unreleased)
+0.24.2 (unreleased)
 -------------------
+
+- Nothing changed yet.
+
+
+0.24.1 (2022-01-17)
+-------------------
+
+- Bugfix: DWF lateral upload fails due to incorrect function arguments.
+
+
+0.24 (2022-01-17)
+-----------------
+
+- Bugfix: Need to convert lateral geometry from str to dict representation.
+
+- Add dem_obstacle_detection != True check.
+
+- Added check on water_level_ini_type.
+
+- Interpret empty strings the same as NULL in initial (groundwater) level file
+  fields (simulation template worker).
+
+- Set interpolate flag for boundary conditions from extractor default to True.
+
+- Added dry weather flow calculation.
+
+
+0.23 (2022-01-11)
+-----------------
+
+- Added security measures on connection for untrusted sqlite input.
+
+- Added ThreediDatabase.check_integrity().
+
+- Disabled temporary patch: require initial groundwaterlevel files to be present.
+
+
+0.22 (2022-01-10)
+-----------------
+
+- Added legacy migrations down to version 160.
+
+
+0.21 (2022-01-04)
+-----------------
 
 - Reduced level of bank level check to warning.
 
 - Reduced level of v2_connection_nodes.the_geom_linestring to info.
 
 - Minor typographic fixes.
-
-- Added dry weather flow calculation.
 
 
 0.20.2 (2021-12-28)

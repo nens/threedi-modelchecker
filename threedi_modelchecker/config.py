@@ -596,13 +596,11 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=302,
-        column=models.GlobalSetting.dem_obstacle_height,
+        column=models.GlobalSetting.dem_obstacle_detection,
         invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.dem_obstacle_height <= 0,
             models.GlobalSetting.dem_obstacle_detection == True,
         ),
-        message="v2_global_settings.dem_obstacle_height should be larger than 0 when "
-        "v2_global_settings.dem_obstacle_detection == True",
+        message="v2_global_settings.dem_obstacle_detection is True, while this feature is not supported",
     ),
     QueryCheck(
         error_code=303,
@@ -738,6 +736,15 @@ CHECKS += [
             ),
         ),
         message="sub-basins (v2_global_settings.manhole_storage_area > 0) should only be used when there is no DEM supplied and there is no 2D flow",
+    ),
+    QueryCheck(
+        error_code=322,
+        column=models.GlobalSetting.water_level_ini_type,
+        invalid=Query(models.GlobalSetting).filter(
+            ~is_none_or_empty(models.GlobalSetting.initial_waterlevel_file),
+            models.GlobalSetting.water_level_ini_type == None,
+        ),
+        message="an initial waterlevel type (v2_global_settings.water_level_ini_type) should be defined when using an initial waterlevel file.",
     ),
 ]
 
