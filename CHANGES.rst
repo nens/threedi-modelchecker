@@ -5,7 +5,8 @@ Changelog of threedi-modelchecker
 0.24.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Allow isolated manholes that are not connected to anything (emit warning instead
+  of error).
 
 
 0.24.1 (2022-01-17)
