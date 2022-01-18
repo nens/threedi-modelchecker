@@ -752,12 +752,16 @@ def test_memory_control_capacity_factor(session, measure_group):
 
 
 def test_dwf_calculator(session):
-    conn_node = factories.ConnectionNodeFactory.create()
+    conn_node = factories.ConnectionNodeFactory.create(id=1)
     imp1: ImperviousSurface = factories.ImperviousSurfaceFactory.create(
+        code="030007",
+        display_name="030007",
         nr_of_inhabitants=3.34,
         dry_weather_flow=120.0,
     )
     imp2: ImperviousSurface = factories.ImperviousSurfaceFactory.create(
+        code="030008",
+        display_name="030008",
         nr_of_inhabitants=1.92,
         dry_weather_flow=120.0,
     )
@@ -786,4 +790,5 @@ def test_dwf_calculator(session):
         for i, factor in DWF_FACTORS
     ]
 
+    import pdb; pdb.set_trace()
     np.testing.assert_array_almost_equal(laterals[0]["values"], expected_values)
