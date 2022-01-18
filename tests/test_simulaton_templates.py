@@ -1,5 +1,6 @@
 from pathlib import Path
 from tests import factories
+from sqlalchemy.orm import Query
 from threedi_api_client.openapi.models import FileBoundaryCondition
 from threedi_api_client.openapi.models import FileLateral
 from threedi_api_client.openapi.models import Simulation
@@ -75,11 +76,13 @@ from threedi_modelchecker.threedi_model.constants import (
     ControlTableActionTypes,
 )
 from threedi_modelchecker.threedi_model.constants import InitializationType
+from threedi_modelchecker.threedi_model.models import ConnectionNode
 from threedi_modelchecker.threedi_model.models import ControlGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
 from threedi_modelchecker.threedi_model.models import ControlMemory
 from threedi_modelchecker.threedi_model.models import ControlTable
 from threedi_modelchecker.threedi_model.models import ImperviousSurface
+from threedi_modelchecker.threedi_model.models import ImperviousSurfaceMap
 from unittest import mock
 
 import pytest
@@ -777,6 +780,8 @@ def test_dwf_calculator(session):
         impervious_surface_id=imp2.id,
         connection_node_id=conn_node.id,
     )
+    # Because we use a raw SQL query in DWF we need to commit the data
+    session.commit()
 
     calculator = DWFCalculator(session)
     laterals = calculator.laterals
@@ -790,5 +795,10 @@ def test_dwf_calculator(session):
         for i, factor in DWF_FACTORS
     ]
 
-    import pdb; pdb.set_trace()
     np.testing.assert_array_almost_equal(laterals[0]["values"], expected_values)
+
+    # Remove committed data
+    Query(ImperviousSurfaceMap).with_session(session).delete()
+    Query(ImperviousSurface).with_session(session).delete()
+    Query(ConnectionNode).with_session(session).delete()
+    session.commit()
