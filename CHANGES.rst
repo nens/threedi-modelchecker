@@ -7,6 +7,9 @@ Changelog of threedi-modelchecker
 
 - Bugfix: DWF lateral upload wrong api call.
 
+- Allow isolated manholes that are not connected to anything (emit warning instead
+  of error).
+
 
 0.24.1 (2022-01-17)
 -------------------
