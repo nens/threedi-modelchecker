@@ -10,6 +10,12 @@ Changelog of threedi-modelchecker
 - Allow isolated manholes that are not connected to anything (emit warning instead
   of error).
 
+- Added threedi_modelchecker.__version__.
+
+- Added automatic release to PyPI.
+
+- Use the threedi-api-client beta release instead of checking out from github.
+
 
 0.24.1 (2022-01-17)
 -------------------

@@ -70,7 +70,7 @@ def read_dwf_per_node(session: Session) -> List[Union[int, float]]:
 
 
 def generate_dwf_laterals(session: Session) -> List[Dict]:
-    """Generate dry weather flow laterals from spatialite """
+    """Generate dry weather flow laterals from spatialite"""
     dwf_on_each_node = read_dwf_per_node(session)
     dwf_laterals = []
 
