@@ -14,11 +14,11 @@ Changelog of threedi-modelchecker
 
 - Added automatic release to PyPI.
 
+- Use the threedi-api-client beta release instead of checking out from github.
+
 
 0.24.1 (2022-01-17)
 -------------------
-
-- Use the threedi-api-client beta release instead of checking out from github.
 
 - Bugfix: DWF lateral upload fails due to incorrect function arguments.
 
