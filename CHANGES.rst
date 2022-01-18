@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.24.2 (unreleased)
+0.24.2 (2022-01-18)
 -------------------
 
 - Bugfix: DWF lateral upload wrong api call.
