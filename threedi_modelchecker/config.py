@@ -520,6 +520,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=251,
+        level=CheckLevel.WARNING,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
         .join(models.Manhole)

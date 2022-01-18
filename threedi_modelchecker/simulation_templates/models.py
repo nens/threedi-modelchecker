@@ -539,7 +539,7 @@ class Events(AsDictMixin):
         ):
             # Refresh from API
             self._dwf_lateral_upload: FileLateral = (
-                await client.simulations_events_lateral_read(
+                await client.simulations_events_lateral_file_read(
                     id=self._dwf_lateral_upload.id, simulation_pk=self._simulation.id
                 )
             )
@@ -674,8 +674,7 @@ class Events(AsDictMixin):
 
         upload: UploadEventFile = await client.simulations_events_lateral_file_create(
             simulation_pk=simulation.id,
-            data=UploadEventFile(filename=filename, offset=0),
-            periodic="daily",
+            data=UploadEventFile(filename=filename, offset=0, periodic="daily")
         )
         await upload_fileobj(upload.put_url, data)
 

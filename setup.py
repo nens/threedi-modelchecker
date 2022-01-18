@@ -2,7 +2,6 @@ from setuptools import setup
 
 import pathlib
 
-
 long_description = "\n\n".join([open("README.rst").read()])
 
 install_requires = [
