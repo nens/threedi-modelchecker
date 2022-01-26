@@ -1,7 +1,15 @@
+from threedi_modelchecker.threedi_model.constants import InflowType
 from sqlalchemy.orm import Session
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Union
+
+
+INFLOW_TABLE_NAME_BASES = {
+    InflowType.IMPERVIOUS_SURFACE: "impervious_surface",
+    InflowType.SURFACE: "surface",
+}
 
 
 # Default values
@@ -34,21 +42,23 @@ DWF_FACTORS = [
 ]
 
 
-def read_dwf_per_node(session: Session) -> List[Union[int, float]]:
-    """Obtains the DWF per connection node per second a 3Di model sqlite-file."""
+def read_dwf_per_node(
+    session: Session, inflow_type: InflowType
+) -> List[Union[int, float]]:
+    """Obtains the total dry weather flow in m3/d per connection node from a 3Di model sqlite-file."""
 
-    # Group dry_weather_flow * nr_of_inhabitants per connection node id
-    query = """
-        SELECT 	ism.connection_node_id,
-                sum(isu.dry_weather_flow * isu.nr_of_inhabitants * ism.percentage/100)/1000 AS dwf
-        FROM 	v2_impervious_surface isu
-        JOIN 	v2_impervious_surface_map ism
-        ON 		isu.id = ism.impervious_surface_id
-        WHERE 	isu.dry_weather_flow IS NOT NULL
-                and isu.nr_of_inhabitants != 0
-                and isu.nr_of_inhabitants IS NOT NULL
-                and ism.percentage IS NOT NULL
-        GROUP BY ism.connection_node_id
+    basename = INFLOW_TABLE_NAME_BASES[inflow_type]
+    query = f"""
+        SELECT 	map.connection_node_id,
+                sum(surf.dry_weather_flow * surf.nr_of_inhabitants * map.percentage/100)/1000 AS dwf
+        FROM 	v2_{basename} AS surf
+        JOIN 	v2_{basename}_map AS map
+        ON 		surf.id = map.{basename}_id
+        WHERE 	surf.dry_weather_flow IS NOT NULL
+                and surf.nr_of_inhabitants != 0
+                and surf.nr_of_inhabitants IS NOT NULL
+                and map.percentage IS NOT NULL
+        GROUP BY map.connection_node_id
     """
     dwf_per_node = [
         [connection_node_id, weighted_flow_sum]
@@ -58,9 +68,9 @@ def read_dwf_per_node(session: Session) -> List[Union[int, float]]:
     return dwf_per_node
 
 
-def generate_dwf_laterals(session: Session) -> List[Dict]:
+def generate_dwf_laterals(session: Session, inflow_type: InflowType) -> List[Dict]:
     """Generate dry weather flow laterals from spatialite """
-    dwf_per_node = read_dwf_per_node(session)
+    dwf_per_node = read_dwf_per_node(session, inflow_type)
     dwf_laterals = []
 
     # Generate lateral for each connection node
@@ -82,13 +92,17 @@ def generate_dwf_laterals(session: Session) -> List[Dict]:
 class DWFCalculator:
     """Calculate dry weather flow (DWF) from sqlite."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, inflow_type: InflowType) -> None:
         self.session = session
+        self.inflow_type = inflow_type
         self._laterals = None
 
     @property
-    def laterals(self) -> List[Dict]:
+    def laterals(self) -> List[Optional[Dict]]:
+        if self.inflow_type not in [InflowType.SURFACE, InflowType.IMPERVIOUS_SURFACE]:
+            return []
+
         if self._laterals is None:
-            self._laterals = generate_dwf_laterals(self.session)
+            self._laterals = generate_dwf_laterals(self.session, self.inflow_type)
 
         return self._laterals

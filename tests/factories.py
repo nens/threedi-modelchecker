@@ -221,6 +221,22 @@ class ImperviousSurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
     percentage = 100.0
 
 
+class SurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Surface
+        sqlalchemy_session = Session
+
+    area = 0.0
+
+
+class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SurfaceMap
+        sqlalchemy_session = Session
+
+    percentage = 100.0
+
+
 class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.ControlTable

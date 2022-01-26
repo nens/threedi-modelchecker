@@ -61,10 +61,7 @@ class SimulationTemplateExtractor(object):
                 f"Global settings with id: {global_settings_id} not found."
             )
 
-        dwf_laterals = []
-        if global_settings.use_0d_inflow:
-            dwf_laterals = DWFCalculator(session).laterals
-
+        dwf_laterals = DWFCalculator(session, global_settings.use_0d_inflow).laterals
         initial_waterlevels = InitialWaterlevelExtractor(session, global_settings_id)
         settings = SettingsExtractor(session, global_settings.id)
 
