@@ -1,6 +1,6 @@
 from setuptools import setup
 
-version = '0.24.2.dev0'
+import pathlib
 
 long_description = "\n\n".join([open("README.rst").read()])
 
@@ -16,22 +16,35 @@ tests_require = [
     "pytest",
     "mock",
     "pytest-cov",
-    "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master",
+    "threedi-api-client>=4.0.0b2",
     "aiofiles",
     "aiohttp",
     "pytest-asyncio",
+    "numpy",
 ]
 
 simulation_templates_require = [
     # Note: Change when threedi-api-client has been released
-    "threedi-api-client @ git+https://github.com/nens/threedi-api-client.git@master",
+    "threedi-api-client>=4.0.0b2",
     "aiofiles",
     "aiohttp",
 ]
 
+
+def get_version():
+    # Edited from https://packaging.python.org/guides/single-sourcing-package-version/
+    init_path = pathlib.Path(__file__).parent / "threedi_modelchecker/__init__.py"
+    for line in init_path.open("r").readlines():
+        if line.startswith("__version__"):
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    else:
+        raise RuntimeError("Unable to find version string.")
+
+
 setup(
     name="threedi-modelchecker",
-    version=version,
+    version=get_version(),
     description="Checks validity of a threedi-model",
     long_description=long_description,
     # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
@@ -56,7 +69,7 @@ setup(
         "postgis": ["psycopg2"],
         "simulation_templates": simulation_templates_require,
     },
-    python_requires='>=3.7',
+    python_requires=">=3.7",
     entry_points={
         "console_scripts": [
             "threedi_modelchecker = threedi_modelchecker.scripts:threedi_modelchecker"

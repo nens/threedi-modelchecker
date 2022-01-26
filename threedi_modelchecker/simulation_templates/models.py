@@ -539,7 +539,7 @@ class Events(AsDictMixin):
         ):
             # Refresh from API
             self._dwf_lateral_upload: FileLateral = (
-                await client.simulations_events_lateral_read(
+                await client.simulations_events_lateral_file_read(
                     id=self._dwf_lateral_upload.id, simulation_pk=self._simulation.id
                 )
             )

@@ -2,10 +2,25 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.24.2 (unreleased)
+0.24.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Updated DWF calculation to match ThreediToolBox update.
+
+
+0.24.2 (2022-01-18)
+-------------------
+
+- Bugfix: DWF lateral upload wrong api call.
+
+- Allow isolated manholes that are not connected to anything (emit warning instead
+  of error).
+
+- Added threedi_modelchecker.__version__.
+
+- Added automatic release to PyPI.
+
+- Use the threedi-api-client beta release instead of checking out from github.
 
 
 0.24.1 (2022-01-17)

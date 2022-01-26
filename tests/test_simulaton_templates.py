@@ -1,5 +1,6 @@
 from pathlib import Path
 from tests import factories
+from sqlalchemy.orm import Query
 from threedi_api_client.openapi.models import FileBoundaryCondition
 from threedi_api_client.openapi.models import FileLateral
 from threedi_api_client.openapi.models import Simulation
@@ -49,6 +50,12 @@ from threedi_modelchecker.simulation_templates.initial_waterlevels.extractor imp
 from threedi_modelchecker.simulation_templates.laterals.extractor import (
     LateralsExtractor,
 )
+from threedi_modelchecker.simulation_templates.laterals.dwf_calculator import (
+    DWFCalculator,
+)
+from threedi_modelchecker.simulation_templates.laterals.dwf_calculator import (
+    DWF_FACTORS,
+)
 from threedi_modelchecker.simulation_templates.models import (
     get_upload_instance,
 )
@@ -69,14 +76,17 @@ from threedi_modelchecker.threedi_model.constants import (
     ControlTableActionTypes,
 )
 from threedi_modelchecker.threedi_model.constants import InitializationType
+from threedi_modelchecker.threedi_model.models import ConnectionNode
 from threedi_modelchecker.threedi_model.models import ControlGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
 from threedi_modelchecker.threedi_model.models import ControlMemory
 from threedi_modelchecker.threedi_model.models import ControlTable
+from threedi_modelchecker.threedi_model.models import ImperviousSurface
+from threedi_modelchecker.threedi_model.models import ImperviousSurfaceMap
 from unittest import mock
 
 import pytest
-
+import numpy as np
 
 try:
     from unittest.mock import AsyncMock
@@ -742,3 +752,55 @@ def test_memory_control_capacity_factor(session, measure_group):
     extractor = StructureControlExtractor(session, control_group_id=control_group.id)
 
     assert extractor.all_controls().memory[0].value == [0.1]
+
+
+def test_dwf_calculator(session):
+    conn_node = factories.ConnectionNodeFactory.create(id=1)
+    imp1: ImperviousSurface = factories.ImperviousSurfaceFactory.create(
+        code="030007",
+        display_name="030007",
+        nr_of_inhabitants=3.34,
+        dry_weather_flow=120.0,
+    )
+    imp2: ImperviousSurface = factories.ImperviousSurfaceFactory.create(
+        code="030008",
+        display_name="030008",
+        nr_of_inhabitants=1.92,
+        dry_weather_flow=120.0,
+    )
+    imp_map1: ImperviousSurfaceMap = factories.ImperviousSurfaceMapFactory.create(
+        id=1,
+        impervious_surface=imp1,
+        impervious_surface_id=imp1.id,
+        connection_node_id=conn_node.id,
+        percentage=69.0,
+    )
+    imp_map2: ImperviousSurfaceMap = factories.ImperviousSurfaceMapFactory.create(
+        id=2,
+        impervious_surface=imp2,
+        impervious_surface_id=imp2.id,
+        connection_node_id=conn_node.id,
+        percentage=42.0,
+    )
+    # Because we use a raw SQL query in DWF we need to commit the data
+    session.commit()
+
+    calculator = DWFCalculator(session)
+    laterals = calculator.laterals
+
+    weighted_flow_sum = (
+        imp1.nr_of_inhabitants * imp1.dry_weather_flow * imp_map1.percentage / 100
+        + imp2.nr_of_inhabitants * imp2.dry_weather_flow * imp_map2.percentage / 100
+    )
+    expected_values = [
+        [i * 3600, (factor * weighted_flow_sum) / 1000 / 3600]
+        for i, factor in DWF_FACTORS
+    ]
+
+    # Remove committed data
+    Query(ImperviousSurfaceMap).with_session(session).delete()
+    Query(ImperviousSurface).with_session(session).delete()
+    Query(ConnectionNode).with_session(session).delete()
+    session.commit()
+
+    np.testing.assert_array_almost_equal(laterals[0]["values"], expected_values)
