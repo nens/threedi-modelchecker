@@ -5,8 +5,7 @@ Changelog of threedi-modelchecker
 0.25.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Try to add `start_datetime` and `duration` to a `GlobalSettingOption`
 
 0.25.2 (2022-01-26)
 -------------------

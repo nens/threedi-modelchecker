@@ -2,6 +2,7 @@ from .exceptions import SchematisationError
 from pathlib import Path
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
+from datetime import datetime, timezone
 from threedi_modelchecker.simulation_templates.boundaries.extractor import (
     BoundariesExtractor,
 )
@@ -32,6 +33,32 @@ from typing import Optional
 
 
 __all__ = ["SimulationTemplateExtractor"]
+
+
+def parse_datetime(global_setting: GlobalSetting) -> Optional[datetime]:
+    # first try combination, than start_time than start_date
+    for option in [
+        global_setting.start_date + " " + global_setting.start_time,
+        global_setting.start_time,
+        global_setting.start_date,
+    ]:
+        try:
+            dt = datetime.fromisoformat(option)
+        except (ValueError, TypeError):
+            dt = None
+        if dt:
+            dt = dt.astimezone(timezone.utc)
+            break
+
+    return dt
+
+
+def get_duration(global_setting: GlobalSetting) -> Optional[int]:
+    try:
+        duration = int(global_setting.nr_timesteps) * int(global_setting.sim_time_step)
+    except (ValueError, TypeError):
+        duration = None
+    return duration
 
 
 class SimulationTemplateExtractor(object):
@@ -82,7 +109,7 @@ class SimulationTemplateExtractor(object):
         self, session: Session
     ) -> List[GlobalSettingOption]:
         return [
-            GlobalSettingOption(x.id, x.name)
+            GlobalSettingOption(x.id, x.name, parse_datetime(x), get_duration(x))
             for x in Query(GlobalSetting).with_session(session)
         ]
 

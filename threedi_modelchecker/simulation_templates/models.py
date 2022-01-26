@@ -5,6 +5,7 @@ from dataclasses import fields
 from dataclasses import InitVar
 from enum import Enum
 from io import BytesIO
+from datetime import datetime
 from threedi_api_client.aio.files import upload_fileobj
 from threedi_api_client.openapi.models import AggregationSettings
 from threedi_api_client.openapi.models import FileLateral
@@ -79,6 +80,11 @@ class GlobalSettingOption:
 
     id: int  # v2_global_settings.id
     name: str
+
+    # derived start_datetime and duration from global settings
+    # might be None
+    start_datetime: Optional[datetime] = None
+    duration: Optional[int] = None
 
 
 class AsyncBytesIO:
