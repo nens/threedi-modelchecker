@@ -9,6 +9,7 @@ install_requires = [
     "GeoAlchemy2>=0.9",
     "SQLAlchemy>=1.2",
     "alembic>=0.9",
+    "dataclasses ; python_version<'3.7'",
 ]
 
 tests_require = [
@@ -21,7 +22,6 @@ tests_require = [
     "aiohttp",
     "pytest-asyncio",
     "numpy",
-    "dataclasses ; python_version<'3.7'",
 ]
 
 simulation_templates_require = [
