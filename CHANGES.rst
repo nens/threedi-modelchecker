@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.25.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Re-enable Python 3.6 compatibility.
 
 
 0.25.1 (2022-01-26)
