@@ -768,17 +768,19 @@ def test_dwf_calculator(session):
         nr_of_inhabitants=1.92,
         dry_weather_flow=120.0,
     )
-    factories.ImperviousSurfaceMapFactory.create(
+    imp_map1: ImperviousSurfaceMap = factories.ImperviousSurfaceMapFactory.create(
         id=1,
         impervious_surface=imp1,
         impervious_surface_id=imp1.id,
         connection_node_id=conn_node.id,
+        percentage=69.0,
     )
-    factories.ImperviousSurfaceMapFactory.create(
+    imp_map2: ImperviousSurfaceMap = factories.ImperviousSurfaceMapFactory.create(
         id=2,
         impervious_surface=imp2,
         impervious_surface_id=imp2.id,
         connection_node_id=conn_node.id,
+        percentage=42.0,
     )
     # Because we use a raw SQL query in DWF we need to commit the data
     session.commit()
@@ -787,18 +789,18 @@ def test_dwf_calculator(session):
     laterals = calculator.laterals
 
     weighted_flow_sum = (
-        imp1.nr_of_inhabitants * imp1.dry_weather_flow
-        + imp2.nr_of_inhabitants * imp2.dry_weather_flow
+        imp1.nr_of_inhabitants * imp1.dry_weather_flow * imp_map1.percentage / 100
+        + imp2.nr_of_inhabitants * imp2.dry_weather_flow * imp_map2.percentage / 100
     )
     expected_values = [
-        [i * 3600, (factor * weighted_flow_sum / 1000) / 3600]
+        [i * 3600, (factor * weighted_flow_sum) / 1000 / 3600]
         for i, factor in DWF_FACTORS
     ]
-
-    np.testing.assert_array_almost_equal(laterals[0]["values"], expected_values)
 
     # Remove committed data
     Query(ImperviousSurfaceMap).with_session(session).delete()
     Query(ImperviousSurface).with_session(session).delete()
     Query(ConnectionNode).with_session(session).delete()
     session.commit()
+
+    np.testing.assert_array_almost_equal(laterals[0]["values"], expected_values)

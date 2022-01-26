@@ -37,46 +37,35 @@ DWF_FACTORS = [
 def read_dwf_per_node(session: Session) -> List[Union[int, float]]:
     """Obtains the DWF per connection node per second a 3Di model sqlite-file."""
 
-    # Create empty list that holds total 24h dry weather flow per node
-    dwf_per_node_per_second = []
+    # Group dry_weather_flow * nr_of_inhabitants per connection node id
+    query = """
+        SELECT 	ism.connection_node_id,
+                sum(isu.dry_weather_flow * isu.nr_of_inhabitants * ism.percentage/100)/1000 AS dwf
+        FROM 	v2_impervious_surface isu
+        JOIN 	v2_impervious_surface_map ism
+        ON 		isu.id = ism.impervious_surface_id
+        WHERE 	isu.dry_weather_flow IS NOT NULL
+                and isu.nr_of_inhabitants != 0
+                and isu.nr_of_inhabitants IS NOT NULL
+                and ism.percentage IS NOT NULL
+        GROUP BY ism.connection_node_id
+    """
+    dwf_per_node = [
+        [connection_node_id, weighted_flow_sum]
+        for connection_node_id, weighted_flow_sum in session.execute(query)
+    ]
 
-    # Create a table that contains nr_of_inhabitants per connection_node and iterate over it
-    for row in session.execute(
-        """
-        WITH imp_surface_count AS
-            ( SELECT impsurf.id, impsurf.dry_weather_flow,
-                     impsurf.dry_weather_flow * impsurf.nr_of_inhabitants AS weighted_flow,
-                     impsurf.nr_of_inhabitants / COUNT(impmap.impervious_surface_id) AS nr_of_inhabitants
-             FROM v2_impervious_surface impsurf, v2_impervious_surface_map impmap
-             WHERE impsurf.nr_of_inhabitants IS NOT NULL AND impsurf.nr_of_inhabitants != 0
-             AND impsurf.id = impmap.impervious_surface_id GROUP BY impsurf.id),
-        inhibs_per_node AS (
-            SELECT impmap.impervious_surface_id, impsurfcount.nr_of_inhabitants,
-                   impmap.connection_node_id, impsurfcount.dry_weather_flow, impsurfcount.weighted_flow
-            FROM imp_surface_count impsurfcount, v2_impervious_surface_map impmap
-            WHERE impsurfcount.id = impmap.impervious_surface_id)
-        SELECT ipn.connection_node_id, SUM(ipn.nr_of_inhabitants), SUM(ipn.weighted_flow)
-        FROM inhibs_per_node ipn GROUP BY ipn.connection_node_id
-        """
-    ):
-        connection_node_id, nr_of_inhabitants_sum, weighted_flow_sum = row
-        # DWF per person example: 120 l/inhabitant / 1000 = 0.12 m3/inhabitant
-        dwf_per_node = (
-            nr_of_inhabitants_sum * (weighted_flow_sum / nr_of_inhabitants_sum) / 1000
-        )
-        dwf_per_node_per_second.append([connection_node_id, dwf_per_node / 3600])
-
-    return dwf_per_node_per_second
+    return dwf_per_node
 
 
 def generate_dwf_laterals(session: Session) -> List[Dict]:
-    """Generate dry weather flow laterals from spatialite"""
-    dwf_on_each_node = read_dwf_per_node(session)
+    """Generate dry weather flow laterals from spatialite """
+    dwf_per_node = read_dwf_per_node(session)
     dwf_laterals = []
 
     # Generate lateral for each connection node
-    for node_id, flow in dwf_on_each_node:
-        values = [[hour * 3600, flow * factor] for hour, factor in DWF_FACTORS]
+    for node_id, flow in dwf_per_node:
+        values = [[hour * 3600, flow * factor / 3600] for hour, factor in DWF_FACTORS]
         dwf_laterals.append(
             dict(
                 offset=0,

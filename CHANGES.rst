@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.24.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Updated DWF calculation to match ThreediToolBox update.
 
 
 0.24.2 (2022-01-18)
