@@ -75,7 +75,10 @@ from threedi_modelchecker.simulation_templates.structure_controls.extractor impo
 from threedi_modelchecker.threedi_model.constants import (
     ControlTableActionTypes,
 )
-from threedi_modelchecker.threedi_model.constants import InitializationType
+from threedi_modelchecker.threedi_model.constants import (
+    InitializationType,
+    InflowType,
+)
 from threedi_modelchecker.threedi_model.models import ConnectionNode
 from threedi_modelchecker.threedi_model.models import ControlGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
@@ -83,6 +86,8 @@ from threedi_modelchecker.threedi_model.models import ControlMemory
 from threedi_modelchecker.threedi_model.models import ControlTable
 from threedi_modelchecker.threedi_model.models import ImperviousSurface
 from threedi_modelchecker.threedi_model.models import ImperviousSurfaceMap
+from threedi_modelchecker.threedi_model.models import Surface
+from threedi_modelchecker.threedi_model.models import SurfaceMap
 from unittest import mock
 
 import pytest
@@ -754,7 +759,7 @@ def test_memory_control_capacity_factor(session, measure_group):
     assert extractor.all_controls().memory[0].value == [0.1]
 
 
-def test_dwf_calculator(session):
+def test_dwf_calculator_impervious_surface(session):
     conn_node = factories.ConnectionNodeFactory.create(id=1)
     imp1: ImperviousSurface = factories.ImperviousSurfaceFactory.create(
         code="030007",
@@ -785,7 +790,7 @@ def test_dwf_calculator(session):
     # Because we use a raw SQL query in DWF we need to commit the data
     session.commit()
 
-    calculator = DWFCalculator(session)
+    calculator = DWFCalculator(session, InflowType.IMPERVIOUS_SURFACE)
     laterals = calculator.laterals
 
     weighted_flow_sum = (
@@ -804,3 +809,60 @@ def test_dwf_calculator(session):
     session.commit()
 
     np.testing.assert_array_almost_equal(laterals[0]["values"], expected_values)
+
+
+def test_dwf_calculator_surface(session):  # same algorithm as impervious surface
+    conn_node = factories.ConnectionNodeFactory.create(id=1)
+    sur1: Surface = factories.SurfaceFactory.create(
+        id=1,
+        code="030007",
+        display_name="030007",
+        nr_of_inhabitants=3.34,
+        dry_weather_flow=120.0,
+    )
+    sur2: Surface = factories.SurfaceFactory.create(
+        id=2,
+        code="030008",
+        display_name="030008",
+        nr_of_inhabitants=1.92,
+        dry_weather_flow=120.0,
+    )
+    sur_map1: SurfaceMap = factories.SurfaceMapFactory.create(
+        id=1,
+        surface_id=sur1.id,
+        connection_node_id=conn_node.id,
+        percentage=69.0,
+    )
+    sur_map2: SurfaceMap = factories.SurfaceMapFactory.create(
+        id=2,
+        surface_id=sur2.id,
+        connection_node_id=conn_node.id,
+        percentage=42.0,
+    )
+    # Because we use a raw SQL query in DWF we need to commit the data
+    session.commit()
+
+    calculator = DWFCalculator(session, InflowType.SURFACE)
+    laterals = calculator.laterals
+
+    weighted_flow_sum = (
+        sur1.nr_of_inhabitants * sur1.dry_weather_flow * sur_map1.percentage / 100
+        + sur2.nr_of_inhabitants * sur2.dry_weather_flow * sur_map2.percentage / 100
+    )
+    expected_values = [
+        [i * 3600, (factor * weighted_flow_sum) / 1000 / 3600]
+        for i, factor in DWF_FACTORS
+    ]
+
+    # Remove committed data
+    Query(SurfaceMap).with_session(session).delete()
+    Query(Surface).with_session(session).delete()
+    Query(ConnectionNode).with_session(session).delete()
+    session.commit()
+
+    np.testing.assert_array_almost_equal(laterals[0]["values"], expected_values)
+
+
+def test_dwf_calculator_no_inflow(session):
+    calculator = DWFCalculator(session, InflowType.NO_INFLOW)
+    assert calculator.laterals == []

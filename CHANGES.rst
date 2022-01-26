@@ -7,6 +7,8 @@ Changelog of threedi-modelchecker
 
 - Updated DWF calculation to match ThreediToolBox update.
 
+- Included Surface in DWF calculation. 
+
 
 0.24.2 (2022-01-18)
 -------------------
