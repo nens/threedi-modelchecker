@@ -21,6 +21,7 @@ tests_require = [
     "aiohttp",
     "pytest-asyncio",
     "numpy",
+    "dataclasses ; python_version<'3.7'",
 ]
 
 simulation_templates_require = [
@@ -69,7 +70,7 @@ setup(
         "postgis": ["psycopg2"],
         "simulation_templates": simulation_templates_require,
     },
-    python_requires=">=3.7",
+    python_requires=">=3.6",
     entry_points={
         "console_scripts": [
             "threedi_modelchecker = threedi_modelchecker.scripts:threedi_modelchecker"
