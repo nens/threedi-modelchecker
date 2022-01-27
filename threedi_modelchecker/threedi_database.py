@@ -151,13 +151,13 @@ class ThreediDatabase:
             raise NotImplementedError(
                 f"Cannot make database backups for db_type {self.db_type}"
             )
-        with tempfile.NamedTemporaryFile(suffix=".sqlite") as work_file:
-            # copy the database to the temporary directory
-            shutil.copy(self.settings["db_path"], work_file.name)
-            # yield a new ThreediDatabase refering to the backup
-            yield self.__class__({"db_path": work_file.name}, "spatialite")
-            # this is only reached if there was no error:
-            shutil.copy(work_file.name, self.settings["db_path"])
+        work_file = tempfile.NamedTemporaryFile(suffix=".sqlite")
+        # copy the database to the temporary directory
+        shutil.copy(self.settings["db_path"], work_file.name)
+        # yield a new ThreediDatabase refering to the backup
+        yield self.__class__({"db_path": work_file.name}, "spatialite")
+        # this is only reached if there was no error:
+        shutil.copy(work_file.name, self.settings["db_path"])
 
     def check_connection(self):
         """Check if there a connection can be started with the database

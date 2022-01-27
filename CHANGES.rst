@@ -5,7 +5,8 @@ Changelog of threedi-modelchecker
 0.25.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Pass temporary database copy file in a different context so it is opened
+  one time, previously it was opened twice which results in errors on Windows.
 
 
 0.25.2 (2022-01-26)
