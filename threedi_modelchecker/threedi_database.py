@@ -155,9 +155,14 @@ class ThreediDatabase:
         # copy the database to the temporary directory
         shutil.copy(self.settings["db_path"], work_file.name)
         # yield a new ThreediDatabase refering to the backup
-        yield self.__class__({"db_path": work_file.name}, "spatialite")
-        # this is only reached if there was no error:
-        shutil.copy(work_file.name, self.settings["db_path"])
+        try:
+            yield self.__class__({"db_path": work_file.name}, "spatialite")
+        except Exception:
+            pass
+        else:
+            shutil.copy(work_file.name, self.settings["db_path"])
+        finally:
+            work_file.close()  # auto deletes the file
 
     def check_connection(self):
         """Check if there a connection can be started with the database
