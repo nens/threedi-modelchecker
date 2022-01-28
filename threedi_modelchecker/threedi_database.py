@@ -157,8 +157,8 @@ class ThreediDatabase:
         # yield a new ThreediDatabase refering to the backup
         try:
             yield self.__class__({"db_path": work_file.name}, "spatialite")
-        except Exception:
-            pass
+        except Exception as e:
+            raise e
         else:
             shutil.copy(work_file.name, self.settings["db_path"])
         finally:
