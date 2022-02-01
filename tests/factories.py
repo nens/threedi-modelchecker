@@ -20,7 +20,7 @@ class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     grid_space = 20
     advection_2d = 1
     dist_calc_points = 15
-    start_date = datetime.datetime.now()
+    start_date = datetime.datetime.now().isoformat()
     table_step_size = 0.05
     use_1d_flow = False
     use_2d_rain = 1
