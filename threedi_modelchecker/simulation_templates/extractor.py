@@ -37,11 +37,16 @@ __all__ = ["SimulationTemplateExtractor"]
 
 def parse_datetime(global_setting: GlobalSetting) -> Optional[datetime]:
     # first try combination, than start_time than start_date
-    for option in [
-        global_setting.start_date + " " + global_setting.start_time,
-        global_setting.start_time,
-        global_setting.start_date,
-    ]:
+    options = []
+    if global_setting.start_date and global_setting.start_time:
+        options.append(f"{global_setting.start_date} {global_setting.start_time}")
+    if global_setting.start_time:
+        options.append(f"{global_setting.start_time}")
+    if global_setting.start_date:
+        options.append(f"{global_setting.start_date}")
+        
+    dt = None
+    for option in options:
         try:
             dt = datetime.fromisoformat(option)
         except (ValueError, TypeError):
