@@ -22,6 +22,7 @@ tests_require = [
     "aiohttp",
     "pytest-asyncio",
     "numpy",
+    "python-dateutil"
 ]
 
 simulation_templates_require = [
@@ -29,6 +30,7 @@ simulation_templates_require = [
     "threedi-api-client>=4.0.0b2",
     "aiofiles",
     "aiohttp",
+    "python-dateutil"
 ]
 
 

@@ -3,6 +3,7 @@ from pathlib import Path
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from datetime import datetime, timezone
+from dateutil import parser
 from threedi_modelchecker.simulation_templates.boundaries.extractor import (
     BoundariesExtractor,
 )
@@ -44,11 +45,11 @@ def parse_datetime(global_setting: GlobalSetting) -> Optional[datetime]:
         options.append(f"{global_setting.start_time}")
     if global_setting.start_date:
         options.append(f"{global_setting.start_date}")
-        
+
     dt = None
     for option in options:
         try:
-            dt = datetime.fromisoformat(option)
+            dt = parser.parse(option)
         except (ValueError, TypeError):
             dt = None
         if dt:
