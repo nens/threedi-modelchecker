@@ -8,7 +8,7 @@ from .checks.base import QueryCheck
 from .checks.base import RangeCheck
 from .checks.cross_section_definitions import CrossSectionEqualElementsCheck
 from .checks.cross_section_definitions import (
-    CrossSectionFirstElementNonZeroCheck,
+    CrossSectionFirstElementNonZeroCheck, CrossSectionFirstElementZeroCheck,
 )
 from .checks.cross_section_definitions import CrossSectionFloatCheck
 from .checks.cross_section_definitions import CrossSectionFloatListCheck
@@ -367,6 +367,15 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.CrossSectionDefinition.width,
         shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
+    ),
+    CrossSectionFirstElementZeroCheck(
+        error_code=92,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionDefinition.height,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
     ),
 ]
 
