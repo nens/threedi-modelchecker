@@ -5,6 +5,8 @@ Changelog of threedi-modelchecker
 0.25.3 (unreleased)
 -------------------
 
+- Add warning: cross section (tabulated) should start with 0.
+
 - Pass temporary database copy file in a different context so it is opened
   one time, previously it was opened twice which results in errors on Windows.
 
