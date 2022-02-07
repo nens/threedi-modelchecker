@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.25.3 (unreleased)
+0.25.3 (2022-02-07)
 -------------------
 
 - Add warning: cross section (tabulated) should start with 0.
