@@ -67,7 +67,7 @@ class CrossSectionFloatCheck(CrossSectionBaseCheck):
 
 
 class CrossSectionNonZeroCheck(CrossSectionBaseCheck):
-    """Check that width / height is larger than >0"""
+    """Check that width / height is larger than 0"""
 
     def get_invalid(self, session):
         invalids = []
@@ -161,8 +161,32 @@ class CrossSectionIncreasingCheck(CrossSectionBaseCheck):
         return f"{self.column_name} should be monotonically increasing for shapes {self.shape_msg}. Maybe the width and height have been interchanged?"
 
 
+class CrossSectionFirstElementZeroCheck(CrossSectionBaseCheck):
+    """Tabulated definitions should start at with 0 height."""
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            try:
+                values = [
+                    float(x) for x in getattr(record, self.column.name).split(" ")
+                ]
+            except ValueError:
+                continue  # other check catches this
+
+            if abs(values[0]) != 0:
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return f"The first element of {self.column_name} should equal 0 for shapes {self.shape_msg}. Note that heights are relative to 'reference_level'."
+
+
 class CrossSectionFirstElementNonZeroCheck(CrossSectionBaseCheck):
-    """Tabulated definitions should have an increasing list of heights."""
+    """Tabulated rectangles cannot start with 0 width."""
 
     def get_invalid(self, session):
         invalids = []
