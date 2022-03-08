@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.25.4 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fixed bug in timeseries checks 1201 and 1202.
 
 
 0.25.3 (2022-02-07)
