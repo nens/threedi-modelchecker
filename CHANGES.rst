@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.25.4 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Prevent usage of GeoAlchemy 0.11 (because of a known issue).
 
 
 0.25.3 (2022-02-07)
