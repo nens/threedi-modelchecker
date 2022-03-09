@@ -47,8 +47,8 @@ class TimeseriesTimestepCheck(BaseCheck):
             if not timeserie:
                 continue
 
-            for row in timeserie.split():
-                elems = row.split(",")
+            for timeseries_row in timeserie.split():
+                elems = timeseries_row.split(",")
                 if len(elems) != 2:
                     continue  # checked elsewhere
 
@@ -81,8 +81,8 @@ class TimeseriesValueCheck(BaseCheck):
             if not timeserie:
                 continue
 
-            for row in timeserie.split():
-                elems = row.split(",")
+            for timeseries_row in timeserie.split():
+                elems = timeseries_row.split(",")
                 if len(elems) != 2:
                     continue  # checked elsewhere
 

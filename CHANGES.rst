@@ -5,6 +5,8 @@ Changelog of threedi-modelchecker
 0.25.4 (unreleased)
 -------------------
 
+- Fixed bug in timeseries checks 1201 and 1202.
+
 - Prevent usage of GeoAlchemy 0.11 (because of a known issue).
 
 
