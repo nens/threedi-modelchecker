@@ -172,15 +172,14 @@ def test_upgrade_without_backup(threedi_db):
 
 
 def test_set_views(oldest_sqlite):
-    """Upgrade an empty database to the latest version"""
+    """Make sure that the views are regenerated
+    """
     schema = ModelSchema(oldest_sqlite)
     schema.upgrade(backup=False)
     assert schema.get_version() == get_schema_version()
-
-    with oldest_sqlite.session_scope() as session:
-        rec = session.execute("SELECT * FROM v2_pipe_view LIMIT 1").fetchall()
     
     schema.set_views()
 
+    # without calling set_views, v2_pipe_view would error
     with oldest_sqlite.session_scope() as session:
-        rec = session.execute("SELECT * FROM v2_pipe_view LIMIT 1").fetchall()
+        session.execute("SELECT * FROM v2_pipe_view LIMIT 1").fetchall()

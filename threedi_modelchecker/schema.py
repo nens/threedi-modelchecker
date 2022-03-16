@@ -159,11 +159,13 @@ class ModelSchema:
                 f"Setting views requires schema version "
                 f"{schema_version}. Current version: {version}."
             )
-        
+
         with self.db.get_engine().begin() as connection:
-            inspector = Inspector.from_engine(connection)
-            current_views = set(inspector.get_view_names())
-            for (name, defn) in views.ALL_VIEWS.items():
-                if name in current_views:
-                    connection.execute(f"DROP VIEW {name}")
-                connection.execute(f"CREATE VIEW {name} AS {defn}")
+            for (name, view) in views.ALL_VIEWS.items():
+                connection.execute(f"DROP VIEW IF EXISTS {name}")
+                connection.execute(f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'")
+                connection.execute(f"CREATE VIEW {name} AS {view['definition']}")
+                connection.execute(f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')")
+            for name in views.VIEWS_TO_DELETE:
+                connection.execute(f"DROP VIEW IF EXISTS {name}")
+                connection.execute(f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'")
