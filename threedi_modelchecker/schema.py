@@ -1,6 +1,7 @@
 from .errors import MigrationMissingError
 from .threedi_model import constants
 from .threedi_model import models
+from .threedi_model import views
 from alembic.config import Config
 from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
@@ -9,6 +10,8 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
+from sqlalchemy.engine.reflection import Inspector
+
 
 import warnings
 
@@ -125,13 +128,13 @@ class ModelSchema:
         :raise MigrationMissingError, MigrationTooHighError
         """
         version = self.get_version()
-        if version is None or version < constants.MIN_SCHEMA_VERSION:
+        schema_version = get_schema_version()
+        if version is None or version < schema_version:
             raise MigrationMissingError(
                 f"The modelchecker requires at least schema version "
-                f"{constants.MIN_SCHEMA_VERSION}. Current version: {version}."
+                f"{schema_version}. Current version: {version}."
             )
 
-        schema_version = get_schema_version()
         if version > schema_version:
             warnings.warn(
                 f"The database version is higher than the modelchecker "
@@ -145,3 +148,22 @@ class ModelSchema:
 
     def get_missing_columns(self):
         pass
+
+    def set_views(self):
+        """(Re)create views in the spatialite according to the latest definitions.
+        """
+        version = self.get_version()
+        schema_version = get_schema_version()
+        if version != get_schema_version():
+            raise MigrationMissingError(
+                f"Setting views requires schema version "
+                f"{schema_version}. Current version: {version}."
+            )
+        
+        with self.db.get_engine().begin() as connection:
+            inspector = Inspector.from_engine(connection)
+            current_views = set(inspector.get_view_names())
+            for (name, defn) in views.ALL_VIEWS.items():
+                if name in current_views:
+                    connection.execute(f"DROP VIEW {name}")
+                connection.execute(f"CREATE VIEW {name} AS {defn}")

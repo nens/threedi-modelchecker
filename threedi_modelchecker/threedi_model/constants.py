@@ -2,7 +2,6 @@ from enum import Enum
 
 
 LATEST_SOUTH_MIGRATION_ID = 160
-MIN_SCHEMA_VERSION = 206
 VERSION_TABLE_NAME = "schema_version"
 
 

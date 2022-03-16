@@ -86,12 +86,12 @@ def test_validate_schema(threedi_db):
     """Validate a correct schema version"""
     schema = ModelSchema(threedi_db)
     with mock.patch.object(
-        schema, "get_version", return_value=constants.MIN_SCHEMA_VERSION
+        schema, "get_version", return_value=206
     ):
         assert schema.validate_schema()
 
 
-@pytest.mark.parametrize("version", [-1, constants.MIN_SCHEMA_VERSION - 1, None])
+@pytest.mark.parametrize("version", [-1, 205, None])
 def test_validate_schema_missing_migration(threedi_db, version):
     """Validate a too low schema version"""
     schema = ModelSchema(threedi_db)
@@ -126,7 +126,7 @@ def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
 
 
 def test_full_upgrade_oldest(oldest_sqlite):
-    """Upgrade an empty database to the latest version"""
+    """Upgrade a legacy database to the latest version"""
     schema = ModelSchema(oldest_sqlite)
     schema.upgrade(backup=False)
     assert schema.get_version() == get_schema_version()
@@ -169,3 +169,18 @@ def test_upgrade_without_backup(threedi_db):
 
     (db,), kwargs = upgrade.call_args
     assert db is threedi_db
+
+
+def test_set_views(oldest_sqlite):
+    """Upgrade an empty database to the latest version"""
+    schema = ModelSchema(oldest_sqlite)
+    schema.upgrade(backup=False)
+    assert schema.get_version() == get_schema_version()
+
+    with oldest_sqlite.session_scope() as session:
+        rec = session.execute("SELECT * FROM v2_pipe_view LIMIT 1").fetchall()
+    
+    schema.set_views()
+
+    with oldest_sqlite.session_scope() as session:
+        rec = session.execute("SELECT * FROM v2_pipe_view LIMIT 1").fetchall()
