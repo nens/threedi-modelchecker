@@ -177,7 +177,7 @@ def test_set_views(oldest_sqlite):
     schema = ModelSchema(oldest_sqlite)
     schema.upgrade(backup=False)
     assert schema.get_version() == get_schema_version()
-    
+
     schema.set_views()
 
     # without calling set_views, v2_pipe_view would error
