@@ -674,7 +674,7 @@ class Events(AsDictMixin):
 
         upload: UploadEventFile = await client.simulations_events_lateral_file_create(
             simulation_pk=simulation.id,
-            data=UploadEventFile(filename=filename, offset=0, periodic="daily")
+            data=UploadEventFile(filename=filename, offset=0, periodic="daily"),
         )
         await upload_fileobj(upload.put_url, data)
 

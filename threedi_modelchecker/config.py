@@ -8,8 +8,9 @@ from .checks.base import QueryCheck
 from .checks.base import RangeCheck
 from .checks.cross_section_definitions import CrossSectionEqualElementsCheck
 from .checks.cross_section_definitions import (
-    CrossSectionFirstElementNonZeroCheck, CrossSectionFirstElementZeroCheck,
+    CrossSectionFirstElementNonZeroCheck,
 )
+from .checks.cross_section_definitions import CrossSectionFirstElementZeroCheck
 from .checks.cross_section_definitions import CrossSectionFloatCheck
 from .checks.cross_section_definitions import CrossSectionFloatListCheck
 from .checks.cross_section_definitions import CrossSectionIncreasingCheck

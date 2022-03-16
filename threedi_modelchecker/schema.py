@@ -10,8 +10,6 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
-from sqlalchemy.engine.reflection import Inspector
-
 
 import warnings
 
@@ -150,8 +148,7 @@ class ModelSchema:
         pass
 
     def set_views(self):
-        """(Re)create views in the spatialite according to the latest definitions.
-        """
+        """(Re)create views in the spatialite according to the latest definitions."""
         version = self.get_version()
         schema_version = get_schema_version()
         if version != get_schema_version():
@@ -163,9 +160,15 @@ class ModelSchema:
         with self.db.get_engine().begin() as connection:
             for (name, view) in views.ALL_VIEWS.items():
                 connection.execute(f"DROP VIEW IF EXISTS {name}")
-                connection.execute(f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'")
+                connection.execute(
+                    f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
+                )
                 connection.execute(f"CREATE VIEW {name} AS {view['definition']}")
-                connection.execute(f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')")
+                connection.execute(
+                    f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')"
+                )
             for name in views.VIEWS_TO_DELETE:
                 connection.execute(f"DROP VIEW IF EXISTS {name}")
-                connection.execute(f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'")
+                connection.execute(
+                    f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
+                )

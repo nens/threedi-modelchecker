@@ -86,7 +86,7 @@ def test_validate_schema(threedi_db):
     """Validate a correct schema version"""
     schema = ModelSchema(threedi_db)
     with mock.patch.object(
-        schema, "get_version", return_value=206
+        schema, "get_version", return_value=get_schema_version()
     ):
         assert schema.validate_schema()
 

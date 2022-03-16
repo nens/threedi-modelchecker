@@ -1,5 +1,5 @@
-from threedi_modelchecker.threedi_model.constants import InflowType
 from sqlalchemy.orm import Session
+from threedi_modelchecker.threedi_model.constants import InflowType
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -69,7 +69,7 @@ def read_dwf_per_node(
 
 
 def generate_dwf_laterals(session: Session, inflow_type: InflowType) -> List[Dict]:
-    """Generate dry weather flow laterals from spatialite """
+    """Generate dry weather flow laterals from spatialite"""
     dwf_per_node = read_dwf_per_node(session, inflow_type)
     dwf_laterals = []
 
