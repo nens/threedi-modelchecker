@@ -1,6 +1,7 @@
 from .errors import MigrationMissingError
 from .threedi_model import constants
 from .threedi_model import models
+from .threedi_model import views
 from alembic.config import Config
 from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
@@ -88,7 +89,7 @@ class ModelSchema:
         else:
             return self._get_version_old()
 
-    def upgrade(self, revision="head", backup=True):
+    def upgrade(self, revision="head", backup=True, set_views=True):
         """Upgrade the database to the latest version.
 
         This requires either a completely empty database or a database with its
@@ -100,6 +101,10 @@ class ModelSchema:
         database file does not become corrupt, enable the "backup" parameter.
         If the database is temporary already (or if it is PostGIS), disable
         it.
+
+        Specify 'set_views=True' to also (re)create views after the upgrade.
+        This is not compatible when upgrading to a different version than the
+        latest version.
         """
         v = self.get_version()
         if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
@@ -108,11 +113,16 @@ class ModelSchema:
                 f"{constants.LATEST_SOUTH_MIGRATION_ID}. Please consult the "
                 f"3Di documentation on how to update legacy databases."
             )
+        if set_views and revision not in ("head", get_schema_version()):
+            raise ValueError(f"Cannot set views when upgrading to version '{revision}'")
         if backup:
             with self.db.file_transaction() as work_db:
                 _upgrade_database(work_db, revision=revision)
         else:
             _upgrade_database(self.db, revision=revision)
+
+        if set_views:
+            self.set_views()
 
     def validate_schema(self):
         """Very basic validation of 3Di schema.
@@ -125,13 +135,13 @@ class ModelSchema:
         :raise MigrationMissingError, MigrationTooHighError
         """
         version = self.get_version()
-        if version is None or version < constants.MIN_SCHEMA_VERSION:
+        schema_version = get_schema_version()
+        if version is None or version < schema_version:
             raise MigrationMissingError(
                 f"The modelchecker requires at least schema version "
-                f"{constants.MIN_SCHEMA_VERSION}. Current version: {version}."
+                f"{schema_version}. Current version: {version}."
             )
 
-        schema_version = get_schema_version()
         if version > schema_version:
             warnings.warn(
                 f"The database version is higher than the modelchecker "
@@ -145,3 +155,29 @@ class ModelSchema:
 
     def get_missing_columns(self):
         pass
+
+    def set_views(self):
+        """(Re)create views in the spatialite according to the latest definitions."""
+        version = self.get_version()
+        schema_version = get_schema_version()
+        if version != get_schema_version():
+            raise MigrationMissingError(
+                f"Setting views requires schema version "
+                f"{schema_version}. Current version: {version}."
+            )
+
+        with self.db.get_engine().begin() as connection:
+            for (name, view) in views.ALL_VIEWS.items():
+                connection.execute(f"DROP VIEW IF EXISTS {name}")
+                connection.execute(
+                    f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
+                )
+                connection.execute(f"CREATE VIEW {name} AS {view['definition']}")
+                connection.execute(
+                    f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')"
+                )
+            for name in views.VIEWS_TO_DELETE:
+                connection.execute(f"DROP VIEW IF EXISTS {name}")
+                connection.execute(
+                    f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
+                )
