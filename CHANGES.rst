@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.25.5 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Added a ModelSchema().set_views method to (re)create views in the spatialite.
 
 
 0.25.4 (2022-03-10)
