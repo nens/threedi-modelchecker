@@ -7,6 +7,7 @@ from threedi_modelchecker import errors
 from threedi_modelchecker.schema import constants
 from threedi_modelchecker.schema import get_schema_version
 from threedi_modelchecker.schema import ModelSchema
+from threedi_modelchecker.threedi_model.views import ALL_VIEWS
 from unittest import mock
 
 import pytest
@@ -180,6 +181,7 @@ def test_set_views(oldest_sqlite):
 
     schema.set_views()
 
-    # without calling set_views, v2_pipe_view would error
+    # Test all views
     with oldest_sqlite.session_scope() as session:
-        session.execute("SELECT * FROM v2_pipe_view LIMIT 1").fetchall()
+        for view_name in ALL_VIEWS:
+            session.execute(f"SELECT * FROM {view_name} LIMIT 1").fetchall()
