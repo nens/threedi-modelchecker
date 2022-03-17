@@ -1,4 +1,4 @@
-VIEWS_TO_DELETE = ["v2_crosssection_view", "v2_pipe_map_view"]
+VIEWS_TO_DELETE = ["v2_crosssection_view", "v2_pipe_map_view", "v2_imp_surface_view"]
 ALL_VIEWS = {
     "v2_1d_lateral_view": {
         "definition": "SELECT a.ROWID AS ROWID, a.id AS id, a.connection_node_id AS connection_node_id, a.timeseries AS timeseries, b.the_geom FROM v2_1d_lateral a JOIN v2_connection_nodes b ON a.connection_node_id = b.id",
@@ -34,13 +34,6 @@ ALL_VIEWS = {
         "view_rowid": "ROWID",
         "f_table_name": "v2_culvert",
         "f_geometry_column": "the_geom",
-    },
-    "v2_imp_surface_view": {
-        "definition": "SELECT isurf.ROWID AS ROWID, isurfmap.id AS isurfmap_id, isurfmap.impervious_surface_id AS isurfmap_impervious_surface_id, isurfmap.connection_node_id AS isurfmap_connection_node_id, isurfmap.percentage AS isurfmap_percentage, MakeLine( ST_Centroid(isurf.the_geom), connection_node.the_geom ) AS the_geom FROM v2_impervious_surface AS isurf , v2_connection_nodes AS connection_node , v2_impervious_surface_map AS isurfmap WHERE isurfmap.connection_node_id = connection_node.id AND isurfmap.impervious_surface_id = isurf.id",
-        "view_geometry": "the_geom",
-        "view_rowid": "ROWID",
-        "f_table_name": "v2_connection_nodes",
-        "f_geometry_column": "the_geom_linestring",
     },
     "v2_manhole_view": {
         "definition": "SELECT manh.ROWID AS ROWID, manh.id AS manh_id, manh.display_name AS manh_display_name, manh.code AS manh_code, manh.connection_node_id AS manh_connection_node_id, manh.shape AS manh_shape, manh.width AS manh_width, manh.length AS manh_length, manh.manhole_indicator AS manh_manhole_indicator, manh.calculation_type AS manh_calculation_type, manh.bottom_level AS manh_bottom_level, manh.surface_level AS manh_surface_level, manh.drain_level AS manh_drain_level, manh.sediment_level AS manh_sediment_level, manh.zoom_category AS manh_zoom_category, node.id AS node_id, node.storage_area AS node_storage_area, node.initial_waterlevel AS node_initial_waterlevel, node.code AS node_code, node.the_geom AS the_geom, node.the_geom_linestring AS node_the_geom_linestring FROM v2_manhole AS manh , v2_connection_nodes AS node WHERE manh.connection_node_id = node.id",
