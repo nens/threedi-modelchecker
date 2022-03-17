@@ -113,7 +113,7 @@ def test_validate_schema_too_high_migration(threedi_db, version):
 def test_full_upgrade_empty(in_memory_sqlite):
     """Upgrade an empty database to the latest version"""
     schema = ModelSchema(in_memory_sqlite)
-    schema.upgrade(backup=False)
+    schema.upgrade(backup=False, set_views=False)
     assert schema.get_version() == get_schema_version()
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
 
@@ -121,7 +121,7 @@ def test_full_upgrade_empty(in_memory_sqlite):
 def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
     """Upgrade an empty database to the latest version"""
     schema = ModelSchema(south_latest_sqlite)
-    schema.upgrade(backup=False)
+    schema.upgrade(backup=False, set_views=False)
     assert schema.get_version() == get_schema_version()
     assert south_latest_sqlite.get_engine().has_table("v2_connection_nodes")
 
@@ -129,7 +129,7 @@ def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
 def test_full_upgrade_oldest(oldest_sqlite):
     """Upgrade a legacy database to the latest version"""
     schema = ModelSchema(oldest_sqlite)
-    schema.upgrade(backup=False)
+    schema.upgrade(backup=False, set_views=False)
     assert schema.get_version() == get_schema_version()
     assert oldest_sqlite.get_engine().has_table("v2_connection_nodes")
 
@@ -141,7 +141,7 @@ def test_upgrade_south_not_latest_errors(in_memory_sqlite):
         schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID - 1
     ):
         with pytest.raises(errors.MigrationMissingError):
-            schema.upgrade(backup=False)
+            schema.upgrade(backup=False, set_views=False)
 
 
 def test_upgrade_with_backup(threedi_db):
@@ -153,7 +153,7 @@ def test_upgrade_with_backup(threedi_db):
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
     ) as upgrade, mock.patch.object(schema, "get_version", return_value=199):
         with pytest.raises(RuntimeError):
-            schema.upgrade(backup=True)
+            schema.upgrade(backup=True, set_views=False)
 
     (db,), kwargs = upgrade.call_args
     assert db is not threedi_db
@@ -166,7 +166,7 @@ def test_upgrade_without_backup(threedi_db):
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
     ) as upgrade, mock.patch.object(schema, "get_version", return_value=199):
         with pytest.raises(RuntimeError):
-            schema.upgrade(backup=False)
+            schema.upgrade(backup=False, set_views=False)
 
     (db,), kwargs = upgrade.call_args
     assert db is threedi_db
@@ -176,10 +176,8 @@ def test_set_views(oldest_sqlite):
     """Make sure that the views are regenerated
     """
     schema = ModelSchema(oldest_sqlite)
-    schema.upgrade(backup=False)
+    schema.upgrade(backup=False, set_views=True)
     assert schema.get_version() == get_schema_version()
-
-    schema.set_views()
 
     # Test all views
     with oldest_sqlite.session_scope() as session:

@@ -89,7 +89,7 @@ class ModelSchema:
         else:
             return self._get_version_old()
 
-    def upgrade(self, revision="head", backup=True):
+    def upgrade(self, revision="head", backup=True, set_views=True):
         """Upgrade the database to the latest version.
 
         This requires either a completely empty database or a database with its
@@ -101,6 +101,10 @@ class ModelSchema:
         database file does not become corrupt, enable the "backup" parameter.
         If the database is temporary already (or if it is PostGIS), disable
         it.
+
+        Specify 'set_views=True' to also (re)create views after the upgrade.
+        This is not compatible when upgrading to a different version than the
+        latest version.
         """
         v = self.get_version()
         if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
@@ -109,11 +113,16 @@ class ModelSchema:
                 f"{constants.LATEST_SOUTH_MIGRATION_ID}. Please consult the "
                 f"3Di documentation on how to update legacy databases."
             )
+        if set_views and revision not in ("head", get_schema_version()):
+            raise ValueError(f"Cannot set views when upgrading to version '{revision}'")
         if backup:
             with self.db.file_transaction() as work_db:
                 _upgrade_database(work_db, revision=revision)
         else:
             _upgrade_database(self.db, revision=revision)
+
+        if set_views:
+            self.set_views()
 
     def validate_schema(self):
         """Very basic validation of 3Di schema.
