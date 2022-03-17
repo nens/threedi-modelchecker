@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.25.5 (unreleased)
+0.26.0 (2022-03-17)
 -------------------
 
 - Automatically (re)create views in the spatialite after performing a schema upgrade.
