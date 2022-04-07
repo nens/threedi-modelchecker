@@ -68,7 +68,7 @@ time_step_settings_map = {
     ],
     "max_time_step": [
         FieldInfoIni("maximum_timestep", float, "simulation"),
-        FieldInfoAPI("max_time_step", float, 1.0),
+        FieldInfoAPI("max_time_step", float, None),
         FieldInfoSqlite(
             "maximum_sim_time_step", float, SettingsTables.global_settings.value
         ),
