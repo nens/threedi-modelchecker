@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.26.1 (unreleased)
+0.26.1 (2022-04-11)
 -------------------
 
 - The simulation template worker does not add default for maximum_time_step anymore.
