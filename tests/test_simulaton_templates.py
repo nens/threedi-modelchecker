@@ -574,7 +574,7 @@ def test_simulation_settings(session):
         ),
         timestep=TimeStepSettings(
             **{
-                "max_time_step": 1.0,
+                "max_time_step": None,
                 "min_time_step": 0.01,
                 "output_time_step": 1.0,
                 "time_step": 30.0,
