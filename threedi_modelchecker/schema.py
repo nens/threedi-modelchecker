@@ -174,7 +174,7 @@ class ModelSchema:
                 )
                 connection.execute(f"CREATE VIEW {name} AS {view['definition']}")
                 connection.execute(
-                    f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')"
+                    f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column,read_only) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}', 0)"
                 )
             for name in views.VIEWS_TO_DELETE:
                 connection.execute(f"DROP VIEW IF EXISTS {name}")
