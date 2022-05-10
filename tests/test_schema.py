@@ -8,6 +8,7 @@ from threedi_modelchecker.schema import constants
 from threedi_modelchecker.schema import get_schema_version
 from threedi_modelchecker.schema import ModelSchema
 from threedi_modelchecker.threedi_model.views import ALL_VIEWS
+from threedi_modelchecker.spatialite_versions import get_spatialite_version
 from unittest import mock
 
 import pytest
@@ -113,7 +114,7 @@ def test_validate_schema_too_high_migration(threedi_db, version):
 def test_full_upgrade_empty(in_memory_sqlite):
     """Upgrade an empty database to the latest version"""
     schema = ModelSchema(in_memory_sqlite)
-    schema.upgrade(backup=False, set_views=False)
+    schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
     assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
 
@@ -121,7 +122,7 @@ def test_full_upgrade_empty(in_memory_sqlite):
 def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
     """Upgrade an empty database to the latest version"""
     schema = ModelSchema(south_latest_sqlite)
-    schema.upgrade(backup=False, set_views=False)
+    schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
     assert south_latest_sqlite.get_engine().has_table("v2_connection_nodes")
 
@@ -129,7 +130,7 @@ def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
 def test_full_upgrade_oldest(oldest_sqlite):
     """Upgrade a legacy database to the latest version"""
     schema = ModelSchema(oldest_sqlite)
-    schema.upgrade(backup=False, set_views=False)
+    schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
     assert oldest_sqlite.get_engine().has_table("v2_connection_nodes")
 
@@ -141,7 +142,7 @@ def test_upgrade_south_not_latest_errors(in_memory_sqlite):
         schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID - 1
     ):
         with pytest.raises(errors.MigrationMissingError):
-            schema.upgrade(backup=False, set_views=False)
+            schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
 
 
 def test_upgrade_with_backup(threedi_db):
@@ -153,7 +154,7 @@ def test_upgrade_with_backup(threedi_db):
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
     ) as upgrade, mock.patch.object(schema, "get_version", return_value=199):
         with pytest.raises(RuntimeError):
-            schema.upgrade(backup=True, set_views=False)
+            schema.upgrade(backup=True, set_views=False, upgrade_spatialite_version=False)
 
     (db,), kwargs = upgrade.call_args
     assert db is not threedi_db
@@ -166,7 +167,7 @@ def test_upgrade_without_backup(threedi_db):
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
     ) as upgrade, mock.patch.object(schema, "get_version", return_value=199):
         with pytest.raises(RuntimeError):
-            schema.upgrade(backup=False, set_views=False)
+            schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
 
     (db,), kwargs = upgrade.call_args
     assert db is threedi_db
@@ -176,10 +177,21 @@ def test_set_views(oldest_sqlite):
     """Make sure that the views are regenerated
     """
     schema = ModelSchema(oldest_sqlite)
-    schema.upgrade(backup=False, set_views=True)
+    schema.upgrade(backup=False, set_views=True, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
 
     # Test all views
     with oldest_sqlite.session_scope() as session:
         for view_name in ALL_VIEWS:
             session.execute(f"SELECT * FROM {view_name} LIMIT 1").fetchall()
+
+def test_upgrade_spatialite_version(oldest_sqlite):
+    lib_version, file_version_before = get_spatialite_version(oldest_sqlite)
+    if lib_version == file_version_before:
+        pytest.skip("Nothing to test: spatialite library version equals file version")
+
+    schema = ModelSchema(oldest_sqlite)
+    schema.upgrade(backup=False, upgrade_spatialite_version=True)
+
+    _, file_version_after = get_spatialite_version(oldest_sqlite)
+    assert file_version_before == file_version_after

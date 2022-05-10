@@ -1,4 +1,5 @@
-FROM python:3.7
+FROM python:3.9-slim-bullseye
+# The bullseye image contains libspatialite 5
 
 RUN apt-get update \
     && apt-get install -y \

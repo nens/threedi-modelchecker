@@ -141,7 +141,7 @@ class ThreediDatabase:
             session.close()
 
     @contextmanager
-    def file_transaction(self, **kwargs):
+    def file_transaction(self, start_empty=False):
         """Copy the complete database into a tmpdir and work on that one.
 
         On contextmanager exit, the database is copied back and the real
@@ -153,7 +153,8 @@ class ThreediDatabase:
             )
         work_file = tempfile.NamedTemporaryFile(suffix=".sqlite")
         # copy the database to the temporary directory
-        shutil.copy(self.settings["db_path"], work_file.name)
+        if not start_empty:
+            shutil.copy(self.settings["db_path"], work_file.name)
         # yield a new ThreediDatabase refering to the backup
         try:
             yield self.__class__({"db_path": work_file.name}, "spatialite")

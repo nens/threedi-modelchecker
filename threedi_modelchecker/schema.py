@@ -10,7 +10,7 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
-
+from .spatialite_versions import get_spatialite_version, copy_models
 import warnings
 
 
@@ -89,7 +89,7 @@ class ModelSchema:
         else:
             return self._get_version_old()
 
-    def upgrade(self, revision="head", backup=True, set_views=True):
+    def upgrade(self, revision="head", backup=True, set_views=True, upgrade_spatialite_version=False):
         """Upgrade the database to the latest version.
 
         This requires either a completely empty database or a database with its
@@ -106,6 +106,8 @@ class ModelSchema:
         This is not compatible when upgrading to a different version than the
         latest version.
         """
+        if upgrade_spatialite_version and not set_views:
+            raise ValueError("Cannot upgrade the spatialite version without setting the views.")
         v = self.get_version()
         if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
             raise MigrationMissingError(
@@ -121,7 +123,9 @@ class ModelSchema:
         else:
             _upgrade_database(self.db, revision=revision)
 
-        if set_views:
+        if upgrade_spatialite_version:
+            self.upgrade_spatialite_version()
+        elif set_views:
             self.set_views()
 
     def validate_schema(self):
@@ -160,6 +164,8 @@ class ModelSchema:
         """(Re)create views in the spatialite according to the latest definitions."""
         version = self.get_version()
         schema_version = get_schema_version()
+        _, file_version = get_spatialite_version(self.db)
+
         if version != get_schema_version():
             raise MigrationMissingError(
                 f"Setting views requires schema version "
@@ -173,11 +179,28 @@ class ModelSchema:
                     f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
                 )
                 connection.execute(f"CREATE VIEW {name} AS {view['definition']}")
-                connection.execute(
-                    f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column,read_only) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}', 0)"
-                )
+                if file_version == 3:
+                    connection.execute(
+                        f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')"
+                    )
+                else:
+                    connection.execute(
+                        f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column,read_only) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}', 0)"
+                    )
             for name in views.VIEWS_TO_DELETE:
                 connection.execute(f"DROP VIEW IF EXISTS {name}")
                 connection.execute(
                     f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
                 )
+
+    def upgrade_spatialite_version(self):
+        lib_version, file_version = get_spatialite_version(self.db)
+        if lib_version <= file_version:
+            return
+
+        self.validate_schema()
+
+        with self.db.file_transaction(start_empty=True) as work_db:
+            work_schema = ModelSchema(work_db)
+            work_schema.upgrade(backup=False, set_views=True, upgrade_spatialite_version=False)
+            copy_models(self.db, work_db, self.declared_models)

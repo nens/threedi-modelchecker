@@ -1,9 +1,9 @@
-coverage
 factory_boy
-flake8
 pytest
-pytest-cov
-pytest-flake8
 mock
-mypy
-sqlalchemy-stubs
+pytest-cov
+threedi-api-client
+aiofiles
+aiohttp
+pytest-asyncio
+numpy

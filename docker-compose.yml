@@ -10,8 +10,6 @@ services:
     volumes:
       - .:/code
     working_dir: /code
-    depends_on:
-      - postgis
     command: bash
 
   postgis:
