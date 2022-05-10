@@ -14,7 +14,7 @@ def get_spatialite_version(db):
     if "srs_wkt" in spatial_ref_sys_cols:
         file_version = 3
     else:
-        raise NotImplementedError("TODO distinguish 4 from 5")
+        file_version = 4
 
     return int(lib_version.split(".")[0]), file_version
 

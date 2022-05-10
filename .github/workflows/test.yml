@@ -33,11 +33,6 @@ jobs:
           - python: 3.9
             pins: ""
             extras: "test,postgis,migrations"
-          # current - Spatialite 5.0.1
-          - python: 3.9
-            pins: ""
-            extras: "test,postgis,migrations"
-            spatialite: 5
           # current - no optional deps
           - python: 3.9
             pins: ""
@@ -59,7 +54,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      
+
       - name: Install psql, sqlite3 and spatialite
         run: |
           sudo apt-get install --yes --no-install-recommends postgresql-client sqlite3 libsqlite3-mod-spatialite

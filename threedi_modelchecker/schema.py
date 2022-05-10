@@ -3,6 +3,7 @@ from .threedi_model import constants
 from .threedi_model import models
 from .threedi_model import views
 from alembic.config import Config
+from alembic.command import stamp
 from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
@@ -10,6 +11,7 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
+from sqlalchemy import inspect
 from .spatialite_versions import get_spatialite_version, copy_models
 import warnings
 
@@ -36,7 +38,20 @@ def get_schema_version():
 
 def _upgrade_database(db, revision="head"):
     """Upgrade ThreediDatabase instance"""
-    with db.get_engine().begin() as connection:
+    engine = db.get_engine()
+
+    # Fast track the upgrade in case db is empty:
+    if revision in {"head", get_schema_version()}:
+        inspector = inspect(engine)
+        if len(inspector.get_table_names()) == 0:
+            models.Base.metadata.create_all(engine)
+
+            with engine.begin() as connection:
+                config = get_alembic_config(connection)
+                stamp(config, "{:04d}".format(get_schema_version()))
+            return
+
+    with engine.begin() as connection:
         config = get_alembic_config(connection)
         script = ScriptDirectory.from_config(config)
 
@@ -195,12 +210,10 @@ class ModelSchema:
 
     def upgrade_spatialite_version(self):
         lib_version, file_version = get_spatialite_version(self.db)
-        if lib_version <= file_version:
-            return
+        if file_version == 3 and lib_version in (4, 5):
+            self.validate_schema()
 
-        self.validate_schema()
-
-        with self.db.file_transaction(start_empty=True) as work_db:
-            work_schema = ModelSchema(work_db)
-            work_schema.upgrade(backup=False, set_views=True, upgrade_spatialite_version=False)
-            copy_models(self.db, work_db, self.declared_models)
+            with self.db.file_transaction(start_empty=True) as work_db:
+                work_schema = ModelSchema(work_db)
+                work_schema.upgrade(backup=False, set_views=True, upgrade_spatialite_version=False)
+                copy_models(self.db, work_db, self.declared_models)
