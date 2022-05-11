@@ -58,14 +58,6 @@ jobs:
       - name: Install psql, sqlite3 and spatialite
         run: |
           sudo apt-get install --yes --no-install-recommends postgresql-client sqlite3 libsqlite3-mod-spatialite
-      
-      - name: Upgrade libspatialite to version 5
-        run: |
-          sudo apt-get -y --no-install-recommends install software-properties-common
-          sudo add-apt-repository "deb http://httpredir.debian.org/debian sid main"
-          sudo apt-get update
-          sudo apt-get -t sid install -y --no-install-recommends libsqlite3-mod-spatialite
-        if: ${{ matrix.spatialite == 5 }}
   
       - name: Load test postgis database
         shell: bash
