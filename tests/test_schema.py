@@ -185,7 +185,7 @@ def test_set_views(oldest_sqlite):
         for view_name in ALL_VIEWS:
             session.execute(f"SELECT * FROM {view_name} LIMIT 1").fetchall()
 
-def test_upgrade_spatialite_version(oldest_sqlite):
+def test_upgrade_spatialite_3(oldest_sqlite):
     lib_version, file_version_before = get_spatialite_version(oldest_sqlite)
     if lib_version == file_version_before:
         pytest.skip("Nothing to test: spatialite library version equals file version")
@@ -194,4 +194,4 @@ def test_upgrade_spatialite_version(oldest_sqlite):
     schema.upgrade(backup=False, upgrade_spatialite_version=True)
 
     _, file_version_after = get_spatialite_version(oldest_sqlite)
-    assert file_version_before == file_version_after
+    assert file_version_after == lib_version
