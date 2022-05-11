@@ -31,13 +31,17 @@ def cast_if_geometry(column):
 
 
 def model_query(session, model):
-    """Query fields explicitly, so that we end up with an iterator of dicts"""
+    """Query fields explicitly, so that we end up with an iterator of row tuples"""
     return session.query(*[cast_if_geometry(c) for c in model.__table__.columns])
+
+
+def model_from_tuple(model, tpl):
+    return model(**{c.key: v for (c, v) in zip(model.__table__.columns, tpl)})
 
 
 def copy_model(from_db, to_db, model):
     with from_db.session_scope() as input_session:
-        objs = [model(**x) for x in model_query(input_session, model)]
+        objs = [model_from_tuple(model, x) for x in model_query(input_session, model)]
         if len(objs) == 0:
             return
     with to_db.session_scope() as work_session:
