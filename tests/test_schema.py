@@ -87,9 +87,7 @@ def test_get_version_alembic(in_memory_sqlite, alembic_version_table):
 def test_validate_schema(threedi_db):
     """Validate a correct schema version"""
     schema = ModelSchema(threedi_db)
-    with mock.patch.object(
-        schema, "get_version", return_value=get_schema_version()
-    ):
+    with mock.patch.object(schema, "get_version", return_value=get_schema_version()):
         assert schema.validate_schema()
 
 
@@ -142,7 +140,9 @@ def test_upgrade_south_not_latest_errors(in_memory_sqlite):
         schema, "get_version", return_value=constants.LATEST_SOUTH_MIGRATION_ID - 1
     ):
         with pytest.raises(errors.MigrationMissingError):
-            schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
+            schema.upgrade(
+                backup=False, set_views=False, upgrade_spatialite_version=False
+            )
 
 
 def test_upgrade_with_backup(threedi_db):
@@ -154,7 +154,9 @@ def test_upgrade_with_backup(threedi_db):
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
     ) as upgrade, mock.patch.object(schema, "get_version", return_value=199):
         with pytest.raises(RuntimeError):
-            schema.upgrade(backup=True, set_views=False, upgrade_spatialite_version=False)
+            schema.upgrade(
+                backup=True, set_views=False, upgrade_spatialite_version=False
+            )
 
     (db,), kwargs = upgrade.call_args
     assert db is not threedi_db
@@ -167,15 +169,16 @@ def test_upgrade_without_backup(threedi_db):
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError
     ) as upgrade, mock.patch.object(schema, "get_version", return_value=199):
         with pytest.raises(RuntimeError):
-            schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
+            schema.upgrade(
+                backup=False, set_views=False, upgrade_spatialite_version=False
+            )
 
     (db,), kwargs = upgrade.call_args
     assert db is threedi_db
 
 
 def test_set_views(oldest_sqlite):
-    """Make sure that the views are regenerated
-    """
+    """Make sure that the views are regenerated"""
     schema = ModelSchema(oldest_sqlite)
     schema.upgrade(backup=False, set_views=True, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
@@ -184,6 +187,7 @@ def test_set_views(oldest_sqlite):
     with oldest_sqlite.session_scope() as session:
         for view_name in ALL_VIEWS:
             session.execute(f"SELECT * FROM {view_name} LIMIT 1").fetchall()
+
 
 def test_upgrade_spatialite_3(oldest_sqlite):
     lib_version, file_version_before = get_spatialite_version(oldest_sqlite)
