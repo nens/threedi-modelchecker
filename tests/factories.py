@@ -26,6 +26,8 @@ class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     use_2d_rain = 1
     kmax = 4
     sim_time_step = 30
+    minimum_sim_time_step = 1
+    output_time_step = 300
     frict_coef = 0.03
     timestep_plus = False
     flooding_threshold = 0.01
@@ -33,6 +35,7 @@ class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     advection_1d = 1
     use_0d_inflow = 0
     control_group_id = 1
+    frict_type = constants.FrictionType.CHEZY
 
 
 class SimpleInfiltrationFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -78,6 +81,7 @@ class ManholeFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     code = Faker("name")
     display_name = Faker("name")
+    bottom_level = 0.0
     connection_node = factory.SubFactory(ConnectionNodeFactory)
 
 
@@ -105,6 +109,9 @@ class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
     friction_value = 2.0
     friction_type = constants.FrictionType.CHEZY
     sewerage = False
+    cross_section_definition_id = 1
+    connection_node_start_id = 1
+    connection_node_end_id = 1
 
 
 class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -112,7 +119,7 @@ class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.BoundaryConditions2D
         sqlalchemy_session = Session
 
-    boundary_type = constants.BoundaryType.WATERLEVEL
+    boundary_type = constants.BoundaryType.WATERLEVEL.value
     timeseries = "0,-0.5"
     display_name = Faker("name")
 
@@ -201,6 +208,7 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     timeseries = "0,-0.2"
     the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    type = constants.Later2dType.SURFACE
 
 
 class ImperviousSurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -227,6 +235,7 @@ class SurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     area = 0.0
+    surface_parameters_id = 1
 
 
 class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -235,6 +244,7 @@ class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = Session
 
     percentage = 100.0
+    surface_type = constants.SurfaceType.SURFACE
 
 
 class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):

@@ -13,12 +13,8 @@ try:
 except ImportError:
     psycopg2 = None
 
-cur_dir = os.path.dirname(__file__)
-data_dir = os.path.join(cur_dir, "data")
-# Sqlite
-emtpy_sqlite_file = "empty.sqlite"
-emtpy_sqlite_path = os.path.join(data_dir, emtpy_sqlite_file)
-sqlite_settings = {"db_path": emtpy_sqlite_path, "db_file": emtpy_sqlite_file}
+data_dir = os.path.join(os.path.dirname(__file__), "data")
+
 # postgres
 postgis_settings = {
     "host": "localhost",
@@ -29,25 +25,26 @@ postgis_settings = {
 }
 
 
+@pytest.fixture(scope="session")
+def postgres_db():
+    if psycopg2 is None:
+        pytest.skip("Skipping postgres test as psycopg2 is not available.")
+    return ThreediDatabase(postgis_settings, db_type="postgres", echo=False)
+
+
 @pytest.fixture(
-    scope="function",
-    params=[("spatialite", sqlite_settings), ("postgres", postgis_settings)],
-    ids=["spatialite", "postgis"],
+    scope="session",
+    params=["empty_sqlite_v3", "empty_sqlite_v4", "postgres_db"],
+    ids=["spatialite3", "spatialite4", "postgis"],
 )
 def threedi_db(request):
     """Fixture which yields a empty 3di database
-
-    Fixture is parameterized to yield two types of databases: a postgis and a
-    spatialite database.
 
     A global Session object is configured based on database type. This allows
     the factories to operate on the same session object. See:
     https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
     """
-    if request.param[0] == "postgres" and psycopg2 is None:
-        pytest.skip("Skipping postgres test as psycopg2 is not available.")
-
-    db = ThreediDatabase(request.param[1], db_type=request.param[0], echo=False)
+    db = request.getfixturevalue(request.param)
     engine = db.get_engine()
     Session.configure(bind=engine)
 
@@ -89,11 +86,19 @@ def in_memory_sqlite():
     return ThreediDatabase({"db_path": ""}, db_type="spatialite", echo=False)
 
 
-@pytest.fixture
-def empty_sqlite_v3(tmp_path):
+@pytest.fixture(scope="session")
+def empty_sqlite_v3(tmpdir_factory):
     """An empty spatialite v3 in the latest migration state"""
-    tmp_sqlite = tmp_path / "empty_v3.sqlite"
+    tmp_sqlite = tmpdir_factory.mktemp("sqlite") / "empty_v3.sqlite"
     shutil.copyfile(os.path.join(data_dir, "empty_v3.sqlite"), tmp_sqlite)
+    return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)
+
+
+@pytest.fixture(scope="session")
+def empty_sqlite_v4(tmpdir_factory):
+    """An empty spatialite v4 in the latest migration state"""
+    tmp_sqlite = tmpdir_factory.mktemp("sqlite") / "empty_v4.sqlite"
+    shutil.copyfile(os.path.join(data_dir, "empty_v4.sqlite"), tmp_sqlite)
     return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)
 
 
