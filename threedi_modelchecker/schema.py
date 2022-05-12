@@ -3,6 +3,7 @@ from .threedi_model import constants
 from .threedi_model import models
 from .threedi_model import views
 from alembic.config import Config
+from alembic import command as alembic_command
 from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
@@ -10,7 +11,8 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
-
+from sqlalchemy import inspect
+from .spatialite_versions import get_spatialite_version, copy_models
 import warnings
 
 
@@ -34,23 +36,43 @@ def get_schema_version():
         return int(env.get_head_revision())
 
 
+def _is_empty_database(db):
+    """Check if there are tables in the database"""
+    engine = db.get_engine()
+    inspector = inspect(engine)
+    return len(inspector.get_table_names()) == 0
+
+
+def _create_database(db):
+    """Create the 3Di model schema in an empty ThreediDatabase instance"""
+    engine = db.get_engine()
+
+    if engine.dialect.name == "sqlite":
+        with db.session_scope() as session:
+            # Speed up by journalling in memory; in case of a crash the database
+            # will likely go corrupt, however we have an empty database here so
+            # that is no problem.
+            session.execute("PRAGMA journal_mode = MEMORY")
+            session.execute("SELECT InitSpatialMetadata()")
+
+    models.Base.metadata.create_all(engine)
+
+    with engine.begin() as connection:
+        config = get_alembic_config(connection)
+        alembic_command.stamp(config, "head")
+
+
 def _upgrade_database(db, revision="head"):
     """Upgrade ThreediDatabase instance"""
-    with db.get_engine().begin() as connection:
+    engine = db.get_engine()
+
+    # Fast track the upgrade to the latest version if database is empty
+    if revision in {"head", get_schema_version()} and _is_empty_database(db):
+        return _create_database(db)
+
+    with engine.begin() as connection:
         config = get_alembic_config(connection)
-        script = ScriptDirectory.from_config(config)
-
-        def upgrade(rev, context):
-            return script._upgrade_revs(revision, rev)
-
-        with EnvironmentContext(
-            config,
-            script,
-            fn=upgrade,
-            destination_rev=revision,
-            version_table=constants.VERSION_TABLE_NAME,
-        ):
-            script.run_env()
+        alembic_command.upgrade(config, revision)
 
 
 class ModelSchema:
@@ -89,7 +111,13 @@ class ModelSchema:
         else:
             return self._get_version_old()
 
-    def upgrade(self, revision="head", backup=True, set_views=True):
+    def upgrade(
+        self,
+        revision="head",
+        backup=True,
+        set_views=True,
+        upgrade_spatialite_version=False,
+    ):
         """Upgrade the database to the latest version.
 
         This requires either a completely empty database or a database with its
@@ -105,7 +133,14 @@ class ModelSchema:
         Specify 'set_views=True' to also (re)create views after the upgrade.
         This is not compatible when upgrading to a different version than the
         latest version.
+
+        Specify 'upgrade_spatialite_version=True' to also upgrade the
+        spatialite file version after the upgrade.
         """
+        if upgrade_spatialite_version and not set_views:
+            raise ValueError(
+                "Cannot upgrade the spatialite version without setting the views."
+            )
         v = self.get_version()
         if v is not None and v < constants.LATEST_SOUTH_MIGRATION_ID:
             raise MigrationMissingError(
@@ -121,7 +156,9 @@ class ModelSchema:
         else:
             _upgrade_database(self.db, revision=revision)
 
-        if set_views:
+        if upgrade_spatialite_version:
+            self.upgrade_spatialite_version()
+        elif set_views:
             self.set_views()
 
     def validate_schema(self):
@@ -160,6 +197,8 @@ class ModelSchema:
         """(Re)create views in the spatialite according to the latest definitions."""
         version = self.get_version()
         schema_version = get_schema_version()
+        _, file_version = get_spatialite_version(self.db)
+
         if version != get_schema_version():
             raise MigrationMissingError(
                 f"Setting views requires schema version "
@@ -173,11 +212,28 @@ class ModelSchema:
                     f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
                 )
                 connection.execute(f"CREATE VIEW {name} AS {view['definition']}")
-                connection.execute(
-                    f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')"
-                )
+                if file_version == 3:
+                    connection.execute(
+                        f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')"
+                    )
+                else:
+                    connection.execute(
+                        f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column,read_only) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}', 0)"
+                    )
             for name in views.VIEWS_TO_DELETE:
                 connection.execute(f"DROP VIEW IF EXISTS {name}")
                 connection.execute(
                     f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
                 )
+
+    def upgrade_spatialite_version(self):
+        lib_version, file_version = get_spatialite_version(self.db)
+        if file_version == 3 and lib_version in (4, 5):
+            self.validate_schema()
+
+            with self.db.file_transaction(start_empty=True) as work_db:
+                work_schema = ModelSchema(work_db)
+                work_schema.upgrade(
+                    backup=False, set_views=True, upgrade_spatialite_version=False
+                )
+                copy_models(self.db, work_db, self.declared_models)
