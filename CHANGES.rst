@@ -8,6 +8,8 @@ Changelog of threedi-modelchecker
 - Added ModelSchema().upgrade_spatialite_version (and the same argument to .upgrade) to
   upgrade the spatialite version from 3 to 4/5.
 
+- Run unittests on spatialite 3 and 4.
+
 
 0.26.1 (2022-04-11)
 -------------------

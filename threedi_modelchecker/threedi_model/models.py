@@ -207,6 +207,11 @@ class SurfaceParameter(Base):
     infiltration_decay_constant = Column(Float, nullable=False)
     infiltration_recovery_constant = Column(Float, nullable=False)
 
+    surface = relationship(
+        "Surface",
+        back_populates="surface_parameters",
+    )
+
 
 class Surface(Base):
     __tablename__ = "v2_surface"
@@ -226,6 +231,9 @@ class Surface(Base):
             geometry_type="GEOMETRY", srid=4326, spatial_index=True, management=True
         ),
         nullable=True,
+    )
+    surface_parameters = relationship(
+        SurfaceParameter, foreign_keys=surface_parameters_id, back_populates="surface"
     )
 
 

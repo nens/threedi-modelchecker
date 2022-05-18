@@ -2,6 +2,8 @@ from geoalchemy2 import func as geo_func
 from threedi_modelchecker.spatialite_versions import get_spatialite_version, copy_model
 from threedi_modelchecker.threedi_model import models
 from threedi_modelchecker.errors import UpgradeFailedError
+from threedi_modelchecker.threedi_database import ThreediDatabase
+import shutil
 
 import pytest
 
@@ -11,17 +13,32 @@ def test_get_spatialite_version(empty_sqlite_v3):
     assert file_version == 3
 
 
-def test_copy_model(empty_sqlite_v3, empty_sqlite_v3_clone):
+def test_copy_model(empty_sqlite_v3):
+    # Create 2 copies because we change the files in-place
+    path = str(empty_sqlite_v3.settings["db_path"])
+
+    path_1 = path.replace(".sqlite", "_1.sqlite")
+    path_2 = path.replace(".sqlite", "_2.sqlite")
+
+    shutil.copyfile(path, path_1)
+    shutil.copyfile(path, path_2)
+
+    db_from = ThreediDatabase({"db_path": path_1}, db_type="spatialite", echo=False)
+    db_to = ThreediDatabase({"db_path": path_2}, db_type="spatialite", echo=False)
+
+    # Add a record to 'db_from'
     obj = models.ConnectionNode(
         id=3, code="test", the_geom="SRID=4326;POINT(-71.064544 42.287870)"
     )
-    with empty_sqlite_v3.session_scope() as session:
+    with db_from.session_scope() as session:
         session.add(obj)
         session.commit()
 
-    copy_model(empty_sqlite_v3, empty_sqlite_v3_clone, models.ConnectionNode)
+    # Copy it
+    copy_model(db_from, db_to, models.ConnectionNode)
 
-    with empty_sqlite_v3_clone.session_scope() as session:
+    # Check if it is present in 'db_to'
+    with db_to.session_scope() as session:
         records = list(
             session.query(
                 models.ConnectionNode.id,

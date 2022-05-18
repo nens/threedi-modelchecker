@@ -14,8 +14,6 @@ import pytest
 
 
 def test_connection_nodes_length(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.GlobalSettingsFactory(epsg_code=28992)
     factories.WeirFactory(
         connection_node_start=factories.ConnectionNodeFactory(
@@ -47,11 +45,9 @@ def test_connection_nodes_length(session):
 
 
 def test_connection_nodes_length_missing_start_node(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.GlobalSettingsFactory(epsg_code=28992)
     factories.WeirFactory(
-        connection_node_start=None,
+        connection_node_start_id=9999,
         connection_node_end=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
         ),
@@ -76,7 +72,7 @@ def test_connection_nodes_length_missing_end_node(session):
         connection_node_start=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
         ),
-        connection_node_end=None,
+        connection_node_end_id=9999,
     )
 
     check_length = ConnectionNodesLength(
@@ -168,23 +164,21 @@ def test_node_distance(session):
 @pytest.mark.parametrize(
     "channel_geom",
     [
-        "LINESTRING(155000 463000, 155000 463010)",
-        "LINESTRING(155001 463000, 155001 463010)",  # within tolerance
-        "LINESTRING(155000 463010, 155000 463000)",  # reversed
-        "LINESTRING(155001 463010, 155001 463000)",  # reversed, within tolerance
+        "LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
+        "LINESTRING(5.387218 52.155172, 5.387218 52.155262)",  # within tolerance
+        "LINESTRING(5.387204 52.155262, 5.387204 52.155172)",  # reversed
+        "LINESTRING(5.387218 52.155262, 5.387218 52.155172)",  # reversed, within tolerance
     ],
 )
 def test_channels_location_check(session, channel_geom):
-    if session.bind.name == "postgresql":
-        pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(155000 463000)"
+            the_geom="SRID=4326;POINT(5.387204 52.155172)"
         ),
         connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(155000 463010)"
+            the_geom="SRID=4326;POINT(5.387204 52.155262)"
         ),
-        the_geom=f"SRID=28992;{channel_geom}",
+        the_geom=f"SRID=4326;{channel_geom}",
     )
 
     errors = LinestringLocationCheck(
@@ -196,21 +190,19 @@ def test_channels_location_check(session, channel_geom):
 @pytest.mark.parametrize(
     "channel_geom",
     [
-        "LINESTRING(155000 463999, 155000 463010)",  # startpoint is wrong
-        "LINESTRING(155000 463000, 155000 463999)",  # endpoint is wrong
+        "LINESTRING(5.387204 52.164151, 5.387204 52.155262)",  # startpoint is wrong
+        "LINESTRING(5.387204 52.155172, 5.387204 52.164151)",  # endpoint is wrong
     ],
 )
 def test_channels_location_check_invalid(session, channel_geom):
-    if session.bind.name == "postgresql":
-        pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(155000 463000)"
+            the_geom="SRID=4326;POINT(5.387204 52.155172)"
         ),
         connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=28992;POINT(155000 463010)"
+            the_geom="SRID=4326;POINT(5.387204 52.155262)"
         ),
-        the_geom=f"SRID=28992;{channel_geom}",
+        the_geom=f"SRID=4326;{channel_geom}",
     )
 
     errors = LinestringLocationCheck(
@@ -220,16 +212,14 @@ def test_channels_location_check_invalid(session, channel_geom):
 
 
 def test_cross_section_location(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Postgres only accepts coords in epsg 4326")
     channel = factories.ChannelFactory(
-        the_geom="SRID=28992;LINESTRING(155000 463000, 155000 463010)",
+        the_geom="SRID=4326;LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
     )
     factories.CrossSectionLocationFactory(
-        channel=channel, the_geom="SRID=28992;POINT(155000 463002)"
+        channel=channel, the_geom="SRID=4326;POINT(5.387204 52.155200)"
     )
     factories.CrossSectionLocationFactory(
-        channel=channel, the_geom="SRID=28992;POINT(155001 463008)"
+        channel=channel, the_geom="SRID=4326;POINT(5.387218 52.155244)"
     )
     errors = CrossSectionLocationCheck(0.1).get_invalid(session)
     assert len(errors) == 1

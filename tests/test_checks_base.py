@@ -152,10 +152,9 @@ def test_null_check_with_null_value(session):
     assert invalid_rows[0].id == null_node.id
 
 
-def test_threedi_db_and_factories(threedi_db):
+def test_threedi_db_and_factories(session):
     """Test to ensure that the threedi_db and factories use the same
     session object."""
-    session = threedi_db.get_session()
     factories.ManholeFactory()
     q = session.query(models.Manhole)
     assert q.count() == 1
@@ -254,22 +253,6 @@ def test_geometry_check(session):
     assert len(invalid_rows) == 0
 
 
-def test_geometry_check_with_invalid_geoms(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Not sure how to insert invalid types in postgresql")
-
-    inser_invalid_geom_q = """
-    INSERT INTO v2_connection_nodes (id, code, the_geom)
-    VALUES (2, 'the_code', 'invalid_geom')
-    """
-    session.execute(inser_invalid_geom_q)
-    factories.ConnectionNodeFactory(the_geom="SRID=4326;POINT(-71.064544 42.28787)")
-
-    geometry_check = GeometryCheck(models.ConnectionNode.the_geom)
-    invalid_rows = geometry_check.get_invalid(session)
-    assert len(invalid_rows) == 1
-
-
 def test_geometry_type_check(session):
     factories.ConnectionNodeFactory.create_batch(
         2, the_geom="SRID=4326;POINT(-71.064544 42.28787)"
@@ -278,20 +261,6 @@ def test_geometry_type_check(session):
     geometry_type_check = GeometryTypeCheck(models.ConnectionNode.the_geom)
     invalid_rows = geometry_type_check.get_invalid(session)
     assert len(invalid_rows) == 0
-
-
-def test_geometry_type_check_invalid_geom_type(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Not sure how to insert invalid geometry types in postgresql")
-    factories.ConnectionNodeFactory(the_geom="SRID=4326;POINT(-71.064544 42.28787)")
-    invalid_geom_type = factories.ConnectionNodeFactory(
-        the_geom="SRID=4326;LINESTRING(71.0 42.2, 71.3 42.3)"
-    )
-
-    geometry_type_check = GeometryTypeCheck(models.ConnectionNode.the_geom)
-    invalid_rows = geometry_type_check.get_invalid(session)
-    assert len(invalid_rows) == 1
-    assert invalid_rows[0].id == invalid_geom_type.id
 
 
 def test_enum_check(session):
@@ -303,9 +272,9 @@ def test_enum_check(session):
 
 
 def test_enum_check_with_null_values(session):
-    factories.BoundaryConditions2DFactory(boundary_type=None)
+    factories.CulvertFactory(calculation_type=None)
 
-    enum_check = EnumCheck(models.BoundaryConditions2D.boundary_type)
+    enum_check = EnumCheck(models.Culvert.calculation_type)
     invalid_rows = enum_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
