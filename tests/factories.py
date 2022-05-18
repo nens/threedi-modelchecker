@@ -238,7 +238,7 @@ class ImperviousSurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
 class SurfaceParameterFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.SurfaceParameter
-        sqlalchemy_session = Session
+        sqlalchemy_session = None
 
     outflow_delay = 10.0
     surface_layer_thickness = 5.0

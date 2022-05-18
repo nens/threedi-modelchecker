@@ -17,7 +17,7 @@ data_dir = os.path.join(os.path.dirname(__file__), "data")
 
 # postgres
 postgis_settings = {
-    "host": "postgis",
+    "host": os.environ.get("TEST_DB_HOST") or "localhost",
     "port": 5432,
     "database": "postgis",
     "username": "postgis",
