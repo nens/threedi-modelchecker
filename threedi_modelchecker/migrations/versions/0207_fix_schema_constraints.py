@@ -6,7 +6,7 @@ Create Date: 2022-05-18 10:15:20.851968
 
 """
 from alembic import op
-
+import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '0207'
@@ -26,23 +26,40 @@ UPDATE v2_weir SET sewerage = NULL WHERE sewerage NOT IN (0, 1);
 
 UPDATE v2_weir SET external = NULL WHERE external NOT IN (0, 1);
 
+DROP TRIGGER IF EXISTS ggi_v2_connection_nodes_the_geom;
+DROP TRIGGER IF EXISTS ggu_v2_connection_nodes_the_geom;
+DROP TRIGGER IF EXISTS ggi_v2_connection_nodes_the_geom_linestring;
+DROP TRIGGER IF EXISTS ggu_v2_connection_nodes_the_geom_linestring;
 UPDATE v2_connection_nodes SET the_geom_linestring = NULL;
 """
 
 
 def upgrade():
+    # First alter the tables to nullable TEXT, because we need to be able to
+    # accept any value
     with op.batch_alter_table("v2_orifice") as batch_op:
-        batch_op.alter_column("sewerage", nullable=True)
+        batch_op.alter_column("sewerage", nullable=True, type_=sa.TEXT)
 
     with op.batch_alter_table("v2_pumpstation") as batch_op:
-        batch_op.alter_column("sewerage", nullable=True)
+        batch_op.alter_column("sewerage", nullable=True, type_=sa.TEXT)
 
     with op.batch_alter_table("v2_weir") as batch_op:
-        batch_op.alter_column("sewerage", nullable=True)
-        batch_op.alter_column("external", nullable=True)
+        batch_op.alter_column("sewerage", nullable=True, type_=sa.TEXT)
+        batch_op.alter_column("external", nullable=True, type_=sa.TEXT)
 
     for q in MIGRATION_QUERIES.split(";"):
         op.execute(q)
+
+    # After the data migration; alter the tables to nullable BOOLEAN
+    with op.batch_alter_table("v2_orifice") as batch_op:
+        batch_op.alter_column("sewerage", nullable=True, type_=sa.BOOLEAN)
+
+    with op.batch_alter_table("v2_pumpstation") as batch_op:
+        batch_op.alter_column("sewerage", nullable=True, type_=sa.BOOLEAN)
+
+    with op.batch_alter_table("v2_weir") as batch_op:
+        batch_op.alter_column("sewerage", nullable=True, type_=sa.BOOLEAN)
+        batch_op.alter_column("external", nullable=True, type_=sa.BOOLEAN)
 
 
 def downgrade():
