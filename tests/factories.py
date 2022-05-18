@@ -233,6 +233,7 @@ class SurfaceParameterFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.SurfaceParameter
         sqlalchemy_session = Session
+
     outflow_delay = 10.0
     surface_layer_thickness = 5.0
     infiltration = True

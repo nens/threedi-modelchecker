@@ -233,7 +233,8 @@ class Surface(Base):
         nullable=True,
     )
     surface_parameters = relationship(
-        SurfaceParameter, foreign_keys=surface_parameters_id, back_populates="surface")
+        SurfaceParameter, foreign_keys=surface_parameters_id, back_populates="surface"
+    )
 
 
 class GroundWater(Base):
