@@ -61,7 +61,7 @@ def session(threedi_db):
 
     factories.inject_session(s)
     s.model_checker_context = Context()
-    
+
     yield s
     # Rollback the session => no changes to the database
     s.rollback()
