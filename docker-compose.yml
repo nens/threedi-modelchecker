@@ -11,6 +11,8 @@ services:
       - .:/code
     working_dir: /code
     command: bash
+    environment:
+      TEST_DB_HOST: "postgis"
 
   postgis:
     image: mdillon/postgis
