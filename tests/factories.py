@@ -235,13 +235,27 @@ class ImperviousSurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
     percentage = 100.0
 
 
+class SurfaceParameterFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SurfaceParameter
+        sqlalchemy_session = Session
+
+    outflow_delay = 10.0
+    surface_layer_thickness = 5.0
+    infiltration = True
+    max_infiltration_capacity = 10.0
+    min_infiltration_capacity = 5.0
+    infiltration_decay_constant = 3.0
+    infiltration_recovery_constant = 2.0
+
+
 class SurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Surface
         sqlalchemy_session = None
 
     area = 0.0
-    surface_parameters_id = 1
+    surface_parameters = factory.SubFactory(SurfaceParameterFactory)
 
 
 class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):

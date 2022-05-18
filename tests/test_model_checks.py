@@ -14,7 +14,10 @@ def model_checker(threedi_db):
 def test_set_base_path(model_checker):
     if model_checker.db.db_type == "postgres":
         pytest.skip("postgres does not have a base_path in its context")
-    assert model_checker.context.base_path == Path(model_checker.db.settings["db_path"]).parent
+    assert (
+        model_checker.context.base_path
+        == Path(model_checker.db.settings["db_path"]).parent
+    )
 
 
 @pytest.mark.filterwarnings("error::")
