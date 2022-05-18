@@ -1,7 +1,7 @@
-from tests import Session
 from threedi_modelchecker.model_checks import Context
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_database import ThreediDatabase
+from . import factories
 
 import os
 import pytest
@@ -17,7 +17,7 @@ data_dir = os.path.join(os.path.dirname(__file__), "data")
 
 # postgres
 postgis_settings = {
-    "host": "localhost",
+    "host": "postgis",
     "port": 5432,
     "database": "postgis",
     "username": "postgis",
@@ -44,15 +44,7 @@ def threedi_db(request):
     the factories to operate on the same session object. See:
     https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
     """
-    db = request.getfixturevalue(request.param)
-    engine = db.get_engine()
-    Session.configure(bind=engine)
-
-    # monkey-patch get_session
-    db.get_session = lambda: Session()
-
-    yield db
-    Session.remove()
+    return request.getfixturevalue(request.param)
 
 
 @pytest.fixture
@@ -65,13 +57,15 @@ def session(threedi_db):
 
     :return: sqlalchemy.orm.session.Session
     """
-    s = Session()
+    s = threedi_db.get_session()
+
+    factories.inject_session(s)
     s.model_checker_context = Context()
+    
     yield s
     # Rollback the session => no changes to the database
     s.rollback()
-    # Remove it, so that the next test gets a new Session()
-    Session.remove()
+    factories.inject_session(None)
 
 
 @pytest.fixture
