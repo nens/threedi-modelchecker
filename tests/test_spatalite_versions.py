@@ -2,10 +2,10 @@ from geoalchemy2 import func as geo_func
 from threedi_modelchecker.spatialite_versions import get_spatialite_version, copy_model
 from threedi_modelchecker.threedi_model import models
 from threedi_modelchecker.errors import UpgradeFailedError
-from threedi_modelchecker.threedi_database import ThreediDatabase
-import shutil
+
 
 import pytest
+
 
 def test_get_spatialite_version(empty_sqlite_v3):
     lib_version, file_version = get_spatialite_version(empty_sqlite_v3)
@@ -13,18 +13,9 @@ def test_get_spatialite_version(empty_sqlite_v3):
     assert file_version == 3
 
 
-def test_copy_model(empty_sqlite_v3):
-    # Create 2 copies because we change the files in-place
-    path = str(empty_sqlite_v3.settings["db_path"])
-
-    path_1 = path.replace(".sqlite", "_1.sqlite")
-    path_2 = path.replace(".sqlite", "_2.sqlite")
-
-    shutil.copyfile(path, path_1)
-    shutil.copyfile(path, path_2)
-
-    db_from = ThreediDatabase({"db_path": path_1}, db_type="spatialite", echo=False)
-    db_to = ThreediDatabase({"db_path": path_2}, db_type="spatialite", echo=False)
+def test_copy_model(empty_sqlite_v3, empty_sqlite_v4):
+    db_from = empty_sqlite_v3
+    db_to = empty_sqlite_v4
 
     # Add a record to 'db_from'
     obj = models.ConnectionNode(
@@ -51,19 +42,25 @@ def test_copy_model(empty_sqlite_v3):
         assert records == [(3, "test", "POINT(-71.064544 42.28787)", None)]
 
 
-def test_copy_invalid_geometry(empty_sqlite_v3, empty_sqlite_v3_clone):
-    """Copying an invalid geometry (ST_IsValid evaluates to False) is possible
-    """
+def test_copy_invalid_geometry(empty_sqlite_v3, empty_sqlite_v4):
+    """Copying an invalid geometry (ST_IsValid evaluates to False) is possible"""
+    db_from = empty_sqlite_v3
+    db_to = empty_sqlite_v4
+
     obj = models.Surface(
-        id=3, code="test", display_name="test", the_geom="SRID=4326;POLYGON((0 0, 10 10, 0 10, 10 0, 0 0))"
+        id=3,
+        code="test",
+        display_name="test",
+        the_geom="SRID=4326;POLYGON((0 0, 10 10, 0 10, 10 0, 0 0))",
+        surface_parameters_id=1,
     )
-    with empty_sqlite_v3.session_scope() as session:
+    with db_from.session_scope() as session:
         session.add(obj)
         session.commit()
 
-    copy_model(empty_sqlite_v3, empty_sqlite_v3_clone, models.Surface)
+    copy_model(db_from, db_to, models.Surface)
 
-    with empty_sqlite_v3_clone.session_scope() as session:
+    with db_to.session_scope() as session:
         records = list(
             session.query(
                 models.Surface.id,
@@ -74,17 +71,15 @@ def test_copy_invalid_geometry(empty_sqlite_v3, empty_sqlite_v3_clone):
         assert records == [(3, "POLYGON((0 0, 10 10, 0 10, 10 0, 0 0))")]
 
 
+def test_copy_violates_null_constraint(empty_sqlite_v3, empty_sqlite_v4):
+    """Copying an invalid geometry (ST_IsValid evaluates to False) is possible"""
+    db_from = empty_sqlite_v3
+    db_to = empty_sqlite_v4
 
-def test_copy_violates_null_constraint(empty_sqlite_v3, empty_sqlite_v3_clone):
-    """Copying an invalid geometry (ST_IsValid evaluates to False) is possible
-    """
-    obj = models.Manhole(
-        id=3, code="test", display_name="test"
-    )
-    with empty_sqlite_v3.session_scope() as session:
-        session.execute()
+    obj = models.Manhole(id=3, code="test", display_name="test", connection_node_id=1)
+    with db_from.session_scope() as session:
         session.add(obj)
         session.commit()
 
-    with pytest.raises(UpgradeFailedError):
-        copy_model(empty_sqlite_v3, empty_sqlite_v3_clone, models.Manhole)
+    with pytest.raises(UpgradeFailedError, match="NOT NULL constraint failed: v2_manhole.bottom_level"):
+        copy_model(db_from, db_to, models.Manhole)

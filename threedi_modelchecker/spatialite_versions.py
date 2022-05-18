@@ -2,6 +2,8 @@ from sqlalchemy import inspect
 from geoalchemy2 import func as geo_func
 from geoalchemy2.types import Geometry
 from .threedi_model import models
+from sqlalchemy.exc import IntegrityError
+from threedi_modelchecker.errors import UpgradeFailedError
 
 
 def get_spatialite_version(db):
@@ -45,8 +47,13 @@ def copy_model(from_db, to_db, model):
         if len(objs) == 0:
             return
     with to_db.session_scope() as work_session:
-        work_session.bulk_save_objects(objs)
-        work_session.commit()
+        try:
+            work_session.bulk_save_objects(objs)
+        except IntegrityError as e:
+            work_session.rollback()
+            raise UpgradeFailedError(e.orig.args[0])
+        else:
+            work_session.commit()
 
 
 def copy_models(from_db, to_db, models=models.DECLARED_MODELS):

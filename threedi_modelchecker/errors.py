@@ -6,5 +6,3 @@ class MigrationMissingError(Exception):
 
 class UpgradeFailedError(Exception):
     """Raised when an upgrade() fails"""
-
-    pass
