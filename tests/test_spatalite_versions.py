@@ -19,8 +19,6 @@ def test_copy_model(empty_sqlite_v3, empty_sqlite_v3_clone):
 
     copy_model(empty_sqlite_v3, empty_sqlite_v3_clone, models.ConnectionNode)
 
-    assert models.ConnectionNode.__table__.columns
-
     with empty_sqlite_v3_clone.session_scope() as session:
         records = list(
             session.query(
@@ -32,3 +30,24 @@ def test_copy_model(empty_sqlite_v3, empty_sqlite_v3_clone):
         )
 
         assert records == [(3, "test", "POINT(-71.064544 42.28787)", None)]
+
+
+def test_insert_invalid_geometry(empty_sqlite_v3, empty_sqlite_v3_clone):
+    obj = models.Surface(
+        id=3, code="test", display_name="test", the_geom="SRID=4326;POLYGON((0 0, 10 10, 0 10, 10 0, 0 0))"
+    )
+    with empty_sqlite_v3.session_scope() as session:
+        session.add(obj)
+        session.commit()
+
+    copy_model(empty_sqlite_v3, empty_sqlite_v3_clone, models.Surface)
+
+    with empty_sqlite_v3_clone.session_scope() as session:
+        records = list(
+            session.query(
+                models.Surface.id,
+                geo_func.ST_AsText(models.Surface.the_geom),
+            )
+        )
+
+        assert records == [(3, "POLYGON((0 0, 10 10, 0 10, 10 0, 0 0))")]

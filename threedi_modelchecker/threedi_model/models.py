@@ -735,7 +735,7 @@ class Orifice(Base):
     friction_type = Column(IntegerEnum(constants.FrictionType))
     discharge_coefficient_positive = Column(Float)
     discharge_coefficient_negative = Column(Float)
-    sewerage = Column(Boolean, nullable=False)
+    sewerage = Column(Boolean)
 
     connection_node_start_id = Column(
         Integer, ForeignKey(ConnectionNode.__tablename__ + ".id"), nullable=False
