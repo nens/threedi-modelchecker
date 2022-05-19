@@ -523,6 +523,14 @@ CHECKS += [
     LinestringLocationCheck(error_code=205, column=table.the_geom, max_distance=1)
     for table in [models.Channel, models.Culvert]
 ]
+CHECKS += [
+    QueryCheck(
+        error_code=206,
+        column=models.ConnectionNode.the_geom_linestring,
+        invalid=Query(models.ConnectionNode).filter(models.ConnectionNode.the_geom_linestring != None),
+        message="The 'the_geom_linestring' column of v2_connection_nodes must be NULL",
+    )
+]
 
 
 ## 025x: Connectivity
@@ -1486,27 +1494,15 @@ class Config:
             self.checks += generate_unique_checks(model.__table__, error_code=2)
             self.checks += generate_not_null_checks(
                 model.__table__,
-                error_code=3,
-                custom_level_map={
-                    "v2_grid_refinement.refinement_level": "warning",
-                    "v2_grid_refinement.the_geom": "warning",
-                    "v2_grid_refinement_area.refinement_level": "warning",
-                    "v2_grid_refinement_area.the_geom": "warning",
-                },
+                error_code=3
             )
             self.checks += generate_type_checks(
                 model.__table__,
-                error_code=4,
-                custom_level_map={
-                    "*.sewerage": "INFO",
-                    "v2_weir.external": "INFO",
-                    "v2_connection_nodes.the_geom_linestring": "info",
-                },
+                error_code=4
             )
             self.checks += generate_geometry_checks(
                 model.__table__,
                 custom_level_map={
-                    "v2_connection_nodes.the_geom_linestring": "info",
                     "v2_grid_refinement.the_geom": "warning",
                     "v2_grid_refinement_area.the_geom": "warning",
                     "v2_dem_average_area.the_geom": "warning",
@@ -1517,9 +1513,6 @@ class Config:
             )
             self.checks += generate_geometry_type_checks(
                 model.__table__,
-                custom_level_map={
-                    "v2_connection_nodes.the_geom_linestring": "info",
-                },
                 error_code=6,
             )
             self.checks += generate_enum_checks(

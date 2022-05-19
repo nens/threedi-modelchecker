@@ -227,6 +227,14 @@ class ModelSchema:
                 )
 
     def upgrade_spatialite_version(self):
+        """Upgrade the version of the spatialite file to the version of the
+        current spatialite library.
+
+        Does nothing if the current file version > 3 or if the current library
+        version is not 4 or 5.
+
+        Raises UpgradeFailedError if there are any SQL constraints violated.
+        """
         lib_version, file_version = get_spatialite_version(self.db)
         if file_version == 3 and lib_version in (4, 5):
             self.validate_schema()
