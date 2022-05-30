@@ -102,7 +102,7 @@ def upgrade_164():
     """
     create_table_if_not_exists(
         "v2_grid_refinement_area",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("refinement_level", sa.Integer(), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
@@ -126,7 +126,7 @@ def upgrade_165():
     """
     create_table_if_not_exists(
         "v2_groundwater",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("groundwater_impervious_layer_level", sa.Float(), nullable=True),
         sa.Column(
             "groundwater_impervious_layer_level_file",
@@ -169,7 +169,7 @@ def upgrade_165():
 
     create_table_if_not_exists(
         "v2_simple_infiltration",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("infiltration_rate", sa.Float(), nullable=True),
         sa.Column("infiltration_rate_file", sa.String(length=255), nullable=True),
         sa.Column("infiltration_surface_option", sa.Integer(), nullable=True),
@@ -180,7 +180,7 @@ def upgrade_165():
 
     create_table_if_not_exists(
         "v2_interflow",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("interflow_type", sa.Integer(), nullable=True),
         sa.Column("porosity", sa.Float(), nullable=True),
         sa.Column("porosity_file", sa.String(length=255), nullable=True),
@@ -378,7 +378,7 @@ def upgrade():
 
     create_table_if_not_exists(
         "v2_2d_boundary_conditions",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("timeseries", sa.Text(), nullable=True),
         sa.Column("boundary_type", sa.Integer(), nullable=True),
@@ -395,7 +395,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_2d_lateral",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("type", sa.Integer(), nullable=True),
         sa.Column(
             "the_geom",
@@ -411,7 +411,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_calculation_point",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("content_type_id", sa.Integer(), nullable=True),
         sa.Column("user_ref", sa.String(length=80), nullable=True),
         sa.Column("calc_type", sa.Integer(), nullable=True),
@@ -428,7 +428,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_connection_nodes",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("storage_area", sa.Float(), nullable=True),
         sa.Column("initial_waterlevel", sa.Float(), nullable=True),
         sa.Column(
@@ -454,7 +454,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_control_delta",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("measure_variable", sa.String(length=50), nullable=True),
         sa.Column("measure_delta", sa.String(length=50), nullable=True),
         sa.Column("measure_dt", sa.Float(), nullable=True),
@@ -467,19 +467,19 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_control_group",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=100), nullable=True),
         sa.Column("description", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
         "v2_control_measure_group",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
         "v2_control_memory",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("measure_variable", sa.String(length=50), nullable=True),
         sa.Column("upper_threshold", sa.Float(), nullable=True),
         sa.Column("lower_threshold", sa.Float(), nullable=True),
@@ -493,7 +493,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_control_pid",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("measure_variable", sa.String(length=50), nullable=True),
         sa.Column("setpoint", sa.Float(), nullable=True),
         sa.Column("kp", sa.Float(), nullable=True),
@@ -507,7 +507,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_control_table",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("action_table", sa.Text(), nullable=True),
         sa.Column("action_type", sa.String(length=50), nullable=True),
         sa.Column("measure_variable", sa.String(length=50), nullable=True),
@@ -518,7 +518,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_control_timed",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("action_type", sa.String(length=50), nullable=True),
         sa.Column("action_table", sa.Text(), nullable=True),
         sa.Column("target_type", sa.String(length=100), nullable=True),
@@ -527,7 +527,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_cross_section_definition",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("width", sa.String(length=255), nullable=True),
         sa.Column("height", sa.String(length=255), nullable=True),
         sa.Column("shape", sa.Integer(), nullable=True),
@@ -536,7 +536,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_dem_average_area",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column(
             "the_geom",
             geoalchemy2.types.Geometry(
@@ -550,7 +550,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_floodfill",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("waterlevel", sa.Float(), nullable=True),
         sa.Column(
             "the_geom",
@@ -565,7 +565,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_grid_refinement",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("refinement_level", sa.Integer(), nullable=True),
         sa.Column(
@@ -582,7 +582,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_grid_refinement_area",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("refinement_level", sa.Integer(), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
@@ -599,7 +599,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_groundwater",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("groundwater_impervious_layer_level", sa.Float(), nullable=True),
         sa.Column(
             "groundwater_impervious_layer_level_file",
@@ -641,7 +641,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_impervious_surface",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("surface_inclination", sa.String(length=64), nullable=True),
@@ -664,7 +664,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_interflow",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("interflow_type", sa.Integer(), nullable=True),
         sa.Column("porosity", sa.Float(), nullable=True),
         sa.Column("porosity_file", sa.String(length=255), nullable=True),
@@ -677,7 +677,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_levee",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("crest_level", sa.Float(), nullable=True),
         sa.Column(
@@ -695,7 +695,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_numerical_settings",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("cfl_strictness_factor_1d", sa.Float(), nullable=True),
         sa.Column("cfl_strictness_factor_2d", sa.Float(), nullable=True),
         sa.Column("convergence_cg", sa.Float(), nullable=True),
@@ -722,7 +722,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_obstacle",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("crest_level", sa.Float(), nullable=True),
         sa.Column(
@@ -738,7 +738,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_simple_infiltration",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("infiltration_rate", sa.Float(), nullable=True),
         sa.Column("infiltration_rate_file", sa.String(length=255), nullable=True),
         sa.Column("infiltration_surface_option", sa.Integer(), nullable=True),
@@ -748,7 +748,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_surface_parameters",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("outflow_delay", sa.Float(), nullable=True),
         sa.Column("surface_layer_thickness", sa.Float(), nullable=True),
         sa.Column("infiltration", sa.Boolean(), nullable=True),
@@ -760,23 +760,22 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_1d_boundary_conditions",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("boundary_type", sa.Integer(), nullable=True),
         sa.Column("timeseries", sa.Text(), nullable=True),
         sa.Column("connection_node_id", sa.Integer(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("connection_node_id"),
     )
     create_table_if_not_exists(
         "v2_1d_lateral",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("connection_node_id", sa.Integer(), nullable=True),
         sa.Column("timeseries", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     create_table_if_not_exists(
         "v2_channel",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("calculation_type", sa.Integer(), nullable=True),
@@ -797,7 +796,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_connected_pnt",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("calculation_pnt_id", sa.Integer(), nullable=True),
         sa.Column("levee_id", sa.Integer(), nullable=True),
         sa.Column("exchange_level", sa.Float(), nullable=True),
@@ -814,7 +813,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_control",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("control_group_id", sa.Integer(), nullable=True),
         sa.Column("measure_group_id", sa.Integer(), nullable=True),
         sa.Column("control_type", sa.String(length=15), nullable=True),
@@ -826,7 +825,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_control_measure_map",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("measure_group_id", sa.Integer(), nullable=True),
         sa.Column("object_type", sa.String(length=100), nullable=True),
         sa.Column("object_id", sa.Integer(), nullable=True),
@@ -835,7 +834,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_culvert",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("calculation_type", sa.Integer(), nullable=True),
@@ -863,7 +862,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_global_settings",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("use_2d_flow", sa.Boolean(), nullable=True),
         sa.Column("use_1d_flow", sa.Boolean(), nullable=True),
         sa.Column("manhole_storage_area", sa.Float(), nullable=True),
@@ -918,7 +917,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_impervious_surface_map",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("percentage", sa.Float(), nullable=True),
         sa.Column("impervious_surface_id", sa.Integer(), nullable=True),
         sa.Column("connection_node_id", sa.Integer(), nullable=True),
@@ -926,7 +925,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_manhole",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("zoom_category", sa.Integer(), nullable=True),
@@ -944,7 +943,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_orifice",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("zoom_category", sa.Integer(), nullable=True),
@@ -962,7 +961,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_pipe",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("profile_num", sa.Integer(), nullable=True),
@@ -983,7 +982,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_pumpstation",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("zoom_category", sa.Integer(), nullable=True),
@@ -1000,7 +999,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_surface",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("zoom_category", sa.Integer(), nullable=True),
@@ -1022,7 +1021,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_surface_map",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("surface_type", sa.String(length=40), nullable=True),
         sa.Column("surface_id", sa.Integer(), nullable=True),
         sa.Column("connection_node_id", sa.Integer(), nullable=True),
@@ -1031,7 +1030,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_weir",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("crest_level", sa.Float(), nullable=True),
@@ -1050,7 +1049,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_aggregation_settings",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("global_settings_id", sa.Integer(), nullable=True),
         sa.Column("var_name", sa.String(length=100), nullable=True),
         sa.Column("flow_variable", sa.String(length=100), nullable=True),
@@ -1061,7 +1060,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_cross_section_location",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("reference_level", sa.Float(), nullable=True),
         sa.Column("friction_type", sa.Integer(), nullable=True),
@@ -1082,7 +1081,7 @@ def upgrade():
     )
     create_table_if_not_exists(
         "v2_windshielding",
-        sa.Column("id", sa.Integer(), nullable=True),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("north", sa.Float(), nullable=True),
         sa.Column("northeast", sa.Float(), nullable=True),
         sa.Column("east", sa.Float(), nullable=True),
