@@ -375,7 +375,8 @@ def upgrade():
 
     # Initialize the Spatialite if necessary:
     if conn.dialect.name == "sqlite" and "spatial_ref_sys" not in existing_tables:
-        op.execute("SELECT InitSpatialMetadata()")
+        # The (1) performs the init in 1 transaction, which improves performance.
+        op.execute("SELECT InitSpatialMetadata(1)")
 
     version = _get_version(conn)
     if version is not None:

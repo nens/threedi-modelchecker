@@ -1,9 +1,11 @@
 from .errors import MigrationMissingError
+from .spatialite_versions import copy_models
+from .spatialite_versions import get_spatialite_version
 from .threedi_model import constants
 from .threedi_model import models
 from .threedi_model import views
-from alembic.config import Config
 from alembic import command as alembic_command
+from alembic.config import Config
 from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
@@ -11,8 +13,7 @@ from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
-from sqlalchemy import inspect
-from .spatialite_versions import get_spatialite_version, copy_models
+
 import warnings
 
 
@@ -36,43 +37,44 @@ def get_schema_version():
         return int(env.get_head_revision())
 
 
-def _is_empty_database(db):
-    """Check if there are tables in the database"""
-    engine = db.get_engine()
-    inspector = inspect(engine)
-    return len(inspector.get_table_names()) == 0
-
-
-def _create_database(db):
-    """Create the 3Di model schema in an empty ThreediDatabase instance"""
-    engine = db.get_engine()
-
-    if engine.dialect.name == "sqlite":
-        with db.session_scope() as session:
-            # Speed up by journalling in memory; in case of a crash the database
-            # will likely go corrupt, however we have an empty database here so
-            # that is no problem.
-            session.execute("PRAGMA journal_mode = MEMORY")
-            session.execute("SELECT InitSpatialMetadata()")
-
-    models.Base.metadata.create_all(engine)
-
-    with engine.begin() as connection:
-        config = get_alembic_config(connection)
-        alembic_command.stamp(config, "head")
-
-
-def _upgrade_database(db, revision="head"):
+def _upgrade_database(db, revision="head", unsafe=True):
     """Upgrade ThreediDatabase instance"""
     engine = db.get_engine()
 
-    # Fast track the upgrade to the latest version if database is empty
-    if revision in {"head", get_schema_version()} and _is_empty_database(db):
-        return _create_database(db)
-
     with engine.begin() as connection:
+        if unsafe:
+            # Speed up by journalling in memory; in case of a crash the database
+            # will likely go corrupt.
+            # NB: This setting is scoped to this connection.
+            connection.execute("PRAGMA journal_mode = MEMORY")
         config = get_alembic_config(connection)
         alembic_command.upgrade(config, revision)
+
+
+def _recreate_views(db, file_version):
+    """Recreate predefined views in a ThreediDatabase instance"""
+    engine = db.get_engine()
+
+    with engine.begin() as connection:
+        for (name, view) in views.ALL_VIEWS.items():
+            connection.execute(f"DROP VIEW IF EXISTS {name}")
+            connection.execute(
+                f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
+            )
+            connection.execute(f"CREATE VIEW {name} AS {view['definition']}")
+            if file_version == 3:
+                connection.execute(
+                    f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')"
+                )
+            else:
+                connection.execute(
+                    f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column,read_only) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}', 0)"
+                )
+        for name in views.VIEWS_TO_DELETE:
+            connection.execute(f"DROP VIEW IF EXISTS {name}")
+            connection.execute(
+                f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
+            )
 
 
 class ModelSchema:
@@ -152,9 +154,9 @@ class ModelSchema:
             raise ValueError(f"Cannot set views when upgrading to version '{revision}'")
         if backup:
             with self.db.file_transaction() as work_db:
-                _upgrade_database(work_db, revision=revision)
+                _upgrade_database(work_db, revision=revision, unsafe=True)
         else:
-            _upgrade_database(self.db, revision=revision)
+            _upgrade_database(self.db, revision=revision, unsafe=False)
 
         if upgrade_spatialite_version:
             self.upgrade_spatialite_version()
@@ -197,34 +199,15 @@ class ModelSchema:
         """(Re)create views in the spatialite according to the latest definitions."""
         version = self.get_version()
         schema_version = get_schema_version()
-        _, file_version = get_spatialite_version(self.db)
-
-        if version != get_schema_version():
+        if version != schema_version:
             raise MigrationMissingError(
                 f"Setting views requires schema version "
                 f"{schema_version}. Current version: {version}."
             )
 
-        with self.db.get_engine().begin() as connection:
-            for (name, view) in views.ALL_VIEWS.items():
-                connection.execute(f"DROP VIEW IF EXISTS {name}")
-                connection.execute(
-                    f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
-                )
-                connection.execute(f"CREATE VIEW {name} AS {view['definition']}")
-                if file_version == 3:
-                    connection.execute(
-                        f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}')"
-                    )
-                else:
-                    connection.execute(
-                        f"INSERT INTO views_geometry_columns (view_name, view_geometry,view_rowid,f_table_name,f_geometry_column,read_only) VALUES('{name}', '{view['view_geometry']}', '{view['view_rowid']}', '{view['f_table_name']}', '{view['f_geometry_column']}', 0)"
-                    )
-            for name in views.VIEWS_TO_DELETE:
-                connection.execute(f"DROP VIEW IF EXISTS {name}")
-                connection.execute(
-                    f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
-                )
+        _, file_version = get_spatialite_version(self.db)
+
+        _recreate_views(self.db, file_version)
 
     def upgrade_spatialite_version(self):
         """Upgrade the version of the spatialite file to the version of the
@@ -240,8 +223,6 @@ class ModelSchema:
             self.validate_schema()
 
             with self.db.file_transaction(start_empty=True) as work_db:
-                work_schema = ModelSchema(work_db)
-                work_schema.upgrade(
-                    backup=False, set_views=True, upgrade_spatialite_version=False
-                )
+                _upgrade_database(work_db, revision="head", unsafe=True)
+                _recreate_views(work_db, file_version=4)
                 copy_models(self.db, work_db, self.declared_models)
