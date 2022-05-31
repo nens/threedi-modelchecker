@@ -1,12 +1,12 @@
+from . import factories
 from threedi_modelchecker.model_checks import Context
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.threedi_database import ThreediDatabase
-from . import factories
 
 import os
+import pathlib
 import pytest
 import shutil
-import pathlib
 
 
 try:

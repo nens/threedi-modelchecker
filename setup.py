@@ -2,6 +2,7 @@ from setuptools import setup
 
 import pathlib
 
+
 long_description = "\n\n".join([open("README.rst").read()])
 
 install_requires = [
@@ -21,7 +22,6 @@ tests_require = [
     "aiofiles",
     "aiohttp",
     "pytest-asyncio",
-    "numpy",
 ]
 
 simulation_templates_require = [

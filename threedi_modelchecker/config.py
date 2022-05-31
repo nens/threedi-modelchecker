@@ -527,7 +527,9 @@ CHECKS += [
     QueryCheck(
         error_code=206,
         column=models.ConnectionNode.the_geom_linestring,
-        invalid=Query(models.ConnectionNode).filter(models.ConnectionNode.the_geom_linestring != None),
+        invalid=Query(models.ConnectionNode).filter(
+            models.ConnectionNode.the_geom_linestring != None
+        ),
         message="The 'the_geom_linestring' column of v2_connection_nodes must be NULL",
     )
 ]
@@ -1492,14 +1494,8 @@ class Config:
                 error_code=1,
             )
             self.checks += generate_unique_checks(model.__table__, error_code=2)
-            self.checks += generate_not_null_checks(
-                model.__table__,
-                error_code=3
-            )
-            self.checks += generate_type_checks(
-                model.__table__,
-                error_code=4
-            )
+            self.checks += generate_not_null_checks(model.__table__, error_code=3)
+            self.checks += generate_type_checks(model.__table__, error_code=4)
             self.checks += generate_geometry_checks(
                 model.__table__,
                 custom_level_map={

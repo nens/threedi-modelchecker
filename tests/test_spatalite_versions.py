@@ -1,8 +1,8 @@
 from geoalchemy2 import func as geo_func
-from threedi_modelchecker.spatialite_versions import get_spatialite_version, copy_model
-from threedi_modelchecker.threedi_model import models
 from threedi_modelchecker.errors import UpgradeFailedError
-
+from threedi_modelchecker.spatialite_versions import copy_model
+from threedi_modelchecker.spatialite_versions import get_spatialite_version
+from threedi_modelchecker.threedi_model import models
 
 import pytest
 
@@ -81,5 +81,7 @@ def test_copy_violates_null_constraint(empty_sqlite_v3, empty_sqlite_v4):
         session.add(obj)
         session.commit()
 
-    with pytest.raises(UpgradeFailedError, match="NOT NULL constraint failed: v2_manhole.bottom_level"):
+    with pytest.raises(
+        UpgradeFailedError, match="NOT NULL constraint failed: v2_manhole.bottom_level"
+    ):
         copy_model(db_from, db_to, models.Manhole)

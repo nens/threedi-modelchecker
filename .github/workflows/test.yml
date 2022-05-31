@@ -11,7 +11,7 @@ on:
 
 jobs:
   TestLinux:
-    name: Python ${{ matrix.python }}
+    name: Linux, Python ${{ matrix.python }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -78,10 +78,17 @@ jobs:
         run: |
           pytest --cov threedi_modelchecker
 
-      - name: Run flake8
-        shell: bash
-        run: |
-          flake8 tests threedi_modelchecker
+  TestWindows:
+    name: Windows, Python ${{ matrix.python }}
+    runs-on: windows-2019
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # current
+          - python: 3.9
+            pins: ""
+            extras: "test,migrations"
 
   publish:
     name: Build and publish on PyPI

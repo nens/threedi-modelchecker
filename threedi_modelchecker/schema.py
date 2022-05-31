@@ -1,18 +1,20 @@
 from .errors import MigrationMissingError
+from .spatialite_versions import copy_models
+from .spatialite_versions import get_spatialite_version
 from .threedi_model import constants
 from .threedi_model import models
 from .threedi_model import views
-from alembic.config import Config
 from alembic import command as alembic_command
+from alembic.config import Config
 from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import Column
+from sqlalchemy import inspect
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
-from sqlalchemy import inspect
-from .spatialite_versions import get_spatialite_version, copy_models
+
 import warnings
 
 
