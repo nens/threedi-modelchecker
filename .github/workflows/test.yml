@@ -75,15 +75,19 @@ jobs:
           pytest --cov threedi_modelchecker
 
   TestWindows:
-    name: Windows, Python ${{ matrix.python }}
-    runs-on: windows-2019
+    name: Conda ${{ matrix.os }}, Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           # current
-          - python: 3.9
-            deps: "libspatialite click geoalchemy2 sqlalchemy alembic pytest pytest-asyncio factory_boy"
+          - os: "windows-latest"
+            python: 3.9
+          - os: "ubuntu-latest"
+            python: 3.9
+          - os: "macos-latest"
+            python: 3.9
 
     steps:
       - uses: actions/checkout@v2
@@ -97,7 +101,7 @@ jobs:
       - name: Setup Environment
         shell: bash
         run: |
-          conda create --name test python=${{ matrix.python }} ${{ matrix.deps }}
+          conda create --name test python=${{ matrix.python }} libspatialite click geoalchemy2 sqlalchemy alembic pytest pytest-asyncio factory_boy
           source activate test
           python -V
           conda info
