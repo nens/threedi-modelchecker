@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.26.2 (unreleased)
+0.27.0 (2022-05-31)
 -------------------
 
 - Added ModelSchema().upgrade_spatialite_version (and the same argument to .upgrade) to
