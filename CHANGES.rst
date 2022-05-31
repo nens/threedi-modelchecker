@@ -10,6 +10,10 @@ Changelog of threedi-modelchecker
 
 - Run unittests on spatialite 3 and 4.
 
+- Improved performance of upgrading an empty database.
+
+- Remove all NOT NULL, unique, and foreign key constraints in the spatialite.
+
 
 0.26.1 (2022-04-11)
 -------------------
