@@ -1,0 +1,49 @@
+name: TestConda
+
+# Run on PR requests. And on master itself.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  TestConda:
+    name: Conda ${{ matrix.os }}, Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # current
+          - os: "windows-latest"
+            python: 3.9
+          - os: "ubuntu-latest"
+            python: 3.9
+          - os: "macos-latest"
+            python: 3.9
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Conda
+        uses: s-weigand/setup-conda@v1.0.5
+        with:
+          activate-conda: false
+          conda-channels: conda-forge
+
+      - name: Setup Environment
+        shell: bash
+        run: |
+          conda create --name test python=${{ matrix.python }} libspatialite click sqlalchemy alembic pytest pytest-asyncio factory_boy
+          source activate test
+          pip install geoalchemy2==0.10.*
+          python -V
+          conda info
+          conda list
+
+      - name: Run tests
+        shell: bash
+        run: |
+          source activate test
+          pytest
