@@ -1,8 +1,9 @@
-from sqlalchemy import inspect
+from .threedi_model import models
 from geoalchemy2 import func as geo_func
 from geoalchemy2.types import Geometry
-from .threedi_model import models
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy import inspect
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import OperationalError
 from threedi_modelchecker.errors import UpgradeFailedError
 
 

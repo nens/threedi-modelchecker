@@ -1,10 +1,7 @@
 from geoalchemy2 import func as geo_func
-from threedi_modelchecker.spatialite_versions import get_spatialite_version, copy_model
+from threedi_modelchecker.spatialite_versions import copy_model
+from threedi_modelchecker.spatialite_versions import get_spatialite_version
 from threedi_modelchecker.threedi_model import models
-from threedi_modelchecker.errors import UpgradeFailedError
-
-
-import pytest
 
 
 def test_get_spatialite_version(empty_sqlite_v3):
@@ -69,17 +66,3 @@ def test_copy_invalid_geometry(empty_sqlite_v3, empty_sqlite_v4):
         )
 
         assert records == [(3, "POLYGON((0 0, 10 10, 0 10, 10 0, 0 0))")]
-
-
-def test_copy_violates_null_constraint(empty_sqlite_v3, empty_sqlite_v4):
-    """Copying an invalid geometry (ST_IsValid evaluates to False) is possible"""
-    db_from = empty_sqlite_v3
-    db_to = empty_sqlite_v4
-
-    obj = models.Manhole(id=3, code="test", display_name="test", connection_node_id=1)
-    with db_from.session_scope() as session:
-        session.add(obj)
-        session.commit()
-
-    with pytest.raises(UpgradeFailedError, match="NOT NULL constraint failed: v2_manhole.bottom_level"):
-        copy_model(db_from, db_to, models.Manhole)
