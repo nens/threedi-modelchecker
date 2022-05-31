@@ -14,6 +14,10 @@ Changelog of threedi-modelchecker
 
 - Remove all NOT NULL, unique, and foreign key constraints in the spatialite.
 
+- Fixed upgrade with backup=True on Windows.
+
+- Added continuous integration on MacOS and Windows.
+
 
 0.26.1 (2022-04-11)
 -------------------
