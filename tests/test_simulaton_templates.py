@@ -1,6 +1,6 @@
 from pathlib import Path
-from tests import factories
 from sqlalchemy.orm import Query
+from tests import factories
 from threedi_api_client.openapi.models import FileBoundaryCondition
 from threedi_api_client.openapi.models import FileLateral
 from threedi_api_client.openapi.models import Simulation
@@ -47,14 +47,14 @@ from threedi_modelchecker.simulation_templates.extractor import (
 from threedi_modelchecker.simulation_templates.initial_waterlevels.extractor import (
     InitialWaterlevelExtractor,
 )
-from threedi_modelchecker.simulation_templates.laterals.extractor import (
-    LateralsExtractor,
+from threedi_modelchecker.simulation_templates.laterals.dwf_calculator import (
+    DWF_FACTORS,
 )
 from threedi_modelchecker.simulation_templates.laterals.dwf_calculator import (
     DWFCalculator,
 )
-from threedi_modelchecker.simulation_templates.laterals.dwf_calculator import (
-    DWF_FACTORS,
+from threedi_modelchecker.simulation_templates.laterals.extractor import (
+    LateralsExtractor,
 )
 from threedi_modelchecker.simulation_templates.models import (
     get_upload_instance,
@@ -75,10 +75,8 @@ from threedi_modelchecker.simulation_templates.structure_controls.extractor impo
 from threedi_modelchecker.threedi_model.constants import (
     ControlTableActionTypes,
 )
-from threedi_modelchecker.threedi_model.constants import (
-    InitializationType,
-    InflowType,
-)
+from threedi_modelchecker.threedi_model.constants import InflowType
+from threedi_modelchecker.threedi_model.constants import InitializationType
 from threedi_modelchecker.threedi_model.models import ConnectionNode
 from threedi_modelchecker.threedi_model.models import ControlGroup
 from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
@@ -90,8 +88,9 @@ from threedi_modelchecker.threedi_model.models import Surface
 from threedi_modelchecker.threedi_model.models import SurfaceMap
 from unittest import mock
 
-import pytest
 import numpy as np
+import pytest
+
 
 try:
     from unittest.mock import AsyncMock

@@ -1,10 +1,7 @@
 from geoalchemy2 import func as geo_func
-from threedi_modelchecker.spatialite_versions import get_spatialite_version, copy_model
+from threedi_modelchecker.spatialite_versions import copy_model
+from threedi_modelchecker.spatialite_versions import get_spatialite_version
 from threedi_modelchecker.threedi_model import models
-from threedi_modelchecker.errors import UpgradeFailedError
-
-
-import pytest
 
 
 def test_get_spatialite_version(empty_sqlite_v3):

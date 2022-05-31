@@ -7,8 +7,8 @@ from threedi_modelchecker import errors
 from threedi_modelchecker.schema import constants
 from threedi_modelchecker.schema import get_schema_version
 from threedi_modelchecker.schema import ModelSchema
-from threedi_modelchecker.threedi_model.views import ALL_VIEWS
 from threedi_modelchecker.spatialite_versions import get_spatialite_version
+from threedi_modelchecker.threedi_model.views import ALL_VIEWS
 from unittest import mock
 
 import pytest
