@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-      - fixes_*
-    tags:
-      - '*'
   pull_request:
 
 jobs:

@@ -19,7 +19,7 @@ information about any potential errors in the model.
 Threedi-modelchecks works with both spatialite and postgis databases. However, 
 the database should always have the latest 3Di migration: https://docs.3di.lizard.net/en/stable/d_before_you_begin.html#database-overview 
 
-Installation:
+Installation::
 
     pip install threedi-modelchecker
 

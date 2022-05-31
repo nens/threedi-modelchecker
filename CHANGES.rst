@@ -5,13 +5,7 @@ Changelog of threedi-modelchecker
 0.27.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
-
-0.27.1b1 (2022-05-31)
----------------------
-
-- Nothing changed yet.
+- Fixed release script.
 
 
 0.27.0 (2022-05-31)
