@@ -14,21 +14,15 @@ install_requires = [
 ]
 
 tests_require = [
-    "factory_boy",
     "pytest",
-    "mock",
-    "pytest-cov",
-    "threedi-api-client>=4.0.0b2",
-    "aiofiles",
-    "aiohttp",
     "pytest-asyncio",
+    "factory_boy",
+    "mock ; python_version<'3.8'",
 ]
 
 simulation_templates_require = [
     # Note: Change when threedi-api-client has been released
-    "threedi-api-client>=4.0.0b2",
-    "aiofiles",
-    "aiohttp",
+    "threedi-api-client[aio]>=4",
 ]
 
 

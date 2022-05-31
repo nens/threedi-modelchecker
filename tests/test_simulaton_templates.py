@@ -1,6 +1,17 @@
 from pathlib import Path
 from sqlalchemy.orm import Query
 from tests import factories
+
+import pytest
+
+
+try:
+    import threedi_api_client  # NOQA
+    import threedi_api_client.aio.files  # NOQA
+except ImportError:
+    pytest.skip(allow_module_level=True)
+
+
 from threedi_api_client.openapi.models import FileBoundaryCondition
 from threedi_api_client.openapi.models import FileLateral
 from threedi_api_client.openapi.models import Simulation
@@ -88,7 +99,6 @@ from threedi_modelchecker.threedi_model.models import Surface
 from threedi_modelchecker.threedi_model.models import SurfaceMap
 from unittest import mock
 
-import numpy as np
 import pytest
 
 
@@ -99,6 +109,14 @@ except ImportError:
     # Python 3.7
     from mock.mock import AsyncMock
     from mock.mock import Mock
+
+
+def recursive_approx(a, b, **kwargs):
+    """Apply `assert a == pytest.approx(b, **kwargs) recursively"""
+    if hasattr(a, "__iter__") and hasattr(b, "__iter__"):
+        map(recursive_approx, a, b)
+    else:
+        assert a == pytest.approx(b, **kwargs)
 
 
 @pytest.fixture
@@ -807,7 +825,7 @@ def test_dwf_calculator_impervious_surface(session):
     Query(ConnectionNode).with_session(session).delete()
     session.commit()
 
-    np.testing.assert_array_almost_equal(laterals[0]["values"], expected_values)
+    recursive_approx(laterals[0]["values"], expected_values)
 
 
 def test_dwf_calculator_surface(session):  # same algorithm as impervious surface
@@ -859,7 +877,7 @@ def test_dwf_calculator_surface(session):  # same algorithm as impervious surfac
     Query(ConnectionNode).with_session(session).delete()
     session.commit()
 
-    np.testing.assert_array_almost_equal(laterals[0]["values"], expected_values)
+    recursive_approx(laterals[0]["values"], expected_values)
 
 
 def test_dwf_calculator_no_inflow(session):
