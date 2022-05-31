@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 import shutil
 import sqlite3
 import tempfile
+import uuid
 
 
 __all__ = ["ThreediDatabase"]
@@ -151,19 +152,18 @@ class ThreediDatabase:
             raise NotImplementedError(
                 f"Cannot make database backups for db_type {self.db_type}"
             )
-        work_file = tempfile.NamedTemporaryFile(suffix=".sqlite")
-        # copy the database to the temporary directory
-        if not start_empty:
-            shutil.copy(self.settings["db_path"], work_file.name)
-        # yield a new ThreediDatabase refering to the backup
-        try:
-            yield self.__class__({"db_path": work_file.name}, "spatialite")
-        except Exception as e:
-            raise e
-        else:
-            shutil.copy(work_file.name, self.settings["db_path"])
-        finally:
-            work_file.close()  # auto deletes the file
+        with tempfile.TemporaryDirectory() as tempdir:
+            work_file = Path(tempdir) / f"work-{uuid.uuid4()}.sqlite"
+            # copy the database to the temporary directory
+            if not start_empty:
+                shutil.copy(self.settings["db_path"], str(work_file))
+            # yield a new ThreediDatabase refering to the backup
+            try:
+                yield self.__class__({"db_path": str(work_file)}, "spatialite")
+            except Exception as e:
+                raise e
+            else:
+                shutil.copy(str(work_file), self.settings["db_path"])
 
     def check_connection(self):
         """Check if there a connection can be started with the database

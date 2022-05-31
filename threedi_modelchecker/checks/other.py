@@ -286,7 +286,7 @@ class LinestringLocationCheck(BaseCheck):
 
         tol = self.max_distance
         start_point = geo_func.ST_PointN(self.column, 1)
-        end_point = geo_func.ST_PointN(self.column, geo_func.ST_NumPoints(self.column))
+        end_point = geo_func.ST_PointN(self.column, geo_func.ST_NPoints(self.column))
 
         start_ok = distance(start_point, start_node.the_geom) <= tol
         end_ok = distance(end_point, end_node.the_geom) <= tol
