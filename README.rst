@@ -11,13 +11,17 @@ Threedi-modelchecker
 	:target: https://github.com/nens/threedi-modelchecker/actions/workflows/test.yml
 
 
-Threedi-modelchecker is a tool to verify the correctness of a 3Di model.
-The goal is to provide a tool for model builders to quickly check if his/her 
-model is correct and can run a 3Di simulation. It provides detailed 
-information about any potential errors in the model.
+Threedi-modelchecker is a tool to verify the correctness of a 3Di schematisation.
+The goal is to provide a tool for builders to quickly check if his/her 
+schematisation is correct and can be converted to a 3Di-Model to run a 3Di simulation. It provides detailed 
+information about any potential errors in the schematisation.
 
 Threedi-modelchecks works with both spatialite and postgis databases. However, 
 the database should always have the latest 3Di migration: https://docs.3di.lizard.net/en/stable/d_before_you_begin.html#database-overview 
+
+Note:
+
+In 2021 we changed the naming within the three-di realm. To better understand what users meant with 'model' we made a clear distinction between a schematisation and a model. A schematisation is build interactively by the user and this schematisation will be converted to a 3Di-Model which can be used in simulations. This repo is still called the threedi-modelchecker which might lead to confusion.
 
 Installation::
 
