@@ -1208,6 +1208,18 @@ CHECKS += [
         "output_time_step",
     )
 ]
+CHECKS += [
+    QueryCheck(
+        error_code=1106,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.minimum_sim_time_step,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.minimum_sim_time_step
+            > (0.1 * models.GlobalSetting.sim_time_step)
+        ),
+        message="v2_global_settings.minimum_sim_time_step should be at least 10 times smaller than v2_global_settings.sim_time_step",
+    )
+]
 
 ## 111x - 114x: SIMULATION SETTINGS, numerical
 
