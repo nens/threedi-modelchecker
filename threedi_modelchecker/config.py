@@ -687,12 +687,6 @@ CHECKS += [
         left_inclusive=False,
     ),
     RangeCheck(
-        error_code=312,
-        column=models.GlobalSetting.table_step_size_volume_2d,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    RangeCheck(
         error_code=313,
         column=models.GlobalSetting.frict_coef,
         filters=models.GlobalSetting.frict_type == constants.FrictionType.MANNING,
@@ -766,6 +760,15 @@ CHECKS += [
             models.GlobalSetting.water_level_ini_type == None,
         ),
         message="an initial waterlevel type (v2_global_settings.water_level_ini_type) should be defined when using an initial waterlevel file.",
+    ),
+    QueryCheck(
+        error_code=323,
+        column=models.GlobalSetting.maximum_table_step_size,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.maximum_table_step_size
+            < models.GlobalSetting.table_step_size,
+        ),
+        message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.table_step_size.",
     ),
 ]
 
