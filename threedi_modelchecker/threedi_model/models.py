@@ -420,7 +420,7 @@ class GlobalSetting(Base):
     dist_calc_points = Column(Float, nullable=False)
     kmax = Column(Integer, nullable=False)
     guess_dams = Column(Integer)
-    minimum_table_step_size = Column(Float, nullable=False)
+    table_step_size = Column(Float, nullable=False)
     maximum_table_step_size = Column(Float)
     flooding_threshold = Column(Float, nullable=False)
     advection_1d = Column(IntegerEnum(constants.OffOrStandard), nullable=False)

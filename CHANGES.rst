@@ -5,8 +5,8 @@ Changelog of threedi-modelchecker
 0.27.2 (unreleased)
 -------------------
 
-- Altered table settings (v2_global_settings): 'table_step_size' was renamed to 
-  'minimum_table_step_size', 'maximum_table_step_size' was added and 'table_step_size_volume_2d'
+- Updated schema to version 208: altered table settings (v2_global_settings):
+  'maximum_table_step_size' was added and 'table_step_size_volume_2d'
   was removed.
 
 

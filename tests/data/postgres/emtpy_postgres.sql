@@ -953,7 +953,7 @@ CREATE TABLE public.v2_global_settings (
     dist_calc_points double precision NOT NULL,
     kmax integer NOT NULL,
     guess_dams integer,
-    minimum_table_step_size double precision NOT NULL,
+    table_step_size double precision NOT NULL,
     maximum_table_step_size double precision,
     flooding_threshold double precision NOT NULL,
     advection_1d integer NOT NULL,

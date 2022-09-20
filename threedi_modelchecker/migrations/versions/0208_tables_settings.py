@@ -21,9 +21,6 @@ def upgrade():
     # First alter the tables to nullable TEXT, because we need to be able to
     # accept any value
     with op.batch_alter_table("v2_global_settings") as batch_op:
-        batch_op.alter_column(
-            "table_step_size", new_column_name="minimum_table_step_size"
-        )
         batch_op.add_column(
             sa.Column("maximum_table_step_size", sa.Float(), nullable=True)
         )

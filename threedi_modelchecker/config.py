@@ -676,7 +676,7 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=310,
-        column=models.GlobalSetting.minimum_table_step_size,
+        column=models.GlobalSetting.table_step_size,
         min_value=0,
         left_inclusive=False,
     ),
@@ -766,9 +766,9 @@ CHECKS += [
         column=models.GlobalSetting.maximum_table_step_size,
         invalid=Query(models.GlobalSetting).filter(
             models.GlobalSetting.maximum_table_step_size
-            < models.GlobalSetting.minimum_table_step_size,
+            < models.GlobalSetting.table_step_size,
         ),
-        message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.minimum_table_step_size.",
+        message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.table_step_size.",
     ),
 ]
 
