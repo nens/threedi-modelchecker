@@ -1,6 +1,7 @@
 from . import factories
 from threedi_modelchecker.model_checks import Context
 from threedi_modelchecker.model_checks import ThreediModelChecker
+from threedi_modelchecker.schema import ModelSchema
 from threedi_modelchecker.threedi_database import ThreediDatabase
 
 import os
@@ -15,6 +16,15 @@ except ImportError:
     psycopg2 = None
 
 data_dir = pathlib.Path(__file__).parent / "data"
+
+
+@pytest.fixture(
+    scope="session", autouse=True, params=["empty_v3.sqlite", "empty_v4.sqlite"]
+)
+def upgrade_test_data(request):
+    db = ThreediDatabase({"db_path": data_dir / request.param})
+    schema = ModelSchema(db)
+    schema.upgrade(backup=False, upgrade_spatialite_version=False)
 
 
 @pytest.fixture(
