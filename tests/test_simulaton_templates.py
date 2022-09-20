@@ -120,7 +120,7 @@ def recursive_approx(a, b, **kwargs):
 
 
 @pytest.fixture
-async def upload_file_m():
+def upload_file_m():
     with mock.patch(
         "threedi_modelchecker.simulation_templates.models.upload_fileobj",
         new_callable=AsyncMock,
@@ -129,7 +129,7 @@ async def upload_file_m():
 
 
 @pytest.fixture
-async def simulation() -> Simulation:
+def simulation() -> Simulation:
     simulation = Simulation(
         id=1,
         name="sim-1",
@@ -142,9 +142,7 @@ async def simulation() -> Simulation:
 
 
 @pytest.fixture
-async def client():
-    api = AsyncMock()
-
+def mock_get_upload_instance():
     async def mocked_get_upload_instance(api_func, simulation_pk: int, filename: str):
         # Mock lookup function for getting lateral-file and boundary condition file resources
         if "laterals" in filename:
@@ -165,7 +163,12 @@ async def client():
         "threedi_modelchecker.simulation_templates.models.get_upload_instance",
         wraps=mocked_get_upload_instance,
     ):
-        yield api.return_value
+        yield
+
+
+@pytest.fixture
+def client(mock_get_upload_instance):
+    return AsyncMock()
 
 
 @pytest.fixture
