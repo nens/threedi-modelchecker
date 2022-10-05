@@ -66,7 +66,7 @@ class CrossSectionFloatCheck(CrossSectionBaseCheck):
         return f"{self.column_name} should be a positive number for shapes {self.shape_msg}"
 
 
-class CrossSectionNonZeroCheck(CrossSectionBaseCheck):
+class CrossSectionGreaterZeroCheck(CrossSectionBaseCheck):
     """Check that width / height is larger than 0"""
 
     def get_invalid(self, session):
@@ -79,12 +79,12 @@ class CrossSectionNonZeroCheck(CrossSectionBaseCheck):
             except ValueError:
                 continue
 
-            if value == 0:
+            if value <= 0:
                 invalids.append(record)
         return invalids
 
     def description(self):
-        return f"{self.column_name} should be nonzero for shapes {self.shape_msg}"
+        return f"{self.column_name} should be greater than zero for shapes {self.shape_msg}"
 
 
 class CrossSectionFloatListCheck(CrossSectionBaseCheck):

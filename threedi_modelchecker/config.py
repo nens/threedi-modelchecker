@@ -13,8 +13,8 @@ from .checks.cross_section_definitions import (
 from .checks.cross_section_definitions import CrossSectionFirstElementZeroCheck
 from .checks.cross_section_definitions import CrossSectionFloatCheck
 from .checks.cross_section_definitions import CrossSectionFloatListCheck
+from .checks.cross_section_definitions import CrossSectionGreaterZeroCheck
 from .checks.cross_section_definitions import CrossSectionIncreasingCheck
-from .checks.cross_section_definitions import CrossSectionNonZeroCheck
 from .checks.cross_section_definitions import CrossSectionNullCheck
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
@@ -315,7 +315,7 @@ CHECKS += [
         column=models.CrossSectionDefinition.height,
         shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
     ),
-    CrossSectionNonZeroCheck(
+    CrossSectionGreaterZeroCheck(
         error_code=85,
         level=CheckLevel.WARNING,
         column=models.CrossSectionDefinition.width,
@@ -326,7 +326,7 @@ CHECKS += [
             constants.CrossSectionShape.EGG,
         ),
     ),
-    CrossSectionNonZeroCheck(
+    CrossSectionGreaterZeroCheck(
         error_code=86,
         level=CheckLevel.WARNING,
         column=models.CrossSectionDefinition.height,
