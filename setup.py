@@ -61,7 +61,6 @@ setup(
     tests_require=tests_require,
     extras_require={
         "test": tests_require,
-        "postgis": ["psycopg2"],
         "simulation_templates": simulation_templates_require,
     },
     python_requires=">=3.6",

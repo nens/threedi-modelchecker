@@ -13,33 +13,15 @@ import click
     "--sqlite",
     type=click.Path(exists=True, readable=True),
     help="Path to an sqlite (spatialite) file",
+    required=True,
 )
-@click.option("-d", "--database", help="PostGIS database name to connect to")
-@click.option("-h", "--host", help="PostGIS database server host")
-@click.option("-p", "--port", default=5432, help="PostGIS database server port")
-@click.option("-u", "--username", help="PostGIS database username")
-@click.option("-u", "--password", help="PostGIS database password")
 @click.pass_context
-def threedi_modelchecker(ctx, sqlite, database, host, port, username, password):
+def threedi_modelchecker(ctx, sqlite):
     """Checks the threedi-model for errors / warnings / info messages"""
     ctx.ensure_object(dict)
 
-    if sqlite:
-        sqlite_settings = {"db_path": sqlite, "db_file": sqlite}
-        db = ThreediDatabase(
-            connection_settings=sqlite_settings, db_type="spatialite", echo=False
-        )
-    else:
-        postgis_settings = {
-            "host": host,
-            "port": port,
-            "database": database,
-            "username": username,
-            "password": password,
-        }
-        db = ThreediDatabase(
-            connection_settings=postgis_settings, db_type="postgres", echo=False
-        )
+    sqlite_settings = {"db_path": sqlite, "db_file": sqlite}
+    db = ThreediDatabase(connection_settings=sqlite_settings, echo=False)
     ctx.obj["db"] = db
 
 
