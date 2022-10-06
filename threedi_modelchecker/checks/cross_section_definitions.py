@@ -206,4 +206,4 @@ class CrossSectionFirstElementNonZeroCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
-        return f"The first element of {self.column_name} should be larger than 0 for shapes {self.shape_msg}. Zero as first value may lead to numerical issues."
+        return f"The first element of {self.column_name} must be larger than 0 for tabulated rectangle shapes. Consider using tabulated trapezium."
