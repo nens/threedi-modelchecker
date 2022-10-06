@@ -12,7 +12,7 @@ Initialisation:
 
 ```
 >>> from threedi_modelchecker import ThreediDatabase
->>> db = ThreediDatabase({"db_path": "/path/to/sqlite"})
+>>> db = ThreediDatabase("/path/to/sqlite")
 ```
 
 A database knows what version it has (including South legacy migrations):
