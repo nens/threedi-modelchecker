@@ -154,7 +154,7 @@ class ThreediDatabase:
             except Exception as e:
                 raise e
             else:
-                shutil.copy(str(work_file), self.settings["db_path"])
+                shutil.copy(str(work_file), self.path)
 
     def check_connection(self):
         """Check if there a connection can be started with the database

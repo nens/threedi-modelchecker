@@ -6,7 +6,7 @@ Create Date: 2021-09-29 13:50:19.544275
 
 """
 from alembic import op
-from sqlalchemy.engine.reflection import Inspector
+from sqlalchemy import inspect
 
 import re
 
@@ -98,7 +98,7 @@ VIEW_REGEX = re.compile(f".*(\\w+{options}\\w+).*")
 def upgrade():
     # first list views that refer to V1 TABLES
     conn = op.get_bind()
-    inspector = Inspector.from_engine(conn)
+    inspector = inspect(conn)
     view_names = inspector.get_view_names()
     for view_name in view_names:
         if view_name.startswith("v2_") or view_name in SPATIALITE_VIEWS:

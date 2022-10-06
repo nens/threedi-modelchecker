@@ -1,4 +1,5 @@
 from sqlalchemy import Column
+from sqlalchemy import inspect
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import String
@@ -114,7 +115,7 @@ def test_full_upgrade_empty(in_memory_sqlite):
     schema = ModelSchema(in_memory_sqlite)
     schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
-    assert in_memory_sqlite.get_engine().has_table("v2_connection_nodes")
+    assert inspect(in_memory_sqlite.get_engine()).has_table("v2_connection_nodes")
 
 
 def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
@@ -122,7 +123,7 @@ def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
     schema = ModelSchema(south_latest_sqlite)
     schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
-    assert south_latest_sqlite.get_engine().has_table("v2_connection_nodes")
+    assert inspect(south_latest_sqlite.get_engine()).has_table("v2_connection_nodes")
 
 
 def test_full_upgrade_oldest(oldest_sqlite):
@@ -130,7 +131,7 @@ def test_full_upgrade_oldest(oldest_sqlite):
     schema = ModelSchema(oldest_sqlite)
     schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
-    assert oldest_sqlite.get_engine().has_table("v2_connection_nodes")
+    assert inspect(oldest_sqlite.get_engine()).has_table("v2_connection_nodes")
 
 
 def test_upgrade_south_not_latest_errors(in_memory_sqlite):
@@ -147,8 +148,6 @@ def test_upgrade_south_not_latest_errors(in_memory_sqlite):
 
 def test_upgrade_with_backup(threedi_db):
     """Upgrading with backup=True will proceed on a copy of the database"""
-    if threedi_db.db_type != "spatialite":
-        pytest.skip()
     schema = ModelSchema(threedi_db)
     with mock.patch(
         "threedi_modelchecker.schema._upgrade_database", side_effect=RuntimeError

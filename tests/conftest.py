@@ -1,7 +1,6 @@
 from . import factories
 from threedi_modelchecker.model_checks import Context
 from threedi_modelchecker.model_checks import ThreediModelChecker
-from threedi_modelchecker.schema import ModelSchema
 from threedi_modelchecker.threedi_database import ThreediDatabase
 
 import pathlib
@@ -12,19 +11,16 @@ import shutil
 data_dir = pathlib.Path(__file__).parent / "data"
 
 
-@pytest.fixture(
-    scope="session", autouse=True, params=["empty_v3.sqlite", "empty_v4.sqlite"]
-)
-def upgrade_test_data(request):
-    db = ThreediDatabase(data_dir / request.param)
-    schema = ModelSchema(db)
-    schema.upgrade(backup=False, upgrade_spatialite_version=False)
+# @pytest.fixture(
+#     scope="session", autouse=True, params=["empty_v3.sqlite", "empty_v4.sqlite"]
+# )
+# def upgrade_test_data(request):
+#     db = ThreediDatabase(data_dir / request.param)
+#     schema = ModelSchema(db)
+#     schema.upgrade(backup=False, upgrade_spatialite_version=False)
 
 
-@pytest.fixture(
-    scope="session",
-    params=["spatialite3", "spatialite4"],
-)
+@pytest.fixture(scope="session")
 def threedi_db(request, tmpdir_factory):
     """Fixture which yields a empty 3di database
 
@@ -32,18 +28,10 @@ def threedi_db(request, tmpdir_factory):
     the factories to operate on the same session object. See:
     https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
     """
-    if request.param == "spatialite3":
-        tmp_path = tmpdir_factory.mktemp("spatialite3")
-        tmp_sqlite = tmp_path / "empty_v3.sqlite"
-        shutil.copyfile(data_dir / "empty_v3.sqlite", tmp_sqlite)
-        return ThreediDatabase(tmp_sqlite)
-    elif request.param == "spatialite4":
-        tmp_path = tmpdir_factory.mktemp("spatialite4")
-        tmp_sqlite = tmp_path / "empty_v4.sqlite"
-        shutil.copyfile(data_dir / "empty_v4.sqlite", tmp_sqlite)
-        return ThreediDatabase(tmp_sqlite)
-    else:
-        raise NotImplementedError(f"Unexpected param: {request.param}")
+    tmp_path = tmpdir_factory.mktemp("spatialite4")
+    tmp_sqlite = tmp_path / "empty_v4.sqlite"
+    shutil.copyfile(data_dir / "empty_v4.sqlite", tmp_sqlite)
+    return ThreediDatabase(tmp_sqlite)
 
 
 @pytest.fixture

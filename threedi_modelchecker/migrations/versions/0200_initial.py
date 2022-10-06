@@ -6,7 +6,7 @@ Create Date: 2021-02-15 16:31:00.792077
 
 """
 from alembic import op
-from sqlalchemy.engine.reflection import Inspector
+from sqlalchemy import inspect
 
 import geoalchemy2
 import sqlalchemy as sa
@@ -361,7 +361,7 @@ UPGRADE_LOOKUP = {
 
 def upgrade():
     conn = op.get_bind()
-    inspector = Inspector.from_engine(conn)
+    inspector = inspect(conn)
 
     # Setup the global 'existing_tables'
     _get_existing_tables(inspector)
