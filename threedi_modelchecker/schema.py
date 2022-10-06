@@ -10,7 +10,6 @@ from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import Column
-from sqlalchemy import inspect
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
@@ -89,7 +88,7 @@ class ModelSchema:
             "south_migrationhistory", MetaData(), Column("id", Integer)
         )
         engine = self.db.get_engine()
-        if not inspect(engine).has_table("south_migrationhistory"):
+        if not self.db.has_table("south_migrationhistory"):
             return
         with engine.connect() as connection:
             query = south_migrationhistory.select().order_by(

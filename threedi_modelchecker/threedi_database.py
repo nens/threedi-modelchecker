@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy import event
+from sqlalchemy import inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy.event import listen
 from sqlalchemy.orm import sessionmaker
@@ -170,3 +171,11 @@ class ThreediDatabase:
         """Should be called before doing anything with an untrusted sqlite file."""
         with self.session_scope() as session:
             session.execute("PRAGMA integrity_check")
+
+    def has_table(self, name):
+        engine = self.get_engine()
+        try:
+            # SQLAlchemy >= 1.4
+            return inspect(engine).has_table(name)
+        except AttributeError:  # SQLAlchemy < 1.4
+            return engine.has_table(name)

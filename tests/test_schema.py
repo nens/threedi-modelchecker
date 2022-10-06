@@ -1,5 +1,4 @@
 from sqlalchemy import Column
-from sqlalchemy import inspect
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import String
@@ -115,7 +114,7 @@ def test_full_upgrade_empty(in_memory_sqlite):
     schema = ModelSchema(in_memory_sqlite)
     schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
-    assert inspect(in_memory_sqlite.get_engine()).has_table("v2_connection_nodes")
+    assert in_memory_sqlite.has_table("v2_connection_nodes")
 
 
 def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
@@ -123,7 +122,7 @@ def test_full_upgrade_with_preexisting_version(south_latest_sqlite):
     schema = ModelSchema(south_latest_sqlite)
     schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
-    assert inspect(south_latest_sqlite.get_engine()).has_table("v2_connection_nodes")
+    assert south_latest_sqlite.has_table("v2_connection_nodes")
 
 
 def test_full_upgrade_oldest(oldest_sqlite):
@@ -131,7 +130,7 @@ def test_full_upgrade_oldest(oldest_sqlite):
     schema = ModelSchema(oldest_sqlite)
     schema.upgrade(backup=False, set_views=False, upgrade_spatialite_version=False)
     assert schema.get_version() == get_schema_version()
-    assert inspect(oldest_sqlite.get_engine()).has_table("v2_connection_nodes")
+    assert oldest_sqlite.has_table("v2_connection_nodes")
 
 
 def test_upgrade_south_not_latest_errors(in_memory_sqlite):
