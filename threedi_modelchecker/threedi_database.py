@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 import shutil
 import tempfile
 import uuid
+import warnings
 
 
 __all__ = ["ThreediDatabase"]
@@ -69,9 +70,14 @@ class ThreediDatabase:
         # backwards compat:
         # - connection_settings is just a path, but it could be {"db_path": <path>}
         # - db_type is ignored
-
-        path = connection_settings
-        self.path = path if isinstance(path, str) else path["db_path"]
+        if isinstance(connection_settings, dict):
+            self.path = connection_settings["db_path"]
+            warnings.warn(
+                "'connection-settings' is pending deprecation; please supply a path directly instead",
+                UserWarning,
+            )
+        else:
+            self.path = connection_settings
         self.echo = echo
 
         self._engine = None
@@ -79,10 +85,12 @@ class ThreediDatabase:
 
     @property
     def db_type(self):
+        warnings.warn("ThreediDatabase.db_type is pending deprecation", UserWarning)
         return "spatialite"  # backwards compat
 
     @property
     def settings(self):
+        warnings.warn("ThreediDatabase.settings is pending deprecation", UserWarning)
         return {"db_path": self.path}  # backwards compat
 
     @property
@@ -91,14 +99,11 @@ class ThreediDatabase:
 
     @property
     def base_path(self):
-        if self.db_type == "spatialite":
-            return Path(self.settings["db_path"]).absolute().parent
+        return Path(self.path).absolute().parent
 
     def get_engine(self, get_seperate_engine=False):
         if self._engine is None or get_seperate_engine:
-            engine = create_engine(
-                "sqlite:///{0}".format(self.settings["db_path"]), echo=self.echo
-            )
+            engine = create_engine("sqlite:///{0}".format(self.path), echo=self.echo)
             listen(engine, "connect", load_spatialite)
             if get_seperate_engine:
                 return engine
@@ -142,10 +147,10 @@ class ThreediDatabase:
             work_file = Path(tempdir) / f"work-{uuid.uuid4()}.sqlite"
             # copy the database to the temporary directory
             if not start_empty:
-                shutil.copy(self.settings["db_path"], str(work_file))
+                shutil.copy(self.path, str(work_file))
             # yield a new ThreediDatabase refering to the backup
             try:
-                yield self.__class__({"db_path": str(work_file)})
+                yield self.__class__(str(work_file))
             except Exception as e:
                 raise e
             else:
