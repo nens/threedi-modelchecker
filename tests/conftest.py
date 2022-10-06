@@ -4,16 +4,10 @@ from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.schema import ModelSchema
 from threedi_modelchecker.threedi_database import ThreediDatabase
 
-import os
 import pathlib
 import pytest
 import shutil
 
-
-try:
-    import psycopg2
-except ImportError:
-    psycopg2 = None
 
 data_dir = pathlib.Path(__file__).parent / "data"
 
@@ -22,14 +16,14 @@ data_dir = pathlib.Path(__file__).parent / "data"
     scope="session", autouse=True, params=["empty_v3.sqlite", "empty_v4.sqlite"]
 )
 def upgrade_test_data(request):
-    db = ThreediDatabase({"db_path": data_dir / request.param})
+    db = ThreediDatabase(data_dir / request.param)
     schema = ModelSchema(db)
     schema.upgrade(backup=False, upgrade_spatialite_version=False)
 
 
 @pytest.fixture(
     scope="session",
-    params=["spatialite3", "spatialite4", "postgis"],
+    params=["spatialite3", "spatialite4"],
 )
 def threedi_db(request, tmpdir_factory):
     """Fixture which yields a empty 3di database
@@ -42,31 +36,14 @@ def threedi_db(request, tmpdir_factory):
         tmp_path = tmpdir_factory.mktemp("spatialite3")
         tmp_sqlite = tmp_path / "empty_v3.sqlite"
         shutil.copyfile(data_dir / "empty_v3.sqlite", tmp_sqlite)
-        return ThreediDatabase(
-            {"db_path": tmp_sqlite},
-            db_type="spatialite",
-            echo=False,
-        )
+        return ThreediDatabase(tmp_sqlite)
     elif request.param == "spatialite4":
         tmp_path = tmpdir_factory.mktemp("spatialite4")
         tmp_sqlite = tmp_path / "empty_v4.sqlite"
         shutil.copyfile(data_dir / "empty_v4.sqlite", tmp_sqlite)
-        return ThreediDatabase(
-            {"db_path": tmp_sqlite},
-            db_type="spatialite",
-            echo=False,
-        )
-    elif request.param == "postgis":
-        postgis_settings = {
-            "host": os.environ.get("TEST_DB_HOST") or "localhost",
-            "port": 5432,
-            "database": "postgis",
-            "username": "postgis",
-            "password": "mysecret",
-        }
-        if psycopg2 is None:
-            pytest.skip("Skipping postgres test as psycopg2 is not available.")
-        return ThreediDatabase(postgis_settings, db_type="postgres", echo=False)
+        return ThreediDatabase(tmp_sqlite)
+    else:
+        raise NotImplementedError(f"Unexpected param: {request.param}")
 
 
 @pytest.fixture
@@ -99,7 +76,7 @@ def modelchecker(threedi_db):
 @pytest.fixture
 def in_memory_sqlite():
     """An in-memory database without a schema (to test schema migrations)"""
-    return ThreediDatabase({"db_path": ""}, db_type="spatialite", echo=False)
+    return ThreediDatabase("")
 
 
 @pytest.fixture
@@ -107,7 +84,7 @@ def empty_sqlite_v3(tmp_path):
     """A function-scoped empty spatialite v3 in the latest migration state"""
     tmp_sqlite = tmp_path / "empty_v3.sqlite"
     shutil.copyfile(data_dir / "empty_v3.sqlite", tmp_sqlite)
-    return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)
+    return ThreediDatabase(tmp_sqlite)
 
 
 @pytest.fixture
@@ -115,7 +92,7 @@ def empty_sqlite_v4(tmp_path):
     """An function-scoped empty spatialite v4 in the latest migration state"""
     tmp_sqlite = tmp_path / "empty_v4.sqlite"
     shutil.copyfile(data_dir / "empty_v4.sqlite", tmp_sqlite)
-    return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)
+    return ThreediDatabase(tmp_sqlite)
 
 
 @pytest.fixture
@@ -123,7 +100,7 @@ def south_latest_sqlite(tmp_path):
     """An empty SQLite that is in its latest South migration state"""
     tmp_sqlite = tmp_path / "south_latest.sqlite"
     shutil.copyfile(data_dir / "south_latest.sqlite", tmp_sqlite)
-    return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)
+    return ThreediDatabase(tmp_sqlite)
 
 
 @pytest.fixture
@@ -131,4 +108,4 @@ def oldest_sqlite(tmp_path):
     """A real SQLite that is in its oldest possible south migration state (160)"""
     tmp_sqlite = tmp_path / "noordpolder.sqlite"
     shutil.copyfile(data_dir / "noordpolder.sqlite", tmp_sqlite)
-    return ThreediDatabase({"db_path": tmp_sqlite}, db_type="spatialite", echo=False)
+    return ThreediDatabase(tmp_sqlite)

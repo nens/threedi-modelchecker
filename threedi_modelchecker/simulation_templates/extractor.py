@@ -40,10 +40,7 @@ class SimulationTemplateExtractor(object):
         param global_settings_id: if None the first global setting entry is taken (default)
         """
         self.sqlite_path = sqlite_path
-        self.database = ThreediDatabase(
-            connection_settings={"db_path": self.sqlite_path.as_posix()},
-            db_type="spatialite",
-        )
+        self.database = ThreediDatabase(str(self.sqlite_path))
 
     def _extract_simulation_template(
         self, session: Session, global_settings_id: Optional[int] = None

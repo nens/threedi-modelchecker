@@ -7,7 +7,6 @@ from sqlalchemy.event import listen
 from sqlalchemy.orm import sessionmaker
 
 import shutil
-import sqlite3
 import tempfile
 import uuid
 
@@ -27,13 +26,12 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
        "batch operations" fail in case a view referred to the table that is getting a "batch operation".
        The solution was a PRAGMA command. See https://www.sqlite.org/pragma.html#pragma_legacy_alter_table.
     """
-    if isinstance(dbapi_connection, sqlite3.Connection):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA legacy_alter_table=ON")
-        # Some additional pragmas recommended in https://www.sqlite.org/security.html, paragraph 1.2
-        cursor.execute("PRAGMA cell_size_check=ON")
-        cursor.execute("PRAGMA mmap_size=0")
-        cursor.close()
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA legacy_alter_table=ON")
+    # Some additional pragmas recommended in https://www.sqlite.org/security.html, paragraph 1.2
+    cursor.execute("PRAGMA cell_size_check=ON")
+    cursor.execute("PRAGMA mmap_size=0")
+    cursor.close()
 
 
 def load_spatialite(con, connection_record):
@@ -67,19 +65,25 @@ def load_spatialite(con, connection_record):
 
 
 class ThreediDatabase:
-    def __init__(self, connection_settings, db_type="spatialite", echo=False):
-        """
+    def __init__(self, connection_settings, db_type=None, echo=False):
+        # backwards compat:
+        # - connection_settings is just a path, but it could be {"db_path": <path>}
+        # - db_type is ignored
 
-        :param connection_settings:
-        db_type (str choice): database type. 'sqlite' and 'postgresql' are
-                              supported
-        """
-        self.settings = connection_settings
-        self.db_type = db_type
+        path = connection_settings
+        self.path = path if isinstance(path, str) else path["db_path"]
         self.echo = echo
 
         self._engine = None
         self._base_metadata = None
+
+    @property
+    def db_type(self):
+        return "spatialite"  # backwards compat
+
+    @property
+    def settings(self):
+        return {"db_path": self.path}  # backwards compat
 
     @property
     def engine(self):
@@ -91,29 +95,15 @@ class ThreediDatabase:
             return Path(self.settings["db_path"]).absolute().parent
 
     def get_engine(self, get_seperate_engine=False):
-
         if self._engine is None or get_seperate_engine:
-            if self.db_type == "spatialite":
-                engine = create_engine(
-                    "sqlite:///{0}".format(self.settings["db_path"]), echo=self.echo
-                )
-                listen(engine, "connect", load_spatialite)
-                if get_seperate_engine:
-                    return engine
-                else:
-                    self._engine = engine
-
-            elif self.db_type == "postgres":
-                con = (
-                    "postgresql://{username}:{password}@{host}:"
-                    "{port}/{database}".format(**self.settings)
-                )
-
-                engine = create_engine(con, echo=self.echo)
-                if get_seperate_engine:
-                    return engine
-                else:
-                    self._engine = engine
+            engine = create_engine(
+                "sqlite:///{0}".format(self.settings["db_path"]), echo=self.echo
+            )
+            listen(engine, "connect", load_spatialite)
+            if get_seperate_engine:
+                return engine
+            else:
+                self._engine = engine
 
         return self._engine
 
@@ -148,10 +138,6 @@ class ThreediDatabase:
         On contextmanager exit, the database is copied back and the real
         database is overwritten. On error, nothing happens.
         """
-        if self.db_type != "spatialite":
-            raise NotImplementedError(
-                f"Cannot make database backups for db_type {self.db_type}"
-            )
         with tempfile.TemporaryDirectory() as tempdir:
             work_file = Path(tempdir) / f"work-{uuid.uuid4()}.sqlite"
             # copy the database to the temporary directory
@@ -159,7 +145,7 @@ class ThreediDatabase:
                 shutil.copy(self.settings["db_path"], str(work_file))
             # yield a new ThreediDatabase refering to the backup
             try:
-                yield self.__class__({"db_path": str(work_file)}, "spatialite")
+                yield self.__class__({"db_path": str(work_file)})
             except Exception as e:
                 raise e
             else:

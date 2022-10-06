@@ -41,9 +41,7 @@ checks and print an overview of all discovered errors::
     from threedi_modelchecker import ThreediDatabase
 
     sqlite_file = "<Path to your sqlite file>"
-    database = ThreediDatabase(
-        connection_settings={"db_path": sqlite_file}, db_type="spatialite"
-    )
+    database = ThreediDatabase(sqlite_file)
 
     model_checker = ThreediModelChecker(database)
     for check, error in model_checker.errors(level="WARNING"):

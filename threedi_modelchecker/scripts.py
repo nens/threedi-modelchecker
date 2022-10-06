@@ -20,8 +20,7 @@ def threedi_modelchecker(ctx, sqlite):
     """Checks the threedi-model for errors / warnings / info messages"""
     ctx.ensure_object(dict)
 
-    sqlite_settings = {"db_path": sqlite, "db_file": sqlite}
-    db = ThreediDatabase(connection_settings=sqlite_settings, echo=False)
+    db = ThreediDatabase(sqlite, echo=False)
     ctx.obj["db"] = db
 
 
