@@ -8,6 +8,8 @@ Changelog of threedi-modelchecker
 - Emit an error for 0-width cross section definition. Before, only warnings were
   emitted.
 
+- Removed PostGIS support.
+
 
 0.28 (2022-09-20)
 -----------------
