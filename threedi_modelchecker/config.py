@@ -317,7 +317,6 @@ CHECKS += [
     ),
     CrossSectionGreaterZeroCheck(
         error_code=85,
-        level=CheckLevel.WARNING,
         column=models.CrossSectionDefinition.width,
         shapes=(
             constants.CrossSectionShape.RECTANGLE,
@@ -328,7 +327,6 @@ CHECKS += [
     ),
     CrossSectionGreaterZeroCheck(
         error_code=86,
-        level=CheckLevel.WARNING,
         column=models.CrossSectionDefinition.height,
         shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
     ),
@@ -365,7 +363,6 @@ CHECKS += [
     ),
     CrossSectionFirstElementNonZeroCheck(
         error_code=91,
-        level=CheckLevel.WARNING,
         column=models.CrossSectionDefinition.width,
         shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
     ),
