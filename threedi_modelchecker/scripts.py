@@ -62,13 +62,23 @@ def check(ctx, file, level):
 @click.option(
     "-r", "--revision", default="head", help="The schema revision to migrate to"
 )
+@click.option("--backup/--no-backup", default=True)
+@click.option("--set-views/--no-set-views", default=True)
+@click.option(
+    "--upgrade-spatialite-version/--no-upgrade-spatialite-version", default=False
+)
 @click.pass_context
-def migrate(ctx, revision):
+def migrate(ctx, revision, backup, set_views, upgrade_spatialite_version):
     """Migrate the threedi model schematisation to the latest version."""
     schema = ModelSchema(ctx.obj["db"])
     click.echo("The current schema revision is: %s" % schema.get_version())
     click.echo("Running alembic upgrade script...")
-    schema.upgrade(revision=revision)
+    schema.upgrade(
+        revision=revision,
+        backup=backup,
+        set_views=set_views,
+        upgrade_spatialite_version=upgrade_spatialite_version,
+    )
     click.echo("The migrated schema revision is: %s" % schema.get_version())
 
 
