@@ -34,6 +34,14 @@ def threedi_db(request, tmpdir_factory):
     return ThreediDatabase(tmp_sqlite)
 
 
+@pytest.fixture(scope="session")
+def gpkg_db(tmpdir_factory):
+    tmp_path = tmpdir_factory.mktemp("noordpolder")
+    tmp = tmp_path / "noordpolder.gpkg"
+    shutil.copyfile(data_dir / "noordpolder.gpkg", tmp)
+    return ThreediDatabase(tmp)
+
+
 @pytest.fixture
 def session(threedi_db):
     """Fixture which yields a session to an empty 3di database.

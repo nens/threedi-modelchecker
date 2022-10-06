@@ -60,6 +60,10 @@ def load_spatialite(con, connection_record):
         else:
             found = True
             break
+    try:
+        cur.execute("select EnableGpkgAmphibiousMode()")
+    except sqlite3.OperationalError:
+        pass
     if not found:
         raise RuntimeError("Cannot find any suitable spatialite module")
     cur.close()
