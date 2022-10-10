@@ -1,7 +1,7 @@
-from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
 from sqlalchemy.orm import Query
 from tests import factories
+from threedi_modelchecker.checks import geo_query
 from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_types
 from threedi_modelchecker.checks.base import EnumCheck
 from threedi_modelchecker.checks.base import FileExistsCheck
@@ -567,40 +567,7 @@ def test_global_settings_start_date(session):
     assert errors[0].id == wrong_start_date.id
 
 
-def test_length_geom_linestring_in_28992(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Postgres already has a constrain that checks on the length")
-    # around 0.109m
-    factories.ChannelFactory(
-        the_geom="SRID=4326;LINESTRING("
-        "122829.98048471771471668 473589.68720115750329569, "
-        "122830.00490918199648149 473589.68720115750329569, "
-        "122829.95687440223991871 473589.70983449439518154, "
-        "122829.9793449093849631 473589.68850379559444264)"
-    )
-    # around 0.001m
-    channel_too_short = factories.ChannelFactory(
-        the_geom="SRID=4326;LINESTRING("
-        "122829.98185859377554152 473589.69248294795397669, "
-        "122829.98260150455462281 473589.69248294795397669)",
-    )
-
-    check_length_linestring = QueryCheck(
-        column=models.Channel.the_geom,
-        invalid=Query(models.Channel).filter(
-            geo_func.ST_Length(models.Channel.the_geom) < 0.05
-        ),
-        message="Length of the v2_channel is too short, should be at least 0.05m",
-    )
-
-    errors = check_length_linestring.get_invalid(session)
-    assert len(errors) == 1
-    assert errors[0].id == channel_too_short.id
-
-
 def test_length_geom_linestring_in_4326(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Postgres already has a constrain that checks on the length")
     factories.GlobalSettingsFactory(epsg_code=28992)
     channel_too_short = factories.ChannelFactory(
         the_geom="SRID=4326;LINESTRING("
@@ -615,14 +582,7 @@ def test_length_geom_linestring_in_4326(session):
         "-0.38222940929989008 -0.13872235591735235)",
     )
 
-    q = Query(models.Channel).filter(
-        geo_func.ST_Length(
-            geo_func.ST_Transform(
-                models.Channel.the_geom, Query(models.GlobalSetting.epsg_code).limit(1)
-            )
-        )
-        < 0.05
-    )
+    q = Query(models.Channel).filter(geo_query.length(models.Channel.the_geom) < 0.05)
     check_length_linestring = QueryCheck(
         column=models.Channel.the_geom,
         invalid=q,
@@ -635,8 +595,6 @@ def test_length_geom_linestring_in_4326(session):
 
 
 def test_length_geom_linestring_missing_epsg_from_global_settings(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Postgres already has a constrain that checks on the length")
     factories.ChannelFactory(
         the_geom="SRID=4326;LINESTRING("
         "-0.38222938832999598 -0.13872236685816669, "
@@ -650,14 +608,7 @@ def test_length_geom_linestring_missing_epsg_from_global_settings(session):
         "-0.38222940929989008 -0.13872235591735235)",
     )
 
-    q = Query(models.Channel).filter(
-        geo_func.ST_Length(
-            geo_func.ST_Transform(
-                models.Channel.the_geom, Query(models.GlobalSetting.epsg_code).limit(1)
-            )
-        )
-        < 0.05
-    )
+    q = Query(models.Channel).filter(geo_query.length(models.Channel.the_geom) < 0.05)
     check_length_linestring = QueryCheck(
         column=models.Channel.the_geom,
         invalid=q,
@@ -665,7 +616,7 @@ def test_length_geom_linestring_missing_epsg_from_global_settings(session):
     )
 
     errors = check_length_linestring.get_invalid(session)
-    assert len(errors) == 0
+    assert len(errors) == 1
 
 
 def test_file_exists_check_filesystem_ok(session, tmp_path):
