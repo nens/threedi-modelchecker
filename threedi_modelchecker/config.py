@@ -1344,13 +1344,6 @@ CHECKS += [
         error_code=1124,
         column=models.GlobalSetting.flooding_threshold,
         min_value=0,
-        max_value=0.3,
-    ),
-    RangeCheck(
-        error_code=1124,
-        level=CheckLevel.WARNING,
-        column=models.GlobalSetting.flooding_threshold,
-        min_value=0,
         max_value=0.05,
     ),
     QueryCheck(

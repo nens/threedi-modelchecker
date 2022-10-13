@@ -8,9 +8,13 @@ Changelog of threedi-modelchecker
 - Emit an error for 0-width cross section definition. Before, only warnings were
   emitted.
 
+- Changed flooding_threshold (numerical settings) maximum from 0.3 to 0.05.
+
 - Removed PostGIS support.
 
 - Check that refinement_level is not greater than kmax (E0800).
+
+- Require at least python 3.7, sqlalchemy 1.3 and alembic 1.8 to fix a bug in migration 173.
 
 
 0.28 (2022-09-20)

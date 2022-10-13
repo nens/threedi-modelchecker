@@ -8,9 +8,8 @@ long_description = "\n\n".join([open("README.rst").read()])
 install_requires = [
     "Click",
     "GeoAlchemy2>=0.9,!=0.11.*",
-    "SQLAlchemy>=1.2",
-    "alembic>=0.9",
-    "dataclasses ; python_version<'3.7'",
+    "SQLAlchemy>=1.3",
+    "alembic>=1.8",
 ]
 
 tests_require = [
@@ -63,7 +62,7 @@ setup(
         "test": tests_require,
         "simulation_templates": simulation_templates_require,
     },
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     entry_points={
         "console_scripts": [
             "threedi_modelchecker = threedi_modelchecker.scripts:threedi_modelchecker"
