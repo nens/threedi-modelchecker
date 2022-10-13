@@ -8,6 +8,8 @@ Changelog of threedi-modelchecker
 - Emit an error for 0-width cross section definition. Before, only warnings were
   emitted.
 
+- Changed flooding_threshold (numerical settings) maximum from 0.3 to 0.05.
+
 - Removed PostGIS support.
 
 
