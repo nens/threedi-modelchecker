@@ -1169,6 +1169,14 @@ CHECKS += [
     )
     for model in (models.GridRefinement, models.GridRefinementArea)
 ]
+CHECKS += [
+    RangeCheck(
+        error_code=801,
+        column=model.refinement_level,
+        min_value=1,
+    )
+    for model in (models.GridRefinement, models.GridRefinementArea)
+]
 
 ## 110x: SIMULATION SETTINGS, timestep
 CHECKS += [
