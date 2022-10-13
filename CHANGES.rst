@@ -12,6 +12,8 @@ Changelog of threedi-modelchecker
 
 - Removed PostGIS support.
 
+- Removed v2_surface_map.surface_type.
+
 
 0.28 (2022-09-20)
 -----------------

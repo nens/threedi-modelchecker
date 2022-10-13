@@ -265,7 +265,6 @@ class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     percentage = 100.0
-    surface_type = constants.SurfaceType.SURFACE
 
 
 class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):

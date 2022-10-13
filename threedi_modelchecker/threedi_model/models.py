@@ -523,7 +523,6 @@ class BoundaryCondition1D(Base):
 class SurfaceMap(Base):
     __tablename__ = "v2_surface_map"
     id = Column(Integer, primary_key=True)
-    surface_type = Column(VarcharEnum(constants.SurfaceType), nullable=False)
     surface_id = Column(Integer, nullable=False)
     connection_node_id = Column(
         Integer, ForeignKey(ConnectionNode.__tablename__ + ".id"), nullable=False
