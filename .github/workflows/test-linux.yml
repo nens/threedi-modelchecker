@@ -17,20 +17,24 @@ jobs:
         include:
           # 2017
           - python: 3.6
-            pins: "sqlalchemy==1.2.* geoalchemy2==0.9.* alembic==0.9.*"
+            pins: "sqlalchemy==1.3.* geoalchemy2==0.9.*"
             extras: "test,simulation_templates"
           # 2018
           - python: 3.7
-            pins: "sqlalchemy==1.2.* alembic==1.2.*"
+            pins: "sqlalchemy==1.3.* alembic==1.8.* geoalchemy2==0.9.*"
             extras: "test,simulation_templates"
           # 2019
           - python: 3.8
-            pins: "sqlalchemy==1.3.* alembic==1.4.*"
+            pins: "sqlalchemy==1.3.* alembic==1.8.* geoalchemy2==0.9.*"
+            extras: "test,simulation_templates"
+          # 2021
+          - python: 3.9
+            pins: "sqlalchemy==1.4.30 alembic==1.8.* geoalchemy2==0.10.*"
             extras: "test,simulation_templates"
           # current
-          - python: 3.9
+          - python: "3.10"
             pins: ""
-            extras: "test,simulation_templates,migrations"
+            extras: "test,simulation_templates"
 
     steps:
       - uses: actions/checkout@v2

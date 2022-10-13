@@ -10,6 +10,8 @@ Changelog of threedi-modelchecker
 
 - Removed PostGIS support.
 
+- Require at least alembic 1.8 to fix a bug in migration 173.
+
 
 0.28 (2022-09-20)
 -----------------

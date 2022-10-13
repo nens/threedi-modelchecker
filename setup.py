@@ -8,8 +8,8 @@ long_description = "\n\n".join([open("README.rst").read()])
 install_requires = [
     "Click",
     "GeoAlchemy2>=0.9,!=0.11.*",
-    "SQLAlchemy>=1.2",
-    "alembic>=0.9",
+    "SQLAlchemy>=1.3",
+    "alembic>=1.8",
     "dataclasses ; python_version<'3.7'",
 ]
 
