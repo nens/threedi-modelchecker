@@ -60,6 +60,11 @@ CONDITIONS = {
     ),
 }
 
+try:
+    kmax = Query(models.GlobalSetting.kmax).limit(1).scalar_subquery()
+except AttributeError:
+    kmax = Query(models.GlobalSetting.kmax).limit(1).as_scalar()
+
 CHECKS: List[BaseCheck] = []
 
 ## 002x: FRICTION
@@ -1154,6 +1159,16 @@ CHECKS += [
     ),
 ]
 
+## 080x: refinement levels
+CHECKS += [
+    QueryCheck(
+        error_code=800,
+        column=model.refinement_level,
+        invalid=Query(model).filter(model.refinement_level > kmax),
+        message=f"{model.__table__.name}.refinement_level must not be greater than v2_global_settings.kmax",
+    )
+    for model in (models.GridRefinement, models.GridRefinementArea)
+]
 
 ## 110x: SIMULATION SETTINGS, timestep
 CHECKS += [

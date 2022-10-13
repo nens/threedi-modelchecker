@@ -10,6 +10,8 @@ Changelog of threedi-modelchecker
 
 - Removed PostGIS support.
 
+- Check that refinement_level is not greater than kmax (E0800).
+
 
 0.28 (2022-09-20)
 -----------------
