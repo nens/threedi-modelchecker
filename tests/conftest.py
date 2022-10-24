@@ -1,6 +1,7 @@
 from . import factories
 from threedi_modelchecker.model_checks import Context
 from threedi_modelchecker.model_checks import ThreediModelChecker
+from threedi_modelchecker.schema import ModelSchema
 from threedi_modelchecker.threedi_database import ThreediDatabase
 
 import pathlib
@@ -11,17 +12,8 @@ import shutil
 data_dir = pathlib.Path(__file__).parent / "data"
 
 
-# @pytest.fixture(
-#     scope="session", autouse=True, params=["empty_v3.sqlite", "empty_v4.sqlite"]
-# )
-# def upgrade_test_data(request):
-#     db = ThreediDatabase(data_dir / request.param)
-#     schema = ModelSchema(db)
-#     schema.upgrade(backup=False, upgrade_spatialite_version=False)
-
-
 @pytest.fixture(scope="session")
-def threedi_db(request, tmpdir_factory):
+def threedi_db(tmpdir_factory):
     """Fixture which yields a empty 3di database
 
     A global Session object is configured based on database type. This allows
@@ -31,7 +23,10 @@ def threedi_db(request, tmpdir_factory):
     tmp_path = tmpdir_factory.mktemp("spatialite4")
     tmp_sqlite = tmp_path / "empty_v4.sqlite"
     shutil.copyfile(data_dir / "empty_v4.sqlite", tmp_sqlite)
-    return ThreediDatabase(tmp_sqlite)
+    db = ThreediDatabase(tmp_sqlite)
+    schema = ModelSchema(db)
+    schema.upgrade(backup=False, upgrade_spatialite_version=False)
+    return db
 
 
 @pytest.fixture(scope="session")
