@@ -14,6 +14,8 @@ Changelog of threedi-modelchecker
 
 - Removed v2_surface_map.surface_type.
 
+- Check that refinement_level is not greater than kmax (E0800).
+
 - Require at least python 3.7, sqlalchemy 1.3 and alembic 1.8 to fix a bug in migration 173.
 
 
