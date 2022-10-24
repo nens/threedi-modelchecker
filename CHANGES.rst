@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.29 (unreleased)
+0.30 (2022-10-24)
 -----------------
 
 - Emit an error for 0-width cross section definition. Before, only warnings were
