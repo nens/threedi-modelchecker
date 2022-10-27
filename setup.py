@@ -39,7 +39,7 @@ def get_version():
 setup(
     name="threedi-modelchecker",
     version=get_version(),
-    description="Checks validity of a threedi-model",
+    description="Checks validity of a 3Di schematisation",
     long_description=long_description,
     # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[

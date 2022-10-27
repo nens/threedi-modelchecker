@@ -5,7 +5,9 @@ Changelog of threedi-modelchecker
 0.31 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fixed min node distance warning (201) in case there is no spatial index.
+
+- Added a check for bottom_level presence for nodes without connected objects.
 
 
 0.30 (2022-10-24)

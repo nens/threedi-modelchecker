@@ -161,14 +161,8 @@ class ConnectionNodesDistance(BaseCheck):
         if session.bind.name == "postgresql":
             return []
 
-        check_spatial_index = (
-            "SELECT CheckSpatialIndex('v2_connection_nodes', 'the_geom')"
-        )
-        if not session.connection().execute(check_spatial_index).scalar():
-            recover_spatial_index = (
-                "SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')"
-            )
-            session.connection().execute(recover_spatial_index).scalar()
+        if session.connection().execute("SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')").scalar() is None:
+            session.connection().execute("SELECT CreateSpatialIndex('v2_connection_nodes', 'the_geom')").scalar()
 
         query = text(
             f"""SELECT *
@@ -194,7 +188,7 @@ class ConnectionNodesDistance(BaseCheck):
 
     def description(self) -> str:
         return (
-            f"The connection_node is within {self.minimum_distance} meters of "
+            f"The connection_node is within {self.minimum_distance} degrees of "
             f"another connection_node."
         )
 

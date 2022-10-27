@@ -43,7 +43,7 @@ def check(ctx, file, level):
         msg = "errors or warnings"
     else:
         msg = "errors, warnings or info messages"
-    click.echo("Parsing threedi-model for any %s" % msg)
+    click.echo("Parsing schematisation for any %s" % msg)
     if file:
         click.echo("Model errors will be written to %s" % file)
 

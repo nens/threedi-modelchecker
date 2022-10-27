@@ -612,6 +612,33 @@ CHECKS += [
         models.Weir,
     )
 ]
+CHECKS += [
+    QueryCheck(
+        error_code=254,
+        level=CheckLevel.ERROR,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .join(models.Manhole, isouter=True)
+        .filter(
+            models.Manhole.bottom_level == None,
+            models.ConnectionNode.id.notin_(
+                Query(models.Pipe.connection_node_start_id).union_all(
+                    Query(models.Pipe.connection_node_end_id),
+                    Query(models.Channel.connection_node_start_id),
+                    Query(models.Channel.connection_node_end_id),
+                    Query(models.Culvert.connection_node_start_id),
+                    Query(models.Culvert.connection_node_end_id),
+                    Query(models.Weir.connection_node_start_id),
+                    Query(models.Weir.connection_node_end_id),
+                    Query(models.Orifice.connection_node_start_id),
+                    Query(models.Orifice.connection_node_end_id),
+                )
+            ),
+        ),
+        message="A connection node that is not connected to a pipe, "
+        "channel, culvert, weir, or orifice must have a manhole with a bottom_level.",
+    ),
+]
 
 
 ## 030x: SETTINGS
