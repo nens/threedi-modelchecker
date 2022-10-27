@@ -161,8 +161,15 @@ class ConnectionNodesDistance(BaseCheck):
         if session.bind.name == "postgresql":
             return []
 
-        if session.connection().execute("SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')").scalar() is None:
-            session.connection().execute("SELECT CreateSpatialIndex('v2_connection_nodes', 'the_geom')").scalar()
+        if (
+            session.connection()
+            .execute("SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')")
+            .scalar()
+            is None
+        ):
+            session.connection().execute(
+                "SELECT CreateSpatialIndex('v2_connection_nodes', 'the_geom')"
+            ).scalar()
 
         query = text(
             f"""SELECT *
