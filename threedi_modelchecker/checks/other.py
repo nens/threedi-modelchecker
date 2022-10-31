@@ -3,6 +3,7 @@ from ..threedi_model import models
 from .base import BaseCheck
 from .base import CheckLevel
 from .geo_query import distance
+from dataclasses import dataclass
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
 from sqlalchemy import text
@@ -335,8 +336,11 @@ class BoundaryCondition1DObjectNumberCheck(BaseCheck):
         return "1D boundary condition should be connected to exactly one object."
 
 
+@dataclass
 class IndexMissingRecord:
-    id = 1
+    id: int
+    table_name: str
+    column_name: str
 
 
 class SpatialIndexCheck(BaseCheck):
@@ -349,7 +353,13 @@ class SpatialIndexCheck(BaseCheck):
         if result == 1:
             return []
         else:
-            return [IndexMissingRecord()]
+            return [
+                IndexMissingRecord(
+                    id=1,
+                    table_name=self.column.table.name,
+                    column_name=self.column.name,
+                )
+            ]
 
     def description(self) -> str:
         return f"{self.column_name} has no valid spatial index, which is required for some checks"

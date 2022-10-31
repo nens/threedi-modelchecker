@@ -230,7 +230,8 @@ def test_spatial_index_ok(session):
     assert len(invalid) == 0
 
 
-def test_spatial_index_disabled(session):
+def test_spatial_index_disabled(empty_sqlite_v4):
+    session = empty_sqlite_v4.get_session()
     session.execute("SELECT DisableSpatialIndex('v2_connection_nodes', 'the_geom')")
     check = SpatialIndexCheck(models.ConnectionNode.the_geom)
     invalid = check.get_invalid(session)
