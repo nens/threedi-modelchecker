@@ -82,5 +82,15 @@ def migrate(ctx, revision, backup, set_views, upgrade_spatialite_version):
     click.echo("The migrated schema revision is: %s" % schema.get_version())
 
 
+@threedi_modelchecker.command()
+@click.pass_context
+def index(ctx):
+    """Set the indexes of a threedi model schematisation."""
+    schema = ModelSchema(ctx.obj["db"])
+    click.echo("Recovering indexes...")
+    schema.set_spatial_indexes()
+    click.echo("Done.")
+
+
 if __name__ == "__main__":
     threedi_modelchecker()

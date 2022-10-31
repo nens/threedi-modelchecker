@@ -158,19 +158,6 @@ class ConnectionNodesDistance(BaseCheck):
 
         The query only works on a spatialite and therefore skips postgres.
         """
-        if session.bind.name == "postgresql":
-            return []
-
-        if (
-            session.connection()
-            .execute("SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')")
-            .scalar()
-            is None
-        ):
-            session.connection().execute(
-                "SELECT CreateSpatialIndex('v2_connection_nodes', 'the_geom')"
-            ).scalar()
-
         query = text(
             f"""SELECT *
                FROM v2_connection_nodes AS cn1, v2_connection_nodes AS cn2
@@ -346,3 +333,23 @@ class BoundaryCondition1DObjectNumberCheck(BaseCheck):
 
     def description(self) -> str:
         return "1D boundary condition should be connected to exactly one object."
+
+
+class IndexMissingRecord:
+    id = 1
+
+
+class SpatialIndexCheck(BaseCheck):
+    """Checks whether a spatial index is present and valid"""
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        result = session.execute(
+            func.CheckSpatialIndex(self.column.table.name, self.column.name)
+        ).scalar()
+        if result == 1:
+            return []
+        else:
+            return [IndexMissingRecord()]
+
+    def description(self) -> str:
+        return f"{self.column_name} has no valid spatial index, which is required for some checks"

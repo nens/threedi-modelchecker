@@ -9,7 +9,9 @@ from alembic.config import Config
 from alembic.environment import EnvironmentContext
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
+from geoalchemy2.types import Geometry
 from sqlalchemy import Column
+from sqlalchemy import func
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import Table
@@ -75,6 +77,51 @@ def _recreate_views(db, file_version):
             connection.execute(
                 f"DELETE FROM views_geometry_columns WHERE view_name = '{name}'"
             )
+
+
+def _ensure_spatial_index(connection, column):
+    """Ensure presence of a spatial index for given geometry olumn"""
+    if (
+        connection.execute(
+            func.RecoverSpatialIndex(column.table.name, column.name)
+        ).scalar()
+        is not None
+    ):
+        return False
+
+    idx_name = f"{column.table.name}_{column.name}"
+    connection.execute(f"DROP TABLE IF EXISTS idx_{idx_name}")
+    for prefix in {"gii_", "giu_", "gid_"}:
+        connection.execute(f"DROP TRIGGER IF EXISTS {prefix}{idx_name}")
+    if (
+        connection.execute(
+            func.CreateSpatialIndex(column.table.name, column.name)
+        ).scalar()
+        != 1
+    ):
+        raise RuntimeError(f"Spatial index creation for {idx_name} failed")
+
+    return True
+
+
+def _ensure_spatial_indexes(db):
+    """Ensure presence of spatial indexes for all geometry columns"""
+    created = False
+    engine = db.get_engine()
+
+    with engine.begin() as connection:
+        for model in models.DECLARED_MODELS:
+            geom_columns = [
+                x for x in model.__table__.columns if type(x.type) == Geometry
+            ]
+            if len(geom_columns) > 1:
+                # Pragmatic fix: spatialindex breaks on multiple geometry columns per table
+                geom_columns = [x for x in geom_columns if x.name == "the_geom"]
+            if geom_columns:
+                created &= _ensure_spatial_index(connection, geom_columns[0])
+
+        if created:
+            connection.execute("VACUUM")
 
 
 class ModelSchema:
@@ -208,6 +255,18 @@ class ModelSchema:
         _, file_version = get_spatialite_version(self.db)
 
         _recreate_views(self.db, file_version)
+
+    def set_spatial_indexes(self):
+        """(Re)create spatial indexes in the spatialite according to the latest definitions."""
+        version = self.get_version()
+        schema_version = get_schema_version()
+        if version != schema_version:
+            raise MigrationMissingError(
+                f"Setting views requires schema version "
+                f"{schema_version}. Current version: {version}."
+            )
+
+        _ensure_spatial_indexes(self.db)
 
     def upgrade_spatialite_version(self):
         """Upgrade the version of the spatialite file to the version of the
