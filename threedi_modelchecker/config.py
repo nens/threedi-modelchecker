@@ -30,6 +30,7 @@ from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionLocationCheck
 from .checks.other import LinestringLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
+from .checks.other import SpatialIndexCheck
 from .checks.other import Use0DFlowCheck
 from .checks.timeseries import TimeseriesIncreasingCheck
 from .checks.timeseries import TimeseriesRowCheck
@@ -536,6 +537,11 @@ CHECKS += [
         message="The 'the_geom_linestring' column of v2_connection_nodes must be NULL",
     )
 ]
+CHECKS += [
+    SpatialIndexCheck(
+        error_code=207, column=models.ConnectionNode.the_geom, level=CheckLevel.WARNING
+    )
+]
 
 
 ## 025x: Connectivity
@@ -612,6 +618,33 @@ CHECKS += [
         models.Pumpstation,
         models.Weir,
     )
+]
+CHECKS += [
+    QueryCheck(
+        error_code=254,
+        level=CheckLevel.ERROR,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .join(models.Manhole, isouter=True)
+        .filter(
+            models.Manhole.bottom_level == None,
+            models.ConnectionNode.id.notin_(
+                Query(models.Pipe.connection_node_start_id).union_all(
+                    Query(models.Pipe.connection_node_end_id),
+                    Query(models.Channel.connection_node_start_id),
+                    Query(models.Channel.connection_node_end_id),
+                    Query(models.Culvert.connection_node_start_id),
+                    Query(models.Culvert.connection_node_end_id),
+                    Query(models.Weir.connection_node_start_id),
+                    Query(models.Weir.connection_node_end_id),
+                    Query(models.Orifice.connection_node_start_id),
+                    Query(models.Orifice.connection_node_end_id),
+                )
+            ),
+        ),
+        message="A connection node that is not connected to a pipe, "
+        "channel, culvert, weir, or orifice must have a manhole with a bottom_level.",
+    ),
 ]
 
 

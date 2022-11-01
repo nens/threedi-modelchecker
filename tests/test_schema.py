@@ -197,3 +197,33 @@ def test_upgrade_spatialite_3(oldest_sqlite):
 
     _, file_version_after = get_spatialite_version(oldest_sqlite)
     assert file_version_after == 4
+
+    # the spatial indexes are there
+    with oldest_sqlite.get_engine().begin() as connection:
+        check_result = connection.execute(
+            "SELECT CheckSpatialIndex('v2_connection_nodes', 'the_geom')"
+        ).scalar()
+
+    assert check_result == 1
+
+
+def test_set_spatial_indexes(in_memory_sqlite):
+    engine = in_memory_sqlite.get_engine()
+
+    schema = ModelSchema(in_memory_sqlite)
+    schema.upgrade(backup=False)
+
+    with engine.begin() as connection:
+        connection.execute(
+            "SELECT DisableSpatialIndex('v2_connection_nodes', 'the_geom')"
+        ).scalar()
+        connection.execute("DROP TABLE idx_v2_connection_nodes_the_geom")
+
+    schema.set_spatial_indexes()
+
+    with engine.begin() as connection:
+        check_result = connection.execute(
+            "SELECT CheckSpatialIndex('v2_connection_nodes', 'the_geom')"
+        ).scalar()
+
+    assert check_result == 1

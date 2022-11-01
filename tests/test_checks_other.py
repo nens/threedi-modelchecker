@@ -7,6 +7,7 @@ from threedi_modelchecker.checks.other import ConnectionNodesLength
 from threedi_modelchecker.checks.other import CrossSectionLocationCheck
 from threedi_modelchecker.checks.other import LinestringLocationCheck
 from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton
+from threedi_modelchecker.checks.other import SpatialIndexCheck
 from threedi_modelchecker.threedi_model import constants
 from threedi_modelchecker.threedi_model import models
 
@@ -131,8 +132,6 @@ def test_open_channels_with_nested_newton(session):
 
 
 def test_node_distance(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Check only applicable to spatialite")
     con1_too_close = factories.ConnectionNodeFactory(
         the_geom="SRID=4326;POINT(4.728282 52.64579283592512)"
     )
@@ -223,3 +222,17 @@ def test_cross_section_location(session):
     )
     errors = CrossSectionLocationCheck(0.1).get_invalid(session)
     assert len(errors) == 1
+
+
+def test_spatial_index_ok(session):
+    check = SpatialIndexCheck(models.ConnectionNode.the_geom)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 0
+
+
+def test_spatial_index_disabled(empty_sqlite_v4):
+    session = empty_sqlite_v4.get_session()
+    session.execute("SELECT DisableSpatialIndex('v2_connection_nodes', 'the_geom')")
+    check = SpatialIndexCheck(models.ConnectionNode.the_geom)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 1

@@ -43,7 +43,7 @@ def check(ctx, file, level):
         msg = "errors or warnings"
     else:
         msg = "errors, warnings or info messages"
-    click.echo("Parsing threedi-model for any %s" % msg)
+    click.echo("Parsing schematisation for any %s" % msg)
     if file:
         click.echo("Model errors will be written to %s" % file)
 
@@ -80,6 +80,16 @@ def migrate(ctx, revision, backup, set_views, upgrade_spatialite_version):
         upgrade_spatialite_version=upgrade_spatialite_version,
     )
     click.echo("The migrated schema revision is: %s" % schema.get_version())
+
+
+@threedi_modelchecker.command()
+@click.pass_context
+def index(ctx):
+    """Set the indexes of a threedi model schematisation."""
+    schema = ModelSchema(ctx.obj["db"])
+    click.echo("Recovering indexes...")
+    schema.set_spatial_indexes()
+    click.echo("Done.")
 
 
 if __name__ == "__main__":
