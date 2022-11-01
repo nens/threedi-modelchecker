@@ -6,6 +6,7 @@ from .checks.base import ForeignKeyCheck
 from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
 from .checks.base import RangeCheck
+from .checks.base import UniqueCheck
 from .checks.cross_section_definitions import CrossSectionEqualElementsCheck
 from .checks.cross_section_definitions import (
     CrossSectionFirstElementNonZeroCheck,
@@ -772,9 +773,17 @@ CHECKS += [
         ),
         message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.table_step_size.",
     ),
+    UniqueCheck(
+        error_code=324,
+        level=CheckLevel.WARNING,
+        columns=(
+            models.AggregationSettings.flow_variable,
+            models.AggregationSettings.aggregation_method,
+        ),
+    ),
 ]
 
-## 04xx: Groundwater, Interflow & Infiltration
+## 04xx: Groundwater, IWAnterflow & Infiltration
 CHECKS += [
     RangeCheck(
         error_code=401,

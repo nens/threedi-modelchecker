@@ -5,7 +5,8 @@ Changelog of threedi-modelchecker
 0.31 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added error 324: warning when v2_aggregation_settings.flow_variable and
+  .aggregation_method are not unique together.
 
 
 0.30 (2022-10-24)

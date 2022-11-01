@@ -162,6 +162,19 @@ def test_unique_check_multiple_columns_duplicate(session):
     assert len(invalid_rows) == 2
 
 
+def test_unique_check_multiple_description():
+    unique_check = UniqueCheck(
+        (
+            models.AggregationSettings.flow_variable,
+            models.AggregationSettings.aggregation_method,
+        )
+    )
+    assert unique_check.description() == (
+        "columns ['flow_variable', 'aggregation_method'] in table "
+        "v2_aggregation_settings should be unique together"
+    )
+
+
 def test_null_check(session):
     factories.ConnectionNodeFactory.create_batch(5, storage_area=3.0)
 

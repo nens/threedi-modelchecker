@@ -179,7 +179,10 @@ class UniqueCheck(BaseCheck):
         return q_invalid.all()
 
     def description(self):
-        return f"{self.column_name} should to be unique"
+        if len(self.columns) > 1:
+            return f"columns {[c.name for c in self.columns]} in table {self.table.name} should be unique together"
+        else:
+            return f"{self.column_name} should to be unique"
 
 
 class UniqueTogetherCheck(BaseCheck):
