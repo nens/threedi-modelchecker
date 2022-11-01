@@ -160,6 +160,37 @@ class UniqueCheck(BaseCheck):
 
     Null values are ignored."""
 
+    def __init__(self, columns, **kwargs):
+        if not isinstance(columns, (list, tuple)):
+            columns = (columns,)
+        self.columns = columns
+        super().__init__(column=columns[0], **kwargs)
+
+    def get_invalid(self, session):
+        duplicate_values = (
+            session.query(*self.columns)
+            .group_by(*self.columns)
+            .having(func.count(self.column) > 1)
+        ).subquery()
+        join_clause = and_(
+            *[getattr(duplicate_values.c, c.name) == c for c in self.columns]
+        )
+        q_invalid = self.to_check(session).join(duplicate_values, join_clause)
+        return q_invalid.all()
+
+    def description(self):
+        return f"{self.column_name} should to be unique"
+
+
+class UniqueTogetherCheck(BaseCheck):
+    """Check all values in `column` are unique
+
+    Null values are ignored."""
+
+    def __init__(self, columns, **kwargs):
+        self.columns = columns
+        super().__init__(column=columns[0], **kwargs)
+
     def get_invalid(self, session):
         duplicate_values = (
             session.query(self.column)
