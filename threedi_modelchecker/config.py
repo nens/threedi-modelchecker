@@ -783,7 +783,7 @@ CHECKS += [
     ),
 ]
 
-## 04xx: Groundwater, IWAnterflow & Infiltration
+## 04xx: Groundwater, Interflow & Infiltration
 CHECKS += [
     RangeCheck(
         error_code=401,

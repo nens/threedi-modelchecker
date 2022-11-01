@@ -185,29 +185,6 @@ class UniqueCheck(BaseCheck):
             return f"{self.column_name} should to be unique"
 
 
-class UniqueTogetherCheck(BaseCheck):
-    """Check all values in `column` are unique
-
-    Null values are ignored."""
-
-    def __init__(self, columns, **kwargs):
-        self.columns = columns
-        super().__init__(column=columns[0], **kwargs)
-
-    def get_invalid(self, session):
-        duplicate_values = (
-            session.query(self.column)
-            .group_by(self.column)
-            .having(func.count(self.column) > 1)
-        )
-        q_invalid = self.to_check(session)
-        invalid_uniques_query = q_invalid.filter(self.column.in_(duplicate_values))
-        return invalid_uniques_query.all()
-
-    def description(self):
-        return f"{self.column_name} should to be unique"
-
-
 class NotNullCheck(BaseCheck):
     """ "Check all values in `column` that are not null"""
 
