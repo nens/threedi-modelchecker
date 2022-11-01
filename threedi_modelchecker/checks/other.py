@@ -3,6 +3,7 @@ from ..threedi_model import models
 from .base import BaseCheck
 from .base import CheckLevel
 from .geo_query import distance
+from dataclasses import dataclass
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
 from sqlalchemy import text
@@ -158,18 +159,6 @@ class ConnectionNodesDistance(BaseCheck):
 
         The query only works on a spatialite and therefore skips postgres.
         """
-        if session.bind.name == "postgresql":
-            return []
-
-        check_spatial_index = (
-            "SELECT CheckSpatialIndex('v2_connection_nodes', 'the_geom')"
-        )
-        if not session.connection().execute(check_spatial_index).scalar():
-            recover_spatial_index = (
-                "SELECT RecoverSpatialIndex('v2_connection_nodes', 'the_geom')"
-            )
-            session.connection().execute(recover_spatial_index).scalar()
-
         query = text(
             f"""SELECT *
                FROM v2_connection_nodes AS cn1, v2_connection_nodes AS cn2
@@ -194,7 +183,7 @@ class ConnectionNodesDistance(BaseCheck):
 
     def description(self) -> str:
         return (
-            f"The connection_node is within {self.minimum_distance} meters of "
+            f"The connection_node is within {self.minimum_distance} degrees of "
             f"another connection_node."
         )
 
@@ -345,3 +334,32 @@ class BoundaryCondition1DObjectNumberCheck(BaseCheck):
 
     def description(self) -> str:
         return "1D boundary condition should be connected to exactly one object."
+
+
+@dataclass
+class IndexMissingRecord:
+    id: int
+    table_name: str
+    column_name: str
+
+
+class SpatialIndexCheck(BaseCheck):
+    """Checks whether a spatial index is present and valid"""
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        result = session.execute(
+            func.CheckSpatialIndex(self.column.table.name, self.column.name)
+        ).scalar()
+        if result == 1:
+            return []
+        else:
+            return [
+                IndexMissingRecord(
+                    id=1,
+                    table_name=self.column.table.name,
+                    column_name=self.column.name,
+                )
+            ]
+
+    def description(self) -> str:
+        return f"{self.column_name} has no valid spatial index, which is required for some checks"

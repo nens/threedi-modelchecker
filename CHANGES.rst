@@ -5,7 +5,13 @@ Changelog of threedi-modelchecker
 0.31 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added a check (207) for absence on index on connection_node geometry.
+
+- Removed the side-effect of check 201 that enables spatial indexes.
+
+- Added a check (254) for bottom_level presence for nodes without connected objects.
+
+- Added ModelSchema.set_spatial_indexes and corresponding cli command.
 
 
 0.30 (2022-10-24)
