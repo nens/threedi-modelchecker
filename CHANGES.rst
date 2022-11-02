@@ -5,6 +5,9 @@ Changelog of threedi-modelchecker
 0.31 (unreleased)
 -----------------
 
+- Added error 324: warning when v2_aggregation_settings.flow_variable and
+  .aggregation_method are not unique together.
+
 - Added a check (207) for absence on index on connection_node geometry.
 
 - Removed the side-effect of check 201 that enables spatial indexes.
