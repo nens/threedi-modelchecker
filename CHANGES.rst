@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.31 (unreleased)
+0.31 (2022-11-02)
 -----------------
 
 - Added error 324: warning when v2_aggregation_settings.flow_variable and
