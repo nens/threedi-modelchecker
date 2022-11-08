@@ -27,6 +27,9 @@ Changelog of threedi-modelchecker
 - Added warning 428 when v2_groundwater.groundwater_hydro_connectivity is NULL and
   a groundwater_hydro_connectivity_file is supplied.
 
+- Migration to schema version 210 also fixes errors 421, 424, 425, 426, 427 by
+  replacing negative values with NULL.
+
 
 0.31 (2022-11-02)
 -----------------
