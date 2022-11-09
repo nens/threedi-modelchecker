@@ -1,10 +1,8 @@
 from .base import BaseCheck
 from dataclasses import dataclass
 from pathlib import Path
-from sqlalchemy import false
-from typing import List
+from threedi_modelchecker.interfaces import RasterInterface
 from typing import Set
-from typing import Tuple
 
 
 class Context:
@@ -32,14 +30,27 @@ class BaseRasterCheck(BaseCheck):
             )
         )
 
-    def get_context(self, session) -> Context:
-        return session.model_checker_context
+    def get_invalid(self, session):
+        context = session.model_checker_context
+        if isinstance(context, LocalContext):
+            is_valid = self.is_valid_local
+        elif isinstance(context, ServerContext):
+            is_valid = self.is_valid_server
+        else:
+            raise NotImplementedError(f"Invalid context type: {context}")
 
-    def get_paths(self, session, context: LocalContext) -> List[Tuple[int, Path]]:
+        column_name = self.column.name
         return [
-            (x.id, Path(context.base_path / getattr(x, self.column.name)))
+            x
             for x in self.to_check(session).all()
+            if not is_valid(getattr(x, column_name), context)
         ]
+
+    def is_valid_local(self, rel_path: str, context: LocalContext):
+        return True
+
+    def is_valid_server(self, rel_path: str, context: ServerContext):
+        return True
 
 
 class RasterExistsCheck(BaseRasterCheck):
@@ -51,30 +62,148 @@ class RasterExistsCheck(BaseRasterCheck):
     ServerContextinstance.
     """
 
-    def none(self, session):
-        return self.to_check(session).filter(false()).all()  # empty query
+    def is_valid_local(self, rel_path: str, context: LocalContext):
+        return Path(context.base_path / rel_path).exists()
 
-    def get_invalid(self, session):
-        context = self.get_context(session)
-        if isinstance(context, LocalContext):
-            return self.get_invalid_local(session, context)
-        else:
-            return self.get_invalid_server(session, context)
-
-    def get_invalid_local(self, session, context: LocalContext):
-        invalid_ids = [
-            x[0] for x in self.get_paths(session, context) if not x[1].exists()
-        ]
-        return self.to_check(session).filter(self.table.c.id.in_(invalid_ids)).all()
-
-    def get_invalid_server(self, session, context: ServerContext):
-        available_rasters = context.available_rasters
-        if self.column.name in available_rasters:
-            # the raster is available (so says the context)
-            return self.none(session)
-        else:
-            # the raster is not available (so says the context)
-            return self.to_check(session).all()
+    def is_valid_server(self, rel_path: str, context: ServerContext):
+        return self.column.name in context.available_rasters
 
     def description(self):
         return f"The file in {self.column_name} is not present"
+
+
+class RasterIsGeoTiffCheck(BaseRasterCheck):
+    """Check whether a file is a geotiff.
+
+    Only works locally.
+    """
+
+    def is_valid_local(self, rel_path: str, context: LocalContext):
+        path = Path(context.base_path / rel_path)
+        if not path.exists():
+            return True  # RasterExistsCheck will cover this situation
+        try:
+            with RasterInterface(path):
+                pass
+        except RuntimeError:
+            return False
+
+    def description(self):
+        return f"The file in {self.column_name} is not a valid GeoTIFF file"
+
+
+class RasterHasOneBandCheck(BaseRasterCheck):
+    """Check whether a raster has a single band.
+
+    Only works locally.
+    """
+
+    def is_valid_local(self, rel_path: str, context: LocalContext):
+        try:
+            with RasterInterface(Path(context.base_path / rel_path)) as raster:
+                return raster.band_count == 1
+        except RuntimeError:
+            return True  # RasterIsGeoTiffCheck will cover this situation
+
+    def description(self):
+        return f"The file in {self.column_name} has multiple or no bands."
+
+
+class RasterHasExpectedEPSGCheck(BaseRasterCheck):
+    """Check whether a raster has an expected EPSG code as projection.
+
+    Only works locally.
+    """
+
+    def __init__(self, epsg_code: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.epsg_code = epsg_code
+
+    def is_valid_local(self, rel_path: str, context: LocalContext):
+        try:
+            with RasterInterface(Path(context.base_path / rel_path)) as raster:
+                return raster.epsg_code == self.epsg_code
+        except RuntimeError:
+            return True  # RasterIsGeoTiffCheck will cover this situation
+
+    def description(self):
+        return f"The file in {self.column_name} has a an unexpected projection."
+
+
+class RasterSquareCellsCheck(BaseRasterCheck):
+    """Check whether a raster has square cells (pixels)
+
+    Only works locally.
+    """
+
+    def is_valid_local(self, rel_path: str, context: LocalContext):
+        try:
+            with RasterInterface(Path(context.base_path / rel_path)) as raster:
+                dx, dy = raster.pixel_size
+                return dx is None or dx != dy
+        except RuntimeError:
+            return True  # RasterIsGeoTiffCheck will cover this situation
+
+    def description(self):
+        return f"The raster in {self.column_name} has non-square raster cells."
+
+
+class RasterRangeCheck(BaseRasterCheck):
+    """Check whether a raster has values outside of provided range.
+
+    Also fails when there are no values in the raster. Only works locally.
+    """
+
+    def __init__(
+        self,
+        min_value=None,
+        max_value=None,
+        left_inclusive=True,
+        right_inclusive=True,
+        message=None,
+        *args,
+        **kwargs,
+    ):
+        if min_value is None and max_value is None:
+            raise ValueError("Please supply at least one of {min_value, max_value}.")
+        self.min_value = min_value
+        self.max_value = max_value
+        self.left_inclusive = left_inclusive
+        self.right_inclusive = right_inclusive
+        self.message = message
+        super().__init__(*args, **kwargs)
+
+    def is_valid_local(self, rel_path: str, context: LocalContext):
+        try:
+            with RasterInterface(Path(context.base_path / rel_path)) as raster:
+                raster_min = raster.min_value
+                raster_max = raster.max_value
+        except RuntimeError:
+            return True  # RasterIsGeoTiffCheck will cover this situation
+
+        if raster_min is None or raster_max is None:
+            return False
+        if self.min_value is not None:
+            if self.left_inclusive and raster_min < self.min_value:
+                return False
+            if not self.left_inclusive and raster_min <= self.min_value:
+                return False
+        if self.max_value is not None:
+            if self.right_inclusive and raster_max > self.max_value:
+                return False
+            if not self.right_inclusive and raster_max >= self.max_value:
+                return False
+
+        return True
+
+    def description(self):
+        if self.message:
+            return self.message
+        if self.min_value is None:
+            msg = f"greater than{' or equal to' if self.right_inclusive else ''} {self.max_value}"
+        elif self.max_value is None:
+            msg = f"less than{' or equal to' if self.left_inclusive else ''} {self.min_value}"
+        else:
+            # no room for 'left_inclusive' / 'right_inclusive' info
+            msg = f"that are not between {self.min_value} and {self.max_value}"
+        return f"{self.column_name} has values {msg}"

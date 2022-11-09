@@ -11,13 +11,16 @@ except ImportError:
 
 class RasterInterface:
     def __init__(self, path):
+        if gdal is None:
+            raise ImportError("This raster check requires GDAL")
         self.path = str(path)
 
-    def __enter__(self):
+    def __enter__(self) -> "RasterInterface":
         try:
             self._dataset = gdal.OpenEx(self.path, allowed_drivers=["gtiff"])
         except RuntimeError:
             self._dataset = None
+        return self
 
     def __exit__(self, *args, **kwargs):
         self._dataset = None
@@ -57,12 +60,12 @@ class RasterInterface:
         else:
             return abs(gt[1]), abs(gt[5])
 
-    def min(self):
+    def min_value(self):
         if self.band_count == 0:
             return None
         return self._statistics[0]
 
-    def max(self):
+    def max_value(self):
         if self.band_count == 0:
             return None
         return self._statistics[1]
