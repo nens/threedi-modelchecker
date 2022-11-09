@@ -72,7 +72,7 @@ class RasterExistsCheck(BaseRasterCheck):
         return f"The file in {self.column_name} is not present"
 
 
-class RasterIsGeoTiffCheck(BaseRasterCheck):
+class RasterIsValidCheck(BaseRasterCheck):
     """Check whether a file is a geotiff.
 
     Only works locally.
@@ -82,11 +82,8 @@ class RasterIsGeoTiffCheck(BaseRasterCheck):
         path = Path(context.base_path / rel_path)
         if not path.exists():
             return True  # RasterExistsCheck will cover this situation
-        try:
-            with RasterInterface(path):
-                pass
-        except RuntimeError:
-            return False
+        with RasterInterface(path) as raster:
+            return raster.is_valid_geotiff
 
     def description(self):
         return f"The file in {self.column_name} is not a valid GeoTIFF file"
@@ -99,35 +96,29 @@ class RasterHasOneBandCheck(BaseRasterCheck):
     """
 
     def is_valid_local(self, rel_path: str, context: LocalContext):
-        try:
-            with RasterInterface(Path(context.base_path / rel_path)) as raster:
-                return raster.band_count == 1
-        except RuntimeError:
-            return True  # RasterIsGeoTiffCheck will cover this situation
+        with RasterInterface(Path(context.base_path / rel_path)) as raster:
+            if not raster.is_valid_geotiff:
+                return True
+            return raster.band_count == 1
 
     def description(self):
         return f"The file in {self.column_name} has multiple or no bands."
 
 
-class RasterHasExpectedEPSGCheck(BaseRasterCheck):
-    """Check whether a raster has an expected EPSG code as projection.
+class RasterIsProjectedCheck(BaseRasterCheck):
+    """Check whether a raster has a projected coordinate system.
 
     Only works locally.
     """
 
-    def __init__(self, epsg_code: int, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.epsg_code = epsg_code
-
     def is_valid_local(self, rel_path: str, context: LocalContext):
-        try:
-            with RasterInterface(Path(context.base_path / rel_path)) as raster:
-                return raster.epsg_code == self.epsg_code
-        except RuntimeError:
-            return True  # RasterIsGeoTiffCheck will cover this situation
+        with RasterInterface(Path(context.base_path / rel_path)) as raster:
+            if not raster.is_valid_geotiff:
+                return True
+            return raster.is_geographic is False
 
     def description(self):
-        return f"The file in {self.column_name} has a an unexpected projection."
+        return f"The file in {self.column_name} does not use a projected CRS."
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):
@@ -137,12 +128,11 @@ class RasterSquareCellsCheck(BaseRasterCheck):
     """
 
     def is_valid_local(self, rel_path: str, context: LocalContext):
-        try:
-            with RasterInterface(Path(context.base_path / rel_path)) as raster:
-                dx, dy = raster.pixel_size
-                return dx is None or dx != dy
-        except RuntimeError:
-            return True  # RasterIsGeoTiffCheck will cover this situation
+        with RasterInterface(Path(context.base_path / rel_path)) as raster:
+            if not raster.is_valid_geotiff:
+                return True
+            dx, dy = raster.pixel_size
+            return dx is not None and dx == dy
 
     def description(self):
         return f"The raster in {self.column_name} has non-square raster cells."
@@ -174,12 +164,11 @@ class RasterRangeCheck(BaseRasterCheck):
         super().__init__(*args, **kwargs)
 
     def is_valid_local(self, rel_path: str, context: LocalContext):
-        try:
-            with RasterInterface(Path(context.base_path / rel_path)) as raster:
-                raster_min = raster.min_value
-                raster_max = raster.max_value
-        except RuntimeError:
-            return True  # RasterIsGeoTiffCheck will cover this situation
+        with RasterInterface(Path(context.base_path / rel_path)) as raster:
+            if not raster.is_valid_geotiff:
+                return True
+            raster_min = raster.min_value
+            raster_max = raster.max_value
 
         if raster_min is None or raster_max is None:
             return False
@@ -199,11 +188,9 @@ class RasterRangeCheck(BaseRasterCheck):
     def description(self):
         if self.message:
             return self.message
-        if self.min_value is None:
-            msg = f"greater than{' or equal to' if self.right_inclusive else ''} {self.max_value}"
-        elif self.max_value is None:
-            msg = f"less than{' or equal to' if self.left_inclusive else ''} {self.min_value}"
-        else:
-            # no room for 'left_inclusive' / 'right_inclusive' info
-            msg = f"that are not between {self.min_value} and {self.max_value}"
-        return f"{self.column_name} has values {msg}"
+        parts = []
+        if self.min_value is not None:
+            parts.append(f"{'<' if self.left_inclusive else '<='}{self.min_value}")
+        if self.max_value is not None:
+            parts.append(f"{'>' if self.right_inclusive else '>='}{self.max_value}")
+        return f"{self.column_name} has values {' and/or '.join(parts)}"

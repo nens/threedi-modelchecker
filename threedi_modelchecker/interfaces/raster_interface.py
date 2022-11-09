@@ -1,4 +1,5 @@
 from functools import cached_property
+from typing import Optional
 
 
 try:
@@ -17,7 +18,9 @@ class RasterInterface:
 
     def __enter__(self) -> "RasterInterface":
         try:
-            self._dataset = gdal.OpenEx(self.path, allowed_drivers=["gtiff"])
+            self._dataset = gdal.OpenEx(
+                self.path, gdal.GA_ReadOnly, allowed_drivers=["gtiff"]
+            )
         except RuntimeError:
             self._dataset = None
         return self
@@ -34,16 +37,17 @@ class RasterInterface:
         return self._dataset.GetRasterBand(1).ComputeStatistics(False)
 
     @property
+    def is_valid_geotiff(self):
+        return self._dataset is not None
+
+    @property
     def band_count(self):
         return self._dataset.RasterCount
 
     @property
-    def is_geographic(self):
+    def is_geographic(self) -> Optional[bool]:
         sr = self._spatial_reference
-        if sr is None:
-            return False
-        else:
-            return bool(sr.IsGeographic())
+        return None if sr is None else bool(sr.IsGeographic())
 
     @property
     def epsg_code(self):
@@ -60,11 +64,13 @@ class RasterInterface:
         else:
             return abs(gt[1]), abs(gt[5])
 
+    @property
     def min_value(self):
         if self.band_count == 0:
             return None
         return self._statistics[0]
 
+    @property
     def max_value(self):
         if self.band_count == 0:
             return None
