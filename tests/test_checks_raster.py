@@ -1,13 +1,21 @@
 from tests import factories
 from threedi_modelchecker.checks.raster import BaseRasterCheck
 from threedi_modelchecker.checks.raster import LocalContext
-from threedi_modelchecker.checks.raster import RasterExistsCheck, RasterIsValidCheck, RasterHasOneBandCheck, RasterIsProjectedCheck, RasterSquareCellsCheck, RasterRangeCheck
+from threedi_modelchecker.checks.raster import RasterExistsCheck
+from threedi_modelchecker.checks.raster import RasterHasOneBandCheck
+from threedi_modelchecker.checks.raster import RasterIsProjectedCheck
+from threedi_modelchecker.checks.raster import RasterIsValidCheck
+from threedi_modelchecker.checks.raster import RasterRangeCheck
+from threedi_modelchecker.checks.raster import RasterSquareCellsCheck
 from threedi_modelchecker.checks.raster import ServerContext
 from threedi_modelchecker.threedi_model import models
 from unittest import mock
 
+
 try:
-    from osgeo import gdal, osr
+    from osgeo import gdal
+    from osgeo import osr
+
     import numpy as np
 except ImportError:
     gdal = osr = np = None
@@ -105,10 +113,12 @@ def test_exists_is_valid_server_err(context_server, exists_check):
 
 
 def create_geotiff(path, epsg=28992, width=3, height=2, bands=1, dx=0.5, dy=0.5):
-    ds = gdal.GetDriverByName('GTiff').Create(str(path), width, height, bands, gdal.GDT_Byte)
+    ds = gdal.GetDriverByName("GTiff").Create(
+        str(path), width, height, bands, gdal.GDT_Byte
+    )
     if epsg is not None:
         ds.SetProjection(osr.GetUserInputAsWKT(f"EPSG:{epsg}"))
-    ds.SetGeoTransform((155000., dx, 0, 463000., 0, -dy))
+    ds.SetGeoTransform((155000.0, dx, 0, 463000.0, 0, -dy))
     band = ds.GetRasterBand(1)
     band.SetNoDataValue(255)
     band.WriteArray(np.arange(height * width).reshape(height, width))
@@ -184,6 +194,7 @@ def test_projected_err_4326(context_local, projected_check, tmp_path):
     create_geotiff(tmp_path / "raster.tiff", epsg=4326)
     assert not projected_check.is_valid_local("raster.tiff", context_local)
 
+
 def test_projected_err_no_projection(context_local, projected_check, tmp_path):
     create_geotiff(tmp_path / "raster.tiff", epsg=None)
     assert not projected_check.is_valid_local("raster.tiff", context_local)
@@ -206,36 +217,44 @@ def test_square_cells_corrupt_file(context_local, square_cells_check, tmp_path):
     (tmp_path / "somefile.tiff").touch()
     assert square_cells_check.is_valid_local("somefile.tiff", context_local)
 
+
 def test_square_cells_err(context_local, square_cells_check, tmp_path):
     create_geotiff(tmp_path / "raster.tiff", dx=0.5, dy=1.0)
     assert not square_cells_check.is_valid_local("raster.tiff", context_local)
 
 
-
-
 def test_raster_range_ok(context_local, valid_geotiff):
-    check = RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0, max_value=5)
+    check = RasterRangeCheck(
+        column=models.GlobalSetting.dem_file, min_value=0, max_value=5
+    )
     assert check.is_valid_local(valid_geotiff, context_local)
 
 
-def test_range_range_file_missing(context_local, square_cells_check):
-    check = RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0, max_value=5)
+def test_range_range_file_missing(context_local):
+    check = RasterRangeCheck(
+        column=models.GlobalSetting.dem_file, min_value=0, max_value=5
+    )
     assert check.is_valid_local("somefile.tiff", context_local)
 
 
-def test_range_range_corrupt_file(context_local, square_cells_check, tmp_path):
-    check = RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0, max_value=5)
+def test_range_range_corrupt_file(context_local, tmp_path):
+    check = RasterRangeCheck(
+        column=models.GlobalSetting.dem_file, min_value=0, max_value=5
+    )
     (tmp_path / "somefile.tiff").touch()
     assert check.is_valid_local("somefile.tiff", context_local)
 
 
-@pytest.mark.parametrize("kwargs,msg", [
-    ({"min_value": 1}, "{} has values <1"),
-    ({"max_value": 4}, "{} has values >4"),
-    ({"min_value": 0, "left_inclusive": False}, "{} has values <=0"),
-    ({"max_value": 5, "right_inclusive": False}, "{} has values >=5"),
-    ({"min_value": 1, "max_value": 6}, "{} has values <1 and/or >6"),
-])
+@pytest.mark.parametrize(
+    "kwargs,msg",
+    [
+        ({"min_value": 1}, "{} has values <1"),
+        ({"max_value": 4}, "{} has values >4"),
+        ({"min_value": 0, "left_inclusive": False}, "{} has values <=0"),
+        ({"max_value": 5, "right_inclusive": False}, "{} has values >=5"),
+        ({"min_value": 1, "max_value": 6}, "{} has values <1 and/or >6"),
+    ],
+)
 def test_raster_range_err(context_local, valid_geotiff, kwargs, msg):
     check = RasterRangeCheck(column=models.GlobalSetting.dem_file, **kwargs)
     assert not check.is_valid_local(valid_geotiff, context_local)
