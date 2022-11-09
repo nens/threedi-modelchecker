@@ -20,6 +20,12 @@ class LocalContext(Context):
 
 
 class BaseRasterCheck(BaseCheck):
+    """Baseclass for all raster checks.
+
+    Because these checks are different on local and server systems, subclasses may
+    implement 2 methods: is_valid_local and/or is_valid_local.
+    """
+
     def to_check(self, session):
         return (
             super()
@@ -72,7 +78,49 @@ class RasterExistsCheck(BaseRasterCheck):
         return f"The file in {self.column_name} is not present"
 
 
-class RasterIsValidCheck(BaseRasterCheck):
+class BaseRasterOpenCheck(BaseRasterCheck):
+    """See BaseRasterCheck.
+
+    Additionally skip the check if the raster file is not there or if GDAL is
+    not present.
+    """
+
+    def to_check(self, session):
+        return (
+            super()
+            .to_check(session)
+            .filter(
+                self.column != None,
+                self.column != "",
+            )
+        )
+
+    def get_invalid(self, session):
+        context = session.model_checker_context
+        if isinstance(context, LocalContext):
+            if not RasterInterface.available():
+                return []
+            is_valid = self.is_valid_local
+        elif isinstance(context, ServerContext):
+            is_valid = self.is_valid_server
+        else:
+            raise NotImplementedError(f"Invalid context type: {context}")
+
+        column_name = self.column.name
+        return [
+            x
+            for x in self.to_check(session).all()
+            if not is_valid(getattr(x, column_name), context)
+        ]
+
+    def is_valid_local(self, rel_path: str, context: LocalContext):
+        return True
+
+    def is_valid_server(self, rel_path: str, context: ServerContext):
+        return True
+
+
+class RasterIsValidCheck(BaseRasterOpenCheck):
     """Check whether a file is a geotiff.
 
     Only works locally.
@@ -89,7 +137,7 @@ class RasterIsValidCheck(BaseRasterCheck):
         return f"The file in {self.column_name} is not a valid GeoTIFF file"
 
 
-class RasterHasOneBandCheck(BaseRasterCheck):
+class RasterHasOneBandCheck(BaseRasterOpenCheck):
     """Check whether a raster has a single band.
 
     Only works locally.
@@ -105,7 +153,7 @@ class RasterHasOneBandCheck(BaseRasterCheck):
         return f"The file in {self.column_name} has multiple or no bands."
 
 
-class RasterHasProjectionCheck(BaseRasterCheck):
+class RasterHasProjectionCheck(BaseRasterOpenCheck):
     """Check whether a raster has a projected coordinate system.
 
     Only works locally.
@@ -121,7 +169,7 @@ class RasterHasProjectionCheck(BaseRasterCheck):
         return f"The file in {self.column_name} has no CRS."
 
 
-class RasterIsProjectedCheck(BaseRasterCheck):
+class RasterIsProjectedCheck(BaseRasterOpenCheck):
     """Check whether a raster has a projected coordinate system.
 
     Only works locally.
@@ -137,7 +185,7 @@ class RasterIsProjectedCheck(BaseRasterCheck):
         return f"The file in {self.column_name} does not use a projected CRS."
 
 
-class RasterSquareCellsCheck(BaseRasterCheck):
+class RasterSquareCellsCheck(BaseRasterOpenCheck):
     """Check whether a raster has square cells (pixels)
 
     Only works locally.
@@ -154,7 +202,7 @@ class RasterSquareCellsCheck(BaseRasterCheck):
         return f"The raster in {self.column_name} has non-square raster cells."
 
 
-class RasterRangeCheck(BaseRasterCheck):
+class RasterRangeCheck(BaseRasterOpenCheck):
     """Check whether a raster has values outside of provided range.
 
     Also fails when there are no values in the raster. Only works locally.
@@ -183,8 +231,7 @@ class RasterRangeCheck(BaseRasterCheck):
         with RasterInterface(Path(context.base_path / rel_path)) as raster:
             if not raster.is_valid_geotiff:
                 return True
-            raster_min = raster.min_value
-            raster_max = raster.max_value
+            raster_min, raster_max = raster.min_max
 
         if raster_min is None or raster_max is None:
             return False
@@ -210,3 +257,21 @@ class RasterRangeCheck(BaseRasterCheck):
         if self.max_value is not None:
             parts.append(f"{'>' if self.right_inclusive else '>='}{self.max_value}")
         return f"{self.column_name} has values {' and/or '.join(parts)}"
+
+
+@dataclass
+class GDALUnavailable:
+    id: int
+
+
+class GDALAvailableCheck(BaseCheck):
+    """Checks whether GDAL is available"""
+
+    def get_invalid(self, session):
+        if RasterInterface.available():
+            return []
+        else:
+            return [GDALUnavailable(id=1)]
+
+    def description(self) -> str:
+        return "raster checks require GDAL to be available"

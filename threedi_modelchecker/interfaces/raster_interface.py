@@ -1,4 +1,3 @@
-from functools import cached_property
 from typing import Optional
 
 
@@ -16,6 +15,10 @@ class RasterInterface:
             raise ImportError("This raster check requires GDAL")
         self.path = str(path)
 
+    @staticmethod
+    def available():
+        return gdal is not None
+
     def __enter__(self) -> "RasterInterface":
         try:
             self._dataset = gdal.OpenEx(
@@ -28,13 +31,9 @@ class RasterInterface:
     def __exit__(self, *args, **kwargs):
         self._dataset = None
 
-    @cached_property
+    @property
     def _spatial_reference(self):
         return self._dataset.GetSpatialRef()
-
-    @cached_property
-    def _statistics(self):
-        return self._dataset.GetRasterBand(1).ComputeStatistics(False)
 
     @property
     def is_valid_geotiff(self):
@@ -65,13 +64,8 @@ class RasterInterface:
             return abs(gt[1]), abs(gt[5])
 
     @property
-    def min_value(self):
+    def min_max(self):
         if self.band_count == 0:
-            return None
-        return self._statistics[0]
-
-    @property
-    def max_value(self):
-        if self.band_count == 0:
-            return None
-        return self._statistics[1]
+            return None, None
+        statistics = self._dataset.GetRasterBand(1).ComputeStatistics(False)
+        return statistics[0], statistics[1]

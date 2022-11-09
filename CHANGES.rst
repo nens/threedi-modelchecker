@@ -5,7 +5,8 @@ Changelog of threedi-modelchecker
 0.32 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Added raster checks: file validity, has one band, has crs, range check.
+  For DEM only it is also checked if pixels are square and crs is projected. 
 
 
 0.31 (2022-11-02)

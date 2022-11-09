@@ -31,6 +31,7 @@ from .checks.other import LinestringLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import SpatialIndexCheck
 from .checks.other import Use0DFlowCheck
+from .checks.raster import GDALAvailableCheck
 from .checks.raster import RasterExistsCheck
 from .checks.raster import RasterHasOneBandCheck
 from .checks.raster import RasterHasProjectionCheck
@@ -1184,6 +1185,11 @@ RASTER_COLUMNS_FILTERS = [
         models.GlobalSetting.initial_groundwater_level_file,
         models.GlobalSetting.groundwater_settings_id != None,
     ),
+]
+CHECKS += [
+    GDALAvailableCheck(
+        error_code=700, level=CheckLevel.WARNING, column=models.GlobalSetting.dem_file
+    )
 ]
 CHECKS += [
     RasterExistsCheck(
