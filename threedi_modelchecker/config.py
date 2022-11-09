@@ -1229,7 +1229,7 @@ CHECKS += [
     RasterRangeCheck(
         error_code=781,
         column=models.GlobalSetting.dem_file,
-        min_value=-10000.0,
+        min_value=-9998.0,
         max_value=8848.0,
     ),
     RasterRangeCheck(
@@ -1274,7 +1274,7 @@ CHECKS += [
         error_code=788,
         column=models.GroundWater.groundwater_impervious_layer_level_file,
         filters=models.GroundWater.global_settings != None,
-        min_value=-10000.0,
+        min_value=-9998.0,
         max_value=8848.0,
     ),
     RasterRangeCheck(
@@ -1318,14 +1318,14 @@ CHECKS += [
     RasterRangeCheck(
         error_code=795,
         column=models.GlobalSetting.initial_waterlevel_file,
-        min_value=-10000.0,
+        min_value=-9998.0,
         max_value=8848.0,
     ),
     RasterRangeCheck(
         error_code=796,
         column=models.GlobalSetting.initial_groundwater_level_file,
         filters=models.GlobalSetting.groundwater_settings_id != None,
-        min_value=-10000.0,
+        min_value=-9998.0,
         max_value=8848.0,
     ),
 ]
