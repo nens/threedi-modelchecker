@@ -3,6 +3,7 @@ from threedi_modelchecker.checks.raster import BaseRasterCheck
 from threedi_modelchecker.checks.raster import LocalContext
 from threedi_modelchecker.checks.raster import RasterExistsCheck
 from threedi_modelchecker.checks.raster import RasterHasOneBandCheck
+from threedi_modelchecker.checks.raster import RasterHasProjectionCheck
 from threedi_modelchecker.checks.raster import RasterIsProjectedCheck
 from threedi_modelchecker.checks.raster import RasterIsValidCheck
 from threedi_modelchecker.checks.raster import RasterRangeCheck
@@ -173,31 +174,54 @@ def test_one_band_err(context_local, one_band_check, tmp_path):
 
 
 @pytest.fixture
-def projected_check():
+def has_projection_check():
+    return RasterHasProjectionCheck(column=models.GlobalSetting.dem_file)
+
+
+def test_has_projection_ok(context_local, has_projection_check, valid_geotiff):
+    assert has_projection_check.is_valid_local(valid_geotiff, context_local)
+
+
+def test_has_projection_file_missing(context_local, has_projection_check):
+    assert has_projection_check.is_valid_local("somefile.tiff", context_local)
+
+
+def test_has_projection_corrupt_file(context_local, has_projection_check, tmp_path):
+    (tmp_path / "somefile.tiff").touch()
+    assert has_projection_check.is_valid_local("somefile.tiff", context_local)
+
+
+def test_has_projection_no_projection(context_local, has_projection_check, tmp_path):
+    create_geotiff(tmp_path / "raster.tiff", epsg=None)
+    assert not has_projection_check.is_valid_local("raster.tiff", context_local)
+
+
+@pytest.fixture
+def is_projected_check():
     return RasterIsProjectedCheck(column=models.GlobalSetting.dem_file)
 
 
-def test_projected_ok(context_local, projected_check, valid_geotiff):
-    assert projected_check.is_valid_local(valid_geotiff, context_local)
+def test_is_projected_ok(context_local, is_projected_check, valid_geotiff):
+    assert is_projected_check.is_valid_local(valid_geotiff, context_local)
 
 
-def test_projected_file_missing(context_local, projected_check):
-    assert projected_check.is_valid_local("somefile.tiff", context_local)
+def test_is_projected_file_missing(context_local, is_projected_check):
+    assert is_projected_check.is_valid_local("somefile.tiff", context_local)
 
 
-def test_projected_corrupt_file(context_local, projected_check, tmp_path):
+def test_is_projected_corrupt_file(context_local, is_projected_check, tmp_path):
     (tmp_path / "somefile.tiff").touch()
-    assert projected_check.is_valid_local("somefile.tiff", context_local)
+    assert is_projected_check.is_valid_local("somefile.tiff", context_local)
 
 
-def test_projected_err_4326(context_local, projected_check, tmp_path):
-    create_geotiff(tmp_path / "raster.tiff", epsg=4326)
-    assert not projected_check.is_valid_local("raster.tiff", context_local)
-
-
-def test_projected_err_no_projection(context_local, projected_check, tmp_path):
+def test_is_projected_no_projection(context_local, is_projected_check, tmp_path):
     create_geotiff(tmp_path / "raster.tiff", epsg=None)
-    assert not projected_check.is_valid_local("raster.tiff", context_local)
+    assert is_projected_check.is_valid_local("raster.tiff", context_local)
+
+
+def test_is_projected_err(context_local, is_projected_check, tmp_path):
+    create_geotiff(tmp_path / "raster.tiff", epsg=4326)
+    assert not is_projected_check.is_valid_local("raster.tiff", context_local)
 
 
 @pytest.fixture

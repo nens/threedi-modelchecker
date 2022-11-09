@@ -105,6 +105,22 @@ class RasterHasOneBandCheck(BaseRasterCheck):
         return f"The file in {self.column_name} has multiple or no bands."
 
 
+class RasterHasProjectionCheck(BaseRasterCheck):
+    """Check whether a raster has a projected coordinate system.
+
+    Only works locally.
+    """
+
+    def is_valid_local(self, rel_path: str, context: LocalContext):
+        with RasterInterface(Path(context.base_path / rel_path)) as raster:
+            if not raster.is_valid_geotiff:
+                return True
+            return raster.is_geographic is not None
+
+    def description(self):
+        return f"The file in {self.column_name} has no CRS."
+
+
 class RasterIsProjectedCheck(BaseRasterCheck):
     """Check whether a raster has a projected coordinate system.
 
@@ -115,7 +131,7 @@ class RasterIsProjectedCheck(BaseRasterCheck):
         with RasterInterface(Path(context.base_path / rel_path)) as raster:
             if not raster.is_valid_geotiff:
                 return True
-            return raster.is_geographic is False
+            return raster.is_geographic is not True
 
     def description(self):
         return f"The file in {self.column_name} does not use a projected CRS."
