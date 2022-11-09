@@ -686,16 +686,16 @@ def test_range_check_valid(
 
 
 @pytest.mark.parametrize(
-    "min_value,max_value,left_inclusive,right_inclusive",
+    "min_value,max_value,left_inclusive,right_inclusive,msg",
     [
-        (0, 42, True, False),
-        (42, 100, False, True),
-        (None, 42, True, False),
-        (42, None, False, False),
+        (0, 42, True, False, "{} is <0 and/or >=42"),
+        (42, 100, False, True, "{} is <=42 and/or >100"),
+        (None, 42, True, False, "{} is >=42"),
+        (42, None, False, False, "{} is <=42"),
     ],
 )
 def test_range_check_invalid(
-    session, min_value, max_value, left_inclusive, right_inclusive
+    session, min_value, max_value, left_inclusive, right_inclusive, msg
 ):
     factories.ConnectionNodeFactory(storage_area=42)
 
@@ -708,3 +708,5 @@ def test_range_check_invalid(
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
+
+    assert check.description() == msg.format("v2_connection_nodes.storage_area")

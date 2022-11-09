@@ -369,11 +369,9 @@ class RangeCheck(BaseCheck):
     def description(self):
         if self.message:
             return self.message
-        if self.min_value is None:
-            msg = f"is not less than{' or equal to' if self.right_inclusive else ''} {self.max_value}"
-        elif self.max_value is None:
-            msg = f"is not greater than{' or equal to' if self.left_inclusive else ''} {self.min_value}"
-        else:
-            # no room for 'left_inclusive' / 'right_inclusive' info
-            msg = f"is not between {self.min_value} and {self.max_value}"
-        return f"{self.column_name} {msg}"
+        parts = []
+        if self.min_value is not None:
+            parts.append(f"{'<' if self.left_inclusive else '<='}{self.min_value}")
+        if self.max_value is not None:
+            parts.append(f"{'>' if self.right_inclusive else '>='}{self.max_value}")
+        return f"{self.column_name} is {' and/or '.join(parts)}"
