@@ -1,44 +1,35 @@
 from .checks.base import BaseCheck
 from .checks.base import CheckLevel
+from .checks.raster import LocalContext
+from .checks.raster import ServerContext
 from .config import Config
 from .schema import ModelSchema
 from .threedi_database import ThreediDatabase
-from pathlib import Path
+from typing import Dict
 from typing import Iterator
 from typing import NamedTuple
 from typing import Optional
-from typing import Set
 from typing import Tuple
 
 
 __all__ = ["ThreediModelChecker"]
 
 
-class Context:
-    def __init__(
-        self,
-        available_rasters: Optional[Set] = None,
-        base_path: Optional[Path] = None,
-    ):
-        self.available_rasters = available_rasters
-        self.base_path = base_path
-
-
 class ThreediModelChecker:
-    def __init__(self, threedi_db: ThreediDatabase, context: Optional[Context] = None):
+    def __init__(self, threedi_db: ThreediDatabase, context: Optional[Dict] = None):
         """Initialize the model checker.
 
         Optionally, supply the context of the model check:
         - "available_rasters": a set of raster options that are available
-        - "base_path": file presence is checked relative to this path
         """
         self.db = threedi_db
         self.schema = ModelSchema(self.db)
         self.schema.validate_schema()
         self.config = Config(self.models)
-        self.context = Context(**(context or {}))
-        if not self.context.base_path:
-            self.context.base_path = self.db.base_path
+        if context is None:
+            self.context = LocalContext(base_path=self.db.base_path)
+        else:
+            self.context = ServerContext(**context)
 
     @property
     def models(self):

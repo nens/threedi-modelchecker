@@ -1,5 +1,5 @@
 from . import factories
-from threedi_modelchecker.model_checks import Context
+from threedi_modelchecker.checks.raster import LocalContext
 from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.schema import ModelSchema
 from threedi_modelchecker.threedi_database import ThreediDatabase
@@ -51,7 +51,7 @@ def session(threedi_db):
     s = threedi_db.get_session()
 
     factories.inject_session(s)
-    s.model_checker_context = Context()
+    s.model_checker_context = LocalContext(base_path=data_dir)
 
     yield s
     # Rollback the session => no changes to the database

@@ -1,7 +1,6 @@
 from .checks import geo_query
 from .checks.base import BaseCheck
 from .checks.base import CheckLevel
-from .checks.base import FileExistsCheck
 from .checks.base import ForeignKeyCheck
 from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
@@ -32,6 +31,7 @@ from .checks.other import LinestringLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import SpatialIndexCheck
 from .checks.other import Use0DFlowCheck
+from .checks.raster import RasterExistsCheck
 from .checks.timeseries import TimeseriesIncreasingCheck
 from .checks.timeseries import TimeseriesRowCheck
 from .checks.timeseries import TimeseriesTimestepCheck
@@ -1132,69 +1132,69 @@ CHECKS += [
 
 # 07xx: FILE EXISTENCE
 CHECKS += [
-    FileExistsCheck(error_code=701, column=models.GlobalSetting.dem_file),
-    FileExistsCheck(error_code=702, column=models.GlobalSetting.frict_coef_file),
-    FileExistsCheck(error_code=703, column=models.GlobalSetting.interception_file),
-    FileExistsCheck(
+    RasterExistsCheck(error_code=701, column=models.GlobalSetting.dem_file),
+    RasterExistsCheck(error_code=702, column=models.GlobalSetting.frict_coef_file),
+    RasterExistsCheck(error_code=703, column=models.GlobalSetting.interception_file),
+    RasterExistsCheck(
         error_code=704,
         column=models.Interflow.porosity_file,
         filters=models.Interflow.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=705,
         column=models.Interflow.hydraulic_conductivity_file,
         filters=models.Interflow.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=706,
         column=models.SimpleInfiltration.infiltration_rate_file,
         filters=models.SimpleInfiltration.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=707,
         column=models.SimpleInfiltration.max_infiltration_capacity_file,
         filters=models.SimpleInfiltration.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=708,
         column=models.GroundWater.groundwater_impervious_layer_level_file,
         filters=models.GroundWater.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=709,
         column=models.GroundWater.phreatic_storage_capacity_file,
         filters=models.GroundWater.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=710,
         column=models.GroundWater.equilibrium_infiltration_rate_file,
         filters=models.GroundWater.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=711,
         column=models.GroundWater.initial_infiltration_rate_file,
         filters=models.GroundWater.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=712,
         column=models.GroundWater.infiltration_decay_period_file,
         filters=models.GroundWater.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=713,
         column=models.GroundWater.groundwater_hydro_connectivity_file,
         filters=models.GroundWater.global_settings != None,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=714,
         column=models.GroundWater.leakage_file,
         filters=(models.GroundWater.global_settings != None),
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=715,
         column=models.GlobalSetting.initial_waterlevel_file,
     ),
-    FileExistsCheck(
+    RasterExistsCheck(
         error_code=716,
         column=models.GlobalSetting.initial_groundwater_level_file,
         filters=(models.GlobalSetting.groundwater_settings_id != None),

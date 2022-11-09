@@ -4,7 +4,6 @@ from tests import factories
 from threedi_modelchecker.checks import geo_query
 from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_types
 from threedi_modelchecker.checks.base import EnumCheck
-from threedi_modelchecker.checks.base import FileExistsCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import GeometryCheck
 from threedi_modelchecker.checks.base import GeometryTypeCheck
@@ -658,63 +657,6 @@ def test_length_geom_linestring_missing_epsg_from_global_settings(session):
 
     errors = check_length_linestring.get_invalid(session)
     assert len(errors) == 1
-
-
-def test_file_exists_check_filesystem_ok(session, tmp_path):
-    (tmp_path / "somefile").touch()
-    factories.GlobalSettingsFactory(dem_file="somefile")
-    session.model_checker_context.base_path = tmp_path
-    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
-def test_file_exists_check_filesystem_ignore(session, tmp_path):
-    factories.GlobalSettingsFactory(dem_file="")
-    session.model_checker_context.base_path = tmp_path
-    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
-def test_file_exists_check_filesystem_err(session, tmp_path):
-    factories.GlobalSettingsFactory(dem_file="some/file")
-    session.model_checker_context.base_path = tmp_path
-    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
-
-
-def test_file_exists_check_context_ok(session):
-    factories.GlobalSettingsFactory(dem_file="some/file")
-    session.model_checker_context.available_rasters = {"dem_file"}
-    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
-def test_file_exists_check_context_err(session):
-    factories.GlobalSettingsFactory(dem_file="some/file")
-    session.model_checker_context.available_rasters = {"frict_coef_file"}
-    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
-
-
-def test_file_exists_check_context_ignore(session):
-    factories.GlobalSettingsFactory(dem_file="")
-    session.model_checker_context.available_rasters = {"frict_coef_file"}
-    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
-def test_file_exists_check_skip(session):
-    # no context, no check, no invalid records
-    factories.GlobalSettingsFactory(dem_file="some/file")
-    check = FileExistsCheck(column=models.GlobalSetting.dem_file)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
 
 
 @pytest.mark.parametrize(
