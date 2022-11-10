@@ -40,15 +40,15 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install psql, sqlite3 and spatialite
+      - name: Install GDAL, sqlite3 and spatialite
         run: |
-          sudo apt-get install --yes --no-install-recommends sqlite3 libsqlite3-mod-spatialite
+          sudo apt-get install --yes --no-install-recommends sqlite3 libsqlite3-mod-spatialite libgdal-dev
   
       - name: Install python dependencies
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
-          pip install ${{ matrix.pins }} .[${{ matrix.extras }}] pytest-cov
+          pip install ${{ matrix.pins }} .[${{ matrix.extras }}] pytest-cov pygdal==$(gdal-config --version).*
           pip list
 
       - name: Run tests

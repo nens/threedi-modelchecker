@@ -1,7 +1,6 @@
 from .checks import geo_query
 from .checks.base import BaseCheck
 from .checks.base import CheckLevel
-from .checks.base import FileExistsCheck
 from .checks.base import ForeignKeyCheck
 from .checks.base import NotNullCheck
 from .checks.base import QueryCheck
@@ -32,6 +31,14 @@ from .checks.other import LinestringLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
 from .checks.other import SpatialIndexCheck
 from .checks.other import Use0DFlowCheck
+from .checks.raster import GDALAvailableCheck
+from .checks.raster import RasterExistsCheck
+from .checks.raster import RasterHasOneBandCheck
+from .checks.raster import RasterHasProjectionCheck
+from .checks.raster import RasterIsProjectedCheck
+from .checks.raster import RasterIsValidCheck
+from .checks.raster import RasterRangeCheck
+from .checks.raster import RasterSquareCellsCheck
 from .checks.timeseries import TimeseriesIncreasingCheck
 from .checks.timeseries import TimeseriesRowCheck
 from .checks.timeseries import TimeseriesTimestepCheck
@@ -1274,74 +1281,191 @@ CHECKS += [
 ]
 
 
-# 07xx: FILE EXISTENCE
+# 07xx: RASTERS
+RASTER_COLUMNS_FILTERS = [
+    (models.GlobalSetting.dem_file, None),
+    (models.GlobalSetting.frict_coef_file, None),
+    (models.GlobalSetting.interception_file, None),
+    (models.Interflow.porosity_file, models.Interflow.global_settings != None),
+    (
+        models.Interflow.hydraulic_conductivity_file,
+        models.Interflow.global_settings != None,
+    ),
+    (
+        models.SimpleInfiltration.infiltration_rate_file,
+        models.SimpleInfiltration.global_settings != None,
+    ),
+    (
+        models.SimpleInfiltration.max_infiltration_capacity_file,
+        models.SimpleInfiltration.global_settings != None,
+    ),
+    (
+        models.GroundWater.groundwater_impervious_layer_level_file,
+        models.GroundWater.global_settings != None,
+    ),
+    (
+        models.GroundWater.phreatic_storage_capacity_file,
+        models.GroundWater.global_settings != None,
+    ),
+    (
+        models.GroundWater.equilibrium_infiltration_rate_file,
+        models.GroundWater.global_settings != None,
+    ),
+    (
+        models.GroundWater.initial_infiltration_rate_file,
+        models.GroundWater.global_settings != None,
+    ),
+    (
+        models.GroundWater.infiltration_decay_period_file,
+        models.GroundWater.global_settings != None,
+    ),
+    (
+        models.GroundWater.groundwater_hydro_connectivity_file,
+        models.GroundWater.global_settings != None,
+    ),
+    (models.GroundWater.leakage_file, models.GroundWater.global_settings != None),
+    (models.GlobalSetting.initial_waterlevel_file, None),
+    (
+        models.GlobalSetting.initial_groundwater_level_file,
+        models.GlobalSetting.groundwater_settings_id != None,
+    ),
+]
 CHECKS += [
-    FileExistsCheck(error_code=701, column=models.GlobalSetting.dem_file),
-    FileExistsCheck(error_code=702, column=models.GlobalSetting.frict_coef_file),
-    FileExistsCheck(error_code=703, column=models.GlobalSetting.interception_file),
-    FileExistsCheck(
-        error_code=704,
+    GDALAvailableCheck(
+        error_code=700, level=CheckLevel.WARNING, column=models.GlobalSetting.dem_file
+    )
+]
+CHECKS += [
+    RasterExistsCheck(
+        error_code=701 + i,
+        column=column,
+        filters=filters,
+    )
+    for i, (column, filters) in enumerate(RASTER_COLUMNS_FILTERS)
+]
+CHECKS += [
+    RasterIsValidCheck(
+        error_code=721 + i,
+        column=column,
+        filters=filters,
+    )
+    for i, (column, filters) in enumerate(RASTER_COLUMNS_FILTERS)
+]
+CHECKS += [
+    RasterHasOneBandCheck(
+        error_code=741 + i,
+        level=CheckLevel.WARNING,
+        column=column,
+        filters=filters,
+    )
+    for i, (column, filters) in enumerate(RASTER_COLUMNS_FILTERS)
+]
+CHECKS += [
+    RasterHasProjectionCheck(
+        error_code=761 + i,
+        column=column,
+        filters=filters,
+    )
+    for i, (column, filters) in enumerate(RASTER_COLUMNS_FILTERS)
+]
+CHECKS += [
+    RasterIsProjectedCheck(error_code=779, column=models.GlobalSetting.dem_file),
+    RasterSquareCellsCheck(error_code=780, column=models.GlobalSetting.dem_file),
+    RasterRangeCheck(
+        error_code=781,
+        column=models.GlobalSetting.dem_file,
+        min_value=-9998.0,
+        max_value=8848.0,
+    ),
+    RasterRangeCheck(
+        error_code=782,
+        column=models.GlobalSetting.frict_coef_file,
+        filters=models.GlobalSetting.frict_type == constants.FrictionType.MANNING,
+        min_value=0,
+        max_value=1,
+    ),
+    RasterRangeCheck(
+        error_code=783,
+        column=models.GlobalSetting.frict_coef_file,
+        filters=models.GlobalSetting.frict_type == constants.FrictionType.CHEZY,
+        min_value=0,
+    ),
+    RasterRangeCheck(
+        error_code=784,
         column=models.Interflow.porosity_file,
         filters=models.Interflow.global_settings != None,
+        min_value=0,
+        max_value=1,
     ),
-    FileExistsCheck(
-        error_code=705,
+    RasterRangeCheck(
+        error_code=785,
         column=models.Interflow.hydraulic_conductivity_file,
         filters=models.Interflow.global_settings != None,
+        min_value=0,
     ),
-    FileExistsCheck(
-        error_code=706,
+    RasterRangeCheck(
+        error_code=786,
         column=models.SimpleInfiltration.infiltration_rate_file,
         filters=models.SimpleInfiltration.global_settings != None,
+        min_value=0,
     ),
-    FileExistsCheck(
-        error_code=707,
+    RasterRangeCheck(
+        error_code=787,
         column=models.SimpleInfiltration.max_infiltration_capacity_file,
         filters=models.SimpleInfiltration.global_settings != None,
+        min_value=0,
     ),
-    FileExistsCheck(
-        error_code=708,
+    RasterRangeCheck(
+        error_code=788,
         column=models.GroundWater.groundwater_impervious_layer_level_file,
         filters=models.GroundWater.global_settings != None,
+        min_value=-9998.0,
+        max_value=8848.0,
     ),
-    FileExistsCheck(
-        error_code=709,
+    RasterRangeCheck(
+        error_code=789,
         column=models.GroundWater.phreatic_storage_capacity_file,
         filters=models.GroundWater.global_settings != None,
+        min_value=0,
+        max_value=1,
     ),
-    FileExistsCheck(
-        error_code=710,
+    RasterRangeCheck(
+        error_code=790,
         column=models.GroundWater.equilibrium_infiltration_rate_file,
         filters=models.GroundWater.global_settings != None,
+        min_value=0,
     ),
-    FileExistsCheck(
-        error_code=711,
+    RasterRangeCheck(
+        error_code=791,
         column=models.GroundWater.initial_infiltration_rate_file,
         filters=models.GroundWater.global_settings != None,
+        min_value=0,
     ),
-    FileExistsCheck(
-        error_code=712,
+    RasterRangeCheck(
+        error_code=792,
         column=models.GroundWater.infiltration_decay_period_file,
         filters=models.GroundWater.global_settings != None,
+        min_value=0,
+        left_inclusive=False,
     ),
-    FileExistsCheck(
-        error_code=713,
+    RasterRangeCheck(
+        error_code=793,
         column=models.GroundWater.groundwater_hydro_connectivity_file,
         filters=models.GroundWater.global_settings != None,
+        min_value=0,
     ),
-    FileExistsCheck(
-        error_code=714,
-        column=models.GroundWater.leakage_file,
-        filters=(models.GroundWater.global_settings != None),
-    ),
-    FileExistsCheck(
-        error_code=715,
+    RasterRangeCheck(
+        error_code=795,
         column=models.GlobalSetting.initial_waterlevel_file,
+        min_value=-9998.0,
+        max_value=8848.0,
     ),
-    FileExistsCheck(
-        error_code=716,
+    RasterRangeCheck(
+        error_code=796,
         column=models.GlobalSetting.initial_groundwater_level_file,
-        filters=(models.GlobalSetting.groundwater_settings_id != None),
+        filters=models.GlobalSetting.groundwater_settings_id != None,
+        min_value=-9998.0,
+        max_value=8848.0,
     ),
 ]
 

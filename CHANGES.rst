@@ -5,6 +5,9 @@ Changelog of threedi-modelchecker
 0.32 (unreleased)
 -----------------
 
+- Added raster checks: file validity, has one band, has crs, range check.
+  For DEM only it is also checked if pixels are square and crs is projected. 
+
 - Added warning 325: interception_file given and interception_global not.
 
 - Adapted errors 404, 405, 407, 410, 412, 414, 416, 419 to emit a warning when a

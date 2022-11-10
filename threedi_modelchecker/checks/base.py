@@ -3,7 +3,6 @@ from abc import abstractmethod
 from enum import IntEnum
 from geoalchemy2 import functions as geo_func
 from geoalchemy2.types import Geometry
-from pathlib import Path
 from sqlalchemy import and_
 from sqlalchemy import false
 from sqlalchemy import func
@@ -370,70 +369,9 @@ class RangeCheck(BaseCheck):
     def description(self):
         if self.message:
             return self.message
-        if self.min_value is None:
-            msg = f"is not less than{' or equal to' if self.right_inclusive else ''} {self.max_value}"
-        elif self.max_value is None:
-            msg = f"is not greater than{' or equal to' if self.left_inclusive else ''} {self.min_value}"
-        else:
-            # no room for 'left_inclusive' / 'right_inclusive' info
-            msg = f"is not between {self.min_value} and {self.max_value}"
-        return f"{self.column_name} {msg}"
-
-
-class FileExistsCheck(BaseCheck):
-    """Check whether a file referenced in given Column exists.
-
-    In order to perform this check, the SQLAlchemy session requires a
-    `model_checker_context` attribute, which is set automatically by the
-    ThreediModelChecker and contains either `available_rasters` or `base_path`.
-
-    If it contains `available_rasters`, non-empty file fields are checked
-    against this list. If a field contains a filename and does not occur in
-    the list, the field is invalid.
-
-    Else, if it contains `base_path`, the file fields are checked in the local
-    filesystem. Paths are interpreted relative to `base_path`. The `base_path`
-    is set automatically by ThreediModelChecker if a spatialite is used.
-
-    If the context does not exist, the checker is skipped.
-    """
-
-    def to_check(self, session):
-        return (
-            super()
-            .to_check(session)
-            .filter(
-                self.column != None,
-                self.column != "",
-            )
-        )
-
-    def none(self, session):
-        return self.to_check(session).filter(false()).all()  # empty query
-
-    def get_invalid(self, session):
-        context = getattr(session, "model_checker_context", None)
-        available_rasters = getattr(context, "available_rasters", None)
-        if available_rasters is not None and self.to_check(session).count() > 0:
-            if self.column.name in available_rasters:
-                # the raster is available (so says the context)
-                return self.none(session)
-            else:
-                # the raster is not available (so says the context)
-                return self.to_check(session).all()
-
-        base_path = getattr(context, "base_path", None)
-        if not base_path:
-            # cannot check if there is no path: skip the check
-            return self.none(session)
-
-        invalid = []
-        for record in self.to_check(session).all():
-            path = getattr(record, self.column.name)
-            if not Path(base_path / path).exists():
-                invalid.append(path)
-
-        return self.to_check(session).filter(self.column.in_(invalid)).all()
-
-    def description(self):
-        return f"The file in {self.column_name} is not present"
+        parts = []
+        if self.min_value is not None:
+            parts.append(f"{'<' if self.left_inclusive else '<='}{self.min_value}")
+        if self.max_value is not None:
+            parts.append(f"{'>' if self.right_inclusive else '>='}{self.max_value}")
+        return f"{self.column_name} is {' and/or '.join(parts)}"
