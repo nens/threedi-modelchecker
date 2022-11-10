@@ -158,6 +158,7 @@ class RasterSquareCellsCheck(BaseRasterCheck):
     """
 
     def __init__(self, *args, decimals=7, **kwargs):
+        super().__init__(*args, **kwargs)
         self.decimals = decimals
 
     def is_valid_local(self, rel_path: str, context: LocalContext):

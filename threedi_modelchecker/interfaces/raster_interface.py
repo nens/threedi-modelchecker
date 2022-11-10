@@ -35,7 +35,9 @@ class RasterInterface:
 
     @property
     def _spatial_reference(self):
-        return osr.SpatialReference(self._dataset.GetProjection())
+        projection = self._dataset.GetProjection()
+        if projection:
+            return osr.SpatialReference(projection)
 
     @property
     def is_valid_geotiff(self):
