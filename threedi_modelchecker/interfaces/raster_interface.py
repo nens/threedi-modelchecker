@@ -23,9 +23,7 @@ class RasterInterface:
 
     def __enter__(self) -> "RasterInterface":
         try:
-            self._dataset = gdal.OpenEx(
-                self.path, gdal.GA_ReadOnly, allowed_drivers=["gtiff"]
-            )
+            self._dataset = gdal.Open(self.path, gdal.GA_ReadOnly)
         except RuntimeError:
             self._dataset = None
         return self
@@ -41,7 +39,9 @@ class RasterInterface:
 
     @property
     def is_valid_geotiff(self):
-        return self._dataset is not None
+        return (
+            self._dataset is not None and self._dataset.GetDriver().ShortName == "GTiff"
+        )
 
     @property
     def band_count(self):
@@ -54,8 +54,6 @@ class RasterInterface:
 
     @property
     def epsg_code(self):
-        if not self.is_geographic:
-            return None
         code = self._spatial_reference.GetAuthorityCode("PROJCS")
         return int(code) if code is not None else None
 
