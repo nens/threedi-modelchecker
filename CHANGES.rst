@@ -8,6 +8,31 @@ Changelog of threedi-modelchecker
 - Added raster checks: file validity, has one band, has crs, range check.
   For DEM only it is also checked if pixels are square and crs is projected. 
 
+- Added warning 325: interception_file given and interception_global not.
+
+- Adapted errors 404, 405, 407, 410, 412, 414, 416, 419 to emit a warning when a
+  raster is given but its corresponding global value is not. This global value
+  will be used as a fallback value on pixels where the supplied raster has no data.
+
+- Added error 421: v2_groundwater.groundwater_hydro_connectivity >= 0.
+
+- New schema version (210): added v2_simple_infiltration.max_infiltration_capacity
+  and corresponding checks 422 (>= 0) and 423 (warning when it is NULL and there is a file).
+
+- Added error 424: v2_interflow.hydraulic_conductivity >= 0.
+
+- Added error 425: v2_groundwater.initial_infiltration_rate >= 0.
+
+- Added error 426: v2_groundwater.equilibrium_infiltration_rate >= 0.
+
+- Added error 427: v2_groundwater.infiltration_decay_period > 0.
+
+- Added warning 428 when v2_groundwater.groundwater_hydro_connectivity is NULL and
+  a groundwater_hydro_connectivity_file is supplied.
+
+- Migration to schema version 210 also fixes errors 421, 424, 425, 426, 427 by
+  replacing negative values with NULL.
+
 
 0.31 (2022-11-02)
 -----------------

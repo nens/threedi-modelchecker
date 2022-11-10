@@ -188,6 +188,7 @@ class SimpleInfiltration(Base):
     infiltration_surface_option = Column(
         IntegerEnum(constants.InfiltrationSurfaceOption)
     )
+    max_infiltration_capacity = Column(Float)
     max_infiltration_capacity_file = Column(Text)
     display_name = Column(String(255))
 
