@@ -821,7 +821,7 @@ CHECKS += [
         invalid=Query(models.GlobalSetting).filter(
             ~is_none_or_empty(models.GlobalSetting.interception_file),
         ),
-        message="v2_global_settings.interception_global should be defined also when using an interception_file.",
+        message="v2_global_settings.interception_global is recommended as fallback value when using an interception_file.",
     ),
 ]
 
@@ -865,7 +865,7 @@ CHECKS += [
             models.SimpleInfiltration.infiltration_rate == None,
             ~is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
         ),
-        message="v2_simple_infiltration.infiltration_rate should be defined also when using an infiltration_rate_file.",
+        message="v2_simple_infiltration.infiltration_rate is recommended as fallback value when using an infiltration_rate_file.",
     ),
     QueryCheck(
         error_code=405,
@@ -886,7 +886,7 @@ CHECKS += [
             models.GroundWater.equilibrium_infiltration_rate == None,
             ~is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
         ),
-        message="v2_groundwater.equilibrium_infiltration_rate should be defined also when using an equilibrium_infiltration_rate_file.",
+        message="v2_groundwater.equilibrium_infiltration_rate is recommended as fallback value when using an equilibrium_infiltration_rate_file.",
     ),
     QueryCheck(
         error_code=406,
@@ -917,7 +917,7 @@ CHECKS += [
             models.GroundWater.infiltration_decay_period == None,
             ~is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
         ),
-        message="v2_groundwater.infiltration_decay_period should be defined also when using an infiltration_decay_period_file.",
+        message="v2_groundwater.infiltration_decay_period is recommended as fallback value when using an infiltration_decay_period_file.",
     ),
     QueryCheck(
         error_code=408,
@@ -962,7 +962,7 @@ CHECKS += [
                 models.GroundWater.groundwater_impervious_layer_level_file
             ),
         ),
-        message="v2_groundwater.groundwater_impervious_layer_level should be defined also when using a groundwater_impervious_layer_level_file.",
+        message="v2_groundwater.groundwater_impervious_layer_level is recommended as fallback value when using a groundwater_impervious_layer_level_file.",
     ),
     QueryCheck(
         error_code=411,
@@ -995,7 +995,7 @@ CHECKS += [
             models.GroundWater.initial_infiltration_rate == None,
             ~is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
         ),
-        message="v2_groundwater.initial_infiltration_rate should be defined also when using a initial_infiltration_rate_file.",
+        message="v2_groundwater.initial_infiltration_rate is recommended as fallback value when using a initial_infiltration_rate_file.",
     ),
     QueryCheck(
         error_code=413,
@@ -1026,7 +1026,7 @@ CHECKS += [
             models.GroundWater.phreatic_storage_capacity == None,
             ~is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
         ),
-        message="v2_groundwater.phreatic_storage_capacity should be defined also when using a phreatic_storage_capacity_file.",
+        message="v2_groundwater.phreatic_storage_capacity is recommended as fallback value when using a phreatic_storage_capacity_file.",
     ),
     QueryCheck(
         error_code=415,
@@ -1059,7 +1059,7 @@ CHECKS += [
             ~is_none_or_empty(models.Interflow.porosity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message="v2_interflow.porosity should be defined also when using a porosity_file.",
+        message="v2_interflow.porosity is recommended as fallback value when using a porosity_file.",
     ),
     QueryCheck(
         error_code=417,
@@ -1110,7 +1110,7 @@ CHECKS += [
             ~is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message="v2_interflow.hydraulic_conductivity should be defined also when using a hydraulic_conductivity_file.",
+        message="v2_interflow.hydraulic_conductivity is recommended as fallback value when using a hydraulic_conductivity_file.",
     ),
     RangeCheck(
         error_code=420,
@@ -1140,7 +1140,7 @@ CHECKS += [
             models.SimpleInfiltration.max_infiltration_capacity == None,
             ~is_none_or_empty(models.SimpleInfiltration.max_infiltration_capacity_file),
         ),
-        message="v2_simple_infiltration.max_infiltration_capacity should be defined also when using an max_infiltration_capacity_file.",
+        message="v2_simple_infiltration.max_infiltration_capacity is recommended as fallback value when using an max_infiltration_capacity_file.",
     ),
     RangeCheck(
         error_code=424,
@@ -1177,7 +1177,7 @@ CHECKS += [
             (models.GroundWater.groundwater_hydro_connectivity == None),
             ~is_none_or_empty(models.GroundWater.groundwater_hydro_connectivity_file),
         ),
-        message="v2_groundwater.groundwater_hydro_connectivity should be defined also when using a groundwater_hydro_connectivity_file.",
+        message="v2_groundwater.groundwater_hydro_connectivity is recommended as fallback value when using a groundwater_hydro_connectivity_file.",
     ),
 ]
 
