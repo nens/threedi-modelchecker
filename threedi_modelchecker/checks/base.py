@@ -184,6 +184,21 @@ class UniqueCheck(BaseCheck):
             return f"{self.column_name} should to be unique"
 
 
+class AllEqualCheck(BaseCheck):
+    """Check all values in `column` are the same, including NULL values."""
+
+    def get_invalid(self, session):
+        val = session.query(self.column).limit(1).scalar()
+        if val is None:
+            clause = self.column != None
+        else:
+            clause = (self.column != val) | (self.column == None)
+        return self.to_check(session).filter(clause).all()
+
+    def description(self):
+        return f"{self.column_name} is different and is ignored if it is not in the first record"
+
+
 class NotNullCheck(BaseCheck):
     """ "Check all values in `column` that are not null"""
 

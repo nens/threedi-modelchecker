@@ -3,6 +3,7 @@ from sqlalchemy.orm import Query
 from tests import factories
 from threedi_modelchecker.checks import geo_query
 from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_types
+from threedi_modelchecker.checks.base import AllEqualCheck
 from threedi_modelchecker.checks.base import EnumCheck
 from threedi_modelchecker.checks.base import ForeignKeyCheck
 from threedi_modelchecker.checks.base import GeometryCheck
@@ -172,6 +173,52 @@ def test_unique_check_multiple_description():
         "columns ['flow_variable', 'aggregation_method'] in table "
         "v2_aggregation_settings should be unique together"
     )
+
+
+def test_all_equal_check(session):
+    factories.GlobalSettingsFactory(table_step_size=0.5)
+    factories.GlobalSettingsFactory(table_step_size=0.5)
+
+    check = AllEqualCheck(models.GlobalSetting.table_step_size)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0
+
+
+def test_all_equal_check_different_value(session):
+    factories.GlobalSettingsFactory(table_step_size=0.5)
+    factories.GlobalSettingsFactory(table_step_size=0.6)
+    factories.GlobalSettingsFactory(table_step_size=0.5)
+    factories.GlobalSettingsFactory(table_step_size=0.7)
+
+    check = AllEqualCheck(models.GlobalSetting.table_step_size)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 2
+    assert invalid_rows[0].table_step_size == 0.6
+    assert invalid_rows[1].table_step_size == 0.7
+
+
+def test_all_equal_check_null_value(session):
+    factories.GlobalSettingsFactory(maximum_table_step_size=None)
+    factories.GlobalSettingsFactory(maximum_table_step_size=None)
+
+    check = AllEqualCheck(models.GlobalSetting.maximum_table_step_size)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0
+
+
+def test_all_equal_check_null_value_different(session):
+    factories.GlobalSettingsFactory(maximum_table_step_size=1.0)
+    factories.GlobalSettingsFactory(maximum_table_step_size=None)
+
+    check = AllEqualCheck(models.GlobalSetting.maximum_table_step_size)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 1
+
+
+def test_all_equal_check_no_records(session):
+    check = AllEqualCheck(models.GlobalSetting.table_step_size)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == 0
 
 
 def test_null_check(session):
@@ -710,3 +757,25 @@ def test_range_check_invalid(
     assert len(invalid_rows) == 1
 
     assert check.description() == msg.format("v2_connection_nodes.storage_area")
+
+
+def test_check_only_first(session):
+    factories.GlobalSettingsFactory(dem_obstacle_detection=False)
+    factories.GlobalSettingsFactory(dem_obstacle_detection=True)
+
+    try:
+        active_settings = Query(models.GlobalSetting.id).limit(1).scalar_subquery()
+    except AttributeError:
+        active_settings = Query(models.GlobalSetting.id).limit(1).as_scalar()
+
+    check = QueryCheck(
+        error_code=302,
+        column=models.GlobalSetting.dem_obstacle_detection,
+        invalid=Query(models.GlobalSetting).filter(
+            models.GlobalSetting.id == active_settings,
+            models.GlobalSetting.dem_obstacle_detection == True,
+        ),
+        message="v2_global_settings.dem_obstacle_detection is True, while this feature is not supported",
+    )
+
+    assert check.get_invalid(session) == []

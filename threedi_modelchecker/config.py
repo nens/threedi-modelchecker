@@ -1,4 +1,5 @@
 from .checks import geo_query
+from .checks.base import AllEqualCheck
 from .checks.base import BaseCheck
 from .checks.base import CheckLevel
 from .checks.base import ForeignKeyCheck
@@ -54,25 +55,59 @@ def is_none_or_empty(col):
     return (col == None) | (col == "")
 
 
+def scalar_subquery(query):
+    # compatibility between sqlalchemy 1.3 and 1.4
+    try:
+        return query.scalar_subquery()
+    except AttributeError:
+        return query.as_scalar()
+
+
+# Use these to make checks only work on the first global settings entry:
+first_setting = scalar_subquery(Query(models.GlobalSetting.id).limit(1))
+first_setting_filter = models.GlobalSetting.id == first_setting
+interflow_settings_id = scalar_subquery(
+    Query(models.GlobalSetting.interflow_settings_id).filter(first_setting_filter)
+)
+interflow_filter = models.Interflow.id == interflow_settings_id
+infiltration_settings_id = scalar_subquery(
+    Query(models.GlobalSetting.simple_infiltration_settings_id).filter(
+        first_setting_filter
+    )
+)
+infiltration_filter = models.SimpleInfiltration.id == infiltration_settings_id
+groundwater_settings_id = scalar_subquery(
+    Query(models.GlobalSetting.groundwater_settings_id).filter(first_setting_filter)
+)
+groundwater_filter = models.GroundWater.id == groundwater_settings_id
+
 CONDITIONS = {
     "has_dem": Query(models.GlobalSetting).filter(
-        ~is_none_or_empty(models.GlobalSetting.dem_file)
+        first_setting_filter, ~is_none_or_empty(models.GlobalSetting.dem_file)
     ),
     "has_no_dem": Query(models.GlobalSetting).filter(
-        is_none_or_empty(models.GlobalSetting.dem_file)
+        first_setting_filter, is_none_or_empty(models.GlobalSetting.dem_file)
     ),
     "0d_surf": Query(models.GlobalSetting).filter(
-        models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE
+        first_setting_filter,
+        models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
     ),
     "0d_imp": Query(models.GlobalSetting).filter(
-        models.GlobalSetting.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE
+        first_setting_filter,
+        models.GlobalSetting.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE,
+    ),
+    "manning": Query(models.GlobalSetting).filter(
+        first_setting_filter,
+        models.GlobalSetting.frict_type == constants.FrictionType.MANNING,
+    ),
+    "chezy": Query(models.GlobalSetting).filter(
+        first_setting_filter,
+        models.GlobalSetting.frict_type == constants.FrictionType.CHEZY,
     ),
 }
 
-try:
-    kmax = Query(models.GlobalSetting.kmax).limit(1).scalar_subquery()
-except AttributeError:
-    kmax = Query(models.GlobalSetting.kmax).limit(1).as_scalar()
+kmax = scalar_subquery(Query(models.GlobalSetting.kmax).filter(first_setting_filter))
+
 
 CHECKS: List[BaseCheck] = []
 
@@ -662,6 +697,7 @@ CHECKS += [
         error_code=302,
         column=models.GlobalSetting.dem_obstacle_detection,
         invalid=Query(models.GlobalSetting).filter(
+            first_setting_filter,
             models.GlobalSetting.dem_obstacle_detection == True,
         ),
         message="v2_global_settings.dem_obstacle_detection is True, while this feature is not supported",
@@ -671,6 +707,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.GlobalSetting.use_1d_flow,
         invalid=Query(models.GlobalSetting).filter(
+            first_setting_filter,
             models.GlobalSetting.use_1d_flow == False,
             Query(func.count(models.ConnectionNode.id) > 0).label("1d_count"),
         ),
@@ -681,6 +718,7 @@ CHECKS += [
         error_code=304,
         column=models.GlobalSetting.groundwater_settings_id,
         invalid=Query(models.GlobalSetting).filter(
+            first_setting_filter,
             models.GlobalSetting.groundwater_settings_id != None,
             models.GlobalSetting.simple_infiltration_settings != None,
         ),
@@ -689,6 +727,7 @@ CHECKS += [
     RangeCheck(
         error_code=305,
         column=models.GlobalSetting.kmax,
+        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 is not allowed
     ),
@@ -696,6 +735,7 @@ CHECKS += [
         error_code=306,
         level=CheckLevel.WARNING,
         column=models.GlobalSetting.dist_calc_points,
+        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
         message="v2_global_settings.dist_calc_points is not greater than 0, in the future this will lead to an error",
@@ -703,53 +743,60 @@ CHECKS += [
     RangeCheck(
         error_code=307,
         column=models.GlobalSetting.grid_space,
+        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         error_code=308,
         column=models.GlobalSetting.embedded_cutoff_threshold,
+        filters=first_setting_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=309,
         column=models.GlobalSetting.max_angle_1d_advection,
+        filters=first_setting_filter,
         min_value=0,
         max_value=0.5 * 3.14159,
     ),
     RangeCheck(
         error_code=310,
         column=models.GlobalSetting.table_step_size,
+        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,
     ),
     RangeCheck(
         error_code=311,
         column=models.GlobalSetting.table_step_size_1d,
+        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,
     ),
     RangeCheck(
         error_code=313,
         column=models.GlobalSetting.frict_coef,
-        filters=models.GlobalSetting.frict_type == constants.FrictionType.MANNING,
+        filters=CONDITIONS["manning"].exists(),
         min_value=0,
         max_value=1,
     ),
     RangeCheck(
         error_code=314,
         column=models.GlobalSetting.frict_coef,
-        filters=models.GlobalSetting.frict_type == constants.FrictionType.CHEZY,
+        filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
     RangeCheck(
         error_code=315,
         column=models.GlobalSetting.interception_global,
+        filters=first_setting_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=316,
         column=models.GlobalSetting.manhole_storage_area,
+        filters=first_setting_filter,
         min_value=0,
     ),
     QueryCheck(
@@ -777,6 +824,7 @@ CHECKS += [
         error_code=320,
         column=models.GlobalSetting.use_2d_flow,
         invalid=Query(models.GlobalSetting).filter(
+            first_setting_filter,
             models.GlobalSetting.use_1d_flow == False,
             models.GlobalSetting.use_2d_flow == False,
         ),
@@ -787,6 +835,7 @@ CHECKS += [
         error_code=321,
         column=models.GlobalSetting.manhole_storage_area,
         invalid=Query(models.GlobalSetting).filter(
+            first_setting_filter,
             models.GlobalSetting.manhole_storage_area > 0,
             (
                 (models.GlobalSetting.use_2d_flow == True)
@@ -799,6 +848,7 @@ CHECKS += [
         error_code=322,
         column=models.GlobalSetting.water_level_ini_type,
         invalid=Query(models.GlobalSetting).filter(
+            first_setting_filter,
             ~is_none_or_empty(models.GlobalSetting.initial_waterlevel_file),
             models.GlobalSetting.water_level_ini_type == None,
         ),
@@ -808,6 +858,7 @@ CHECKS += [
         error_code=323,
         column=models.GlobalSetting.maximum_table_step_size,
         invalid=Query(models.GlobalSetting).filter(
+            first_setting_filter,
             models.GlobalSetting.maximum_table_step_size
             < models.GlobalSetting.table_step_size,
         ),
@@ -826,10 +877,42 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.GlobalSetting.interception_global,
         invalid=Query(models.GlobalSetting).filter(
+            first_setting_filter,
             ~is_none_or_empty(models.GlobalSetting.interception_file),
         ),
         message="v2_global_settings.interception_global is recommended as fallback value when using an interception_file.",
     ),
+]
+
+CHECKS += [
+    AllEqualCheck(error_code=330 + i, column=column, level=CheckLevel.WARNING)
+    for i, column in enumerate(
+        [
+            models.GlobalSetting.use_2d_flow,
+            models.GlobalSetting.use_1d_flow,
+            models.GlobalSetting.grid_space,
+            models.GlobalSetting.dist_calc_points,
+            models.GlobalSetting.kmax,
+            models.GlobalSetting.dem_file,
+            models.GlobalSetting.embedded_cutoff_threshold,
+            models.GlobalSetting.epsg_code,
+            models.GlobalSetting.max_angle_1d_advection,
+            models.GlobalSetting.frict_avg,
+            models.GlobalSetting.use_0d_inflow,
+            models.GlobalSetting.manhole_storage_area,
+            models.GlobalSetting.table_step_size,
+            models.GlobalSetting.frict_type,
+            models.GlobalSetting.frict_coef,
+            models.GlobalSetting.frict_coef_file,
+            models.GlobalSetting.interception_global,
+            models.GlobalSetting.interception_file,
+            models.GlobalSetting.table_step_size_1d,
+            models.GlobalSetting.maximum_table_step_size,
+            models.GlobalSetting.interflow_settings_id,
+            models.GlobalSetting.simple_infiltration_settings_id,
+            models.GlobalSetting.groundwater_settings_id,
+        ]
+    )
 ]
 
 ## 04xx: Groundwater, Interflow & Infiltration
@@ -837,27 +920,27 @@ CHECKS += [
     RangeCheck(
         error_code=401,
         column=models.Interflow.porosity,
-        filters=models.Interflow.global_settings != None,
+        filters=interflow_filter,
         min_value=0,
         max_value=1,
     ),
     RangeCheck(
         error_code=402,
         column=models.Interflow.impervious_layer_elevation,
-        filters=models.Interflow.global_settings != None,
+        filters=interflow_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=403,
         column=models.SimpleInfiltration.infiltration_rate,
-        filters=models.SimpleInfiltration.global_settings != None,
+        filters=infiltration_filter,
         min_value=0,
     ),
     QueryCheck(
         error_code=404,
         column=models.SimpleInfiltration.infiltration_rate,
         invalid=Query(models.SimpleInfiltration).filter(
-            models.SimpleInfiltration.global_settings != None,
+            infiltration_filter,
             models.SimpleInfiltration.infiltration_rate == None,
             is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
         ),
@@ -868,7 +951,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.SimpleInfiltration.infiltration_rate,
         invalid=Query(models.SimpleInfiltration).filter(
-            models.SimpleInfiltration.global_settings != None,
+            infiltration_filter,
             models.SimpleInfiltration.infiltration_rate == None,
             ~is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
         ),
@@ -878,7 +961,7 @@ CHECKS += [
         error_code=405,
         column=models.GroundWater.equilibrium_infiltration_rate,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.equilibrium_infiltration_rate == None,
             is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
         ),
@@ -889,7 +972,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.GroundWater.equilibrium_infiltration_rate,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.equilibrium_infiltration_rate == None,
             ~is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
         ),
@@ -899,7 +982,7 @@ CHECKS += [
         error_code=406,
         column=models.GroundWater.equilibrium_infiltration_rate_type,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.equilibrium_infiltration_rate_type == None,
             ~is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
         ),
@@ -909,7 +992,7 @@ CHECKS += [
         error_code=407,
         column=models.GroundWater.infiltration_decay_period,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.infiltration_decay_period == None,
             is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
         ),
@@ -920,7 +1003,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.GroundWater.infiltration_decay_period,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.infiltration_decay_period == None,
             ~is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
         ),
@@ -930,7 +1013,7 @@ CHECKS += [
         error_code=408,
         column=models.GroundWater.infiltration_decay_period_type,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.infiltration_decay_period_type == None,
             ~is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
         ),
@@ -940,7 +1023,7 @@ CHECKS += [
         error_code=409,
         column=models.GroundWater.groundwater_hydro_connectivity_type,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.groundwater_hydro_connectivity_type == None,
             ~is_none_or_empty(models.GroundWater.groundwater_hydro_connectivity_file),
         ),
@@ -950,7 +1033,7 @@ CHECKS += [
         error_code=410,
         column=models.GroundWater.groundwater_impervious_layer_level,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.groundwater_impervious_layer_level == None,
             is_none_or_empty(
                 models.GroundWater.groundwater_impervious_layer_level_file
@@ -963,7 +1046,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.GroundWater.groundwater_impervious_layer_level,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.groundwater_impervious_layer_level == None,
             ~is_none_or_empty(
                 models.GroundWater.groundwater_impervious_layer_level_file
@@ -975,7 +1058,7 @@ CHECKS += [
         error_code=411,
         column=models.GroundWater.groundwater_impervious_layer_level_type,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.groundwater_impervious_layer_level_type == None,
             ~is_none_or_empty(
                 models.GroundWater.groundwater_impervious_layer_level_file
@@ -987,7 +1070,7 @@ CHECKS += [
         error_code=412,
         column=models.GroundWater.initial_infiltration_rate,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.initial_infiltration_rate == None,
             is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
         ),
@@ -998,7 +1081,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.GroundWater.initial_infiltration_rate,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.initial_infiltration_rate == None,
             ~is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
         ),
@@ -1008,7 +1091,7 @@ CHECKS += [
         error_code=413,
         column=models.GroundWater.initial_infiltration_rate_type,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.initial_infiltration_rate_type == None,
             ~is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
         ),
@@ -1018,7 +1101,7 @@ CHECKS += [
         error_code=414,
         column=models.GroundWater.phreatic_storage_capacity,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.phreatic_storage_capacity == None,
             is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
         ),
@@ -1029,7 +1112,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.GroundWater.phreatic_storage_capacity,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.phreatic_storage_capacity == None,
             ~is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
         ),
@@ -1039,7 +1122,7 @@ CHECKS += [
         error_code=415,
         column=models.GroundWater.phreatic_storage_capacity_type,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             models.GroundWater.phreatic_storage_capacity_type == None,
             ~is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
         ),
@@ -1049,7 +1132,7 @@ CHECKS += [
         error_code=416,
         column=models.Interflow.porosity,
         invalid=Query(models.Interflow).filter(
-            models.Interflow.global_settings != None,
+            interflow_filter,
             models.Interflow.porosity == None,
             is_none_or_empty(models.Interflow.porosity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
@@ -1061,7 +1144,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.Interflow.porosity,
         invalid=Query(models.Interflow).filter(
-            models.Interflow.global_settings != None,
+            interflow_filter,
             models.Interflow.porosity == None,
             ~is_none_or_empty(models.Interflow.porosity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
@@ -1072,7 +1155,7 @@ CHECKS += [
         error_code=417,
         column=models.Interflow.porosity_layer_thickness,
         invalid=Query(models.Interflow).filter(
-            models.Interflow.global_settings != None,
+            interflow_filter,
             (models.Interflow.porosity_layer_thickness == None)
             | (models.Interflow.porosity_layer_thickness <= 0),
             models.Interflow.interflow_type
@@ -1090,7 +1173,7 @@ CHECKS += [
         error_code=418,
         column=models.Interflow.impervious_layer_elevation,
         invalid=Query(models.Interflow).filter(
-            models.Interflow.global_settings != None,
+            interflow_filter,
             models.Interflow.impervious_layer_elevation == None,
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
@@ -1100,7 +1183,7 @@ CHECKS += [
         error_code=419,
         column=models.Interflow.hydraulic_conductivity,
         invalid=Query(models.Interflow).filter(
-            models.Interflow.global_settings != None,
+            interflow_filter,
             models.Interflow.hydraulic_conductivity == None,
             is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
@@ -1112,7 +1195,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.Interflow.hydraulic_conductivity,
         invalid=Query(models.Interflow).filter(
-            models.Interflow.global_settings != None,
+            interflow_filter,
             models.Interflow.hydraulic_conductivity == None,
             ~is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
@@ -1122,20 +1205,20 @@ CHECKS += [
     RangeCheck(
         error_code=420,
         column=models.GroundWater.phreatic_storage_capacity,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
         max_value=1,
     ),
     RangeCheck(
         error_code=421,
         column=models.GroundWater.groundwater_hydro_connectivity,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=422,
         column=models.SimpleInfiltration.max_infiltration_capacity,
-        filters=models.SimpleInfiltration.global_settings != None,
+        filters=infiltration_filter,
         min_value=0,
     ),
     QueryCheck(
@@ -1143,7 +1226,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.SimpleInfiltration.max_infiltration_capacity,
         invalid=Query(models.SimpleInfiltration).filter(
-            models.SimpleInfiltration.global_settings != None,
+            infiltration_filter,
             models.SimpleInfiltration.max_infiltration_capacity == None,
             ~is_none_or_empty(models.SimpleInfiltration.max_infiltration_capacity_file),
         ),
@@ -1152,26 +1235,26 @@ CHECKS += [
     RangeCheck(
         error_code=424,
         column=models.Interflow.hydraulic_conductivity,
-        filters=(models.Interflow.global_settings != None)
+        filters=(interflow_filter)
         & (models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW),
         min_value=0,
     ),
     RangeCheck(
         error_code=425,
         column=models.GroundWater.initial_infiltration_rate,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=426,
         column=models.GroundWater.equilibrium_infiltration_rate,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=427,
         column=models.GroundWater.infiltration_decay_period,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
         left_inclusive=False,
     ),
@@ -1180,7 +1263,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.GroundWater.groundwater_hydro_connectivity,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.global_settings != None,
+            groundwater_filter,
             (models.GroundWater.groundwater_hydro_connectivity == None),
             ~is_none_or_empty(models.GroundWater.groundwater_hydro_connectivity_file),
         ),
@@ -1283,51 +1366,51 @@ CHECKS += [
 
 # 07xx: RASTERS
 RASTER_COLUMNS_FILTERS = [
-    (models.GlobalSetting.dem_file, None),
-    (models.GlobalSetting.frict_coef_file, None),
-    (models.GlobalSetting.interception_file, None),
-    (models.Interflow.porosity_file, models.Interflow.global_settings != None),
+    (models.GlobalSetting.dem_file, first_setting_filter),
+    (models.GlobalSetting.frict_coef_file, first_setting_filter),
+    (models.GlobalSetting.interception_file, first_setting_filter),
+    (models.Interflow.porosity_file, interflow_filter),
     (
         models.Interflow.hydraulic_conductivity_file,
-        models.Interflow.global_settings != None,
+        interflow_filter,
     ),
     (
         models.SimpleInfiltration.infiltration_rate_file,
-        models.SimpleInfiltration.global_settings != None,
+        infiltration_filter,
     ),
     (
         models.SimpleInfiltration.max_infiltration_capacity_file,
-        models.SimpleInfiltration.global_settings != None,
+        infiltration_filter,
     ),
     (
         models.GroundWater.groundwater_impervious_layer_level_file,
-        models.GroundWater.global_settings != None,
+        groundwater_filter,
     ),
     (
         models.GroundWater.phreatic_storage_capacity_file,
-        models.GroundWater.global_settings != None,
+        groundwater_filter,
     ),
     (
         models.GroundWater.equilibrium_infiltration_rate_file,
-        models.GroundWater.global_settings != None,
+        groundwater_filter,
     ),
     (
         models.GroundWater.initial_infiltration_rate_file,
-        models.GroundWater.global_settings != None,
+        groundwater_filter,
     ),
     (
         models.GroundWater.infiltration_decay_period_file,
-        models.GroundWater.global_settings != None,
+        groundwater_filter,
     ),
     (
         models.GroundWater.groundwater_hydro_connectivity_file,
-        models.GroundWater.global_settings != None,
+        groundwater_filter,
     ),
-    (models.GroundWater.leakage_file, models.GroundWater.global_settings != None),
-    (models.GlobalSetting.initial_waterlevel_file, None),
+    (models.GroundWater.leakage_file, groundwater_filter),
+    (models.GlobalSetting.initial_waterlevel_file, first_setting_filter),
     (
         models.GlobalSetting.initial_groundwater_level_file,
-        models.GlobalSetting.groundwater_settings_id != None,
+        first_setting_filter & (models.GlobalSetting.groundwater_settings_id != None),
     ),
 ]
 CHECKS += [
@@ -1369,89 +1452,98 @@ CHECKS += [
     for i, (column, filters) in enumerate(RASTER_COLUMNS_FILTERS)
 ]
 CHECKS += [
-    RasterIsProjectedCheck(error_code=779, column=models.GlobalSetting.dem_file),
-    RasterSquareCellsCheck(error_code=780, column=models.GlobalSetting.dem_file),
+    RasterIsProjectedCheck(
+        error_code=779,
+        column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
+    ),
+    RasterSquareCellsCheck(
+        error_code=780,
+        column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
+    ),
     RasterRangeCheck(
         error_code=781,
         column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
         min_value=-9998.0,
         max_value=8848.0,
     ),
     RasterRangeCheck(
         error_code=782,
         column=models.GlobalSetting.frict_coef_file,
-        filters=models.GlobalSetting.frict_type == constants.FrictionType.MANNING,
+        filters=CONDITIONS["manning"].exists(),
         min_value=0,
         max_value=1,
     ),
     RasterRangeCheck(
         error_code=783,
         column=models.GlobalSetting.frict_coef_file,
-        filters=models.GlobalSetting.frict_type == constants.FrictionType.CHEZY,
+        filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=784,
         column=models.Interflow.porosity_file,
-        filters=models.Interflow.global_settings != None,
+        filters=interflow_filter,
         min_value=0,
         max_value=1,
     ),
     RasterRangeCheck(
         error_code=785,
         column=models.Interflow.hydraulic_conductivity_file,
-        filters=models.Interflow.global_settings != None,
+        filters=interflow_filter,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=786,
         column=models.SimpleInfiltration.infiltration_rate_file,
-        filters=models.SimpleInfiltration.global_settings != None,
+        filters=infiltration_filter,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=787,
         column=models.SimpleInfiltration.max_infiltration_capacity_file,
-        filters=models.SimpleInfiltration.global_settings != None,
+        filters=infiltration_filter,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=788,
         column=models.GroundWater.groundwater_impervious_layer_level_file,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=-9998.0,
         max_value=8848.0,
     ),
     RasterRangeCheck(
         error_code=789,
         column=models.GroundWater.phreatic_storage_capacity_file,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
         max_value=1,
     ),
     RasterRangeCheck(
         error_code=790,
         column=models.GroundWater.equilibrium_infiltration_rate_file,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=791,
         column=models.GroundWater.initial_infiltration_rate_file,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=792,
         column=models.GroundWater.infiltration_decay_period_file,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
         left_inclusive=False,
     ),
     RasterRangeCheck(
         error_code=793,
         column=models.GroundWater.groundwater_hydro_connectivity_file,
-        filters=models.GroundWater.global_settings != None,
+        filters=groundwater_filter,
         min_value=0,
     ),
     RasterRangeCheck(
@@ -1463,7 +1555,8 @@ CHECKS += [
     RasterRangeCheck(
         error_code=796,
         column=models.GlobalSetting.initial_groundwater_level_file,
-        filters=models.GlobalSetting.groundwater_settings_id != None,
+        filters=first_setting_filter
+        & (models.GlobalSetting.groundwater_settings_id != None),
         min_value=-9998.0,
         max_value=8848.0,
     ),
