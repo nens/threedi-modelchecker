@@ -3,10 +3,12 @@ from typing import Optional
 
 try:
     from osgeo import gdal
+    from osgeo import osr
 
     gdal.UseExceptions()
+    osr.UseExceptions()
 except ImportError:
-    gdal = None
+    gdal = osr = None
 
 
 class RasterInterface:
@@ -33,7 +35,7 @@ class RasterInterface:
 
     @property
     def _spatial_reference(self):
-        return self._dataset.GetSpatialRef()
+        return osr.SpatialReference(self._dataset.GetProjection())
 
     @property
     def is_valid_geotiff(self):
@@ -67,5 +69,7 @@ class RasterInterface:
     def min_max(self):
         if self.band_count == 0:
             return None, None
-        statistics = self._dataset.GetRasterBand(1).ComputeStatistics(False)
-        return statistics[0], statistics[1]
+        # usage of approx_ok=False bypasses statistics cache and forces
+        # all pixels to be read
+        # see: https://gdal.org/doxygen/classGDALRasterBand.html#ac7761bab7cf3b8445ed963e4aa85e715
+        return self._dataset.GetRasterBand(1).ComputeRasterMinMax(False)

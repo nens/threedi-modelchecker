@@ -1210,6 +1210,7 @@ CHECKS += [
 CHECKS += [
     RasterHasOneBandCheck(
         error_code=741 + i,
+        level=CheckLevel.WARNING,
         column=column,
         filters=filters,
     )
@@ -1306,12 +1307,6 @@ CHECKS += [
     RasterRangeCheck(
         error_code=793,
         column=models.GroundWater.groundwater_hydro_connectivity_file,
-        filters=models.GroundWater.global_settings != None,
-        min_value=0,
-    ),
-    RasterRangeCheck(
-        error_code=794,
-        column=models.GroundWater.leakage_file,
         filters=models.GroundWater.global_settings != None,
         min_value=0,
     ),

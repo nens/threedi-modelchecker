@@ -78,49 +78,7 @@ class RasterExistsCheck(BaseRasterCheck):
         return f"The file in {self.column_name} is not present"
 
 
-class BaseRasterOpenCheck(BaseRasterCheck):
-    """See BaseRasterCheck.
-
-    Additionally skip the check if the raster file is not there or if GDAL is
-    not present.
-    """
-
-    def to_check(self, session):
-        return (
-            super()
-            .to_check(session)
-            .filter(
-                self.column != None,
-                self.column != "",
-            )
-        )
-
-    def get_invalid(self, session):
-        context = session.model_checker_context
-        if isinstance(context, LocalContext):
-            if not RasterInterface.available():
-                return []
-            is_valid = self.is_valid_local
-        elif isinstance(context, ServerContext):
-            is_valid = self.is_valid_server
-        else:
-            raise NotImplementedError(f"Invalid context type: {context}")
-
-        column_name = self.column.name
-        return [
-            x
-            for x in self.to_check(session).all()
-            if not is_valid(getattr(x, column_name), context)
-        ]
-
-    def is_valid_local(self, rel_path: str, context: LocalContext):
-        return True
-
-    def is_valid_server(self, rel_path: str, context: ServerContext):
-        return True
-
-
-class RasterIsValidCheck(BaseRasterOpenCheck):
+class RasterIsValidCheck(BaseRasterCheck):
     """Check whether a file is a geotiff.
 
     Only works locally.
@@ -130,6 +88,8 @@ class RasterIsValidCheck(BaseRasterOpenCheck):
         path = Path(context.base_path / rel_path)
         if not path.exists():
             return True  # RasterExistsCheck will cover this situation
+        if not RasterInterface.available():
+            return True  # skip as gdal is not available
         with RasterInterface(path) as raster:
             return raster.is_valid_geotiff
 
@@ -137,13 +97,15 @@ class RasterIsValidCheck(BaseRasterOpenCheck):
         return f"The file in {self.column_name} is not a valid GeoTIFF file"
 
 
-class RasterHasOneBandCheck(BaseRasterOpenCheck):
+class RasterHasOneBandCheck(BaseRasterCheck):
     """Check whether a raster has a single band.
 
     Only works locally.
     """
 
     def is_valid_local(self, rel_path: str, context: LocalContext):
+        if not RasterInterface.available():
+            return True  # skip as gdal is not available
         with RasterInterface(Path(context.base_path / rel_path)) as raster:
             if not raster.is_valid_geotiff:
                 return True
@@ -153,13 +115,15 @@ class RasterHasOneBandCheck(BaseRasterOpenCheck):
         return f"The file in {self.column_name} has multiple or no bands."
 
 
-class RasterHasProjectionCheck(BaseRasterOpenCheck):
+class RasterHasProjectionCheck(BaseRasterCheck):
     """Check whether a raster has a projected coordinate system.
 
     Only works locally.
     """
 
     def is_valid_local(self, rel_path: str, context: LocalContext):
+        if not RasterInterface.available():
+            return True  # skip as gdal is not available
         with RasterInterface(Path(context.base_path / rel_path)) as raster:
             if not raster.is_valid_geotiff:
                 return True
@@ -169,13 +133,15 @@ class RasterHasProjectionCheck(BaseRasterOpenCheck):
         return f"The file in {self.column_name} has no CRS."
 
 
-class RasterIsProjectedCheck(BaseRasterOpenCheck):
+class RasterIsProjectedCheck(BaseRasterCheck):
     """Check whether a raster has a projected coordinate system.
 
     Only works locally.
     """
 
     def is_valid_local(self, rel_path: str, context: LocalContext):
+        if not RasterInterface.available():
+            return True  # skip as gdal is not available
         with RasterInterface(Path(context.base_path / rel_path)) as raster:
             if not raster.is_valid_geotiff:
                 return True
@@ -185,24 +151,31 @@ class RasterIsProjectedCheck(BaseRasterOpenCheck):
         return f"The file in {self.column_name} does not use a projected CRS."
 
 
-class RasterSquareCellsCheck(BaseRasterOpenCheck):
+class RasterSquareCellsCheck(BaseRasterCheck):
     """Check whether a raster has square cells (pixels)
 
     Only works locally.
     """
 
+    def __init__(self, *args, decimals=7, **kwargs):
+        self.decimals = decimals
+
     def is_valid_local(self, rel_path: str, context: LocalContext):
+        if not RasterInterface.available():
+            return True  # skip as gdal is not available
         with RasterInterface(Path(context.base_path / rel_path)) as raster:
             if not raster.is_valid_geotiff:
                 return True
             dx, dy = raster.pixel_size
-            return dx is not None and dx == dy
+            return dx is not None and round(dx, self.decimals) == round(
+                dy, self.decimals
+            )
 
     def description(self):
         return f"The raster in {self.column_name} has non-square raster cells."
 
 
-class RasterRangeCheck(BaseRasterOpenCheck):
+class RasterRangeCheck(BaseRasterCheck):
     """Check whether a raster has values outside of provided range.
 
     Also fails when there are no values in the raster. Only works locally.
@@ -228,6 +201,8 @@ class RasterRangeCheck(BaseRasterOpenCheck):
         super().__init__(*args, **kwargs)
 
     def is_valid_local(self, rel_path: str, context: LocalContext):
+        if not RasterInterface.available():
+            return True  # skip as gdal is not available
         with RasterInterface(Path(context.base_path / rel_path)) as raster:
             if not raster.is_valid_geotiff:
                 return True

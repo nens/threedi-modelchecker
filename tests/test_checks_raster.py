@@ -1,5 +1,6 @@
 from tests import factories
 from threedi_modelchecker.checks.raster import BaseRasterCheck
+from threedi_modelchecker.checks.raster import GDALAvailableCheck
 from threedi_modelchecker.checks.raster import LocalContext
 from threedi_modelchecker.checks.raster import RasterExistsCheck
 from threedi_modelchecker.checks.raster import RasterHasOneBandCheck
@@ -89,28 +90,27 @@ def test_base_get_invalid_server(mocked_check, session_server):
     assert not mocked_check.is_valid_local.called
 
 
-@pytest.fixture
-def exists_check():
-    return RasterExistsCheck(column=models.GlobalSetting.dem_file)
-
-
-def test_exists_is_valid_local_ok(context_local, tmp_path, exists_check):
+def test_exists_local_ok(context_local, tmp_path):
+    check = RasterExistsCheck(column=models.GlobalSetting.dem_file)
     (tmp_path / "somefile").touch()
-    assert exists_check.is_valid_local("somefile", context_local)
+    assert check.is_valid_local("somefile", context_local)
 
 
-def test_exists_is_valid_local_err(context_local, exists_check):
-    assert not exists_check.is_valid_local("somefile", context_local)
+def test_exists_local_err(context_local):
+    check = RasterExistsCheck(column=models.GlobalSetting.dem_file)
+    assert not check.is_valid_local("somefile", context_local)
 
 
-def test_exists_is_valid_server_ok(context_server, exists_check):
+def test_exists_server_ok(context_server):
+    check = RasterExistsCheck(column=models.GlobalSetting.dem_file)
     context_server.available_rasters = {"dem_file"}
-    assert exists_check.is_valid_server("somefile", context_server)
+    assert check.is_valid_server("somefile", context_server)
 
 
-def test_exists_is_valid_server_err(context_server, exists_check):
+def test_exists_erver_err(context_server):
+    check = RasterExistsCheck(column=models.GlobalSetting.dem_file)
     context_server.available_rasters = {"other"}
-    assert not exists_check.is_valid_server("somefile", context_server)
+    assert not check.is_valid_server("somefile", context_server)
 
 
 def create_geotiff(path, epsg=28992, width=3, height=2, bands=1, dx=0.5, dy=0.5):
@@ -132,119 +132,73 @@ def valid_geotiff(tmp_path):
     return "raster.tiff"
 
 
-@pytest.fixture
-def valid_check():
-    return RasterIsValidCheck(column=models.GlobalSetting.dem_file)
+def test_valid_ok(context_local, valid_geotiff):
+    check = RasterIsValidCheck(column=models.GlobalSetting.dem_file)
+    assert check.is_valid_local(valid_geotiff, context_local)
 
 
-def test_valid_ok(context_local, valid_check, valid_geotiff):
-    assert valid_check.is_valid_local(valid_geotiff, context_local)
-
-
-def test_valid_err(context_local, valid_check, tmp_path):
+def test_valid_err(context_local, tmp_path):
     (tmp_path / "somefile.tiff").touch()
-    assert not valid_check.is_valid_local("somefile.tiff", context_local)
+    check = RasterIsValidCheck(column=models.GlobalSetting.dem_file)
+    assert not check.is_valid_local("somefile.tiff", context_local)
 
 
-def test_valid_file_missing(context_local, valid_check):
-    assert valid_check.is_valid_local("somefile.tiff", context_local)
+def test_one_band_ok(context_local, valid_geotiff):
+    check = RasterHasOneBandCheck(column=models.GlobalSetting.dem_file)
+    assert check.is_valid_local(valid_geotiff, context_local)
 
 
-@pytest.fixture
-def one_band_check():
-    return RasterHasOneBandCheck(column=models.GlobalSetting.dem_file)
-
-
-def test_one_band_ok(context_local, one_band_check, valid_geotiff):
-    assert one_band_check.is_valid_local(valid_geotiff, context_local)
-
-
-def test_one_band_file_missing(context_local, one_band_check):
-    assert one_band_check.is_valid_local("somefile.tiff", context_local)
-
-
-def test_one_band_corrupt_file(context_local, one_band_check, tmp_path):
-    (tmp_path / "somefile.tiff").touch()
-    assert one_band_check.is_valid_local("somefile.tiff", context_local)
-
-
-def test_one_band_err(context_local, one_band_check, tmp_path):
+def test_one_band_err(context_local, tmp_path):
     create_geotiff(tmp_path / "raster.tiff", bands=2)
-    assert not one_band_check.is_valid_local("raster.tiff", context_local)
+    check = RasterHasOneBandCheck(column=models.GlobalSetting.dem_file)
+    assert not check.is_valid_local("raster.tiff", context_local)
 
 
-@pytest.fixture
-def has_projection_check():
-    return RasterHasProjectionCheck(column=models.GlobalSetting.dem_file)
+def test_has_projection_ok(context_local, valid_geotiff):
+    check = RasterHasProjectionCheck(column=models.GlobalSetting.dem_file)
+    assert check.is_valid_local(valid_geotiff, context_local)
 
 
-def test_has_projection_ok(context_local, has_projection_check, valid_geotiff):
-    assert has_projection_check.is_valid_local(valid_geotiff, context_local)
-
-
-def test_has_projection_file_missing(context_local, has_projection_check):
-    assert has_projection_check.is_valid_local("somefile.tiff", context_local)
-
-
-def test_has_projection_corrupt_file(context_local, has_projection_check, tmp_path):
-    (tmp_path / "somefile.tiff").touch()
-    assert has_projection_check.is_valid_local("somefile.tiff", context_local)
-
-
-def test_has_projection_no_projection(context_local, has_projection_check, tmp_path):
+def test_has_projection_err(context_local, tmp_path):
     create_geotiff(tmp_path / "raster.tiff", epsg=None)
-    assert not has_projection_check.is_valid_local("raster.tiff", context_local)
+    check = RasterHasProjectionCheck(column=models.GlobalSetting.dem_file)
+    assert not check.is_valid_local("raster.tiff", context_local)
 
 
-@pytest.fixture
-def is_projected_check():
-    return RasterIsProjectedCheck(column=models.GlobalSetting.dem_file)
+def test_is_projected_ok(context_local, valid_geotiff):
+    check = RasterIsProjectedCheck(column=models.GlobalSetting.dem_file)
+    assert check.is_valid_local(valid_geotiff, context_local)
 
 
-def test_is_projected_ok(context_local, is_projected_check, valid_geotiff):
-    assert is_projected_check.is_valid_local(valid_geotiff, context_local)
-
-
-def test_is_projected_file_missing(context_local, is_projected_check):
-    assert is_projected_check.is_valid_local("somefile.tiff", context_local)
-
-
-def test_is_projected_corrupt_file(context_local, is_projected_check, tmp_path):
-    (tmp_path / "somefile.tiff").touch()
-    assert is_projected_check.is_valid_local("somefile.tiff", context_local)
-
-
-def test_is_projected_no_projection(context_local, is_projected_check, tmp_path):
-    create_geotiff(tmp_path / "raster.tiff", epsg=None)
-    assert is_projected_check.is_valid_local("raster.tiff", context_local)
-
-
-def test_is_projected_err(context_local, is_projected_check, tmp_path):
+def test_is_projected_err(context_local, tmp_path):
     create_geotiff(tmp_path / "raster.tiff", epsg=4326)
-    assert not is_projected_check.is_valid_local("raster.tiff", context_local)
+    check = RasterIsProjectedCheck(column=models.GlobalSetting.dem_file)
+    assert not check.is_valid_local("raster.tiff", context_local)
 
 
-@pytest.fixture
-def square_cells_check():
-    return RasterSquareCellsCheck(column=models.GlobalSetting.dem_file)
+def test_is_projected_no_projection(context_local, tmp_path):
+    create_geotiff(tmp_path / "raster.tiff", epsg=None)
+    check = RasterIsProjectedCheck(column=models.GlobalSetting.dem_file)
+    assert check.is_valid_local("raster.tiff", context_local)
 
 
-def test_square_cells_ok(context_local, square_cells_check, valid_geotiff):
-    assert square_cells_check.is_valid_local(valid_geotiff, context_local)
+def test_square_cells_ok(context_local, valid_geotiff):
+    check = RasterSquareCellsCheck(column=models.GlobalSetting.dem_file)
+    assert check.is_valid_local(valid_geotiff, context_local)
 
 
-def test_square_cells_file_missing(context_local, square_cells_check):
-    assert square_cells_check.is_valid_local("somefile.tiff", context_local)
-
-
-def test_square_cells_corrupt_file(context_local, square_cells_check, tmp_path):
-    (tmp_path / "somefile.tiff").touch()
-    assert square_cells_check.is_valid_local("somefile.tiff", context_local)
-
-
-def test_square_cells_err(context_local, square_cells_check, tmp_path):
+def test_square_cells_err(context_local, tmp_path):
     create_geotiff(tmp_path / "raster.tiff", dx=0.5, dy=1.0)
-    assert not square_cells_check.is_valid_local("raster.tiff", context_local)
+    check = RasterSquareCellsCheck(column=models.GlobalSetting.dem_file)
+    assert not check.is_valid_local("raster.tiff", context_local)
+
+
+def test_square_cells_rounding(context_local, tmp_path):
+    create_geotiff(tmp_path / "raster.tiff", dx=0.5, dy=0.5001)
+    check = RasterSquareCellsCheck(decimals=3, column=models.GlobalSetting.dem_file)
+    assert check.is_valid_local("raster.tiff", context_local)
+    check = RasterSquareCellsCheck(decimals=4, column=models.GlobalSetting.dem_file)
+    assert not check.is_valid_local("raster.tiff", context_local)
 
 
 def test_raster_range_ok(context_local, valid_geotiff):
@@ -252,21 +206,6 @@ def test_raster_range_ok(context_local, valid_geotiff):
         column=models.GlobalSetting.dem_file, min_value=0, max_value=5
     )
     assert check.is_valid_local(valid_geotiff, context_local)
-
-
-def test_range_range_file_missing(context_local):
-    check = RasterRangeCheck(
-        column=models.GlobalSetting.dem_file, min_value=0, max_value=5
-    )
-    assert check.is_valid_local("somefile.tiff", context_local)
-
-
-def test_range_range_corrupt_file(context_local, tmp_path):
-    check = RasterRangeCheck(
-        column=models.GlobalSetting.dem_file, min_value=0, max_value=5
-    )
-    (tmp_path / "somefile.tiff").touch()
-    assert check.is_valid_local("somefile.tiff", context_local)
 
 
 @pytest.mark.parametrize(
@@ -283,3 +222,61 @@ def test_raster_range_err(context_local, valid_geotiff, kwargs, msg):
     check = RasterRangeCheck(column=models.GlobalSetting.dem_file, **kwargs)
     assert not check.is_valid_local(valid_geotiff, context_local)
     assert check.description() == msg.format("v2_global_settings.dem_file")
+
+
+@pytest.mark.parametrize(
+    "check",
+    [
+        RasterIsValidCheck(column=models.GlobalSetting.dem_file),
+        RasterHasOneBandCheck(column=models.GlobalSetting.dem_file),
+        RasterHasProjectionCheck(column=models.GlobalSetting.dem_file),
+        RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
+        RasterSquareCellsCheck(column=models.GlobalSetting.dem_file),
+        RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),
+    ],
+)
+def test_raster_check_file_missing(check, context_local):
+    assert check.is_valid_local("somefile.tiff", context_local)
+
+
+@pytest.mark.parametrize(
+    "check",
+    [
+        RasterHasOneBandCheck(column=models.GlobalSetting.dem_file),
+        RasterHasProjectionCheck(column=models.GlobalSetting.dem_file),
+        RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
+        RasterSquareCellsCheck(column=models.GlobalSetting.dem_file),
+        RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),
+    ],
+)
+def test_raster_check_invalid_file(check, context_local, tmp_path):
+    (tmp_path / "somefile.tiff").touch()
+    assert check.is_valid_local("somefile.tiff", context_local)
+
+
+@mock.patch("threedi_modelchecker.interfaces.raster_interface.gdal", new=None)
+@pytest.mark.parametrize(
+    "check",
+    [
+        RasterIsValidCheck(column=models.GlobalSetting.dem_file),
+        RasterHasOneBandCheck(column=models.GlobalSetting.dem_file),
+        RasterHasProjectionCheck(column=models.GlobalSetting.dem_file),
+        RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
+        RasterSquareCellsCheck(column=models.GlobalSetting.dem_file),
+        RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),
+    ],
+)
+def test_raster_check_no_gdal(check, context_local, tmp_path):
+    (tmp_path / "somefile.tiff").touch()
+    assert check.is_valid_local("somefile.tiff", context_local)
+
+
+def test_gdal_check_ok(session_local):
+    check = GDALAvailableCheck(column=models.GlobalSetting.dem_file)
+    assert not check.get_invalid(session_local)
+
+
+@mock.patch("threedi_modelchecker.interfaces.raster_interface.gdal", new=None)
+def test_gdal_check_err(session_local):
+    check = GDALAvailableCheck(column=models.GlobalSetting.dem_file)
+    assert check.get_invalid(session_local)
