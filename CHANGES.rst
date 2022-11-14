@@ -33,6 +33,8 @@ Changelog of threedi-modelchecker
 - Migration to schema version 210 also fixes errors 421, 424, 425, 426, 427 by
   replacing negative values with NULL.
 
+- Added a unique check on v2_manhole.connection_node_id.
+
 
 0.31 (2022-11-02)
 -----------------
