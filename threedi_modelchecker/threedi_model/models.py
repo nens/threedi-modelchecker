@@ -367,7 +367,10 @@ class Manhole(Base):
     calculation_type = Column(IntegerEnum(constants.CalculationTypeNode))
 
     connection_node_id = Column(
-        Integer, ForeignKey(ConnectionNode.__tablename__ + ".id"), nullable=False
+        Integer,
+        ForeignKey(ConnectionNode.__tablename__ + ".id"),
+        nullable=False,
+        unique=True,
     )
     connection_node = relationship(ConnectionNode, back_populates="manholes")
 
