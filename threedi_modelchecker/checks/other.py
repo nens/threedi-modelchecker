@@ -328,8 +328,10 @@ class BoundaryCondition1DObjectNumberCheck(BaseCheck):
             if total_objects != 1:
                 invalid_ids.append(bc.id)
 
-        return self.to_check(session).filter(
-            models.BoundaryCondition1D.id.in_(invalid_ids)
+        return (
+            self.to_check(session)
+            .filter(models.BoundaryCondition1D.id.in_(invalid_ids))
+            .all()
         )
 
     def description(self) -> str:

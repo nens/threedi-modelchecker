@@ -33,6 +33,11 @@ Changelog of threedi-modelchecker
 - Migration to schema version 210 also fixes errors 421, 424, 425, 426, 427 by
   replacing negative values with NULL.
 
+- All settings checks are now done only on the first global settings entry.
+
+- Added "AllEqual" warnings (codes 330 and further) that check whether grid builder global
+  settings are all the same in case there are multiple records.
+
 - Added a unique check on v2_manhole.connection_node_id.
 
 
