@@ -38,6 +38,8 @@ Changelog of threedi-modelchecker
 - Added "AllEqual" warnings (codes 330 and further) that check whether grid builder global
   settings are all the same in case there are multiple records.
 
+- Added a unique check on v2_manhole.connection_node_id.
+
 
 0.31 (2022-11-02)
 -----------------

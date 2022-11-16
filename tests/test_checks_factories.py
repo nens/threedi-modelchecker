@@ -19,8 +19,9 @@ def test_gen_foreign_key_checks():
 
 def test_gen_not_unique_checks():
     not_unique_checks = generate_unique_checks(models.Manhole.__table__)
-    assert len(not_unique_checks) == 1
+    assert len(not_unique_checks) == 2
     assert models.Manhole.id == not_unique_checks[0].column
+    assert models.Manhole.connection_node_id == not_unique_checks[1].column
 
 
 def test_gen_not_null_checks():
