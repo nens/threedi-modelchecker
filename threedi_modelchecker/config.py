@@ -64,7 +64,9 @@ def scalar_subquery(query):
 
 
 # Use these to make checks only work on the first global settings entry:
-first_setting = scalar_subquery(Query(models.GlobalSetting.id).limit(1))
+first_setting = scalar_subquery(
+    Query(models.GlobalSetting.id).order_by(models.GlobalSetting.id).limit(1)
+)
 first_setting_filter = models.GlobalSetting.id == first_setting
 interflow_settings_id = scalar_subquery(
     Query(models.GlobalSetting.interflow_settings_id).filter(first_setting_filter)
