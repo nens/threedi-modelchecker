@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.32 (unreleased)
+0.32 (2022-11-16)
 -----------------
 
 - Added raster checks: file validity, has one band, has crs, range check.
