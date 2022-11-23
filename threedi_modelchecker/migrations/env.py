@@ -1,5 +1,5 @@
 from alembic import context
-from sqlalchemy import create_engine
+from threedi_modelchecker import ThreediDatabase
 from threedi_modelchecker.threedi_model import constants
 from threedi_modelchecker.threedi_model.models import Base
 
@@ -28,7 +28,7 @@ def run_migrations_online():
     """
     connectable = config.attributes.get("connection")
     if connectable is None:
-        connectable = create_engine(get_url())
+        connectable = ThreediDatabase(get_url()).get_engine()
 
     with connectable.connect() as connection:
         context.configure(
