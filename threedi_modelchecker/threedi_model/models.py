@@ -938,6 +938,7 @@ DECLARED_MODELS = [
     CrossSectionLocation,
     Culvert,
     DemAverageArea,
+    ExchangeLine,
     Floodfill,
     GlobalSetting,
     GridRefinement,
