@@ -23,6 +23,7 @@ def upgrade():
     op.create_table(
         "v2_exchange_line",
         sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("channel_id", sa.Integer(), nullable=True),
         sa.Column(
             "the_geom",
             geoalchemy2.types.Geometry(
@@ -55,18 +56,8 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    with op.batch_alter_table("v2_channel") as batch_op:
-        batch_op.add_column(
-            sa.Column("exchange_line_1_id", sa.Integer(), nullable=True)
-        )
-        batch_op.add_column(
-            sa.Column("exchange_line_2_id", sa.Integer(), nullable=True)
-        )
 
 
 def downgrade():
-    with op.batch_alter_table("v2_channel") as batch_op:
-        batch_op.drop_column("exchange_line_2_id")
-        batch_op.drop_column("exchange_line_1_id")
     op.drop_table("v2_potential_breach")
     op.drop_table("v2_exchange_line")

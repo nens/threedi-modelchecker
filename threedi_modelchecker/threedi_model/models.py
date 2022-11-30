@@ -534,17 +534,6 @@ class SurfaceMap(Base):
     percentage = Column(Float)
 
 
-class ExchangeLine(Base):
-    __tablename__ = "v2_exchange_line"
-    id = Column(Integer, primary_key=True)
-    the_geom = Column(
-        Geometry(
-            geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
-        ),
-        nullable=False,
-    )
-
-
 class Channel(Base):
     __tablename__ = "v2_channel"
     id = Column(Integer, primary_key=True)
@@ -575,10 +564,8 @@ class Channel(Base):
     cross_section_locations = relationship(
         "CrossSectionLocation", back_populates="channel"
     )
-    exchange_line_1_id = Column(Integer, ForeignKey(ExchangeLine.__tablename__ + ".id"))
-    exchange_line_1 = relationship(ExchangeLine, foreign_keys=exchange_line_1_id)
-    exchange_line_2_id = Column(Integer, ForeignKey(ExchangeLine.__tablename__ + ".id"))
-    exchange_line_2 = relationship(ExchangeLine, foreign_keys=exchange_line_2_id)
+    potential_breaches = relationship("PotentialBreach", back_populates="channel")
+    exchange_lines = relationship("ExchangeLine", back_populates="channel")
 
 
 class Windshielding(Base):
@@ -904,9 +891,6 @@ class PotentialBreach(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String(100))
     display_name = Column(String(255))
-    channel_id = Column(
-        Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
-    )
     # maximum_breach_depth = Column(Float)
     # levee_material = Column(IntegerEnum(constants.Material))
     the_geom = Column(
@@ -914,6 +898,29 @@ class PotentialBreach(Base):
             geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
         ),
         nullable=False,
+    )
+    channel_id = Column(
+        Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
+    )
+    channel = relationship(
+        Channel, foreign_keys=channel_id, back_populates="potential_breaches"
+    )
+
+
+class ExchangeLine(Base):
+    __tablename__ = "v2_exchange_line"
+    id = Column(Integer, primary_key=True)
+    the_geom = Column(
+        Geometry(
+            geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
+        ),
+        nullable=False,
+    )
+    channel_id = Column(
+        Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
+    )
+    channel = relationship(
+        Channel, foreign_keys=channel_id, back_populates="exchange_lines"
     )
 
 
