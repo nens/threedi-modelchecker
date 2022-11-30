@@ -42,8 +42,6 @@ def upgrade():
         sa.Column("code", sa.String(length=100), nullable=True),
         sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.Column("channel_id", sa.Integer(), nullable=True),
-        sa.Column("maximum_breach_depth", sa.Float(), nullable=True),
-        sa.Column("levee_material", sa.Integer(), nullable=True),
         sa.Column(
             "the_geom",
             geoalchemy2.types.Geometry(

@@ -907,8 +907,8 @@ class PotentialBreach(Base):
     channel_id = Column(
         Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
     )
-    maximum_breach_depth = Column(Float)
-    levee_material = Column(IntegerEnum(constants.Material))
+    # maximum_breach_depth = Column(Float)
+    # levee_material = Column(IntegerEnum(constants.Material))
     the_geom = Column(
         Geometry(
             geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
