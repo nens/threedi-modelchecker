@@ -534,6 +534,17 @@ class SurfaceMap(Base):
     percentage = Column(Float)
 
 
+class ExchangeLine(Base):
+    __tablename__ = "v2_exchange_line"
+    id = Column(Integer, primary_key=True)
+    the_geom = Column(
+        Geometry(
+            geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
+        ),
+        nullable=False,
+    )
+
+
 class Channel(Base):
     __tablename__ = "v2_channel"
     id = Column(Integer, primary_key=True)
@@ -564,6 +575,10 @@ class Channel(Base):
     cross_section_locations = relationship(
         "CrossSectionLocation", back_populates="channel"
     )
+    exchange_line_1_id = Column(Integer, ForeignKey(ExchangeLine.__tablename__ + ".id"))
+    exchange_line_1 = relationship(ExchangeLine, foreign_keys=exchange_line_1_id)
+    exchange_line_2_id = Column(Integer, ForeignKey(ExchangeLine.__tablename__ + ".id"))
+    exchange_line_2 = relationship(ExchangeLine, foreign_keys=exchange_line_2_id)
 
 
 class Windshielding(Base):
@@ -884,6 +899,24 @@ class ImperviousSurfaceMap(Base):
     )
 
 
+class PotentialBreach(Base):
+    __tablename__ = "v2_potential_breach"
+    id = Column(Integer, primary_key=True)
+    code = Column(String(100))
+    display_name = Column(String(255))
+    channel_id = Column(
+        Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
+    )
+    # maximum_breach_depth = Column(Float)
+    # levee_material = Column(IntegerEnum(constants.Material))
+    the_geom = Column(
+        Geometry(
+            geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
+        ),
+        nullable=False,
+    )
+
+
 DECLARED_MODELS = [
     AggregationSettings,
     BoundaryCondition1D,
@@ -905,6 +938,7 @@ DECLARED_MODELS = [
     CrossSectionLocation,
     Culvert,
     DemAverageArea,
+    ExchangeLine,
     Floodfill,
     GlobalSetting,
     GridRefinement,
@@ -921,6 +955,7 @@ DECLARED_MODELS = [
     Obstacle,
     Orifice,
     Pipe,
+    PotentialBreach,
     Pumpstation,
     SimpleInfiltration,
     Surface,
