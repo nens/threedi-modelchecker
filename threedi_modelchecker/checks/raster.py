@@ -97,10 +97,11 @@ class RasterIsValidCheck(BaseRasterCheck):
     """
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
+        try:
+            with RasterInterface(path) as raster:
+                return raster.is_valid_geotiff
+        except RasterInterface.NotAvailable:
             return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
-            return raster.is_valid_geotiff
 
     def description(self):
         return f"The file in {self.column_name} is not a valid GeoTIFF file"
@@ -113,12 +114,13 @@ class RasterHasOneBandCheck(BaseRasterCheck):
     """
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
+        try:
+            with RasterInterface(path) as raster:
+                if not raster.is_valid_geotiff:
+                    return True
+                return raster.band_count == 1
+        except RasterInterface.NotAvailable:
             return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
-            if not raster.is_valid_geotiff:
-                return True
-            return raster.band_count == 1
 
     def description(self):
         return f"The file in {self.column_name} has multiple or no bands."
@@ -131,12 +133,13 @@ class RasterHasProjectionCheck(BaseRasterCheck):
     """
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
+        try:
+            with RasterInterface(path) as raster:
+                if not raster.is_valid_geotiff:
+                    return True
+                return raster.is_geographic is not None
+        except RasterInterface.NotAvailable:
             return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
-            if not raster.is_valid_geotiff:
-                return True
-            return raster.is_geographic is not None
 
     def description(self):
         return f"The file in {self.column_name} has no CRS."
@@ -149,12 +152,13 @@ class RasterIsProjectedCheck(BaseRasterCheck):
     """
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
+        try:
+            with RasterInterface(path) as raster:
+                if not raster.is_valid_geotiff:
+                    return True
+                return raster.is_geographic is not True
+        except RasterInterface.NotAvailable:
             return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
-            if not raster.is_valid_geotiff:
-                return True
-            return raster.is_geographic is not True
 
     def description(self):
         return f"The file in {self.column_name} does not use a projected CRS."
@@ -171,15 +175,16 @@ class RasterSquareCellsCheck(BaseRasterCheck):
         self.decimals = decimals
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
+        try:
+            with RasterInterface(path) as raster:
+                if not raster.is_valid_geotiff:
+                    return True
+                dx, dy = raster.pixel_size
+                return dx is not None and round(dx, self.decimals) == round(
+                    dy, self.decimals
+                )
+        except RasterInterface.NotAvailable:
             return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
-            if not raster.is_valid_geotiff:
-                return True
-            dx, dy = raster.pixel_size
-            return dx is not None and round(dx, self.decimals) == round(
-                dy, self.decimals
-            )
 
     def description(self):
         return f"The raster in {self.column_name} has non-square raster cells."
@@ -211,12 +216,13 @@ class RasterRangeCheck(BaseRasterCheck):
         super().__init__(*args, **kwargs)
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
+        try:
+            with RasterInterface(path) as raster:
+                if not raster.is_valid_geotiff:
+                    return True
+                raster_min, raster_max = raster.min_max
+        except RasterInterface.NotAvailable:
             return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
-            if not raster.is_valid_geotiff:
-                return True
-            raster_min, raster_max = raster.min_max
 
         if raster_min is None or raster_max is None:
             return False

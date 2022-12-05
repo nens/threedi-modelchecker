@@ -2,6 +2,12 @@ Changelog of threedi-modelchecker
 =================================
 
 
+0.32.1 (unreleased)
+-------------------
+
+- Disable checking rasters over HTTP when using GDAL < 3.4.
+
+
 0.32 (2022-11-16)
 -----------------
 

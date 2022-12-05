@@ -1,4 +1,5 @@
 from typing import Optional
+from urllib.parse import urlencode
 
 
 try:
@@ -11,19 +12,47 @@ except ImportError:
     gdal = osr = None
 
 
+# https://gdal.org/user/virtual_file_systems.html#vsicurl-http-https-ftp-files-random-access
+VSICURL_SETTINGS = {
+    "use_head": "no",
+    "list_dir": "no",
+    "max_retry": 3,
+    "retry_delay": 1,
+}
+
+
 class RasterInterface:
+    class NotAvailable(Exception):
+        pass
+
     def __init__(self, path):
         if gdal is None:
-            raise ImportError("This raster check requires GDAL")
+            raise self.NotAvailable("This raster check requires GDAL")
         self.path = str(path)
+        if self.uses_vsicurl and int(gdal.VersionInfo()[:3]) < 304:
+            raise self.NotAvailable(
+                "Checking rasters over HTTP requires at least GDAL 3.4"
+            )
 
     @staticmethod
     def available():
         return gdal is not None
 
+    @property
+    def uses_vsicurl(self):
+        return self.path.startswith("http://") or self.path.startswith("https://")
+
+    @property
+    def uri(self):
+        # https://gdal.org/user/virtual_file_systems.html#vsicurl-http-https-ftp-files-random-access
+        if self.uses_vsicurl:
+            return "/vsicurl?" + urlencode({"url": self.path, **VSICURL_SETTINGS})
+        else:
+            return self.path
+
     def __enter__(self) -> "RasterInterface":
         try:
-            self._dataset = gdal.Open(self.path, gdal.GA_ReadOnly)
+            self._dataset = gdal.Open(self.uri, gdal.GA_ReadOnly)
         except RuntimeError:
             self._dataset = None
         return self

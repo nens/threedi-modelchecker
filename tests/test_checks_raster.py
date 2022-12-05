@@ -292,3 +292,40 @@ def test_gdal_check_ok(session_local):
 def test_gdal_check_err(session_local):
     check = GDALAvailableCheck(column=models.GlobalSetting.dem_file)
     assert check.get_invalid(session_local)
+
+
+@mock.patch(
+    "threedi_modelchecker.interfaces.raster_interface.gdal.VersionInfo",
+    return_value="30400000",
+)
+@mock.patch("threedi_modelchecker.interfaces.raster_interface.gdal.Open")
+@pytest.mark.parametrize(
+    "url", ["http://some-non-existing", "https://some-non-existing"]
+)
+def test_raster_check_http(Open, VersionInfo, url):
+    Open.return_value.GetDriver().ShortName = "GTiff"
+    check = RasterIsValidCheck(column=models.GlobalSetting.dem_file)
+    assert check.is_valid(url)
+    Open.assert_called_once()
+
+
+@mock.patch(
+    "threedi_modelchecker.interfaces.raster_interface.gdal.VersionInfo",
+    return_value="30300000",
+)
+@pytest.mark.parametrize(
+    "check",
+    [
+        RasterIsValidCheck(column=models.GlobalSetting.dem_file),
+        RasterHasOneBandCheck(column=models.GlobalSetting.dem_file),
+        RasterHasProjectionCheck(column=models.GlobalSetting.dem_file),
+        RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
+        RasterSquareCellsCheck(column=models.GlobalSetting.dem_file),
+        RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),
+    ],
+)
+@pytest.mark.parametrize(
+    "url", ["http://some-non-existing", "https://some-non-existing"]
+)
+def test_raster_check_http_skips_with_gdal_33(VersionInfo, check, url):
+    assert check.is_valid(url)
