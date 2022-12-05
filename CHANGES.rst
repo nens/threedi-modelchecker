@@ -1,6 +1,11 @@
 Changelog of threedi-modelchecker
 =================================
 
+0.31.1 (unreleased)
+-----------------
+
+- Added RasterIO as an optional raster interface.
+
 
 0.32 (2022-11-16)
 -----------------

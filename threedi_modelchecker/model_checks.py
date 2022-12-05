@@ -20,7 +20,10 @@ class ThreediModelChecker:
         """Initialize the model checker.
 
         Optionally, supply the context of the model check:
-        - "available_rasters": a set of raster options that are available
+
+        - "raster_interface": a threedi_modelchecker.interfaces.RasterInterface subclass
+        - "base_path": (local) path where to look for rasters (defaults to the db's directory)
+        - "available_rasters": (server) a dict of raster_option -> raster url
         """
         self.db = threedi_db
         self.schema = ModelSchema(self.db)
@@ -28,8 +31,10 @@ class ThreediModelChecker:
         self.config = Config(self.models)
         if context is None:
             self.context = LocalContext(base_path=self.db.base_path)
-        else:
+        elif "available_rasters" in context:
             self.context = ServerContext(**context)
+        else:
+            self.context = LocalContext(**context)
 
     @property
     def models(self):
