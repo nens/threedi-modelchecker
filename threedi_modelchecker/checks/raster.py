@@ -53,7 +53,7 @@ class BaseRasterCheck(BaseCheck):
         return [
             record
             for (record, path) in zip(records, paths)
-            if path is not None and not self.is_valid(path)
+            if path is not None and not self.is_valid(path, self.raster_interface)
         ]
 
     def get_path_local(self, record, context: LocalContext) -> Optional[str]:
@@ -65,7 +65,7 @@ class BaseRasterCheck(BaseCheck):
         if isinstance(context.available_rasters, dict):
             return context.available_rasters.get(self.column.name)
 
-    def is_valid(self, path: str):
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         return True
 
     @property
@@ -104,8 +104,8 @@ class RasterIsValidCheck(BaseRasterCheck):
     Only works locally.
     """
 
-    def is_valid(self, path: str):
-        with self.raster_interface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             return raster.is_valid_geotiff
 
     def description(self):
@@ -118,8 +118,8 @@ class RasterHasOneBandCheck(BaseRasterCheck):
     Only works locally.
     """
 
-    def is_valid(self, path: str):
-        with self.raster_interface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             return raster.band_count == 1
@@ -134,8 +134,8 @@ class RasterHasProjectionCheck(BaseRasterCheck):
     Only works locally.
     """
 
-    def is_valid(self, path: str):
-        with self.raster_interface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             return raster.is_geographic is not None
@@ -150,8 +150,8 @@ class RasterIsProjectedCheck(BaseRasterCheck):
     Only works locally.
     """
 
-    def is_valid(self, path: str):
-        with self.raster_interface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             return raster.is_geographic is not True
@@ -170,8 +170,8 @@ class RasterSquareCellsCheck(BaseRasterCheck):
         super().__init__(*args, **kwargs)
         self.decimals = decimals
 
-    def is_valid(self, path: str):
-        with self.raster_interface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             dx, dy = raster.pixel_size
@@ -208,8 +208,8 @@ class RasterRangeCheck(BaseRasterCheck):
         self.message = message
         super().__init__(*args, **kwargs)
 
-    def is_valid(self, path: str):
-        with self.raster_interface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             raster_min, raster_max = raster.min_max
