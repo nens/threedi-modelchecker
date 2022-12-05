@@ -2,8 +2,10 @@ from .base import BaseCheck
 from dataclasses import dataclass
 from pathlib import Path
 from threedi_modelchecker.interfaces import RasterInterface
+from threedi_modelchecker.interfaces import select_raster_interface
 from typing import Optional
 from typing import Set
+from typing import Type
 
 
 class Context:
@@ -39,6 +41,8 @@ class BaseRasterCheck(BaseCheck):
 
     def get_invalid(self, session):
         context = session.model_checker_context
+        if self.raster_interface is None:
+            return []
         if isinstance(context, ServerContext):
             # max 1 record; we can only have 1 raster per type on the server
             records = list(self.to_check(session).limit(1).all())
@@ -63,6 +67,10 @@ class BaseRasterCheck(BaseCheck):
 
     def is_valid(self, path: str):
         return True
+
+    @property
+    def raster_interface(self) -> Optional[Type[RasterInterface]]:
+        return select_raster_interface()
 
 
 class RasterExistsCheck(BaseRasterCheck):
@@ -97,9 +105,7 @@ class RasterIsValidCheck(BaseRasterCheck):
     """
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+        with self.raster_interface(path) as raster:
             return raster.is_valid_geotiff
 
     def description(self):
@@ -113,9 +119,7 @@ class RasterHasOneBandCheck(BaseRasterCheck):
     """
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+        with self.raster_interface(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             return raster.band_count == 1
@@ -131,9 +135,7 @@ class RasterHasProjectionCheck(BaseRasterCheck):
     """
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+        with self.raster_interface(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             return raster.is_geographic is not None
@@ -149,9 +151,7 @@ class RasterIsProjectedCheck(BaseRasterCheck):
     """
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+        with self.raster_interface(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             return raster.is_geographic is not True
@@ -171,9 +171,7 @@ class RasterSquareCellsCheck(BaseRasterCheck):
         self.decimals = decimals
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+        with self.raster_interface(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             dx, dy = raster.pixel_size
@@ -211,9 +209,7 @@ class RasterRangeCheck(BaseRasterCheck):
         super().__init__(*args, **kwargs)
 
     def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+        with self.raster_interface(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             raster_min, raster_max = raster.min_max
@@ -249,14 +245,14 @@ class GDALUnavailable:
     id: int
 
 
-class GDALAvailableCheck(BaseCheck):
+class GDALAvailableCheck(BaseRasterCheck):
     """Checks whether GDAL is available"""
 
     def get_invalid(self, session):
-        if RasterInterface.available():
-            return []
-        else:
+        if self.raster_interface is None:
             return [GDALUnavailable(id=1)]
+        else:
+            return []
 
     def description(self) -> str:
         return "raster checks require GDAL to be available"

@@ -1,75 +1,61 @@
+from abc import ABC
+from abc import abstractmethod
+from abc import abstractproperty
+from abc import abstractstaticmethod
 from typing import Optional
+from typing import Tuple
 
 
-try:
-    from osgeo import gdal
-    from osgeo import osr
+class RasterInterface(ABC):
+    class NotAvailable(Exception):
+        pass
 
-    gdal.UseExceptions()
-    osr.UseExceptions()
-except ImportError:
-    gdal = osr = None
-
-
-class RasterInterface:
     def __init__(self, path):
-        if gdal is None:
-            raise ImportError("This raster check requires GDAL")
         self.path = str(path)
 
-    @staticmethod
+    @abstractstaticmethod
     def available():
-        return gdal is not None
+        pass
+
+    @abstractmethod
+    def _open(self):
+        pass
+
+    @abstractmethod
+    def _close(self):
+        pass
 
     def __enter__(self) -> "RasterInterface":
-        try:
-            self._dataset = gdal.Open(self.path, gdal.GA_ReadOnly)
-        except RuntimeError:
-            self._dataset = None
+        self._open()
         return self
 
     def __exit__(self, *args, **kwargs):
-        self._dataset = None
+        self._close()
 
-    @property
-    def _spatial_reference(self):
-        projection = self._dataset.GetProjection()
-        if projection:
-            return osr.SpatialReference(projection)
+    @abstractproperty
+    def is_valid_geotiff(self) -> bool:
+        pass
 
-    @property
-    def is_valid_geotiff(self):
-        return (
-            self._dataset is not None and self._dataset.GetDriver().ShortName == "GTiff"
-        )
+    @abstractproperty
+    def band_count(self) -> int:
+        pass
 
-    @property
-    def band_count(self):
-        return self._dataset.RasterCount
-
-    @property
+    @abstractproperty
     def is_geographic(self) -> Optional[bool]:
-        sr = self._spatial_reference
-        return None if sr is None else bool(sr.IsGeographic())
+        pass
 
-    @property
-    def epsg_code(self):
-        code = self._spatial_reference.GetAuthorityCode("PROJCS")
-        return int(code) if code is not None else None
+    @abstractproperty
+    def epsg_code(self) -> Optional[int]:
+        pass
 
-    @property
-    def pixel_size(self):
+    @abstractproperty
+    def pixel_size(self) -> Tuple[Optional[float], Optional[float]]:
         gt = self._dataset.GetGeoTransform()
         if gt is None:
             return None, None
         else:
             return abs(gt[1]), abs(gt[5])
 
-    @property
-    def min_max(self):
-        if self.band_count == 0:
-            return None, None
-        # usage of approx_ok=False bypasses statistics cache and forces
-        # all pixels to be read
-        # see: https://gdal.org/doxygen/classGDALRasterBand.html#ac7761bab7cf3b8445ed963e4aa85e715
-        return self._dataset.GetRasterBand(1).ComputeRasterMinMax(False)
+    @abstractproperty
+    def min_max(self) -> Tuple[Optional[float], Optional[float]]:
+        pass
