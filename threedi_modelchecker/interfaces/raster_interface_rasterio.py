@@ -19,43 +19,41 @@ class RasterIORasterInterface(RasterInterface):
         return rasterio is not None
 
     def _open(self):
-        try:
-            self._dataset = rasterio.open(self.path, "r")
-        except RuntimeError:
-            self._dataset = None
+        with rasterio.Env(
+            CPL_VSIL_CURL_USE_HEAD="NO",
+            GDAL_DISABLE_READDIR_ON_OPEN="YES",
+        ):
+            try:
+                self._dataset = rasterio.open(self.path, "r")
+            except rasterio.RasterioIOError:
+                self._dataset = None
 
     def _close(self):
-        self._dataset = None
-
-    @property
-    def _spatial_reference(self):
-        projection = self._dataset.GetProjection()
-        if projection:
-            return osr.SpatialReference(projection)
+        if self._dataset is not None:
+            self._dataset.close()
+            self._dataset = None
 
     @property
     def is_valid_geotiff(self):
-        return (
-            self._dataset is not None and self._dataset.GetDriver().ShortName == "GTiff"
-        )
+        return self._dataset is not None and self._dataset.driver == "GTiff"
 
     @property
     def band_count(self):
-        return self._dataset.RasterCount
+        return self._dataset.count
 
     @property
     def is_geographic(self) -> Optional[bool]:
-        sr = self._spatial_reference
-        return None if sr is None else bool(sr.IsGeographic())
+        return (
+            self._dataset.crs.is_geographic if self._dataset.crs is not None else None
+        )
 
     @property
     def epsg_code(self):
-        code = self._spatial_reference.GetAuthorityCode("PROJCS")
-        return int(code) if code is not None else None
+        return self._dataset.crs.to_epsg()
 
     @property
     def pixel_size(self):
-        gt = self._dataset.GetGeoTransform()
+        gt = self._dataset.get_transform()
         if gt is None:
             return None, None
         else:
@@ -63,9 +61,6 @@ class RasterIORasterInterface(RasterInterface):
 
     @property
     def min_max(self):
-        if self.band_count == 0:
-            return None, None
-        # usage of approx_ok=False bypasses statistics cache and forces
-        # all pixels to be read
-        # see: https://gdal.org/doxygen/classGDALRasterBand.html#ac7761bab7cf3b8445ed963e4aa85e715
-        return self._dataset.GetRasterBand(1).ComputeRasterMinMax(False)
+        # RasterIO doesn't have the MinMax (it has statistics, which does more and
+        # writes the XML sidecare)
+        return None, None

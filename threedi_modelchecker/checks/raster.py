@@ -1,8 +1,8 @@
 from .base import BaseCheck
 from dataclasses import dataclass
 from pathlib import Path
+from threedi_modelchecker.interfaces import GDALRasterInterface
 from threedi_modelchecker.interfaces import RasterInterface
-from threedi_modelchecker.interfaces import select_raster_interface
 from typing import Optional
 from typing import Set
 from typing import Type
@@ -15,11 +15,13 @@ class Context:
 @dataclass
 class ServerContext(Context):
     available_rasters: Set[str]
+    raster_interface: Type[RasterInterface] = GDALRasterInterface
 
 
 @dataclass
 class LocalContext(Context):
     base_path: Path
+    raster_interface: Type[RasterInterface] = GDALRasterInterface
 
 
 class BaseRasterCheck(BaseCheck):
@@ -41,7 +43,8 @@ class BaseRasterCheck(BaseCheck):
 
     def get_invalid(self, session):
         context = session.model_checker_context
-        if self.raster_interface is None:
+        raster_interface = context.raster_interface
+        if not raster_interface.available():
             return []
         if isinstance(context, ServerContext):
             # max 1 record; we can only have 1 raster per type on the server
@@ -53,7 +56,7 @@ class BaseRasterCheck(BaseCheck):
         return [
             record
             for (record, path) in zip(records, paths)
-            if path is not None and not self.is_valid(path, self.raster_interface)
+            if path is not None and not self.is_valid(path, raster_interface)
         ]
 
     def get_path_local(self, record, context: LocalContext) -> Optional[str]:
@@ -67,10 +70,6 @@ class BaseRasterCheck(BaseCheck):
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         return True
-
-    @property
-    def raster_interface(self) -> Optional[Type[RasterInterface]]:
-        return select_raster_interface()
 
 
 class RasterExistsCheck(BaseRasterCheck):
@@ -249,7 +248,9 @@ class GDALAvailableCheck(BaseRasterCheck):
     """Checks whether GDAL is available"""
 
     def get_invalid(self, session):
-        if self.raster_interface is None:
+        context = session.model_checker_context
+        raster_interface = context.raster_interface
+        if not raster_interface.available():
             return [GDALUnavailable(id=1)]
         else:
             return []
