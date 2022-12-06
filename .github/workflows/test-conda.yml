@@ -35,9 +35,8 @@ jobs:
       - name: Setup Environment
         shell: bash
         run: |
-          conda create --name test python=${{ matrix.python }} libspatialite click sqlalchemy alembic pytest pytest-asyncio factory_boy gdal
+          conda create --name test python=${{ matrix.python }} libspatialite click sqlalchemy geoalchemy2 alembic pytest pytest-asyncio factory_boy gdal rasterio
           source activate test
-          pip install geoalchemy2==0.10.*
           python -V
           conda info
           conda list
