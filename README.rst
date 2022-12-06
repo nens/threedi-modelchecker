@@ -6,9 +6,9 @@ Threedi-modelchecker
 
 .. Github Actions status — https://github.com/nens/threedi-modelchecker/actions
 
-.. image:: https://github.com/nens/threedi-modelchecker/actions/workflows/test.yml/badge.svg
+.. image:: https://github.com/nens/threedi-modelchecker/actions/workflows/test-linux.yml/badge.svg
 	:alt: Github Actions status
-	:target: https://github.com/nens/threedi-modelchecker/actions/workflows/test.yml
+	:target: https://github.com/nens/threedi-modelchecker/actions/workflows/test-linux.yml
 
 
 Threedi-modelchecker is a tool to verify the correctness of a 3Di schematisation.
@@ -20,7 +20,7 @@ Threedi-modelchecks only work against the latest 3Di migration: https://docs.3di
 
 Note:
 
-In 2021 we changed the naming within the 3Di realm. To better understand what users meant with 'model' we made a clear distinction between a schematisation and a model. A schematisation is build interactively by the user and this schematisation will be converted to a 3Di-Model which can be used in simulations. This repo is still called the threedi-modelchecker which might lead to confusion.
+In 2021 we changed the naming within the 3Di realm. To better understand what users meant with 'model' we made a clear distinction between a schematisation and a model. A schematisation is built interactively by the user and this schematisation will be converted to a 3Di-Model which can be used in simulations. This repo is still called the threedi-modelchecker which might lead to confusion.
 
 Installation::
 

@@ -7,6 +7,12 @@ Changelog of threedi-modelchecker
 - Added RasterIO as an optional raster interface.
 
 
+0.33 (unreleased)
+-----------------
+
+- Added v2_potential_breach and v2_exchange_line (schema version 211).
+
+
 0.32 (2022-11-16)
 -----------------
 

@@ -13,7 +13,8 @@ In short, create an empty revision file as follows::
 Or, autogenerate a candidate revision file based on a change in the schema
 definition and a database that is in the latest revision state::
 
-    $ alembic revision -m --autogenerate "create new table" --rev-id=0205
+    $ DB_URL=tests/data/empty_v4.sqlite alembic upgrade head
+    $ DB_URL=tests/data/empty_v4.sqlite alembic revision --autogenerate -m "breach and exchange" --rev-id=0211
 
 
 Note that we fix revision IDs to integers (padded with zeros). Before creating,

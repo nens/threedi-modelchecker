@@ -564,6 +564,8 @@ class Channel(Base):
     cross_section_locations = relationship(
         "CrossSectionLocation", back_populates="channel"
     )
+    potential_breaches = relationship("PotentialBreach", back_populates="channel")
+    exchange_lines = relationship("ExchangeLine", back_populates="channel")
 
 
 class Windshielding(Base):
@@ -884,6 +886,44 @@ class ImperviousSurfaceMap(Base):
     )
 
 
+class PotentialBreach(Base):
+    __tablename__ = "v2_potential_breach"
+    id = Column(Integer, primary_key=True)
+    code = Column(String(100))
+    display_name = Column(String(255))
+    # maximum_breach_depth = Column(Float)
+    # levee_material = Column(IntegerEnum(constants.Material))
+    the_geom = Column(
+        Geometry(
+            geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
+        ),
+        nullable=False,
+    )
+    channel_id = Column(
+        Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
+    )
+    channel = relationship(
+        Channel, foreign_keys=channel_id, back_populates="potential_breaches"
+    )
+
+
+class ExchangeLine(Base):
+    __tablename__ = "v2_exchange_line"
+    id = Column(Integer, primary_key=True)
+    the_geom = Column(
+        Geometry(
+            geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
+        ),
+        nullable=False,
+    )
+    channel_id = Column(
+        Integer, ForeignKey(Channel.__tablename__ + ".id"), nullable=False
+    )
+    channel = relationship(
+        Channel, foreign_keys=channel_id, back_populates="exchange_lines"
+    )
+
+
 DECLARED_MODELS = [
     AggregationSettings,
     BoundaryCondition1D,
@@ -905,6 +945,7 @@ DECLARED_MODELS = [
     CrossSectionLocation,
     Culvert,
     DemAverageArea,
+    ExchangeLine,
     Floodfill,
     GlobalSetting,
     GridRefinement,
@@ -921,6 +962,7 @@ DECLARED_MODELS = [
     Obstacle,
     Orifice,
     Pipe,
+    PotentialBreach,
     Pumpstation,
     SimpleInfiltration,
     Surface,
