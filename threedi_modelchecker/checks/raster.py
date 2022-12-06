@@ -1,9 +1,11 @@
 from .base import BaseCheck
 from dataclasses import dataclass
 from pathlib import Path
+from threedi_modelchecker.interfaces import GDALRasterInterface
 from threedi_modelchecker.interfaces import RasterInterface
 from typing import Optional
 from typing import Set
+from typing import Type
 
 
 class Context:
@@ -13,11 +15,13 @@ class Context:
 @dataclass
 class ServerContext(Context):
     available_rasters: Set[str]
+    raster_interface: Type[RasterInterface] = GDALRasterInterface
 
 
 @dataclass
 class LocalContext(Context):
     base_path: Path
+    raster_interface: Type[RasterInterface] = GDALRasterInterface
 
 
 class BaseRasterCheck(BaseCheck):
@@ -39,6 +43,9 @@ class BaseRasterCheck(BaseCheck):
 
     def get_invalid(self, session):
         context = session.model_checker_context
+        raster_interface = context.raster_interface
+        if not raster_interface.available():
+            return []
         if isinstance(context, ServerContext):
             # max 1 record; we can only have 1 raster per type on the server
             records = list(self.to_check(session).limit(1).all())
@@ -49,7 +56,7 @@ class BaseRasterCheck(BaseCheck):
         return [
             record
             for (record, path) in zip(records, paths)
-            if path is not None and not self.is_valid(path)
+            if path is not None and not self.is_valid(path, raster_interface)
         ]
 
     def get_path_local(self, record, context: LocalContext) -> Optional[str]:
@@ -61,7 +68,7 @@ class BaseRasterCheck(BaseCheck):
         if isinstance(context.available_rasters, dict):
             return context.available_rasters.get(self.column.name)
 
-    def is_valid(self, path: str):
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         return True
 
 
@@ -96,10 +103,8 @@ class RasterIsValidCheck(BaseRasterCheck):
     Only works locally.
     """
 
-    def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             return raster.is_valid_geotiff
 
     def description(self):
@@ -112,10 +117,8 @@ class RasterHasOneBandCheck(BaseRasterCheck):
     Only works locally.
     """
 
-    def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             return raster.band_count == 1
@@ -130,10 +133,8 @@ class RasterHasProjectionCheck(BaseRasterCheck):
     Only works locally.
     """
 
-    def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             return raster.is_geographic is not None
@@ -148,10 +149,8 @@ class RasterIsProjectedCheck(BaseRasterCheck):
     Only works locally.
     """
 
-    def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             return raster.is_geographic is not True
@@ -170,10 +169,8 @@ class RasterSquareCellsCheck(BaseRasterCheck):
         super().__init__(*args, **kwargs)
         self.decimals = decimals
 
-    def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             dx, dy = raster.pixel_size
@@ -210,10 +207,8 @@ class RasterRangeCheck(BaseRasterCheck):
         self.message = message
         super().__init__(*args, **kwargs)
 
-    def is_valid(self, path: str):
-        if not RasterInterface.available():
-            return True  # skip as gdal is not available
-        with RasterInterface(path) as raster:
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
             raster_min, raster_max = raster.min_max
@@ -249,14 +244,16 @@ class GDALUnavailable:
     id: int
 
 
-class GDALAvailableCheck(BaseCheck):
+class GDALAvailableCheck(BaseRasterCheck):
     """Checks whether GDAL is available"""
 
     def get_invalid(self, session):
-        if RasterInterface.available():
-            return []
-        else:
+        context = session.model_checker_context
+        raster_interface = context.raster_interface
+        if not raster_interface.available():
             return [GDALUnavailable(id=1)]
+        else:
+            return []
 
     def description(self) -> str:
         return "raster checks require GDAL to be available"

@@ -10,6 +10,12 @@ from threedi_modelchecker.checks.raster import RasterIsValidCheck
 from threedi_modelchecker.checks.raster import RasterRangeCheck
 from threedi_modelchecker.checks.raster import RasterSquareCellsCheck
 from threedi_modelchecker.checks.raster import ServerContext
+from threedi_modelchecker.interfaces.raster_interface_gdal import (
+    GDALRasterInterface,
+)
+from threedi_modelchecker.interfaces.raster_interface_rasterio import (
+    RasterIORasterInterface,
+)
 from threedi_modelchecker.threedi_model import models
 from unittest import mock
 
@@ -100,7 +106,9 @@ def test_base_to_check_ignores_none(session):
 def test_base_get_invalid_local(mocked_check, session_local, invalid_geotiff):
     factories.GlobalSettingsFactory(dem_file="raster.tiff")
     assert mocked_check.get_invalid(session_local) == []
-    mocked_check.is_valid.assert_called_once_with(invalid_geotiff)
+    mocked_check.is_valid.assert_called_once_with(
+        invalid_geotiff, session_local.model_checker_context.raster_interface
+    )
 
 
 def test_base_get_invalid_local_no_file(mocked_check, session_local):
@@ -113,7 +121,9 @@ def test_base_get_invalid_server(mocked_check, context_server, session_server):
     factories.GlobalSettingsFactory(dem_file="somefile")
     context_server.available_rasters = {"dem_file": "http://tempurl"}
     assert mocked_check.get_invalid(session_server) == []
-    mocked_check.is_valid.assert_called_once_with("http://tempurl")
+    mocked_check.is_valid.assert_called_once_with(
+        "http://tempurl", session_server.model_checker_context.raster_interface
+    )
 
 
 def test_base_get_invalid_server_no_file(mocked_check, context_server, session_server):
@@ -130,6 +140,16 @@ def test_base_get_invalid_server_available_set(
     context_server.available_rasters = {"dem_file"}
     assert mocked_check.get_invalid(session_server) == []
     assert not mocked_check.is_valid.called
+
+
+def test_base_no_gdal(mocked_check, session_local):
+    with mock.patch.object(
+        session_local.model_checker_context.raster_interface,
+        "available",
+        return_value=False,
+    ):
+        assert mocked_check.get_invalid(session_local) == []
+        assert not mocked_check.is_valid.called
 
 
 def test_exists_local_ok(session_local, invalid_geotiff):
@@ -162,81 +182,123 @@ def test_exists_server_err(session_server, context_server, available_rasters):
     assert len(check.get_invalid(session_server)) == 1
 
 
-def test_valid_ok(valid_geotiff):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_valid_ok(valid_geotiff, interface_cls):
     check = RasterIsValidCheck(column=models.GlobalSetting.dem_file)
-    assert check.is_valid(valid_geotiff)
+    assert check.is_valid(valid_geotiff, interface_cls)
 
 
-def test_valid_err(invalid_geotiff):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_valid_err(invalid_geotiff, interface_cls):
     check = RasterIsValidCheck(column=models.GlobalSetting.dem_file)
-    assert not check.is_valid(invalid_geotiff)
+    assert not check.is_valid(invalid_geotiff, interface_cls)
 
 
-def test_one_band_ok(valid_geotiff):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_one_band_ok(valid_geotiff, interface_cls):
     check = RasterHasOneBandCheck(column=models.GlobalSetting.dem_file)
-    assert check.is_valid(valid_geotiff)
+    assert check.is_valid(valid_geotiff, interface_cls)
 
 
-def test_one_band_err(tmp_path):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_one_band_err(tmp_path, interface_cls):
     path = create_geotiff(tmp_path / "raster.tiff", bands=2)
     check = RasterHasOneBandCheck(column=models.GlobalSetting.dem_file)
-    assert not check.is_valid(path)
+    assert not check.is_valid(path, interface_cls)
 
 
-def test_has_projection_ok(valid_geotiff):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_has_projection_ok(valid_geotiff, interface_cls):
     check = RasterHasProjectionCheck(column=models.GlobalSetting.dem_file)
-    assert check.is_valid(valid_geotiff)
+    assert check.is_valid(valid_geotiff, interface_cls)
 
 
-def test_has_projection_err(tmp_path):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_has_projection_err(tmp_path, interface_cls):
     path = create_geotiff(tmp_path / "raster.tiff", epsg=None)
     check = RasterHasProjectionCheck(column=models.GlobalSetting.dem_file)
-    assert not check.is_valid(path)
+    assert not check.is_valid(path, interface_cls)
 
 
-def test_is_projected_ok(valid_geotiff):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_is_projected_ok(valid_geotiff, interface_cls):
     check = RasterIsProjectedCheck(column=models.GlobalSetting.dem_file)
-    assert check.is_valid(valid_geotiff)
+    assert check.is_valid(valid_geotiff, interface_cls)
 
 
-def test_is_projected_err(tmp_path):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_is_projected_err(tmp_path, interface_cls):
     path = create_geotiff(tmp_path / "raster.tiff", epsg=4326)
     check = RasterIsProjectedCheck(column=models.GlobalSetting.dem_file)
-    assert not check.is_valid(path)
+    assert not check.is_valid(path, interface_cls)
 
 
-def test_is_projected_no_projection(tmp_path):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_is_projected_no_projection(tmp_path, interface_cls):
     path = create_geotiff(tmp_path / "raster.tiff", epsg=None)
     check = RasterIsProjectedCheck(column=models.GlobalSetting.dem_file)
-    assert check.is_valid(path)
+    assert check.is_valid(path, interface_cls)
 
 
-def test_square_cells_ok(valid_geotiff):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_square_cells_ok(valid_geotiff, interface_cls):
     check = RasterSquareCellsCheck(column=models.GlobalSetting.dem_file)
-    assert check.is_valid(valid_geotiff)
+    assert check.is_valid(valid_geotiff, interface_cls)
 
 
-def test_square_cells_err(tmp_path):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_square_cells_err(tmp_path, interface_cls):
     path = create_geotiff(tmp_path / "raster.tiff", dx=0.5, dy=1.0)
     check = RasterSquareCellsCheck(column=models.GlobalSetting.dem_file)
-    assert not check.is_valid(path)
+    assert not check.is_valid(path, interface_cls)
 
 
-def test_square_cells_rounding(tmp_path):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_square_cells_rounding(tmp_path, interface_cls):
     path = create_geotiff(tmp_path / "raster.tiff", dx=0.5, dy=0.5001)
     check = RasterSquareCellsCheck(decimals=3, column=models.GlobalSetting.dem_file)
-    assert check.is_valid(path)
+    assert check.is_valid(path, interface_cls)
     check = RasterSquareCellsCheck(decimals=4, column=models.GlobalSetting.dem_file)
-    assert not check.is_valid(path)
+    assert not check.is_valid(path, interface_cls)
 
 
-def test_raster_range_ok(valid_geotiff):
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_raster_range_ok(valid_geotiff, interface_cls):
     check = RasterRangeCheck(
         column=models.GlobalSetting.dem_file, min_value=0, max_value=5
     )
-    assert check.is_valid(valid_geotiff)
+    assert check.is_valid(valid_geotiff, interface_cls)
 
 
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
 @pytest.mark.parametrize(
     "kwargs,msg",
     [
@@ -247,31 +309,18 @@ def test_raster_range_ok(valid_geotiff):
         ({"min_value": 1, "max_value": 6}, "{} has values <1 and/or >6"),
     ],
 )
-def test_raster_range_err(valid_geotiff, kwargs, msg):
+def test_raster_range_err(valid_geotiff, kwargs, msg, interface_cls):
     check = RasterRangeCheck(column=models.GlobalSetting.dem_file, **kwargs)
-    assert not check.is_valid(valid_geotiff)
+    assert not check.is_valid(valid_geotiff, interface_cls)
     assert check.description() == msg.format("v2_global_settings.dem_file")
 
 
 @pytest.mark.parametrize(
-    "check",
-    [
-        RasterHasOneBandCheck(column=models.GlobalSetting.dem_file),
-        RasterHasProjectionCheck(column=models.GlobalSetting.dem_file),
-        RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
-        RasterSquareCellsCheck(column=models.GlobalSetting.dem_file),
-        RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),
-    ],
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
 )
-def test_raster_check_invalid_file(check, invalid_geotiff):
-    assert check.is_valid(invalid_geotiff)
-
-
-@mock.patch("threedi_modelchecker.interfaces.raster_interface.gdal", new=None)
 @pytest.mark.parametrize(
     "check",
     [
-        RasterIsValidCheck(column=models.GlobalSetting.dem_file),
         RasterHasOneBandCheck(column=models.GlobalSetting.dem_file),
         RasterHasProjectionCheck(column=models.GlobalSetting.dem_file),
         RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
@@ -279,8 +328,8 @@ def test_raster_check_invalid_file(check, invalid_geotiff):
         RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),
     ],
 )
-def test_raster_check_no_gdal(check, invalid_geotiff):
-    assert check.is_valid(invalid_geotiff)
+def test_raster_check_invalid_file(check, invalid_geotiff, interface_cls):
+    assert check.is_valid(invalid_geotiff, interface_cls)
 
 
 def test_gdal_check_ok(session_local):
@@ -288,7 +337,11 @@ def test_gdal_check_ok(session_local):
     assert not check.get_invalid(session_local)
 
 
-@mock.patch("threedi_modelchecker.interfaces.raster_interface.gdal", new=None)
 def test_gdal_check_err(session_local):
-    check = GDALAvailableCheck(column=models.GlobalSetting.dem_file)
-    assert check.get_invalid(session_local)
+    with mock.patch.object(
+        session_local.model_checker_context.raster_interface,
+        "available",
+        return_value=False,
+    ):
+        check = GDALAvailableCheck(column=models.GlobalSetting.dem_file)
+        assert check.get_invalid(session_local)
