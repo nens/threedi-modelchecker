@@ -6,6 +6,14 @@ Changelog of threedi-modelchecker
 
 - Added RasterIO as an optional raster interface.
 
+- Added code linters.
+
+- Replaced pipenv.
+
+- Updated dockerfile to match the current Lizard version.
+
+- Added support for Python 3.11.
+
 
 0.32 (2022-11-16)
 -----------------
