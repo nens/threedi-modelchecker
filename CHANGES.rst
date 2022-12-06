@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.33 (unreleased)
+0.33 (2022-12-06)
 -----------------
 
 - Added v2_potential_breach and v2_exchange_line (schema version 211).
