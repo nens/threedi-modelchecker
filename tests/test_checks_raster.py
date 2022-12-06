@@ -286,7 +286,9 @@ def test_square_cells_rounding(tmp_path, interface_cls):
     assert not check.is_valid(path, interface_cls)
 
 
-@pytest.mark.parametrize("interface_cls", [GDALRasterInterface])
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
 def test_raster_range_ok(valid_geotiff, interface_cls):
     check = RasterRangeCheck(
         column=models.GlobalSetting.dem_file, min_value=0, max_value=5
@@ -294,7 +296,9 @@ def test_raster_range_ok(valid_geotiff, interface_cls):
     assert check.is_valid(valid_geotiff, interface_cls)
 
 
-@pytest.mark.parametrize("interface_cls", [GDALRasterInterface])
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
 @pytest.mark.parametrize(
     "kwargs,msg",
     [

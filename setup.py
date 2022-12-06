@@ -61,6 +61,7 @@ setup(
     extras_require={
         "test": tests_require,
         "simulation_templates": simulation_templates_require,
+        "rasterio": ["rasterio>=1.3"],
     },
     python_requires=">=3.7",
     entry_points={

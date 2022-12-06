@@ -18,19 +18,18 @@ jobs:
           # 2018
           - python: 3.7
             pins: "sqlalchemy==1.3.* alembic==1.8.* geoalchemy2==0.9.*"
-            extras: "test,simulation_templates"
           # 2019
           - python: 3.8
             pins: "sqlalchemy==1.3.* alembic==1.8.* geoalchemy2==0.9.*"
-            extras: "test,simulation_templates"
           # 2021
           - python: 3.9
             pins: "sqlalchemy==1.4.30 alembic==1.8.* geoalchemy2==0.10.*"
-            extras: "test,simulation_templates"
-          # current
+          # 2022
           - python: "3.10"
+            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.12.*"
+          # current
+          - python: "3.11"
             pins: ""
-            extras: "test,simulation_templates"
 
     steps:
       - uses: actions/checkout@v2
@@ -48,7 +47,7 @@ jobs:
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
-          pip install ${{ matrix.pins }} .[${{ matrix.extras }}] pytest-cov pygdal==$(gdal-config --version).*
+          pip install ${{ matrix.pins }} .[test,simulation_templates,rasterio] pytest-cov pygdal==$(gdal-config --version).*
           pip list
 
       - name: Run tests

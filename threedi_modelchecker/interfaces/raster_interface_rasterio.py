@@ -61,6 +61,7 @@ class RasterIORasterInterface(RasterInterface):
 
     @property
     def min_max(self):
-        # RasterIO doesn't have the MinMax (it has statistics, which does more and
-        # writes the XML sidecare)
-        return None, None
+        if self.band_count == 0:
+            return None, None
+        statistics = self._dataset.statistics(1, approx=False, clear_cache=True)
+        return statistics.min, statistics.max
