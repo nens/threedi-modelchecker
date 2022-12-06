@@ -21,20 +21,24 @@ class ThreediModelChecker:
 
         Optionally, supply the context of the model check:
 
+        - "context_type": "local" or "server", default "local"
         - "raster_interface": a threedi_modelchecker.interfaces.RasterInterface subclass
-        - "base_path": (local) path where to look for rasters (defaults to the db's directory)
-        - "available_rasters": (server) a dict of raster_option -> raster url
+        - "base_path": (only local) path where to look for rasters (defaults to the db's directory)
+        - "available_rasters": (only server) a dict of raster_option -> raster url
         """
         self.db = threedi_db
         self.schema = ModelSchema(self.db)
         self.schema.validate_schema()
         self.config = Config(self.models)
-        if context is None:
-            self.context = LocalContext(base_path=self.db.base_path)
-        elif "available_rasters" in context:
+        context = {} if context is None else context.copy()
+        context_type = context.pop("context_type", "local")
+        if context_type == "local":
+            context.setdefault("base_path", self.db.base_path)
+            self.context = LocalContext(**context)
+        elif context_type == "server":
             self.context = ServerContext(**context)
         else:
-            self.context = LocalContext(**context)
+            raise ValueError(f"Unknown context_type '{context_type}'")
 
     @property
     def models(self):

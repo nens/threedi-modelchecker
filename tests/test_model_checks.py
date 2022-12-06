@@ -1,4 +1,3 @@
-from pathlib import Path
 from threedi_modelchecker.config import CHECKS
 from threedi_modelchecker.model_checks import BaseCheck
 from threedi_modelchecker.model_checks import LocalContext
@@ -14,8 +13,34 @@ def model_checker(threedi_db):
         return ThreediModelChecker(threedi_db)
 
 
-def test_set_base_path(model_checker):
-    assert model_checker.context.base_path == Path(model_checker.db.path).parent
+@pytest.mark.parametrize(
+    "context",
+    [
+        {},
+        None,
+        {"context_type": "local"},
+        {"base_path": "<db>"},
+        {"context_type": "local", "base_path": "<db>"},
+    ],
+)
+def test_context_local(threedi_db, context):
+    if context is not None and context.get("base_path") == "<db>":
+        context["base_path"] = threedi_db.base_path
+    with mock.patch("threedi_modelchecker.model_checks.ModelSchema"):
+        model_checker = ThreediModelChecker(threedi_db, context)
+    assert model_checker.context.base_path == threedi_db.base_path
+
+
+@pytest.mark.parametrize(
+    "context",
+    [
+        {"context_type": "server", "available_rasters": {"foo": "bar"}},
+    ],
+)
+def test_context_server(threedi_db, context):
+    with mock.patch("threedi_modelchecker.model_checks.ModelSchema"):
+        model_checker = ThreediModelChecker(threedi_db, context)
+    assert model_checker.context.available_rasters == {"foo": "bar"}
 
 
 @pytest.mark.filterwarnings("error::")
