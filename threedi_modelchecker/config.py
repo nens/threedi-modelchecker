@@ -8,6 +8,7 @@ from .checks.base import QueryCheck
 from .checks.base import RangeCheck
 from .checks.base import UniqueCheck
 from .checks.cross_section_definitions import CrossSectionEqualElementsCheck
+from .checks.cross_section_definitions import CrossSectionExpectEmptyCheck
 from .checks.cross_section_definitions import (
     CrossSectionFirstElementNonZeroCheck,
 )
@@ -17,6 +18,13 @@ from .checks.cross_section_definitions import CrossSectionFloatListCheck
 from .checks.cross_section_definitions import CrossSectionGreaterZeroCheck
 from .checks.cross_section_definitions import CrossSectionIncreasingCheck
 from .checks.cross_section_definitions import CrossSectionNullCheck
+from .checks.cross_section_definitions import (
+    CrossSectionProfileCoordinateCountCheck,
+)
+from .checks.cross_section_definitions import CrossSectionProfileHeightCheck
+from .checks.cross_section_definitions import (
+    CrossSectionProfileIncreasingWidthIfOpenCheck,
+)
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
 from .checks.factories import generate_geometry_checks
@@ -349,6 +357,7 @@ CHECKS += [
             constants.CrossSectionShape.CLOSED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.YZ_PROFILE,
         ),
     ),
     CrossSectionFloatCheck(
@@ -374,6 +383,7 @@ CHECKS += [
             constants.CrossSectionShape.CIRCLE,
             constants.CrossSectionShape.CLOSED_RECTANGLE,
             constants.CrossSectionShape.EGG,
+            constants.CrossSectionShape.INVERTED_EGG,
         ),
     ),
     CrossSectionGreaterZeroCheck(
@@ -387,6 +397,7 @@ CHECKS += [
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.YZ_PROFILE,
         ),
     ),
     CrossSectionFloatListCheck(
@@ -395,6 +406,7 @@ CHECKS += [
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.YZ_PROFILE,
         ),
     ),
     CrossSectionEqualElementsCheck(
@@ -402,6 +414,7 @@ CHECKS += [
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.YZ_PROFILE,
         ),
     ),
     CrossSectionIncreasingCheck(
@@ -425,6 +438,29 @@ CHECKS += [
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
         ),
+    ),
+    CrossSectionExpectEmptyCheck(
+        error_code=94,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionDefinition.width,
+        shapes=(
+            constants.CrossSectionShape.CIRCLE,
+            constants.CrossSectionShape.EGG,
+            constants.CrossSectionShape.INVERTED_EGG,
+        ),
+    ),
+    CrossSectionProfileHeightCheck(
+        error_code=95,
+        column=models.CrossSectionDefinition.height,
+        shapes=(constants.CrossSectionShape.YZ_PROFILE,),
+    ),
+    CrossSectionProfileCoordinateCountCheck(
+        error_code=96,
+        shapes=(constants.CrossSectionShape.YZ_PROFILE,),
+    ),
+    CrossSectionProfileIncreasingWidthIfOpenCheck(
+        error_code=97,
+        shapes=(constants.CrossSectionShape.YZ_PROFILE,),
     ),
 ]
 
