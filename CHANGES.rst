@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.34 (unreleased)
 -----------------
 
-- Added YZ_PROFILE (7) and INVERTED_EGG (8) cross section definition types.
+- Added TABULATED_YZ (7) and INVERTED_EGG (8) cross section definition types.
 
 - Added warning 94 for CIRCLE, EGG and INVERTED EGG crossections having a height.
 

@@ -74,7 +74,7 @@ class CrossSectionShape(Enum):
     EGG = 3
     TABULATED_RECTANGLE = 5
     TABULATED_TRAPEZIUM = 6
-    YZ_PROFILE = 7
+    TABULATED_YZ = 7
     INVERTED_EGG = 8
 
 

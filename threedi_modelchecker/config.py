@@ -357,7 +357,7 @@ CHECKS += [
             constants.CrossSectionShape.CLOSED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.YZ_PROFILE,
+            constants.CrossSectionShape.TABULATED_YZ,
         ),
     ),
     CrossSectionFloatCheck(
@@ -397,7 +397,7 @@ CHECKS += [
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.YZ_PROFILE,
+            constants.CrossSectionShape.TABULATED_YZ,
         ),
     ),
     CrossSectionFloatListCheck(
@@ -406,7 +406,7 @@ CHECKS += [
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.YZ_PROFILE,
+            constants.CrossSectionShape.TABULATED_YZ,
         ),
     ),
     CrossSectionEqualElementsCheck(
@@ -414,7 +414,7 @@ CHECKS += [
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.YZ_PROFILE,
+            constants.CrossSectionShape.TABULATED_YZ,
         ),
     ),
     CrossSectionIncreasingCheck(
@@ -452,15 +452,15 @@ CHECKS += [
     CrossSectionProfileHeightCheck(
         error_code=95,
         column=models.CrossSectionDefinition.height,
-        shapes=(constants.CrossSectionShape.YZ_PROFILE,),
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     ),
     CrossSectionProfileCoordinateCountCheck(
         error_code=96,
-        shapes=(constants.CrossSectionShape.YZ_PROFILE,),
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     ),
     CrossSectionProfileIncreasingWidthIfOpenCheck(
         error_code=97,
-        shapes=(constants.CrossSectionShape.YZ_PROFILE,),
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     ),
 ]
 
