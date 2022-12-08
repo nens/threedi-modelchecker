@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.34 (unreleased)
+0.34 (2022-12-08)
 -----------------
 
 - Added TABULATED_YZ (7) and INVERTED_EGG (8) cross section definition types.
