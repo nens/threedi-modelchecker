@@ -41,7 +41,21 @@ class CrossSectionNullCheck(CrossSectionBaseCheck):
         )
 
     def description(self):
-        return f"{self.column_name} cannot be null or empty"
+        return f"{self.column_name} cannot be null or empty for shapes {self.shape_msg}"
+
+
+class CrossSectionExpectEmptyCheck(CrossSectionBaseCheck):
+    """Check if width / height is NULL or empty"""
+
+    def get_invalid(self, session):
+        return (
+            self.to_check(session)
+            .filter((self.column != None) & (self.column != ""))
+            .all()
+        )
+
+    def description(self):
+        return f"{self.column_name} should be null or empty for shapes {self.shape_msg}"
 
 
 class CrossSectionFloatCheck(CrossSectionBaseCheck):
@@ -207,3 +221,98 @@ class CrossSectionFirstElementNonZeroCheck(CrossSectionBaseCheck):
 
     def description(self):
         return f"The first element of {self.column_name} must be larger than 0 for tabulated rectangle shapes. Consider using tabulated trapezium."
+
+
+class CrossSectionYZHeightCheck(CrossSectionBaseCheck):
+    """The height of an yz profile should include 0 and should not have negative
+    elements.
+    """
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            try:
+                values = [
+                    float(x) for x in getattr(record, self.column.name).split(" ")
+                ]
+            except ValueError:
+                continue  # other check catches this
+
+            if len(values) == 0:
+                continue
+
+            if any(x < 0 for x in values) or not any(x == 0 for x in values):
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return f"{self.column_name} for YZ profiles should include 0.0 and should not include negative values."
+
+
+class CrossSectionYZCoordinateCountCheck(CrossSectionBaseCheck):
+    """yz profiles should have 3 coordinates (excluding a closing coordinate)"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionDefinition.width, *args, **kwargs)
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (models.CrossSectionDefinition.width != None)
+            & (models.CrossSectionDefinition.width != "")
+            & (models.CrossSectionDefinition.height != None)
+            & (models.CrossSectionDefinition.height != "")
+        ):
+            try:
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = [float(x) for x in record.height.split(" ")]
+            except ValueError:
+                continue  # other check catches this
+
+            if len(widths) == 0 or len(widths) != len(heights):
+                continue
+
+            is_closed = widths[0] == widths[-1] and heights[0] == heights[-1]
+            if len(heights) < (4 if is_closed else 3):
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return f"{self.table.name} width and height should contain at least 3 coordinates (excluding closing coordinate) for YZ profiles"
+
+
+class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
+    """yz profiles should have increasing widths (y) if they are open"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionDefinition.width, *args, **kwargs)
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (models.CrossSectionDefinition.width != None)
+            & (models.CrossSectionDefinition.width != "")
+            & (models.CrossSectionDefinition.height != None)
+            & (models.CrossSectionDefinition.height != "")
+        ):
+            try:
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = [float(x) for x in record.height.split(" ")]
+            except ValueError:
+                continue  # other check catches this
+
+            if widths[0] == widths[-1] and heights[0] == heights[-1]:
+                continue
+            elif len(widths) > 1 and any(
+                x >= y for (x, y) in zip(widths[:-1], widths[1:])
+            ):
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return f"{self.column_name} should be monotonically increasing for open YZ profiles. Perhaps this is actually a closed profile?"
