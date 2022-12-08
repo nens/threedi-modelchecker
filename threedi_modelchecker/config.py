@@ -19,11 +19,11 @@ from .checks.cross_section_definitions import CrossSectionGreaterZeroCheck
 from .checks.cross_section_definitions import CrossSectionIncreasingCheck
 from .checks.cross_section_definitions import CrossSectionNullCheck
 from .checks.cross_section_definitions import (
-    CrossSectionProfileCoordinateCountCheck,
+    CrossSectionYZCoordinateCountCheck,
 )
-from .checks.cross_section_definitions import CrossSectionProfileHeightCheck
+from .checks.cross_section_definitions import CrossSectionYZHeightCheck
 from .checks.cross_section_definitions import (
-    CrossSectionProfileIncreasingWidthIfOpenCheck,
+    CrossSectionYZIncreasingWidthIfOpenCheck,
 )
 from .checks.factories import generate_enum_checks
 from .checks.factories import generate_foreign_key_checks
@@ -449,16 +449,16 @@ CHECKS += [
             constants.CrossSectionShape.INVERTED_EGG,
         ),
     ),
-    CrossSectionProfileHeightCheck(
+    CrossSectionYZHeightCheck(
         error_code=95,
         column=models.CrossSectionDefinition.height,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     ),
-    CrossSectionProfileCoordinateCountCheck(
+    CrossSectionYZCoordinateCountCheck(
         error_code=96,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     ),
-    CrossSectionProfileIncreasingWidthIfOpenCheck(
+    CrossSectionYZIncreasingWidthIfOpenCheck(
         error_code=97,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     ),

@@ -24,13 +24,13 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionNullCheck,
 )
 from threedi_modelchecker.checks.cross_section_definitions import (
-    CrossSectionProfileCoordinateCountCheck,
+    CrossSectionYZCoordinateCountCheck,
 )
 from threedi_modelchecker.checks.cross_section_definitions import (
-    CrossSectionProfileHeightCheck,
+    CrossSectionYZHeightCheck,
 )
 from threedi_modelchecker.checks.cross_section_definitions import (
-    CrossSectionProfileIncreasingWidthIfOpenCheck,
+    CrossSectionYZIncreasingWidthIfOpenCheck,
 )
 from threedi_modelchecker.threedi_model.constants import CrossSectionShape
 from threedi_modelchecker.threedi_model.models import CrossSectionDefinition
@@ -216,25 +216,25 @@ def test_first_nonzero_valid(session, width):
 
 
 @pytest.mark.parametrize("height", ["0 1 2", "0 1 1", "1 0 1", "foo", None, "0"])
-def test_check_profile_height_valid(session, height):
+def test_check_yz_height_valid(session, height):
     definition = factories.CrossSectionDefinitionFactory(
         width="1 2 3",
         height=height,
     )
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionProfileHeightCheck(column=CrossSectionDefinition.height)
+    check = CrossSectionYZHeightCheck(column=CrossSectionDefinition.height)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
 @pytest.mark.parametrize("height", ["1 2 3", "0 -1 1"])
-def test_check_profile_height_invalid(session, height):
+def test_check_yz_height_invalid(session, height):
     definition = factories.CrossSectionDefinitionFactory(
         width="1 2 3",
         height=height,
     )
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionProfileHeightCheck(column=CrossSectionDefinition.height)
+    check = CrossSectionYZHeightCheck(column=CrossSectionDefinition.height)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
@@ -247,13 +247,13 @@ def test_check_profile_height_invalid(session, height):
         ("0 0.5 0", "0.5 0 0.5"),
     ],
 )
-def test_check_profile_coord_count_invalid(session, width, height):
+def test_check_yz_coord_count_invalid(session, width, height):
     definition = factories.CrossSectionDefinitionFactory(
         width=width,
         height=height,
     )
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionProfileCoordinateCountCheck()
+    check = CrossSectionYZCoordinateCountCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
@@ -268,13 +268,13 @@ def test_check_profile_coord_count_invalid(session, width, height):
         ("0 0.5 1 1.5 2.0", "0.5 0 0 0.5"),
     ],
 )
-def test_check_profile_coord_count_valid(session, width, height):
+def test_check_yz_coord_count_valid(session, width, height):
     definition = factories.CrossSectionDefinitionFactory(
         width=width,
         height=height,
     )
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionProfileCoordinateCountCheck()
+    check = CrossSectionYZCoordinateCountCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -286,13 +286,13 @@ def test_check_profile_coord_count_valid(session, width, height):
         ("0.5 0 0.5 1.5 1.5 0.5", "0 1 2 2 0 1"),
     ],
 )
-def test_check_profile_increasing_if_open_invalid(session, width, height):
+def test_check_yz_increasing_if_open_invalid(session, width, height):
     definition = factories.CrossSectionDefinitionFactory(
         width=width,
         height=height,
     )
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionProfileIncreasingWidthIfOpenCheck()
+    check = CrossSectionYZIncreasingWidthIfOpenCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
@@ -307,12 +307,12 @@ def test_check_profile_increasing_if_open_invalid(session, width, height):
         ("0 0.5 1 1.5 2.0", "0.5 0 0 0.5"),
     ],
 )
-def test_check_profile_increasing_if_open_valid(session, width, height):
+def test_check_yz_increasing_if_open_valid(session, width, height):
     definition = factories.CrossSectionDefinitionFactory(
         width=width,
         height=height,
     )
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionProfileIncreasingWidthIfOpenCheck()
+    check = CrossSectionYZIncreasingWidthIfOpenCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0

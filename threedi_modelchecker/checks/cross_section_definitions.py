@@ -223,7 +223,7 @@ class CrossSectionFirstElementNonZeroCheck(CrossSectionBaseCheck):
         return f"The first element of {self.column_name} must be larger than 0 for tabulated rectangle shapes. Consider using tabulated trapezium."
 
 
-class CrossSectionProfileHeightCheck(CrossSectionBaseCheck):
+class CrossSectionYZHeightCheck(CrossSectionBaseCheck):
     """The height of an yz profile should include 0 and should not have negative
     elements.
     """
@@ -252,7 +252,7 @@ class CrossSectionProfileHeightCheck(CrossSectionBaseCheck):
         return f"{self.column_name} for YZ profiles should include 0.0 and should not include negative values."
 
 
-class CrossSectionProfileCoordinateCountCheck(CrossSectionBaseCheck):
+class CrossSectionYZCoordinateCountCheck(CrossSectionBaseCheck):
     """yz profiles should have 3 coordinates (excluding a closing coordinate)"""
 
     def __init__(self, *args, **kwargs):
@@ -285,7 +285,7 @@ class CrossSectionProfileCoordinateCountCheck(CrossSectionBaseCheck):
         return f"{self.table.name} width and height should contain at least 3 coordinates (excluding closing coordinate) for YZ profiles"
 
 
-class CrossSectionProfileIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
+class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
     """yz profiles should have increasing widths (y) if they are open"""
 
     def __init__(self, *args, **kwargs):
