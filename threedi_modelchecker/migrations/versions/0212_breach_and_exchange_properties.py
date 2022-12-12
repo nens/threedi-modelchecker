@@ -1,8 +1,8 @@
 """breach and exchange
 
-Revision ID: 0211
-Revises: 0210
-Create Date: 2022-11-23 11:21:10.967235
+Revision ID: 0212
+Revises: 0211
+Create Date: 2022-12-12 14:48:00
 
 """
 from alembic import op
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "0211"
-down_revision = "0210"
+revision = "0212"
+down_revision = "0211"
 branch_labels = None
 depends_on = None
 
