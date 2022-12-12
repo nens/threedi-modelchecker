@@ -922,6 +922,7 @@ class ExchangeLine(Base):
     channel = relationship(
         Channel, foreign_keys=channel_id, back_populates="exchange_lines"
     )
+    exchange_level = Column(Float)
 
 
 DECLARED_MODELS = [
