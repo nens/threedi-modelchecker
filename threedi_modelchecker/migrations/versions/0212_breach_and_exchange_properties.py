@@ -20,8 +20,16 @@ depends_on = None
 def upgrade():
     with op.batch_alter_table("v2_exchange_line") as batch_op:
         batch_op.add_column(sa.Column("exchange_level", sa.Float(), nullable=True))
+    with op.batch_alter_table("v2_potential_breach") as batch_op:
+        batch_op.add_column(sa.Column("levee_material", sa.Integer(), nullable=True))
+        batch_op.add_column(
+            sa.Column("maximum_breach_depth", sa.Float(), nullable=True)
+        )
 
 
 def downgrade():
     with op.batch_alter_table("v2_exchange_line") as batch_op:
         batch_op.drop_column("exchange_level")
+    with op.batch_alter_table("v2_potential_breach") as batch_op:
+        batch_op.drop_column("levee_material")
+        batch_op.drop_column("maximum_breach_depth")
