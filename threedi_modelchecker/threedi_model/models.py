@@ -891,6 +891,7 @@ class PotentialBreach(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String(100))
     display_name = Column(String(255))
+    exchange_level = Column(Float)
     maximum_breach_depth = Column(Float)
     levee_material = Column(IntegerEnum(constants.Material))
     the_geom = Column(
