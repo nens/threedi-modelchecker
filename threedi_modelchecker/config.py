@@ -760,7 +760,7 @@ CHECKS += [
             models.Channel.calculation_type == constants.CalculationType.CONNECTED,
         )
         .group_by(models.ExchangeLine.channel_id)
-        .having(func.count(models.ExchangeLine.channel_id) > 1),
+        .having(func.count(models.ExchangeLine.id) > 1),
         message="v2_channel can have max 1 v2_exchange_line if it has "
         "connected (102) calculation type",
     ),
@@ -775,7 +775,7 @@ CHECKS += [
             == constants.CalculationType.DOUBLE_CONNECTED,
         )
         .group_by(models.ExchangeLine.channel_id)
-        .having(func.count(models.ExchangeLine.channel_id) > 2),
+        .having(func.count(models.ExchangeLine.id) > 2),
         message="v2_channel can have max 2 v2_exchange_line if it has "
         "double connected (105) calculation type",
     ),
@@ -814,7 +814,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=270,
-        level=CheckLevel.WARNING,
+        level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
         .join(models.Channel)
@@ -826,11 +826,45 @@ CHECKS += [
                 }
             )
         ),
-        message="v2_potential_breach if assigned to an isolated "
+        message="v2_potential_breach is assigned to an isolated "
         "or embedded channel.",
     ),
     QueryCheck(
         error_code=271,
+        level=CheckLevel.ERROR,
+        column=models.PotentialBreach.id,
+        invalid=Query(models.PotentialBreach)
+        .join(models.Channel)
+        .filter(
+            models.Channel.calculation_type == constants.CalculationType.CONNECTED,
+        )
+        .group_by(
+            models.PotentialBreach.channel_id,
+            func.PointN(models.PotentialBreach.the_geom, 1),
+        )
+        .having(func.count(models.PotentialBreach.id) > 1),
+        message="v2_channel can have max 1 v2_potential_breach at the same position "
+        "on a channel of connected (102) calculation type",
+    ),
+    QueryCheck(
+        error_code=272,
+        level=CheckLevel.ERROR,
+        column=models.PotentialBreach.id,
+        invalid=Query(models.PotentialBreach)
+        .join(models.Channel)
+        .filter(
+            models.Channel.calculation_type == constants.CalculationType.CONNECTED,
+        )
+        .group_by(
+            models.PotentialBreach.channel_id,
+            func.PointN(models.PotentialBreach.the_geom, 1),
+        )
+        .having(func.count(models.PotentialBreach.id) > 2),
+        message="v2_channel can have max 2 v2_potential_breach at the same position "
+        "on a channel of double connected (105) calculation type",
+    ),
+    QueryCheck(
+        error_code=273,
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
