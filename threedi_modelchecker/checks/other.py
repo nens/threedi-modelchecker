@@ -156,8 +156,6 @@ class ConnectionNodesDistance(BaseCheck):
         """
         The query makes use of the SpatialIndex so we won't have to calculate the
         distance between all connection nodes.
-
-        The query only works on a spatialite and therefore skips postgres.
         """
         query = text(
             f"""SELECT *
