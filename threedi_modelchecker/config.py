@@ -59,6 +59,9 @@ from sqlalchemy.orm import Query
 from typing import List
 
 
+TOLERANCE_M = 1.0
+
+
 def is_none_or_empty(col):
     return (col == None) | (col == "")
 
@@ -264,7 +267,7 @@ CHECKS += [
 
 CHECKS += [
     CrossSectionLocationCheck(
-        level=CheckLevel.WARNING, max_distance=1.0, error_code=52
+        level=CheckLevel.WARNING, max_distance=TOLERANCE_M, error_code=52
     ),
     OpenChannelsWithNestedNewton(error_code=53),
     QueryCheck(
@@ -727,6 +730,154 @@ CHECKS += [
     ),
 ]
 
+
+## 026x: Exchange lines
+CHECKS += [
+    QueryCheck(
+        error_code=260,
+        level=CheckLevel.ERROR,
+        column=models.Channel.id,
+        invalid=Query(models.Channel)
+        .join(models.ExchangeLine)
+        .filter(
+            models.Channel.calculation_type.notin_(
+                {
+                    constants.CalculationType.CONNECTED,
+                    constants.CalculationType.DOUBLE_CONNECTED,
+                }
+            )
+        ),
+        message="v2_channel can only have a v2_exchange_line if it has "
+        "a (double) connected (102 or 105) calculation type",
+    ),
+    QueryCheck(
+        error_code=261,
+        level=CheckLevel.ERROR,
+        column=models.Channel.id,
+        invalid=Query(models.Channel)
+        .join(models.ExchangeLine)
+        .filter(
+            models.Channel.calculation_type == constants.CalculationType.CONNECTED,
+        )
+        .group_by(models.ExchangeLine.channel_id)
+        .having(func.count(models.ExchangeLine.id) > 1),
+        message="v2_channel can have max 1 v2_exchange_line if it has "
+        "connected (102) calculation type",
+    ),
+    QueryCheck(
+        error_code=262,
+        level=CheckLevel.ERROR,
+        column=models.Channel.id,
+        invalid=Query(models.Channel)
+        .join(models.ExchangeLine)
+        .filter(
+            models.Channel.calculation_type
+            == constants.CalculationType.DOUBLE_CONNECTED,
+        )
+        .group_by(models.ExchangeLine.channel_id)
+        .having(func.count(models.ExchangeLine.id) > 2),
+        message="v2_channel can have max 2 v2_exchange_line if it has "
+        "double connected (105) calculation type",
+    ),
+    QueryCheck(
+        error_code=263,
+        level=CheckLevel.WARNING,
+        column=models.ExchangeLine.the_geom,
+        invalid=Query(models.ExchangeLine)
+        .join(models.Channel)
+        .filter(
+            geo_query.length(models.ExchangeLine.the_geom)
+            < geo_query.length(models.Channel.the_geom)
+        ),
+        message=(
+            "v2_exchange_line.the_geom should be longer than its corresponding channel "
+            "to avoid edge effects."
+        ),
+    ),
+    QueryCheck(
+        error_code=264,
+        level=CheckLevel.WARNING,
+        column=models.ExchangeLine.the_geom,
+        invalid=Query(models.ExchangeLine)
+        .join(models.Channel)
+        .filter(
+            geo_query.distance(models.ExchangeLine.the_geom, models.Channel.the_geom)
+            > 100.0
+        ),
+        message=(
+            "v2_exchange_line.the_geom is far (> 100 m) from its corresponding channel"
+        ),
+    ),
+]
+
+## 027x: Potential breaches
+CHECKS += [
+    QueryCheck(
+        error_code=270,
+        level=CheckLevel.ERROR,
+        column=models.PotentialBreach.id,
+        invalid=Query(models.PotentialBreach)
+        .join(models.Channel)
+        .filter(
+            models.Channel.calculation_type.notin_(
+                {
+                    constants.CalculationType.CONNECTED,
+                    constants.CalculationType.DOUBLE_CONNECTED,
+                }
+            )
+        ),
+        message="v2_potential_breach is assigned to an isolated "
+        "or embedded channel.",
+    ),
+    QueryCheck(
+        error_code=271,
+        level=CheckLevel.ERROR,
+        column=models.PotentialBreach.id,
+        invalid=Query(models.PotentialBreach)
+        .join(models.Channel)
+        .filter(
+            models.Channel.calculation_type == constants.CalculationType.CONNECTED,
+        )
+        .group_by(
+            models.PotentialBreach.channel_id,
+            func.PointN(models.PotentialBreach.the_geom, 1),
+        )
+        .having(func.count(models.PotentialBreach.id) > 1),
+        message="v2_channel can have max 1 v2_potential_breach at the same position "
+        "on a channel of connected (102) calculation type",
+    ),
+    QueryCheck(
+        error_code=272,
+        level=CheckLevel.ERROR,
+        column=models.PotentialBreach.id,
+        invalid=Query(models.PotentialBreach)
+        .join(models.Channel)
+        .filter(
+            models.Channel.calculation_type == constants.CalculationType.CONNECTED,
+        )
+        .group_by(
+            models.PotentialBreach.channel_id,
+            func.PointN(models.PotentialBreach.the_geom, 1),
+        )
+        .having(func.count(models.PotentialBreach.id) > 2),
+        message="v2_channel can have max 2 v2_potential_breach at the same position "
+        "on a channel of double connected (105) calculation type",
+    ),
+    QueryCheck(
+        error_code=273,
+        level=CheckLevel.ERROR,
+        column=models.PotentialBreach.id,
+        invalid=Query(models.PotentialBreach)
+        .join(models.Channel)
+        .filter(
+            geo_query.distance(
+                func.PointN(models.PotentialBreach.the_geom, 1), models.Channel.the_geom
+            )
+            > TOLERANCE_M
+        ),
+        message="v2_potential_breach.the_geom must begin at the channel it is assigned to",
+    ),
+]
 
 ## 030x: SETTINGS
 

@@ -103,8 +103,8 @@ class ConnectionNodes(BaseCheck):
 class ConnectionNodesLength(BaseCheck):
     """Check that the distance between `start_node` and `end_node` is at least
     `min_distance`. The coords will be transformed into (the first entry) of
-    GlobalSettings.epsg_code. The `min_distance` will be interpreted as these units.
-    For example epsg:28992 will be in meters while epsg:4326 is in degrees."""
+    GlobalSettings.epsg_code.
+    """
 
     def __init__(self, start_node, end_node, min_distance: float, *args, **kwargs):
         """
@@ -139,13 +139,13 @@ class ConnectionNodesLength(BaseCheck):
 
 
 class ConnectionNodesDistance(BaseCheck):
-    """Check that the distance between CONNECTED connection nodes is above a certain
+    """Check that the distance between connection nodes is above a certain
     threshold
     """
 
     def __init__(self, minimum_distance: float, *args, **kwargs):
         """
-        :param minimum_distance: threshold distance in meters
+        :param minimum_distance: threshold distance in degrees
         """
         super().__init__(
             column=models.ConnectionNode.id, level=CheckLevel.WARNING, *args, **kwargs
@@ -156,8 +156,6 @@ class ConnectionNodesDistance(BaseCheck):
         """
         The query makes use of the SpatialIndex so we won't have to calculate the
         distance between all connection nodes.
-
-        The query only works on a spatialite and therefore skips postgres.
         """
         query = text(
             f"""SELECT *
