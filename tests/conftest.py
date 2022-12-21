@@ -66,12 +66,6 @@ def modelchecker(threedi_db):
 
 
 @pytest.fixture
-def in_memory_sqlite():
-    """An in-memory database without a schema (to test schema migrations)"""
-    return ThreediDatabase("")
-
-
-@pytest.fixture
 def empty_sqlite_v3(tmp_path):
     """A function-scoped empty spatialite v3 in the latest migration state"""
     tmp_sqlite = tmp_path / "empty_v3.sqlite"
