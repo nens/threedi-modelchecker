@@ -1,4 +1,4 @@
-"""breach and exchange
+"""add breach and exchange properties
 
 Revision ID: 0212
 Revises: 0211

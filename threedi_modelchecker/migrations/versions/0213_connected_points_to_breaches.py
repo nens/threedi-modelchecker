@@ -1,4 +1,4 @@
-"""breach and exchange
+"""clean unused connected points and transform remaining to potential breaches
 
 Revision ID: 0213
 Revises: 0212

@@ -5,7 +5,11 @@ Changelog of threedi-modelchecker
 0.35 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Schema version 214: remove v2_connected_pnt, v2_calculation_point,
+  and v2_levee. The 'displaced' 1D2D points (mostly, breaches) are copied
+  to v2_potential_breach, which also contains information about breaches.
+  The levees are copied to v2_obstacle (which resets their primary key).
+  Schema versions 211, 212 and 213 prepared for this change.
 
 
 0.34 (2022-12-12)
