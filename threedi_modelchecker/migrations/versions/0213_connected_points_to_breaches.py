@@ -222,15 +222,18 @@ def to_potential_breach(session, conn_point_id):
     if connected_point.exchange_level not in (None, -9999.0):
         exchange_level = connected_point.exchange_level
     elif levee is not None:
-        exchange_level = levee.crest_level if levee.crest_level > -9999 else None
+        exchange_level = levee.crest_level
     else:
         exchange_level = None
 
     if levee is not None:
-        maximum_breach_depth = (
-            levee.max_breach_depth if levee.max_breach_depth > -9999 else None
-        )
+        maximum_breach_depth = levee.max_breach_depth
     else:
+        maximum_breach_depth = None
+
+    if exchange_level == -9999.0:
+        exchange_level = None
+    if maximum_breach_depth == -9999.0:
         maximum_breach_depth = None
 
     return PotentialBreach(
