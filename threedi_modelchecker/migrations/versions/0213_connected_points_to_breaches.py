@@ -226,10 +226,17 @@ def to_potential_breach(session, conn_point_id):
     else:
         exchange_level = None
 
+    if levee is not None:
+        maximum_breach_depth = (
+            levee.max_breach_depth if levee.max_breach_depth > -9999 else None
+        )
+    else:
+        maximum_breach_depth = None
+
     return PotentialBreach(
         code="#".join([str(connected_point.id), calculation_point.user_ref])[:100],
         exchange_level=exchange_level,
-        maximum_breach_depth=levee.max_breach_depth if levee is not None else None,
+        maximum_breach_depth=maximum_breach_depth,
         levee_material=levee.material if levee is not None else None,
         the_geom=line_geom,
         channel_id=channel_id,
