@@ -4,6 +4,7 @@ from sqlalchemy import MetaData
 from sqlalchemy import String
 from sqlalchemy import Table
 from threedi_modelchecker import errors
+from threedi_modelchecker import ThreediDatabase
 from threedi_modelchecker.schema import constants
 from threedi_modelchecker.schema import get_schema_version
 from threedi_modelchecker.schema import ModelSchema
@@ -12,6 +13,12 @@ from threedi_modelchecker.threedi_model.views import ALL_VIEWS
 from unittest import mock
 
 import pytest
+
+
+@pytest.fixture
+def in_memory_sqlite():
+    """An in-memory database with no schema"""
+    return ThreediDatabase("")
 
 
 @pytest.fixture
