@@ -21,6 +21,9 @@ CalculationPoint = migration_213.CalculationPoint
 ConnectedPoint = migration_213.ConnectedPoint
 Levee = migration_213.Levee
 PotentialBreach = migration_213.PotentialBreach
+ConnectionNode = migration_213.ConnectionNode
+Manhole = migration_213.Manhole
+Channel = migration_213.Channel
 
 
 @pytest.fixture
@@ -97,6 +100,8 @@ def todict(x):
 
 def assert_sqlalchemy_objects_equal(a, b):
     assert a.__class__ is b.__class__
+    if a is None:
+        return
     assert todict(a) == todict(b)
 
 
@@ -108,7 +113,7 @@ def assert_sqlalchemy_objects_equal(a, b):
                 CalculationPoint(id=1, the_geom=GEOM1, user_ref="123#4#v2_channel#4"),
                 ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1),
             ],
-            PotentialBreach(id=1, channel_id=4, the_geom=LINE),
+            PotentialBreach(channel_id=4, the_geom=LINE, code="1#123#4#v2_channel#4"),
         ],
         [
             [
@@ -117,7 +122,12 @@ def assert_sqlalchemy_objects_equal(a, b):
                     id=1, the_geom=GEOM2, calculation_pnt_id=1, exchange_level=1.1
                 ),
             ],
-            PotentialBreach(id=1, channel_id=4, the_geom=LINE, exchange_level=1.1),
+            PotentialBreach(
+                channel_id=4,
+                the_geom=LINE,
+                exchange_level=1.1,
+                code="1#123#4#v2_channel#4",
+            ),
         ],
         [
             [
@@ -125,7 +135,12 @@ def assert_sqlalchemy_objects_equal(a, b):
                 ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1, levee_id=4),
                 Levee(id=4, crest_level=1.1),
             ],
-            PotentialBreach(id=1, channel_id=4, the_geom=LINE, exchange_level=1.1),
+            PotentialBreach(
+                channel_id=4,
+                the_geom=LINE,
+                exchange_level=1.1,
+                code="1#123#4#v2_channel#4",
+            ),
         ],
         [
             [
@@ -137,22 +152,88 @@ def assert_sqlalchemy_objects_equal(a, b):
                     exchange_level=1.1,
                     levee_id=4,
                 ),
-                Levee(id=4, crest_level=1.2, max_breach_depth=0.5, material=1),
+                Levee(
+                    id=4,
+                    crest_level=1.2,
+                    max_breach_depth=0.5,
+                    material=1,
+                ),
             ],
             PotentialBreach(
-                id=1,
                 channel_id=4,
                 the_geom=LINE,
                 exchange_level=1.1,
                 maximum_breach_depth=0.5,
                 levee_material=1,
+                code="1#123#4#v2_channel#4",
             ),
+        ],
+        [
+            [
+                CalculationPoint(id=1, the_geom=GEOM1, user_ref="123#3#v2_manhole#1"),
+                ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1),
+                Manhole(id=3, connection_node_id=6),
+                ConnectionNode(id=6),
+                Channel(id=4, connection_node_start_id=6, calculation_type=102),
+            ],
+            PotentialBreach(channel_id=4, the_geom=LINE, code="1#123#3#v2_manhole#1"),
+        ],
+        [
+            [
+                CalculationPoint(id=1, the_geom=GEOM1, user_ref="123#3#v2_manhole#1"),
+                ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1),
+                Manhole(id=3, connection_node_id=6),
+                ConnectionNode(id=6),
+                Channel(id=4, connection_node_end_id=6, calculation_type=102),
+            ],
+            PotentialBreach(channel_id=4, the_geom=LINE, code="1#123#3#v2_manhole#1"),
+        ],
+        [
+            [
+                CalculationPoint(id=1, the_geom=GEOM1, user_ref="123#3#v2_manhole#1"),
+                ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1),
+                Manhole(id=3, connection_node_id=6),
+                ConnectionNode(id=6),
+                Channel(id=4, connection_node_start_id=6, calculation_type=105),
+            ],
+            PotentialBreach(channel_id=4, the_geom=LINE, code="1#123#3#v2_manhole#1"),
+        ],
+        [
+            [
+                CalculationPoint(id=1, the_geom=GEOM1, user_ref="123#3#v2_manhole#1"),
+                ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1),
+                Manhole(id=3, connection_node_id=6),
+                ConnectionNode(id=6),
+            ],
+            None,
+        ],
+        [
+            [
+                CalculationPoint(id=1, the_geom=GEOM1, user_ref="123#3#v2_manhole#1"),
+                ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1),
+                Manhole(id=3, connection_node_id=6),
+                ConnectionNode(id=6),
+                Channel(id=4, connection_node_start_id=6, calculation_type=101),
+            ],
+            None,
+        ],
+        [
+            [
+                CalculationPoint(id=1, the_geom=GEOM1, user_ref="123#3#v2_manhole#1"),
+                ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1),
+                Manhole(id=3, connection_node_id=6),
+                ConnectionNode(id=6),
+                Channel(id=3, connection_node_start_id=6, calculation_type=102),
+                Channel(id=5, connection_node_start_id=6, calculation_type=105),
+                Channel(id=4, connection_node_end_id=6, calculation_type=105),
+            ],
+            PotentialBreach(channel_id=4, the_geom=LINE, code="1#123#3#v2_manhole#1"),
         ],
     ],
 )
-def test_transform(session, objs, expected):
+def test_to_potential_breach(session, objs, expected):
     session.add_all(objs)
     session.flush()
-    actual = migration_213.transform(session, 1)
+    actual = migration_213.to_potential_breach(session, 1)
 
     assert_sqlalchemy_objects_equal(actual, expected)
