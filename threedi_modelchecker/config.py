@@ -802,10 +802,10 @@ CHECKS += [
         .join(models.Channel)
         .filter(
             geo_query.distance(models.ExchangeLine.the_geom, models.Channel.the_geom)
-            > 100.0
+            > 500.0
         ),
         message=(
-            "v2_exchange_line.the_geom is far (> 100 m) from its corresponding channel"
+            "v2_exchange_line.the_geom is far (> 500 m) from its corresponding channel"
         ),
     ),
 ]
@@ -853,7 +853,8 @@ CHECKS += [
         invalid=Query(models.PotentialBreach)
         .join(models.Channel)
         .filter(
-            models.Channel.calculation_type == constants.CalculationType.CONNECTED,
+            models.Channel.calculation_type
+            == constants.CalculationType.DOUBLE_CONNECTED,
         )
         .group_by(
             models.PotentialBreach.channel_id,
