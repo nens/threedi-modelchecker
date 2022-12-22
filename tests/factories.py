@@ -92,18 +92,6 @@ class ManholeFactory(factory.alchemy.SQLAlchemyModelFactory):
     connection_node = factory.SubFactory(ConnectionNodeFactory)
 
 
-class LeveeFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.Levee
-        sqlalchemy_session = None
-
-    code = factory.Sequence(lambda n: "Code %d" % n)
-    crest_level = 4
-    max_breach_depth = 4
-    material = 1
-    the_geom = "SRID=4326;LINESTRING(-71.160281 42.258729,-71.160837 42.259113,-71.161144 42.25932)"  # noqa
-
-
 class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Weir

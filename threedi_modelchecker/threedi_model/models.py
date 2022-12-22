@@ -43,19 +43,6 @@ class BoundaryConditions2D(Base):
     )
 
 
-class CalculationPoint(Base):
-    __tablename__ = "v2_calculation_point"
-    id = Column(Integer, primary_key=True)
-
-    content_type_id = Column(Integer)
-    user_ref = Column(String(80), nullable=False)
-    calc_type = Column(Integer)
-    the_geom = Column(
-        Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
-        nullable=False,
-    )
-
-
 class ControlDelta(Base):
     __tablename__ = "v2_control_delta"
     id = Column(Integer, primary_key=True)
@@ -812,37 +799,6 @@ class Obstacle(Base):
     )
 
 
-class Levee(Base):
-    __tablename__ = "v2_levee"
-    id = Column(Integer, primary_key=True)
-    code = Column(String(100))
-    crest_level = Column(Float)
-    the_geom = Column(
-        Geometry(
-            geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
-        ),
-        nullable=False,
-    )
-    material = Column(IntegerEnum(constants.Material))
-    max_breach_depth = Column(Float)
-
-
-class ConnectedPoint(Base):
-    __tablename__ = "v2_connected_pnt"
-    id = Column(Integer, primary_key=True)
-
-    calculation_pnt_id = Column(
-        Integer, ForeignKey(CalculationPoint.__tablename__ + ".id"), nullable=False
-    )
-    levee_id = Column(Integer, ForeignKey(Levee.__tablename__ + ".id"))
-
-    exchange_level = Column(Float)
-    the_geom = Column(
-        Geometry(geometry_type="POINT", srid=4326, spatial_index=True, management=True),
-        nullable=False,
-    )
-
-
 class ImperviousSurface(Base):
     __tablename__ = "v2_impervious_surface"
     id = Column(Integer, primary_key=True)
@@ -930,9 +886,7 @@ DECLARED_MODELS = [
     AggregationSettings,
     BoundaryCondition1D,
     BoundaryConditions2D,
-    CalculationPoint,
     Channel,
-    ConnectedPoint,
     ConnectionNode,
     Control,
     ControlDelta,
@@ -958,7 +912,6 @@ DECLARED_MODELS = [
     Interflow,
     Lateral1d,
     Lateral2D,
-    Levee,
     Manhole,
     NumericalSettings,
     Obstacle,
