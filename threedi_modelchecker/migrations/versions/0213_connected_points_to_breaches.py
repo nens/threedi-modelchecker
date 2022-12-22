@@ -139,7 +139,11 @@ def clean_connected_points(session):
         x[0]
         for x in session.query(ConnectedPoint.id)
         .join(CalculationPoint, isouter=True)
-        .filter(ConnectedPoint.the_geom != CalculationPoint.the_geom)
+        .filter(
+            (ConnectedPoint.the_geom != CalculationPoint.the_geom)
+            | (ConnectedPoint.exchange_level != None)
+            | (ConnectedPoint.levee_id != None)
+        )
         .all()
     ]
     session.query(ConnectedPoint).filter(
@@ -162,12 +166,12 @@ def get_channel_id(session, user_ref):
     if type_ref == "v2_channel":
         return pk
     elif type_ref == "v2_manhole":
-        return get_channel_id_related(session, pk, Manhole)
+        return get_channel_id_manhole(session, pk)
     return None
 
 
-def get_channel_id_related(session, pk, model):
-    obj = session.query(model).filter(model.id == pk).first()
+def get_channel_id_manhole(session, pk):
+    obj = session.query(Manhole).filter(Manhole.id == pk).first()
     if obj is None:
         return
     connection_node_id = obj.connection_node_id

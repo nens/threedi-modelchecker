@@ -81,6 +81,16 @@ def test_clean_connected_points(session, objs):
             ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1),
             ConnectedPoint(id=2, the_geom=GEOM2, calculation_pnt_id=1),
         ],
+        [
+            CalculationPoint(id=1, the_geom=GEOM1),
+            ConnectedPoint(
+                id=1, the_geom=GEOM2, calculation_pnt_id=1, exchange_level=1.0
+            ),
+        ],
+        [
+            CalculationPoint(id=1, the_geom=GEOM1),
+            ConnectedPoint(id=1, the_geom=GEOM2, calculation_pnt_id=1, levee_id=1),
+        ],
     ],
 )
 def test_clean_connected_points_keep(session, objs):
