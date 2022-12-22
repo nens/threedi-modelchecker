@@ -249,7 +249,7 @@ def upgrade():
                 conn_point_id,
             )
         else:
-            session.add(to_potential_breach(session, conn_point_id))
+            session.add(breach)
     session.flush()
 
 
