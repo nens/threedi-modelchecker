@@ -12,8 +12,9 @@ from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import func
 from sqlalchemy import Integer
-from sqlalchemy import orm
 from sqlalchemy import String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session
 
 import logging
 
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 ## Copy of the ORM at this point in time:
 
-Base = orm.declarative_base()
+Base = declarative_base()
 
 
 class Levee(Base):
@@ -236,7 +237,7 @@ def to_potential_breach(session, conn_point_id):
 
 
 def upgrade():
-    session = orm.Session(bind=op.get_bind())
+    session = Session(bind=op.get_bind())
 
     conn_point_ids = clean_connected_points(session)
     for conn_point_id in conn_point_ids:
