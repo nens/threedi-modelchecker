@@ -27,16 +27,16 @@ Channel = migration_213.Channel
 
 
 @pytest.fixture
-def in_memory_sqlite():
-    """An in-memory database with the most recent schema"""
+def sqlite_v212():
+    """An in-memory database with schema version 212"""
     db = ThreediDatabase("")
     ModelSchema(db).upgrade("0212", backup=False, set_views=False)
     return db
 
 
 @pytest.fixture
-def session(in_memory_sqlite):
-    return in_memory_sqlite.get_session()
+def session(sqlite_v212):
+    return sqlite_v212.get_session()
 
 
 GEOM1 = "SRID=4326;POINT (0 0)"
