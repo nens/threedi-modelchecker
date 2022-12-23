@@ -142,7 +142,7 @@ def clean_connected_points(session):
         .join(CalculationPoint, isouter=True)
         .filter(
             (ConnectedPoint.the_geom != CalculationPoint.the_geom)
-            | (ConnectedPoint.exchange_level != None)
+            | (ConnectedPoint.exchange_level > -9999.0)
             | (ConnectedPoint.levee_id != None)
         )
         .all()
