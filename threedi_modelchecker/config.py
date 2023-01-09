@@ -883,7 +883,13 @@ CHECKS += [
         error_code=274,
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.the_geom,
-        max_distance=TOLERANCE_M,
+        min_distance=TOLERANCE_M,
+    ),
+    PotentialBreachStartEndCheck(
+        error_code=275,
+        level=CheckLevel.ERROR,
+        column=models.PotentialBreach.the_geom,
+        min_distance=TOLERANCE_M,
     ),
 ]
 

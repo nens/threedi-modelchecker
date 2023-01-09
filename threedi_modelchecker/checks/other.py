@@ -3,6 +3,8 @@ from ..threedi_model import models
 from .base import BaseCheck
 from .base import CheckLevel
 from .geo_query import distance
+from .geo_query import length
+from .geo_query import transform
 from dataclasses import dataclass
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
@@ -369,21 +371,18 @@ class PotentialBreachStartEndCheck(BaseCheck):
     """Check that a potential breach is exactly on or >=1 m from a linestring start/end."""
 
     def __init__(self, *args, **kwargs):
-        self.max_distance = kwargs.pop("max_distance")
+        self.min_distance = kwargs.pop("min_distance")
 
         super().__init__(*args, **kwargs)
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         linestring = models.Channel.the_geom
-        tol = self.max_distance
-
-        breach_point = geo_func.ST_PointN(self.column, 1)
-        start_point = geo_func.ST_PointN(linestring, 1)
-        end_point = geo_func.ST_PointN(linestring, geo_func.ST_NPoints(linestring))
-
-        dist_1 = distance(breach_point, start_point)
-        dist_2 = distance(breach_point, end_point)
-
+        tol = self.min_distance
+        breach_point = func.Line_Locate_Point(
+            transform(linestring), transform(geo_func.ST_PointN(self.column, 1))
+        )
+        dist_1 = breach_point * length(linestring)
+        dist_2 = (1 - breach_point) * length(linestring)
         return (
             self.to_check(session)
             .join(models.Channel)
@@ -392,4 +391,46 @@ class PotentialBreachStartEndCheck(BaseCheck):
         )
 
     def description(self) -> str:
-        return f"{self.column_name}  must be exactly on, or >= {self.max_distance} m from a channel ending"
+        return f"{self.column_name} must be exactly on, or >= {self.max_distance} m from a channel ending"
+
+
+class PotentialBreachInterdistanceCheck(BaseCheck):
+    """Check that a potential breaches are exactly on the same place or >=1 m apart."""
+
+    def __init__(self, *args, **kwargs):
+        self.min_distance = kwargs.pop("min_distance")
+
+        super().__init__(*args, **kwargs)
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        def get_position(col):
+            linestring = models.Channel.the_geom
+            breach_point = func.Line_Locate_Point(
+                transform(linestring), transform(geo_func.ST_PointN(col, 1))
+            )
+            return breach_point * length(linestring)
+
+        other = self.table.alias("other")
+        return (
+            self.to_check(session)
+            .add_entity(other)
+            .join(models.Channel, self.table.c.channel_id == models.Channel.id)
+            .filter(
+                (self.table.c.channel_id == other.c.channel_id)
+                & (self.table.c.id < other.c.id)
+            )
+            .filter(
+                (get_position(self.table.c.the_geom) != get_position(other.c.the_geom))
+                & (
+                    func.abs(
+                        get_position(self.table.c.the_geom)
+                        - get_position(other.c.the_geom)
+                    )
+                    < self.min_distance
+                )
+            )
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"{self.column_name} must be more {self.max_distance} m apart (or exactly on the same position)"
