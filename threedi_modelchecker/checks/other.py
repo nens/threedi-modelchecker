@@ -399,6 +399,7 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
 
     def __init__(self, *args, **kwargs):
         self.min_distance = kwargs.pop("min_distance")
+        assert "filters" not in kwargs
 
         super().__init__(*args, **kwargs)
 
@@ -410,10 +411,9 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
             )
             return breach_point * length(linestring)
 
-        other = self.table.alias("other")
+        other = aliased(self.table)
         return (
-            self.to_check(session)
-            .add_entity(other)
+            session.query(self.table, other)
             .join(models.Channel, self.table.c.channel_id == models.Channel.id)
             .filter(
                 (self.table.c.channel_id == other.c.channel_id)
