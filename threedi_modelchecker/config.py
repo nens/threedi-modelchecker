@@ -38,6 +38,7 @@ from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionLocationCheck
 from .checks.other import LinestringLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
+from .checks.other import PotentialBreachStartEndCheck
 from .checks.other import SpatialIndexCheck
 from .checks.other import Use0DFlowCheck
 from .checks.raster import GDALAvailableCheck
@@ -877,6 +878,12 @@ CHECKS += [
             > TOLERANCE_M
         ),
         message="v2_potential_breach.the_geom must begin at the channel it is assigned to",
+    ),
+    PotentialBreachStartEndCheck(
+        error_code=274,
+        level=CheckLevel.ERROR,
+        column=models.PotentialBreach.the_geom,
+        max_distance=TOLERANCE_M,
     ),
 ]
 

@@ -7,6 +7,7 @@ from threedi_modelchecker.checks.other import ConnectionNodesLength
 from threedi_modelchecker.checks.other import CrossSectionLocationCheck
 from threedi_modelchecker.checks.other import LinestringLocationCheck
 from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton
+from threedi_modelchecker.checks.other import PotentialBreachStartEndCheck
 from threedi_modelchecker.checks.other import SpatialIndexCheck
 from threedi_modelchecker.threedi_model import constants
 from threedi_modelchecker.threedi_model import models
@@ -236,3 +237,29 @@ def test_spatial_index_disabled(empty_sqlite_v4):
     check = SpatialIndexCheck(models.ConnectionNode.the_geom)
     invalid = check.get_invalid(session)
     assert len(invalid) == 1
+
+
+@pytest.mark.parametrize(
+    "breach_geom,ok",
+    [
+        ("LINESTRING(-71.064544 42.28787, -71.064544 42.286)", True),  # at start
+        ("LINESTRING(-71.0645 42.287, -71.0645 42.286)", True),  # at end
+        ("LINESTRING(-71.06452 42.2874, -71.0645 42.286)", True),  # middle
+        (
+            "LINESTRING(-71.064544 42.287871, -71.064544 42.286)",
+            False,
+        ),  # close to start
+        ("LINESTRING(-71.0645 42.287001, -71.0645 42.286)", False),  # close to end
+    ],
+)
+def test_potential_breach_start_end(session, breach_geom, ok):
+    # channel geom: LINESTRING (-71.064544 42.28787, -71.0645 42.287)
+    factories.PotentialBreachFactory(the_geom=f"SRID=4326;{breach_geom}")
+    check = PotentialBreachStartEndCheck(
+        models.PotentialBreach.the_geom, max_distance=1.0
+    )
+    invalid = check.get_invalid(session)
+    if ok:
+        assert len(invalid) == 0
+    else:
+        assert len(invalid) == 1

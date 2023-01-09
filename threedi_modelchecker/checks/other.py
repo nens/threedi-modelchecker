@@ -363,3 +363,33 @@ class SpatialIndexCheck(BaseCheck):
 
     def description(self) -> str:
         return f"{self.column_name} has no valid spatial index, which is required for some checks"
+
+
+class PotentialBreachStartEndCheck(BaseCheck):
+    """Check that a potential breach is exactly on or >=1 m from a linestring start/end."""
+
+    def __init__(self, *args, **kwargs):
+        self.max_distance = kwargs.pop("max_distance")
+
+        super().__init__(*args, **kwargs)
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        linestring = models.Channel.the_geom
+        tol = self.max_distance
+
+        breach_point = geo_func.ST_PointN(self.column, 1)
+        start_point = geo_func.ST_PointN(linestring, 1)
+        end_point = geo_func.ST_PointN(linestring, geo_func.ST_NPoints(linestring))
+
+        dist_1 = distance(breach_point, start_point)
+        dist_2 = distance(breach_point, end_point)
+
+        return (
+            self.to_check(session)
+            .join(models.Channel)
+            .filter(((dist_1 > 0) & (dist_1 < tol)) | ((dist_2 > 0) & (dist_2 < tol)))
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"{self.column_name}  must be exactly on, or >= {self.max_distance} m from a channel ending"
