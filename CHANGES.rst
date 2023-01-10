@@ -11,6 +11,12 @@ Changelog of threedi-modelchecker
   The levees are copied to v2_obstacle (which resets their primary key).
   Schema versions 211, 212 and 213 prepared for this change.
 
+- Added error 274; a potential breach cannot be closer than 1m to the channel
+  ending. It can be exactly on it (to allow breaches from connection nodes).
+
+- Added error 275; a potential breach cannot be closer than 1m to another one.
+  It can be exactly on another one (to allow 2 breach options on 1 node).
+
 
 0.34 (2022-12-12)
 -----------------

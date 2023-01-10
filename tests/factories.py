@@ -328,3 +328,14 @@ class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
     cross_section_definition = factory.SubFactory(CrossSectionDefinitionFactory)
     discharge_coefficient_negative = 1.0
     discharge_coefficient_positive = 1.0
+
+
+class PotentialBreachFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.PotentialBreach
+        sqlalchemy_session = None
+
+    display_name = Faker("name")
+    code = "code"
+    the_geom = "SRID=4326;LINESTRING(-71.06452 42.2874, -71.06452 42.286)"
+    channel = factory.SubFactory(ChannelFactory)
