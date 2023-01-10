@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.35 (unreleased)
+0.35 (2023-01-10)
 -----------------
 
 - Schema version 214: remove v2_connected_pnt, v2_calculation_point,
