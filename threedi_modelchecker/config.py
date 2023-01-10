@@ -38,6 +38,7 @@ from .checks.other import ConnectionNodesLength
 from .checks.other import CrossSectionLocationCheck
 from .checks.other import LinestringLocationCheck
 from .checks.other import OpenChannelsWithNestedNewton
+from .checks.other import PotentialBreachInterdistanceCheck
 from .checks.other import PotentialBreachStartEndCheck
 from .checks.other import SpatialIndexCheck
 from .checks.other import Use0DFlowCheck
@@ -885,7 +886,7 @@ CHECKS += [
         column=models.PotentialBreach.the_geom,
         min_distance=TOLERANCE_M,
     ),
-    PotentialBreachStartEndCheck(
+    PotentialBreachInterdistanceCheck(
         error_code=275,
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.the_geom,
