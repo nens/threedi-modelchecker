@@ -789,11 +789,11 @@ CHECKS += [
         .join(models.Channel)
         .filter(
             geo_query.length(models.ExchangeLine.the_geom)
-            < geo_query.length(models.Channel.the_geom)
+            < (0.8 * geo_query.length(models.Channel.the_geom))
         ),
         message=(
-            "v2_exchange_line.the_geom should be longer than its corresponding channel "
-            "to avoid edge effects."
+            "v2_exchange_line.the_geom should not be significantly shorter than its "
+            "corresponding channel."
         ),
     ),
     QueryCheck(

@@ -17,6 +17,9 @@ Changelog of threedi-modelchecker
 - Added error 275; a potential breach cannot be closer than 1m to another one.
   It can be exactly on another one (to allow 2 breach options on 1 node).
 
+- Adapt warning 263: only emit a warning when an exchange line length is < 80%
+  of the corresponding channel length.
+
 
 0.34 (2022-12-12)
 -----------------
