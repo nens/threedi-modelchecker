@@ -391,7 +391,7 @@ class PotentialBreachStartEndCheck(BaseCheck):
         )
 
     def description(self) -> str:
-        return f"{self.column_name} must be exactly on, or >= {self.max_distance} m from a channel ending"
+        return f"{self.column_name} must be exactly on or >= {self.min_distance} m from a start or end channel vertex"
 
 
 class PotentialBreachInterdistanceCheck(BaseCheck):
@@ -433,4 +433,4 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
         )
 
     def description(self) -> str:
-        return f"{self.column_name} must be more {self.max_distance} m apart (or exactly on the same position)"
+        return f"{self.column_name} must be more than {self.min_distance} m apart (or exactly on the same position)"

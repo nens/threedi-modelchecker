@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.36 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Fixed error messages 274 and 275.
 
 
 0.35 (2023-01-10)
