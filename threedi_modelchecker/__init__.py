@@ -3,5 +3,5 @@ from .threedi_database import *  # NOQA
 
 
 # fmt: off
-__version__ = '0.36.dev0'
+__version__ = '0.35.1'
 # fmt: on
