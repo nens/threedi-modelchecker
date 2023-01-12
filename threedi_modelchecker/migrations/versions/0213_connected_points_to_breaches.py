@@ -32,6 +32,13 @@ logger = logging.getLogger(__name__)
 Base = declarative_base()
 
 
+class GlobalSetting(Base):
+    __tablename__ = "v2_global_settings"
+    id = Column(Integer, primary_key=True)
+    dist_calc_points = Column(Float, nullable=False)
+    epsg_code = Column(Integer)
+
+
 class Levee(Base):
     __tablename__ = "v2_levee"
     id = Column(Integer, primary_key=True)
@@ -117,8 +124,15 @@ class Channel(Base):
 
     id = Column(Integer, primary_key=True)
     calculation_type = Column(Integer, nullable=False)
+    dist_calc_points = Column(Float, nullable=True)
     connection_node_start_id = Column(Integer, nullable=False)
     connection_node_end_id = Column(Integer, nullable=False)
+    the_geom = Column(
+        Geometry(
+            geometry_type="LINESTRING", srid=4326, spatial_index=True, management=True
+        ),
+        nullable=True,
+    )
 
 
 def parse_connected_point_user_ref(user_ref: str):
@@ -129,10 +143,10 @@ def parse_connected_point_user_ref(user_ref: str):
     Example
     -------
     >>> parse_connected_point_user_ref("201#123#v2_channels#4)
-    ContentType.TYPE_V2_CHANNEL, 123, 4
+    ContentType.TYPE_V2_CHANNEL, 123, 3
     """
-    _, id_str, type_str, _ = user_ref.split("#")
-    return type_str, int(id_str)
+    _, id_str, type_str, node_nr = user_ref.split("#")
+    return type_str, int(id_str), int(node_nr)
 
 
 def clean_connected_points(session):
@@ -163,18 +177,19 @@ def clean_connected_points(session):
 
 
 def get_channel_id(session, user_ref):
-    type_ref, pk = parse_connected_point_user_ref(user_ref)
+    """Get channel id and index into channel nodes"""
+    type_ref, pk, node_nr = parse_connected_point_user_ref(user_ref)
     if type_ref == "v2_channel":
-        return pk
+        return pk, node_nr - 1
     elif type_ref == "v2_manhole":
         return get_channel_id_manhole(session, pk)
-    return None
+    return None, None
 
 
 def get_channel_id_manhole(session, pk):
     obj = session.query(Manhole).filter(Manhole.id == pk).first()
     if obj is None:
-        return
+        return None, None
     connection_node_id = obj.connection_node_id
 
     # find a channel connected to this connection node, with connected calc type
@@ -189,25 +204,61 @@ def get_channel_id_manhole(session, pk):
         )
         .all()
     )
+    if len(channels) == 0:
+        return None, None
 
     # prefer double connected, and then prefer lowest id
-    channels = sorted(channels, key=lambda x: (-x.calculation_type, x.id))
-    return None if len(channels) == 0 else channels[0].id
+    channel = sorted(channels, key=lambda x: (-x.calculation_type, x.id))[0]
+    if channel.connection_node_start_id == connection_node_id:
+        node_idx = 0
+    else:
+        node_idx = -1
+    return channel.id, node_idx
 
 
-def get_channel_id_boundary_condition(session, pk):
-    return pk
+def scalar_subquery(query):
+    # compatibility between sqlalchemy 1.3 and 1.4
+    try:
+        return query.scalar_subquery()
+    except AttributeError:
+        return query.as_scalar()
 
 
-def to_potential_breach(session, conn_point_id):
-    connected_point, calculation_point, levee, line_geom = (
+def get_breach_line_geom(
+    session, conn_point_id, channel_id, node_idx, epsg_code, dist_calc_points
+):
+    if node_idx == 0:
+        start = func.ST_PointN(Channel.the_geom, 1)
+    elif node_idx == -1:
+        start = func.ST_PointN(Channel.the_geom, func.ST_NPoints(Channel.the_geom))
+    else:
+        length = func.ST_Length(func.ST_Transform(Channel.the_geom, epsg_code))
+        n_segments = func.MAX(
+            func.ROUND(
+                length / func.COALESCE(Channel.dist_calc_points, dist_calc_points)
+            ),
+            1,
+        )
+        fraction = node_idx / n_segments
+        start_proj = func.Line_Interpolate_Point(
+            func.ST_Transform(Channel.the_geom, epsg_code), fraction
+        )
+        start = func.ST_Transform(start_proj, 4326)
+
+    return (
+        session.query(func.AsEWKT(func.MakeLine(start, ConnectedPoint.the_geom)))
+        .filter(ConnectedPoint.id == conn_point_id)
+        .filter(Channel.id == channel_id)
+        .one()[0]
+    )
+
+
+def to_potential_breach(session, conn_point_id, epsg_code, dist_calc_points):
+    connected_point, calculation_point, levee = (
         session.query(
             ConnectedPoint,
             CalculationPoint,
             Levee,
-            func.AsEWKT(
-                func.MakeLine(CalculationPoint.the_geom, ConnectedPoint.the_geom)
-            ),
         )
         .join(CalculationPoint)
         .join(Levee, isouter=True)
@@ -215,9 +266,13 @@ def to_potential_breach(session, conn_point_id):
         .one()
     )
 
-    channel_id = get_channel_id(session, calculation_point.user_ref)
+    channel_id, node_idx = get_channel_id(session, calculation_point.user_ref)
     if channel_id is None:
         return
+
+    line_geom = get_breach_line_geom(
+        session, conn_point_id, channel_id, node_idx, epsg_code, dist_calc_points
+    )
 
     if connected_point.exchange_level not in (None, -9999.0):
         exchange_level = connected_point.exchange_level
@@ -249,9 +304,19 @@ def to_potential_breach(session, conn_point_id):
 def upgrade():
     session = Session(bind=op.get_bind())
 
+    settings = session.query(GlobalSetting).order_by("id").first()
+    if settings is None:
+        epsg_code = 28992
+        dist_calc_points = 100.0
+    else:
+        epsg_code = settings.epsg_code or 28992
+        dist_calc_points = settings.dist_calc_points
+
     conn_point_ids = clean_connected_points(session)
     for conn_point_id in conn_point_ids:
-        breach = to_potential_breach(session, conn_point_id)
+        breach = to_potential_breach(
+            session, conn_point_id, epsg_code, dist_calc_points
+        )
         if breach is None:
             logger.warning(
                 "Connected Point %d will be removed because it "

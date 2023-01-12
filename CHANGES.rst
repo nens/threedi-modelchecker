@@ -5,7 +5,10 @@ Changelog of threedi-modelchecker
 0.35.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Adapt the v2_connected_pnt -> v2_potential_breach migration; instead of
+  using the calculation point geometries, the 'user_ref' is now used. Interpolated
+  channel nodes are computed on the spot. The migration might take up to a minute for
+  schematisations with many connected points.
 
 
 0.35.1 (2023-01-11)
