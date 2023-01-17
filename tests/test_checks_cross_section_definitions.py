@@ -32,8 +32,8 @@ from threedi_modelchecker.checks.cross_section_definitions import (
 from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionYZIncreasingWidthIfOpenCheck,
 )
-from threedi_modelchecker.threedi_model.constants import CrossSectionShape
-from threedi_modelchecker.threedi_model.models import CrossSectionDefinition
+from threedi_schema.domain.constants import CrossSectionShape
+from threedi_schema.domain.models import CrossSectionDefinition
 
 import pytest
 

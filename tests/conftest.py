@@ -1,6 +1,5 @@
 from . import factories
 from threedi_modelchecker.checks.raster import LocalContext
-from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.schema import ModelSchema
 from threedi_modelchecker.threedi_database import ThreediDatabase
 
@@ -30,14 +29,6 @@ def threedi_db(tmpdir_factory):
     return db
 
 
-@pytest.fixture(scope="session")
-def gpkg_db(tmpdir_factory):
-    tmp_path = tmpdir_factory.mktemp("noordpolder")
-    tmp = tmp_path / "noordpolder.gpkg"
-    shutil.copyfile(data_dir / "noordpolder.gpkg", tmp)
-    return ThreediDatabase(tmp)
-
-
 @pytest.fixture
 def session(threedi_db):
     """Fixture which yields a session to an empty 3di database.
@@ -60,38 +51,8 @@ def session(threedi_db):
 
 
 @pytest.fixture
-def modelchecker(threedi_db):
-    mc = ThreediModelChecker(threedi_db)
-    return mc
-
-
-@pytest.fixture
-def empty_sqlite_v3(tmp_path):
-    """A function-scoped empty spatialite v3 in the latest migration state"""
-    tmp_sqlite = tmp_path / "empty_v3.sqlite"
-    shutil.copyfile(data_dir / "empty_v3.sqlite", tmp_sqlite)
-    return ThreediDatabase(tmp_sqlite)
-
-
-@pytest.fixture
 def empty_sqlite_v4(tmp_path):
     """An function-scoped empty spatialite v4 in the latest migration state"""
     tmp_sqlite = tmp_path / "empty_v4.sqlite"
     shutil.copyfile(data_dir / "empty_v4.sqlite", tmp_sqlite)
-    return ThreediDatabase(tmp_sqlite)
-
-
-@pytest.fixture
-def south_latest_sqlite(tmp_path):
-    """An empty SQLite that is in its latest South migration state"""
-    tmp_sqlite = tmp_path / "south_latest.sqlite"
-    shutil.copyfile(data_dir / "south_latest.sqlite", tmp_sqlite)
-    return ThreediDatabase(tmp_sqlite)
-
-
-@pytest.fixture
-def oldest_sqlite(tmp_path):
-    """A real SQLite that is in its oldest possible south migration state (160)"""
-    tmp_sqlite = tmp_path / "noordpolder.sqlite"
-    shutil.copyfile(data_dir / "noordpolder.sqlite", tmp_sqlite)
     return ThreediDatabase(tmp_sqlite)

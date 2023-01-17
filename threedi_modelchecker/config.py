@@ -54,10 +54,10 @@ from .checks.timeseries import TimeseriesIncreasingCheck
 from .checks.timeseries import TimeseriesRowCheck
 from .checks.timeseries import TimeseriesTimestepCheck
 from .checks.timeseries import TimeseriesValueCheck
-from .threedi_model import models
-from .threedi_model.models import constants
 from sqlalchemy import func
 from sqlalchemy.orm import Query
+from threedi_schema import constants
+from threedi_schema import models
 from typing import List
 
 

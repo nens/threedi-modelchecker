@@ -3,8 +3,7 @@ from .checks.base import CheckLevel
 from .checks.raster import LocalContext
 from .checks.raster import ServerContext
 from .config import Config
-from .schema import ModelSchema
-from .threedi_database import ThreediDatabase
+from threedi_schema import ThreediDatabase
 from typing import Dict
 from typing import Iterator
 from typing import NamedTuple
@@ -27,7 +26,7 @@ class ThreediModelChecker:
         - "available_rasters": (only server) a dict of raster_option -> raster url
         """
         self.db = threedi_db
-        self.schema = ModelSchema(self.db)
+        self.schema = self.db.schema
         self.schema.validate_schema()
         self.config = Config(self.models)
         context = {} if context is None else context.copy()

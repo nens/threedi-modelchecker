@@ -1,8 +1,8 @@
-from ..threedi_model import models
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import func
 from sqlalchemy.orm import Query
 from sqlalchemy.sql import literal
+from threedi_schema import models
 
 
 DEFAULT_EPSG = 28992

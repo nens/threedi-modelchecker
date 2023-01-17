@@ -10,6 +10,8 @@ Changelog of threedi-modelchecker
 - Snap v2_calculation_point to their channel geometry (with a tolerance of 1E-7
   degrees) in migration 213 (v2_connected_pnt -> v2_potential_breach).
 
+- Separate the schema to a separate package: threedi-schema.
+
 
 0.35.1 (2023-01-11)
 -------------------

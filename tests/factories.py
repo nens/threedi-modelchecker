@@ -1,7 +1,7 @@
 from factory import Faker
 from inspect import isclass
-from threedi_modelchecker.threedi_model import constants
-from threedi_modelchecker.threedi_model import models
+from threedi_schema import constants
+from threedi_schema import models
 
 import datetime
 import factory

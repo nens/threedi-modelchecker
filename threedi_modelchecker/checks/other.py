@@ -1,5 +1,3 @@
-from ..threedi_model import constants
-from ..threedi_model import models
 from .base import BaseCheck
 from .base import CheckLevel
 from .geo_query import distance
@@ -12,6 +10,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Query
 from sqlalchemy.orm import Session
+from threedi_schema import constants
+from threedi_schema import models
 from typing import List
 from typing import NamedTuple
 

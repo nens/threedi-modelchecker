@@ -2,6 +2,7 @@ from threedi_modelchecker.config import CHECKS
 from threedi_modelchecker.model_checks import BaseCheck
 from threedi_modelchecker.model_checks import LocalContext
 from threedi_modelchecker.model_checks import ThreediModelChecker
+from threedi_schema import ThreediDatabase
 from unittest import mock
 
 import pytest
@@ -9,7 +10,7 @@ import pytest
 
 @pytest.fixture
 def model_checker(threedi_db):
-    with mock.patch("threedi_modelchecker.model_checks.ModelSchema"):
+    with mock.patch.object(ThreediDatabase, "schema"):
         return ThreediModelChecker(threedi_db)
 
 
@@ -26,7 +27,7 @@ def model_checker(threedi_db):
 def test_context_local(threedi_db, context):
     if context is not None and context.get("base_path") == "<db>":
         context["base_path"] = threedi_db.base_path
-    with mock.patch("threedi_modelchecker.model_checks.ModelSchema"):
+    with mock.patch.object(ThreediDatabase, "schema"):
         model_checker = ThreediModelChecker(threedi_db, context)
     assert model_checker.context.base_path == threedi_db.base_path
 
@@ -38,7 +39,7 @@ def test_context_local(threedi_db, context):
     ],
 )
 def test_context_server(threedi_db, context):
-    with mock.patch("threedi_modelchecker.model_checks.ModelSchema"):
+    with mock.patch.object(ThreediDatabase, "schema"):
         model_checker = ThreediModelChecker(threedi_db, context)
     assert model_checker.context.available_rasters == {"foo": "bar"}
 

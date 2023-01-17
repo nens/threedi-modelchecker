@@ -6,10 +6,10 @@ import pathlib
 long_description = "\n\n".join([open("README.rst").read()])
 
 install_requires = [
+    "threedi-schema==214.*",
     "Click",
     "GeoAlchemy2>=0.9,!=0.11.*",
     "SQLAlchemy>=1.3",
-    "alembic>=1.8",
 ]
 
 tests_require = [
