@@ -220,7 +220,7 @@ def scalar_subquery(query):
 def get_breach_line_geom(session, conn_point_id, channel_id, node_idx):
     channel = scalar_subquery(
         session.query(Channel.the_geom).filter(Channel.id == channel_id)
-    )
+    ).limit(1)
     if node_idx == 0:
         breach_line_start = func.ST_PointN(channel, 1)
     elif node_idx == -1:
@@ -232,6 +232,7 @@ def get_breach_line_geom(session, conn_point_id, channel_id, node_idx):
         session.query(
             func.AsEWKB(func.MakeLine(breach_line_start, ConnectedPoint.the_geom))
         )
+        .join(CalculationPoint)
         .filter(ConnectedPoint.id == conn_point_id)
         .one()[0]
     )
