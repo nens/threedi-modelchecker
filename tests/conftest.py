@@ -1,7 +1,7 @@
 from . import factories
 from threedi_modelchecker.checks.raster import LocalContext
-from threedi_modelchecker.schema import ModelSchema
-from threedi_modelchecker.threedi_database import ThreediDatabase
+from threedi_schema import ModelSchema
+from threedi_schema import ThreediDatabase
 
 import pathlib
 import pytest
