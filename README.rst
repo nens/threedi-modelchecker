@@ -38,7 +38,7 @@ checks and print an overview of all discovered errors::
 
     from threedi_modelchecker.exporters import format_check_results
     from threedi_modelchecker import ThreediModelChecker
-    from threedi_modelchecker import ThreediDatabase
+    from threedi_schema import ThreediDatabase
 
     sqlite_file = "<Path to your sqlite file>"
     database = ThreediDatabase(sqlite_file)
@@ -56,16 +56,6 @@ Use the modelchecker from the command line as follows::
     threedi_modelchecker -s path/to/model.sqlite check -l warning 
 
 By default, WARNING and INFO checks are ignored.
-
-
-Migrations
-----------
-
-Migrate the schematisation file to the latest version as follows::
-
-    threedi_modelchecker -s path/to/model.sqlite migrate
-
-The file will be change in-place.
 
 
 Development
