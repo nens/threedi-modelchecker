@@ -32,13 +32,6 @@ logger = logging.getLogger(__name__)
 Base = declarative_base()
 
 
-class GlobalSetting(Base):
-    __tablename__ = "v2_global_settings"
-    id = Column(Integer, primary_key=True)
-    dist_calc_points = Column(Float, nullable=False)
-    epsg_code = Column(Integer)
-
-
 class Levee(Base):
     __tablename__ = "v2_levee"
     id = Column(Integer, primary_key=True)
@@ -224,36 +217,27 @@ def scalar_subquery(query):
         return query.as_scalar()
 
 
-def get_breach_line_geom(
-    session, conn_point_id, channel_id, node_idx, epsg_code, dist_calc_points
-):
+def get_breach_line_geom(session, conn_point_id, channel_id, node_idx):
+    channel = scalar_subquery(
+        session.query(Channel.the_geom).filter(Channel.id == channel_id)
+    )
     if node_idx == 0:
-        start = func.ST_PointN(Channel.the_geom, 1)
+        breach_line_start = func.ST_PointN(channel, 1)
     elif node_idx == -1:
-        start = func.ST_PointN(Channel.the_geom, func.ST_NPoints(Channel.the_geom))
+        breach_line_start = func.ST_PointN(channel, func.ST_NPoints(channel))
     else:
-        length = func.ST_Length(func.ST_Transform(Channel.the_geom, epsg_code))
-        n_segments = func.MAX(
-            func.ROUND(
-                length / func.COALESCE(Channel.dist_calc_points, dist_calc_points)
-            ),
-            1,
-        )
-        fraction = node_idx / n_segments
-        start_proj = func.Line_Interpolate_Point(
-            func.ST_Transform(Channel.the_geom, epsg_code), fraction
-        )
-        start = func.ST_Transform(start_proj, 4326)
+        breach_line_start = func.Snap(CalculationPoint.the_geom, channel, 1e-7)
 
     return (
-        session.query(func.AsEWKB(func.MakeLine(start, ConnectedPoint.the_geom)))
+        session.query(
+            func.AsEWKB(func.MakeLine(breach_line_start, ConnectedPoint.the_geom))
+        )
         .filter(ConnectedPoint.id == conn_point_id)
-        .filter(Channel.id == channel_id)
         .one()[0]
     )
 
 
-def to_potential_breach(session, conn_point_id, epsg_code, dist_calc_points):
+def to_potential_breach(session, conn_point_id):
     connected_point, calculation_point, levee = (
         session.query(
             ConnectedPoint,
@@ -270,9 +254,7 @@ def to_potential_breach(session, conn_point_id, epsg_code, dist_calc_points):
     if channel_id is None:
         return
 
-    line_geom = get_breach_line_geom(
-        session, conn_point_id, channel_id, node_idx, epsg_code, dist_calc_points
-    )
+    line_geom = get_breach_line_geom(session, conn_point_id, channel_id, node_idx)
 
     if connected_point.exchange_level not in (None, -9999.0):
         exchange_level = connected_point.exchange_level
@@ -304,19 +286,9 @@ def to_potential_breach(session, conn_point_id, epsg_code, dist_calc_points):
 def upgrade():
     session = Session(bind=op.get_bind())
 
-    settings = session.query(GlobalSetting).order_by("id").first()
-    if settings is None:
-        epsg_code = 28992
-        dist_calc_points = 100.0
-    else:
-        epsg_code = settings.epsg_code or 28992
-        dist_calc_points = settings.dist_calc_points
-
     conn_point_ids = clean_connected_points(session)
     for conn_point_id in conn_point_ids:
-        breach = to_potential_breach(
-            session, conn_point_id, epsg_code, dist_calc_points
-        )
+        breach = to_potential_breach(session, conn_point_id)
         if breach is None:
             logger.warning(
                 "Connected Point %d will be removed because it "
