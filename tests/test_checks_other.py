@@ -10,8 +10,8 @@ from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton
 from threedi_modelchecker.checks.other import PotentialBreachInterdistanceCheck
 from threedi_modelchecker.checks.other import PotentialBreachStartEndCheck
 from threedi_modelchecker.checks.other import SpatialIndexCheck
-from threedi_modelchecker.threedi_model import constants
-from threedi_modelchecker.threedi_model import models
+from threedi_schema import constants
+from threedi_schema import models
 
 import pytest
 

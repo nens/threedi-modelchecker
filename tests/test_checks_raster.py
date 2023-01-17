@@ -16,7 +16,7 @@ from threedi_modelchecker.interfaces.raster_interface_gdal import (
 from threedi_modelchecker.interfaces.raster_interface_rasterio import (
     RasterIORasterInterface,
 )
-from threedi_modelchecker.threedi_model import models
+from threedi_schema import models
 from unittest import mock
 
 

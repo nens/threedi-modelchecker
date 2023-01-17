@@ -13,9 +13,9 @@ from threedi_modelchecker.checks.base import QueryCheck
 from threedi_modelchecker.checks.base import RangeCheck
 from threedi_modelchecker.checks.base import TypeCheck
 from threedi_modelchecker.checks.base import UniqueCheck
-from threedi_modelchecker.threedi_model import constants
-from threedi_modelchecker.threedi_model import custom_types
-from threedi_modelchecker.threedi_model import models
+from threedi_schema import constants
+from threedi_schema import custom_types
+from threedi_schema import models
 
 import factory
 import pytest

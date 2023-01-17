@@ -32,8 +32,8 @@ from threedi_modelchecker.checks.cross_section_definitions import (
 from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionYZIncreasingWidthIfOpenCheck,
 )
-from threedi_schema.domain.constants import CrossSectionShape
-from threedi_schema.domain.models import CrossSectionDefinition
+from threedi_schema import constants
+from threedi_schema import models
 
 import pytest
 
@@ -41,10 +41,10 @@ import pytest
 def test_in_use(session):
     # should only check records in use
     definition = factories.CrossSectionDefinitionFactory(
-        width=None, shape=CrossSectionShape.CIRCLE
+        width=None, shape=constants.CrossSectionShape.CIRCLE
     )
 
-    check = CrossSectionNullCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionNullCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -56,18 +56,20 @@ def test_in_use(session):
 def test_filter_shapes(session):
     # should only check records of given types
     definition = factories.CrossSectionDefinitionFactory(
-        width=None, shape=CrossSectionShape.CIRCLE
+        width=None, shape=constants.CrossSectionShape.CIRCLE
     )
     factories.CrossSectionLocationFactory(definition=definition)
 
     check = CrossSectionNullCheck(
-        column=CrossSectionDefinition.width, shapes=[CrossSectionShape.RECTANGLE]
+        column=models.CrossSectionDefinition.width,
+        shapes=[constants.CrossSectionShape.RECTANGLE],
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
     check = CrossSectionNullCheck(
-        column=CrossSectionDefinition.width, shapes=[CrossSectionShape.CIRCLE]
+        column=models.CrossSectionDefinition.width,
+        shapes=[constants.CrossSectionShape.CIRCLE],
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
@@ -77,11 +79,11 @@ def test_filter_shapes(session):
 def test_check_null_invalid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionNullCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionNullCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
-    check = CrossSectionExpectEmptyCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionExpectEmptyCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -90,11 +92,11 @@ def test_check_null_invalid(session, width):
 def test_check_null_valid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionNullCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionNullCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
-    check = CrossSectionExpectEmptyCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionExpectEmptyCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
@@ -103,7 +105,7 @@ def test_check_null_valid(session, width):
 def test_check_float_invalid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionFloatCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionFloatCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
@@ -114,7 +116,7 @@ def test_check_float_invalid(session, width):
 def test_check_float_valid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionFloatCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionFloatCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -123,7 +125,7 @@ def test_check_float_valid(session, width):
 def test_check_greater_zero_invalid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionGreaterZeroCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionGreaterZeroCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
@@ -132,7 +134,7 @@ def test_check_greater_zero_invalid(session, width):
 def test_check_greater_zero_valid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionGreaterZeroCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionGreaterZeroCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -141,7 +143,7 @@ def test_check_greater_zero_valid(session, width):
 def test_check_float_list_invalid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionFloatListCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionFloatListCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
@@ -150,7 +152,7 @@ def test_check_float_list_invalid(session, width):
 def test_check_float_list_valid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionFloatListCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionFloatListCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -183,7 +185,7 @@ def test_check_equal_elements_valid(session, width):
 def test_increasing_elements_invalid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionIncreasingCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionIncreasingCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
@@ -192,7 +194,7 @@ def test_increasing_elements_invalid(session, width):
 def test_increasing_elements_valid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionIncreasingCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionIncreasingCheck(column=models.CrossSectionDefinition.width)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -201,7 +203,9 @@ def test_increasing_elements_valid(session, width):
 def test_first_nonzero_invalid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionFirstElementNonZeroCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionFirstElementNonZeroCheck(
+        column=models.CrossSectionDefinition.width
+    )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
@@ -210,7 +214,9 @@ def test_first_nonzero_invalid(session, width):
 def test_first_nonzero_valid(session, width):
     definition = factories.CrossSectionDefinitionFactory(width=width)
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionFirstElementNonZeroCheck(column=CrossSectionDefinition.width)
+    check = CrossSectionFirstElementNonZeroCheck(
+        column=models.CrossSectionDefinition.width
+    )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -222,7 +228,7 @@ def test_check_yz_height_valid(session, height):
         height=height,
     )
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionYZHeightCheck(column=CrossSectionDefinition.height)
+    check = CrossSectionYZHeightCheck(column=models.CrossSectionDefinition.height)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -234,7 +240,7 @@ def test_check_yz_height_invalid(session, height):
         height=height,
     )
     factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionYZHeightCheck(column=CrossSectionDefinition.height)
+    check = CrossSectionYZHeightCheck(column=models.CrossSectionDefinition.height)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 

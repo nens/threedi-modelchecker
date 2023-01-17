@@ -3,7 +3,7 @@ from threedi_modelchecker.checks.timeseries import TimeseriesIncreasingCheck
 from threedi_modelchecker.checks.timeseries import TimeseriesRowCheck
 from threedi_modelchecker.checks.timeseries import TimeseriesTimestepCheck
 from threedi_modelchecker.checks.timeseries import TimeseriesValueCheck
-from threedi_modelchecker.threedi_model import models
+from threedi_schema import models
 
 import pytest
 
