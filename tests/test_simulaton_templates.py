@@ -83,20 +83,8 @@ from threedi_modelchecker.simulation_templates.settings.extractor import (
 from threedi_modelchecker.simulation_templates.structure_controls.extractor import (
     StructureControlExtractor,
 )
-from threedi_modelchecker.threedi_model.constants import (
-    ControlTableActionTypes,
-)
-from threedi_modelchecker.threedi_model.constants import InflowType
-from threedi_modelchecker.threedi_model.constants import InitializationType
-from threedi_modelchecker.threedi_model.models import ConnectionNode
-from threedi_modelchecker.threedi_model.models import ControlGroup
-from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
-from threedi_modelchecker.threedi_model.models import ControlMemory
-from threedi_modelchecker.threedi_model.models import ControlTable
-from threedi_modelchecker.threedi_model.models import ImperviousSurface
-from threedi_modelchecker.threedi_model.models import ImperviousSurfaceMap
-from threedi_modelchecker.threedi_model.models import Surface
-from threedi_modelchecker.threedi_model.models import SurfaceMap
+from threedi_schema import constants
+from threedi_schema import models
 from unittest import mock
 
 import pytest
@@ -173,8 +161,8 @@ def client(mock_get_upload_instance):
 
 @pytest.fixture
 def measure_group(session):
-    measure_group: ControlMeasureGroup = factories.ControlMeasureGroupFactory.create(
-        id=1
+    measure_group: models.ControlMeasureGroup = (
+        factories.ControlMeasureGroupFactory.create(id=1)
     )
     factories.ControlMeasureMapFactory.create(measure_group_id=measure_group.id)
     return measure_group
@@ -189,11 +177,11 @@ def simulation_template(session, measure_group):
 
     factories.BoundaryConditions1DFactory.create(timeseries="0,-0.3\n1,-0.4")
 
-    control_group: ControlGroup = factories.ControlGroupFactory.create(
+    control_group: models.ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"
     )
-    table_control: ControlTable = factories.ControlTableFactory.create(id=1)
-    memory_control: ControlMemory = factories.ControlMemoryFactory.create(id=1)
+    table_control: models.ControlTable = factories.ControlTableFactory.create(id=1)
+    memory_control: models.ControlMemory = factories.ControlMemoryFactory.create(id=1)
 
     factories.ControlFactory.create(
         control_group_id=control_group.id,
@@ -214,9 +202,9 @@ def simulation_template(session, measure_group):
         numerical_settings_id=num_settings.id,
         initial_waterlevel=-9999,
         initial_waterlevel_file="test.tif",
-        water_level_ini_type=InitializationType.MAX,
+        water_level_ini_type=constants.InitializationType.MAX,
         initial_groundwater_level_file="test2.tif",
-        initial_groundwater_level_type=InitializationType.MIN,
+        initial_groundwater_level_type=constants.InitializationType.MIN,
         control_group_id=control_group.id,
     )
 
@@ -473,7 +461,7 @@ def test_initial_waterlevels(session):
     global_settings = factories.GlobalSettingsFactory.create(
         initial_waterlevel=-10,
         initial_waterlevel_file="test.tif",
-        water_level_ini_type=InitializationType.MAX,
+        water_level_ini_type=constants.InitializationType.MAX,
         initial_groundwater_level=-12,
     )
 
@@ -612,11 +600,11 @@ def test_simulation_settings(session):
 
 
 def test_structure_controls(session, measure_group):
-    control_group: ControlGroup = factories.ControlGroupFactory.create(
+    control_group: models.ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"
     )
-    table_control: ControlTable = factories.ControlTableFactory.create(id=1)
-    memory_control: ControlMemory = factories.ControlMemoryFactory.create(id=1)
+    table_control: models.ControlTable = factories.ControlTableFactory.create(id=1)
+    memory_control: models.ControlMemory = factories.ControlMemoryFactory.create(id=1)
 
     factories.ControlFactory.create(
         control_group_id=control_group.id,
@@ -694,10 +682,10 @@ def test_structure_controls(session, measure_group):
     "action_table", ["0.0;-1.0 2.0#1.0;-1.1  2.1", "0.0;-1.0,2.0#1.0;-1.1\t2.1"]
 )
 def test_table_control_alternative_separators(session, measure_group, action_table):
-    control_group: ControlGroup = factories.ControlGroupFactory.create(
+    control_group: models.ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"
     )
-    table_control: ControlTable = factories.ControlTableFactory.create(
+    table_control: models.ControlTable = factories.ControlTableFactory.create(
         id=1, action_table=action_table
     )
 
@@ -718,10 +706,10 @@ def test_table_control_alternative_separators(session, measure_group, action_tab
 
 @pytest.mark.parametrize("action_value", ["0.0;1.0", "0.0,1.0", "0.0  1.0", "0.0\t1.0"])
 def test_memory_control_alternative_separators(session, measure_group, action_value):
-    control_group: ControlGroup = factories.ControlGroupFactory.create(
+    control_group: models.ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"
     )
-    memory_control: ControlMemory = factories.ControlMemoryFactory.create(
+    memory_control: models.ControlMemory = factories.ControlMemoryFactory.create(
         id=1, action_value=action_value
     )
     factories.ControlFactory.create(
@@ -737,13 +725,13 @@ def test_memory_control_alternative_separators(session, measure_group, action_va
 
 
 def test_table_control_capacity_factor(session, measure_group):
-    control_group: ControlGroup = factories.ControlGroupFactory.create(
+    control_group: models.ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"
     )
-    table_control: ControlTable = factories.ControlTableFactory.create(
+    table_control: models.ControlTable = factories.ControlTableFactory.create(
         id=1,
         action_table="0.0;100#1.0;200",
-        action_type=ControlTableActionTypes.set_capacity,
+        action_type=constants.ControlTableActionTypes.set_capacity,
     )
 
     factories.ControlFactory.create(
@@ -759,13 +747,13 @@ def test_table_control_capacity_factor(session, measure_group):
 
 
 def test_memory_control_capacity_factor(session, measure_group):
-    control_group: ControlGroup = factories.ControlGroupFactory.create(
+    control_group: models.ControlGroup = factories.ControlGroupFactory.create(
         id=1, name="test group"
     )
-    memory_control: ControlMemory = factories.ControlMemoryFactory.create(
+    memory_control: models.ControlMemory = factories.ControlMemoryFactory.create(
         id=1,
         action_value="100",
-        action_type=ControlTableActionTypes.set_capacity,
+        action_type=constants.ControlTableActionTypes.set_capacity,
     )
     factories.ControlFactory.create(
         control_group_id=control_group.id,
@@ -781,26 +769,26 @@ def test_memory_control_capacity_factor(session, measure_group):
 
 def test_dwf_calculator_impervious_surface(session):
     conn_node = factories.ConnectionNodeFactory.create(id=1)
-    imp1: ImperviousSurface = factories.ImperviousSurfaceFactory.create(
+    imp1 = factories.ImperviousSurfaceFactory.create(
         code="030007",
         display_name="030007",
         nr_of_inhabitants=3.34,
         dry_weather_flow=120.0,
     )
-    imp2: ImperviousSurface = factories.ImperviousSurfaceFactory.create(
+    imp2 = factories.ImperviousSurfaceFactory.create(
         code="030008",
         display_name="030008",
         nr_of_inhabitants=1.92,
         dry_weather_flow=120.0,
     )
-    imp_map1: ImperviousSurfaceMap = factories.ImperviousSurfaceMapFactory.create(
+    imp_map1 = factories.ImperviousSurfaceMapFactory.create(
         id=1,
         impervious_surface=imp1,
         impervious_surface_id=imp1.id,
         connection_node_id=conn_node.id,
         percentage=69.0,
     )
-    imp_map2: ImperviousSurfaceMap = factories.ImperviousSurfaceMapFactory.create(
+    imp_map2 = factories.ImperviousSurfaceMapFactory.create(
         id=2,
         impervious_surface=imp2,
         impervious_surface_id=imp2.id,
@@ -810,7 +798,7 @@ def test_dwf_calculator_impervious_surface(session):
     # Because we use a raw SQL query in DWF we need to commit the data
     session.commit()
 
-    calculator = DWFCalculator(session, InflowType.IMPERVIOUS_SURFACE)
+    calculator = DWFCalculator(session, constants.InflowType.IMPERVIOUS_SURFACE)
     laterals = calculator.laterals
 
     weighted_flow_sum = (
@@ -823,9 +811,9 @@ def test_dwf_calculator_impervious_surface(session):
     ]
 
     # Remove committed data
-    Query(ImperviousSurfaceMap).with_session(session).delete()
-    Query(ImperviousSurface).with_session(session).delete()
-    Query(ConnectionNode).with_session(session).delete()
+    Query(models.ImperviousSurfaceMap).with_session(session).delete()
+    Query(models.ImperviousSurface).with_session(session).delete()
+    Query(models.ConnectionNode).with_session(session).delete()
     session.commit()
 
     recursive_approx(laterals[0]["values"], expected_values)
@@ -833,27 +821,27 @@ def test_dwf_calculator_impervious_surface(session):
 
 def test_dwf_calculator_surface(session):  # same algorithm as impervious surface
     conn_node = factories.ConnectionNodeFactory.create(id=1)
-    sur1: Surface = factories.SurfaceFactory.create(
+    sur1: models.Surface = factories.SurfaceFactory.create(
         id=1,
         code="030007",
         display_name="030007",
         nr_of_inhabitants=3.34,
         dry_weather_flow=120.0,
     )
-    sur2: Surface = factories.SurfaceFactory.create(
+    sur2: models.Surface = factories.SurfaceFactory.create(
         id=2,
         code="030008",
         display_name="030008",
         nr_of_inhabitants=1.92,
         dry_weather_flow=120.0,
     )
-    sur_map1: SurfaceMap = factories.SurfaceMapFactory.create(
+    sur_map1: models.SurfaceMap = factories.SurfaceMapFactory.create(
         id=1,
         surface_id=sur1.id,
         connection_node_id=conn_node.id,
         percentage=69.0,
     )
-    sur_map2: SurfaceMap = factories.SurfaceMapFactory.create(
+    sur_map2: models.SurfaceMap = factories.SurfaceMapFactory.create(
         id=2,
         surface_id=sur2.id,
         connection_node_id=conn_node.id,
@@ -862,7 +850,7 @@ def test_dwf_calculator_surface(session):  # same algorithm as impervious surfac
     # Because we use a raw SQL query in DWF we need to commit the data
     session.commit()
 
-    calculator = DWFCalculator(session, InflowType.SURFACE)
+    calculator = DWFCalculator(session, constants.InflowType.SURFACE)
     laterals = calculator.laterals
 
     weighted_flow_sum = (
@@ -875,14 +863,14 @@ def test_dwf_calculator_surface(session):  # same algorithm as impervious surfac
     ]
 
     # Remove committed data
-    Query(SurfaceMap).with_session(session).delete()
-    Query(Surface).with_session(session).delete()
-    Query(ConnectionNode).with_session(session).delete()
+    Query(models.SurfaceMap).with_session(session).delete()
+    Query(models.Surface).with_session(session).delete()
+    Query(models.ConnectionNode).with_session(session).delete()
     session.commit()
 
     recursive_approx(laterals[0]["values"], expected_values)
 
 
 def test_dwf_calculator_no_inflow(session):
-    calculator = DWFCalculator(session, InflowType.NO_INFLOW)
+    calculator = DWFCalculator(session, constants.InflowType.NO_INFLOW)
     assert calculator.laterals == []

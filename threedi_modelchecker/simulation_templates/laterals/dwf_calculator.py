@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from threedi_modelchecker.threedi_model.constants import InflowType
+from threedi_schema import constants
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -7,8 +7,8 @@ from typing import Union
 
 
 INFLOW_TABLE_NAME_BASES = {
-    InflowType.IMPERVIOUS_SURFACE: "impervious_surface",
-    InflowType.SURFACE: "surface",
+    constants.InflowType.IMPERVIOUS_SURFACE: "impervious_surface",
+    constants.InflowType.SURFACE: "surface",
 }
 
 
@@ -43,7 +43,7 @@ DWF_FACTORS = [
 
 
 def read_dwf_per_node(
-    session: Session, inflow_type: InflowType
+    session: Session, inflow_type: constants.InflowType
 ) -> List[Union[int, float]]:
     """Obtains the total dry weather flow in m3/d per connection node from a 3Di model sqlite-file."""
 
@@ -68,7 +68,9 @@ def read_dwf_per_node(
     return dwf_per_node
 
 
-def generate_dwf_laterals(session: Session, inflow_type: InflowType) -> List[Dict]:
+def generate_dwf_laterals(
+    session: Session, inflow_type: constants.InflowType
+) -> List[Dict]:
     """Generate dry weather flow laterals from spatialite"""
     dwf_per_node = read_dwf_per_node(session, inflow_type)
     dwf_laterals = []
@@ -92,14 +94,17 @@ def generate_dwf_laterals(session: Session, inflow_type: InflowType) -> List[Dic
 class DWFCalculator:
     """Calculate dry weather flow (DWF) from sqlite."""
 
-    def __init__(self, session: Session, inflow_type: InflowType) -> None:
+    def __init__(self, session: Session, inflow_type: constants.InflowType) -> None:
         self.session = session
         self.inflow_type = inflow_type
         self._laterals = None
 
     @property
     def laterals(self) -> List[Optional[Dict]]:
-        if self.inflow_type not in [InflowType.SURFACE, InflowType.IMPERVIOUS_SURFACE]:
+        if self.inflow_type not in [
+            constants.InflowType.SURFACE,
+            constants.InflowType.IMPERVIOUS_SURFACE,
+        ]:
             return []
 
         if self._laterals is None:

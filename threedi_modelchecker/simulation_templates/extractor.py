@@ -25,8 +25,8 @@ from threedi_modelchecker.simulation_templates.settings.extractor import (
 from threedi_modelchecker.simulation_templates.structure_controls.extractor import (
     StructureControlExtractor,
 )
-from threedi_modelchecker.threedi_database import ThreediDatabase
-from threedi_modelchecker.threedi_model.models import GlobalSetting
+from threedi_schema import models
+from threedi_schema import ThreediDatabase
 from typing import List
 from typing import Optional
 
@@ -48,10 +48,10 @@ class SimulationTemplateExtractor(object):
         """
         Extract a SimulationTemplate instance using the given database session
         """
-        qr = Query(GlobalSetting).with_session(session)
+        qr = Query(models.GlobalSetting).with_session(session)
         if global_settings_id is not None:
-            qr = qr.filter(GlobalSetting.id == global_settings_id)
-        global_settings: GlobalSetting = qr.first()
+            qr = qr.filter(models.GlobalSetting.id == global_settings_id)
+        global_settings: models.GlobalSetting = qr.first()
 
         if global_settings is None:
             raise SchematisationError(
@@ -80,7 +80,7 @@ class SimulationTemplateExtractor(object):
     ) -> List[GlobalSettingOption]:
         return [
             GlobalSettingOption(x.id, x.name)
-            for x in Query(GlobalSetting).with_session(session)
+            for x in Query(models.GlobalSetting).with_session(session)
         ]
 
     def global_settings_options(self) -> List[GlobalSettingOption]:

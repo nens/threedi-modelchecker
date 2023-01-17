@@ -23,14 +23,8 @@ from threedi_modelchecker.simulation_templates.settings.mappings import (
 from threedi_modelchecker.simulation_templates.settings.mappings import (
     time_step_settings_map,
 )
-from threedi_modelchecker.threedi_model.constants import FlowVariable
-from threedi_modelchecker.threedi_model.models import (
-    AggregationSettings as SQLAggregationSettings,
-)
-from threedi_modelchecker.threedi_model.models import GlobalSetting
-from threedi_modelchecker.threedi_model.models import (
-    NumericalSettings as SQLNumericalSettings,
-)
+from threedi_schema import constants
+from threedi_schema import models
 from typing import List
 from typing import Optional
 
@@ -44,13 +38,14 @@ class SettingsExtractor(object):
         self._aggregation_settings = None
 
     @property
-    def _sql_aggregation_settings(self) -> List[SQLAggregationSettings]:
+    def _sql_aggregation_settings(self) -> List[models.AggregationSettings]:
         if self._aggregation_settings is None:
             self._aggregation_settings = (
-                Query(SQLAggregationSettings)
+                Query(models.AggregationSettings)
                 .with_session(self.session)
                 .filter(
-                    SQLAggregationSettings.global_settings_id == self.global_settings.id
+                    models.AggregationSettings.global_settings_id
+                    == self.global_settings.id
                 )
                 .all()
             )
@@ -59,13 +54,13 @@ class SettingsExtractor(object):
         return self._aggregation_settings
 
     @property
-    def _sql_numerical_settings(self) -> SQLNumericalSettings:
+    def _sql_numerical_settings(self) -> models.NumericalSettings:
         if self._numerical_settings is None:
             self._numerical_settings = (
-                Query(SQLNumericalSettings)
+                Query(models.NumericalSettings)
                 .with_session(self.session)
                 .filter(
-                    SQLNumericalSettings.id
+                    models.NumericalSettings.id
                     == self.global_settings.numerical_settings_id
                 )
                 .first()
@@ -73,11 +68,11 @@ class SettingsExtractor(object):
         return self._numerical_settings
 
     @property
-    def global_settings(self) -> GlobalSetting:
+    def global_settings(self) -> models.GlobalSetting:
         if self._global_settings is None:
-            qr = Query(GlobalSetting).with_session(self.session)
+            qr = Query(models.GlobalSetting).with_session(self.session)
             if self._global_settings_id is not None:
-                qr = qr.filter(GlobalSetting.id == self._global_settings_id)
+                qr = qr.filter(models.GlobalSetting.id == self._global_settings_id)
             self._global_settings = qr.first()
         return self._global_settings
 
@@ -106,7 +101,7 @@ class SettingsExtractor(object):
         agg_settings = []
 
         def convert_enum(value):
-            if isinstance(value, FlowVariable):
+            if isinstance(value, constants.FlowVariable):
                 # Mismatch between sqlite and API....
                 mapping = {
                     "waterlevel": "water_level",
@@ -119,7 +114,7 @@ class SettingsExtractor(object):
             return value
 
         for agg_setting in self._sql_aggregation_settings:
-            agg_setting: SQLAggregationSettings
+            agg_setting: models.AggregationSettings
             config_dict = {
                 x.name: convert_enum(getattr(agg_setting, x.name))
                 for x in agg_setting.__table__.columns

@@ -8,14 +8,13 @@ from threedi_modelchecker.simulation_templates.utils import parse_timeseries
 from threedi_modelchecker.simulation_templates.utils import (
     strip_dict_none_values,
 )
-from threedi_modelchecker.threedi_model.models import Lateral1d
-from threedi_modelchecker.threedi_model.models import Lateral2D
+from threedi_schema import models
 from typing import List
 
 import json
 
 
-def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:
+def lateral_1d_to_api_lateral(lateral_1d: models.Lateral1d) -> Lateral:
     try:
         values = parse_timeseries(lateral_1d.timeseries)
     except (ValueError, TypeError):
@@ -38,7 +37,9 @@ def lateral_1d_to_api_lateral(lateral_1d: Lateral1d) -> Lateral:
     )
 
 
-def lateral_2d_to_api_lateral(lateral_2d: Lateral2D, session: Session) -> Lateral:
+def lateral_2d_to_api_lateral(
+    lateral_2d: models.Lateral2D, session: Session
+) -> Lateral:
     try:
         values = parse_timeseries(lateral_2d.timeseries)
     except (ValueError, TypeError):
@@ -73,7 +74,7 @@ class LateralsExtractor(object):
     @property
     def laterals_2d(self) -> List[Lateral]:
         if self._laterals_2d is None:
-            laterals_2d = Query(Lateral2D).with_session(self.session).all()
+            laterals_2d = Query(models.Lateral2D).with_session(self.session).all()
             self._laterals_2d = [
                 lateral_2d_to_api_lateral(x, self.session) for x in laterals_2d
             ]
@@ -83,7 +84,7 @@ class LateralsExtractor(object):
     @property
     def laterals_1d(self) -> List[Lateral]:
         if self._laterals_1d is None:
-            laterals_1d = Query(Lateral1d).with_session(self.session).all()
+            laterals_1d = Query(models.Lateral1d).with_session(self.session).all()
             self._laterals_1d = [lateral_1d_to_api_lateral(x) for x in laterals_1d]
 
         return self._laterals_1d

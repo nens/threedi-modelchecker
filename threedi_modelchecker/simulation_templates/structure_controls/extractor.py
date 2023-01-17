@@ -18,20 +18,8 @@ from threedi_modelchecker.simulation_templates.models import StructureControls
 from threedi_modelchecker.simulation_templates.utils import (
     strip_dict_none_values,
 )
-from threedi_modelchecker.threedi_model.constants import (
-    ControlTableActionTypes,
-)
-from threedi_modelchecker.threedi_model.constants import ControlType
-from threedi_modelchecker.threedi_model.constants import (
-    MeasureLocationContentTypes,
-)
-from threedi_modelchecker.threedi_model.constants import MeasureVariables
-from threedi_modelchecker.threedi_model.models import Control
-from threedi_modelchecker.threedi_model.models import ControlGroup
-from threedi_modelchecker.threedi_model.models import ControlMeasureGroup
-from threedi_modelchecker.threedi_model.models import ControlMeasureMap
-from threedi_modelchecker.threedi_model.models import ControlMemory
-from threedi_modelchecker.threedi_model.models import ControlTable
+from threedi_schema import constants
+from threedi_schema import models
 from typing import Dict
 from typing import List
 from typing import Union
@@ -41,11 +29,11 @@ INFINITE_SIM_DURATION = int((timedelta(days=365) * 100).total_seconds())
 
 
 def control_measure_map_to_measure_location(
-    c_measure_map: ControlMeasureMap,
+    c_measure_map: models.ControlMeasureMap,
 ) -> MeasureLocation:
     # Connection nodes should be only option here.
     CONTENT_TYPE_MAP = {
-        MeasureLocationContentTypes.v2_connection_nodes: "v2_connection_node"
+        constants.MeasureLocationContentTypes.v2_connection_nodes: "v2_connection_node"
     }
 
     return MeasureLocation(
@@ -56,15 +44,15 @@ def control_measure_map_to_measure_location(
 
 
 def to_measure_specification(
-    control: Union[ControlMemory, ControlTable],
-    group: ControlGroup,
+    control: Union[models.ControlMemory, models.ControlTable],
+    group: models.ControlGroup,
     locations: List[MeasureLocation],
 ) -> MeasureSpecification:
     VARIABLE_MAPPING = {
-        MeasureVariables.waterlevel: "s1",
-        MeasureVariables.volume: "vol1",
-        MeasureVariables.discharge: "q",
-        MeasureVariables.velocity: "u1",
+        constants.MeasureVariables.waterlevel: "s1",
+        constants.MeasureVariables.volume: "vol1",
+        constants.MeasureVariables.discharge: "q",
+        constants.MeasureVariables.velocity: "u1",
     }
 
     # Use > as default for memory control
@@ -80,7 +68,7 @@ def to_measure_specification(
     )
 
 
-TYPE_MAPPING = {ControlTableActionTypes.set_capacity: "set_pump_capacity"}
+TYPE_MAPPING = {constants.ControlTableActionTypes.set_capacity: "set_pump_capacity"}
 CAPACITY_FACTOR: float = 0.001
 
 
@@ -112,8 +100,8 @@ def parse_action_table(table) -> List[List[float]]:
 
 
 def to_table_control(
-    control: Control,
-    table_control: ControlTable,
+    control: models.Control,
+    table_control: models.ControlTable,
     measure_specification: MeasureSpecification,
 ) -> TableStructureControl:
 
@@ -122,7 +110,7 @@ def to_table_control(
     )
     try:
         values = parse_action_table(table_control.action_table)
-        if table_control.action_type is ControlTableActionTypes.set_capacity:
+        if table_control.action_type is constants.ControlTableActionTypes.set_capacity:
             values = [[x[0], x[1] * CAPACITY_FACTOR] for x in values]
     except (ValueError, TypeError):
         raise SchematisationError(
@@ -151,8 +139,8 @@ def to_table_control(
 
 
 def to_memory_control(
-    control: Control,
-    memory_control: ControlMemory,
+    control: models.Control,
+    memory_control: models.ControlMemory,
     measure_specification: MeasureSpecification,
 ) -> MemoryStructureControl:
 
@@ -162,7 +150,7 @@ def to_memory_control(
 
     try:
         value = parse_action_value(memory_control.action_value)
-        if memory_control.action_type is ControlTableActionTypes.set_capacity:
+        if memory_control.action_type is constants.ControlTableActionTypes.set_capacity:
             value = [value[0] * CAPACITY_FACTOR]
     except (ValueError, TypeError):
         raise SchematisationError(
@@ -206,18 +194,22 @@ class StructureControlExtractor(object):
             table_lookup = dict(
                 [
                     (x.id, x)
-                    for x in Query(ControlTable).with_session(self.session).all()
+                    for x in Query(models.ControlTable).with_session(self.session).all()
                 ]
             )
             memory_lookup = dict(
                 [
                     (x.id, x)
-                    for x in Query(ControlMemory).with_session(self.session).all()
+                    for x in Query(models.ControlMemory)
+                    .with_session(self.session)
+                    .all()
                 ]
             )
             maps_lookup = {}
 
-            for map_item in Query([ControlMeasureMap]).with_session(self.session).all():
+            for map_item in (
+                Query([models.ControlMeasureMap]).with_session(self.session).all()
+            ):
                 if map_item.measure_group_id not in maps_lookup:
                     maps_lookup[map_item.measure_group_id] = []
                 maps_lookup[map_item.measure_group_id].append(
@@ -225,28 +217,28 @@ class StructureControlExtractor(object):
                 )
 
             all_controls = (
-                Query([Control, ControlGroup, ControlMeasureGroup])
-                .join(ControlGroup, ControlMeasureGroup)
+                Query([models.Control, models.ControlGroup, models.ControlMeasureGroup])
+                .join(models.ControlGroup, models.ControlMeasureGroup)
                 .with_session(self.session)
                 .filter(
-                    Control.control_group_id == self._control_group_id,
-                    ControlGroup.id == self._control_group_id,
+                    models.Control.control_group_id == self._control_group_id,
+                    models.ControlGroup.id == self._control_group_id,
                 )
                 .all()
             )
 
             for control, group, measuregroup in all_controls:
-                control: Control
-                maps: List[ControlMeasureGroup] = maps_lookup[measuregroup.id]
+                control: models.Control
+                maps: List[models.ControlMeasureGroup] = maps_lookup[measuregroup.id]
 
                 api_control = None
 
-                if control.control_type is ControlType.table:
-                    table: ControlTable = table_lookup[control.control_id]
+                if control.control_type is constants.ControlType.table:
+                    table: models.ControlTable = table_lookup[control.control_id]
                     measure_spec = to_measure_specification(table, group, maps)
                     api_control = to_table_control(control, table, measure_spec)
-                elif control.control_type is ControlType.memory:
-                    memory: ControlMemory = memory_lookup[control.control_id]
+                elif control.control_type is constants.ControlType.memory:
+                    memory: models.ControlMemory = memory_lookup[control.control_id]
                     measure_spec = to_measure_specification(memory, group, maps)
                     api_control = to_memory_control(control, memory, measure_spec)
                 else:

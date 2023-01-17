@@ -5,8 +5,7 @@ from threedi_modelchecker.simulation_templates.exceptions import (
     SchematisationError,
 )
 from threedi_modelchecker.simulation_templates.utils import parse_timeseries
-from threedi_modelchecker.threedi_model.models import BoundaryCondition1D
-from threedi_modelchecker.threedi_model.models import BoundaryConditions2D
+from threedi_schema import models
 from typing import Dict
 from typing import List
 from typing import Union
@@ -53,11 +52,11 @@ class BoundaryType(Enum):
 
 
 def sqlite_boundary_to_dict(
-    boundary: Union[BoundaryConditions2D, BoundaryCondition1D]
+    boundary: Union[models.BoundaryConditions2D, models.BoundaryCondition1D]
 ) -> Dict:
 
     boundary_1d2d: BoundaryType = BoundaryType.one_d
-    if isinstance(boundary, BoundaryConditions2D):
+    if isinstance(boundary, models.BoundaryConditions2D):
         boundary_1d2d = BoundaryType.two_d
 
     try:
@@ -85,9 +84,9 @@ class BoundariesExtractor(object):
     def boundaries_2d(self) -> List[Dict]:
         if self._boundaries_2d is None:
             boundaries_2d = (
-                Query(BoundaryConditions2D)
+                Query(models.BoundaryConditions2D)
                 .with_session(self.session)
-                .order_by(BoundaryConditions2D.id)
+                .order_by(models.BoundaryConditions2D.id)
                 .all()
             )
 
@@ -99,9 +98,9 @@ class BoundariesExtractor(object):
     def boundaries_1d(self) -> List[Dict]:
         if self._boundaries_1d is None:
             boundaries_1d = (
-                Query(BoundaryCondition1D)
+                Query(models.BoundaryCondition1D)
                 .with_session(self.session)
-                .order_by(BoundaryCondition1D.id)
+                .order_by(models.BoundaryCondition1D.id)
                 .all()
             )
             self._boundaries_1d = [sqlite_boundary_to_dict(x) for x in boundaries_1d]

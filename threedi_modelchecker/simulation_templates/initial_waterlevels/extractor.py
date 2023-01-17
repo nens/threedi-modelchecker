@@ -12,8 +12,7 @@ from threedi_api_client.openapi.models.one_d_water_level_file import (
 )
 from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
 from threedi_modelchecker.simulation_templates.models import InitialWaterlevels
-from threedi_modelchecker.threedi_model.models import ConnectionNode
-from threedi_modelchecker.threedi_model.models import GlobalSetting
+from threedi_schema import models
 from typing import Optional
 
 
@@ -31,20 +30,20 @@ class InitialWaterlevelExtractor(object):
     def has_connection_nodes_with_initial_waterlevels(self) -> bool:
         if self._connection_nodes_with_initial_waterlevels is None:
             self._connection_nodes_with_initial_waterlevels = (
-                Query(ConnectionNode)
+                Query(models.ConnectionNode)
                 .with_session(self.session)
-                .filter(ConnectionNode.initial_waterlevel != None)
+                .filter(models.ConnectionNode.initial_waterlevel != None)
                 .first()
                 is not None
             )
         return self._connection_nodes_with_initial_waterlevels
 
     @property
-    def global_settings(self) -> GlobalSetting:
+    def global_settings(self) -> models.GlobalSetting:
         if self._global_settings is None:
-            qr = Query(GlobalSetting).with_session(self.session)
+            qr = Query(models.GlobalSetting).with_session(self.session)
             if self._global_settings_id is not None:
-                qr = qr.filter(GlobalSetting.id == self._global_settings_id)
+                qr = qr.filter(models.GlobalSetting.id == self._global_settings_id)
             self._global_settings = qr.first()
         return self._global_settings
 
