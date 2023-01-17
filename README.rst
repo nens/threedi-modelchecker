@@ -1,4 +1,4 @@
-Threedi-modelchecker
+threedi-modelchecker
 ====================
 
 .. image:: https://img.shields.io/pypi/v/threedi-modelchecker.svg
@@ -11,24 +11,25 @@ Threedi-modelchecker
 	:target: https://github.com/nens/threedi-modelchecker/actions/workflows/test-linux.yml
 
 
-Threedi-modelchecker is a tool to verify the correctness of a 3Di schematisation.
-The goal is to provide a tool for builders to quickly check if his/her 
-schematisation is correct and can be converted to a 3Di-Model to run a 3Di simulation. It provides detailed 
-information about any potential errors in the schematisation.
+A tool to verify the correctness of a 3Di schematisation.
 
-Threedi-modelchecks only work against the latest 3Di migration: https://docs.3di.lizard.net/en/stable/d_before_you_begin.html#database-overview 
+It asserts the correctness of a 3Di schematisation and provides detailed 
+information about any potential errors in it.
 
-Note:
+This package only work against a specific schematisation version. Use https://pypi.org/project/threedi-schema/ to upgrade
+a schematisation version. See also the 3Di documentation at https://docs.3di.lizard.net/en/stable/d_before_you_begin.html#database-overview
 
-In 2021 we changed the naming within the 3Di realm. To better understand what users meant with 'model' we made a clear distinction between a schematisation and a model. A schematisation is built interactively by the user and this schematisation will be converted to a 3Di-Model which can be used in simulations. This repo is still called the threedi-modelchecker which might lead to confusion.
+Note that the name "modelchecker" might be slightly confusing: the thing that is checked is a schematisation, and not
+a threedimodel. A schematisation is built interactively by the user and this schematisation will be converted to a
+3Di-Model which can be used in simulations.
 
-Installation::
+Installation
+------------
 
     pip install threedi-modelchecker
 
-
-Threedi-modelchecker is also integrated into the ThreediToolbox Qgis plugin: https://github.com/nens/ThreeDiToolbox
-
+Note that raster checks will be skipped unless GDAL is available.
+``threedi-modelchecker`` is also integrated into the ThreediToolbox Qgis plugin: https://github.com/nens/ThreeDiToolbox
 
 Example
 -------
