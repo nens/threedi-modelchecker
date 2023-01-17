@@ -4,6 +4,7 @@ from threedi_modelchecker import ThreediDatabase
 from threedi_modelchecker.schema import ModelSchema
 
 import pytest
+import struct
 import threedi_modelchecker
 
 
@@ -39,9 +40,14 @@ def session(sqlite_v212):
     return sqlite_v212.get_session()
 
 
+def parse_hexewkb(ewkb):
+    """Extract 4 line coordinates from an ewkb"""
+    return struct.unpack("4d", bytes.fromhex(ewkb)[-32:])
+
+
 GEOM1 = "SRID=4326;POINT (0 0)"
 GEOM2 = "SRID=4326;POINT (0 1)"
-LINE = "SRID=4326;LINESTRING(0 0,0 1)"
+LINE = "0102000020E610000002000000000000000000000000000000000000000000000000000000000000000000F03F"
 
 
 @pytest.mark.parametrize(
