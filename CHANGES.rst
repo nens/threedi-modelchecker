@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 0.35.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Optimize check 275 (potential breach interdistance)
 
 
 0.35.1 (2023-01-11)

@@ -404,33 +404,36 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
         super().__init__(*args, **kwargs)
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        def get_position(col):
-            linestring = models.Channel.the_geom
-            breach_point = func.Line_Locate_Point(
-                transform(linestring), transform(geo_func.ST_PointN(col, 1))
-            )
-            return breach_point * length(linestring)
+        # this query is hard to get performant; we do a hybrid sql / Python approach
 
-        other = aliased(self.table)
-        return (
-            session.query(self.table, other)
-            .join(models.Channel, self.table.c.channel_id == models.Channel.id)
-            .filter(
-                (self.table.c.channel_id == other.c.channel_id)
-                & (self.table.c.id < other.c.id)
+        # First fetch the position of each potential breach per channel
+        def get_position(point, linestring):
+            breach_point = func.Line_Locate_Point(
+                transform(linestring), transform(geo_func.ST_PointN(point, 1))
             )
-            .filter(
-                (get_position(self.table.c.the_geom) != get_position(other.c.the_geom))
-                & (
-                    func.abs(
-                        get_position(self.table.c.the_geom)
-                        - get_position(other.c.the_geom)
-                    )
-                    < self.min_distance
-                )
+            return (breach_point * length(linestring)).label("position")
+
+        potential_breaches = sorted(
+            session.query(
+                self.table, get_position(self.column, models.Channel.the_geom)
             )
-            .all()
+            .join(models.Channel)
+            .all(),
+            key=lambda x: (x.channel_id, x[-1]),
         )
+
+        invalid = []
+        prev_channel_id = -9999
+        prev_position = -1.0
+        for breach in potential_breaches:
+            if breach.channel_id != prev_channel_id:
+                prev_channel_id, prev_position = breach.channel_id, breach.position
+                continue
+            if breach.position == prev_position:
+                continue
+            if (breach.position - prev_position) <= self.min_distance:
+                invalid.append(breach)
+        return invalid
 
     def description(self) -> str:
         return f"{self.column_name} must be more than {self.min_distance} m apart (or exactly on the same position)"
