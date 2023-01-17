@@ -92,7 +92,7 @@ class PotentialBreach(Base):
     maximum_breach_depth = Column(Float)
     levee_material = Column(Integer)
     the_geom = Column(
-        Geometry(geometry_type="LINESTRING", srid=4326),
+        Geometry(geometry_type="LINESTRING", srid=4326, from_text="ST_GeomFromEWKB"),
         nullable=False,
     )
     channel_id = Column(Integer, nullable=False)
@@ -246,7 +246,7 @@ def get_breach_line_geom(
         start = func.ST_Transform(start_proj, 4326)
 
     return (
-        session.query(func.AsEWKT(func.MakeLine(start, ConnectedPoint.the_geom)))
+        session.query(func.AsEWKB(func.MakeLine(start, ConnectedPoint.the_geom)))
         .filter(ConnectedPoint.id == conn_point_id)
         .filter(Channel.id == channel_id)
         .one()[0]
