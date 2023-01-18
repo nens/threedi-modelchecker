@@ -72,4 +72,10 @@ class GDALRasterInterface(RasterInterface):
         # usage of approx_ok=False bypasses statistics cache and forces
         # all pixels to be read
         # see: https://gdal.org/doxygen/classGDALRasterBand.html#ac7761bab7cf3b8445ed963e4aa85e715
-        return self._dataset.GetRasterBand(1).ComputeRasterMinMax(False)
+        try:
+            return self._dataset.GetRasterBand(1).ComputeRasterMinMax(False)
+        except RuntimeError as e:
+            if "no valid pixels found" in str(e):
+                raise self.NoData()
+            else:
+                raise e

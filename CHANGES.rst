@@ -14,6 +14,8 @@ Changelog of threedi-modelchecker
 
 - Added check that a boundary condition timeseries starts at timestamp 0 (1204).
 
+- Add checks for completely empty rasters (extended raster range checks 781-796).
+
 
 0.35.1 (2023-01-11)
 -------------------
