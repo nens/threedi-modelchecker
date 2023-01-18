@@ -1,10 +1,8 @@
+from ..exceptions import SchematisationError
+from ..utils import parse_timeseries
 from enum import Enum
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
-from threedi_modelchecker.simulation_templates.exceptions import (
-    SchematisationError,
-)
-from threedi_modelchecker.simulation_templates.utils import parse_timeseries
 from threedi_schema import models
 from typing import Dict
 from typing import List

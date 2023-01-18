@@ -1,3 +1,9 @@
+from ..models import Settings
+from .mappings import aggregation_settings_map
+from .mappings import numerical_settings_map
+from .mappings import physical_settings_map
+from .mappings import sqlalchemy_to_api_model
+from .mappings import time_step_settings_map
 from enum import Enum
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
@@ -6,22 +12,6 @@ from threedi_api_client.openapi.models import NumericalSettings
 from threedi_api_client.openapi.models import TimeStepSettings
 from threedi_api_client.openapi.models.physical_settings import (
     PhysicalSettings,
-)
-from threedi_modelchecker.simulation_templates.models import Settings
-from threedi_modelchecker.simulation_templates.settings.mappings import (
-    aggregation_settings_map,
-)
-from threedi_modelchecker.simulation_templates.settings.mappings import (
-    numerical_settings_map,
-)
-from threedi_modelchecker.simulation_templates.settings.mappings import (
-    physical_settings_map,
-)
-from threedi_modelchecker.simulation_templates.settings.mappings import (
-    sqlalchemy_to_api_model,
-)
-from threedi_modelchecker.simulation_templates.settings.mappings import (
-    time_step_settings_map,
 )
 from threedi_schema import constants
 from threedi_schema import models

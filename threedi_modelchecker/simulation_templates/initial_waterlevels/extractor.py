@@ -1,4 +1,5 @@
 from ..exceptions import SchematisationError
+from ..models import InitialWaterlevels
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_api_client.openapi.models import GroundWaterRaster
@@ -11,7 +12,6 @@ from threedi_api_client.openapi.models.one_d_water_level_file import (
     OneDWaterLevelFile,
 )
 from threedi_api_client.openapi.models.two_d_water_level import TwoDWaterLevel
-from threedi_modelchecker.simulation_templates.models import InitialWaterlevels
 from threedi_schema import models
 from typing import Optional
 

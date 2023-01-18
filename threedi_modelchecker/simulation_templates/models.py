@@ -1,5 +1,6 @@
 from .exceptions import TemplateValidationError
 from .exceptions import TemplateValidationTimeoutError
+from .utils import strip_dict_none_values
 from dataclasses import dataclass
 from dataclasses import fields
 from dataclasses import InitVar
@@ -41,9 +42,6 @@ from threedi_api_client.openapi.models.two_d_water_raster import (
     TwoDWaterRaster,
 )
 from threedi_api_client.versions import V3BetaApi
-from threedi_modelchecker.simulation_templates.utils import (
-    strip_dict_none_values,
-)
 from typing import Any
 from typing import Dict
 from typing import List

@@ -1,13 +1,9 @@
+from ..exceptions import SchematisationError
+from ..utils import parse_timeseries
+from ..utils import strip_dict_none_values
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
 from threedi_api_client.openapi.models.lateral import Lateral
-from threedi_modelchecker.simulation_templates.exceptions import (
-    SchematisationError,
-)
-from threedi_modelchecker.simulation_templates.utils import parse_timeseries
-from threedi_modelchecker.simulation_templates.utils import (
-    strip_dict_none_values,
-)
 from threedi_schema import models
 from typing import List
 

@@ -1,3 +1,6 @@
+from ..exceptions import SchematisationError
+from ..models import StructureControls
+from ..utils import strip_dict_none_values
 from datetime import timedelta
 from sqlalchemy.orm import Query
 from sqlalchemy.orm.session import Session
@@ -10,13 +13,6 @@ from threedi_api_client.openapi.models.memory_structure_control import (
 )
 from threedi_api_client.openapi.models.table_structure_control import (
     TableStructureControl,
-)
-from threedi_modelchecker.simulation_templates.exceptions import (
-    SchematisationError,
-)
-from threedi_modelchecker.simulation_templates.models import StructureControls
-from threedi_modelchecker.simulation_templates.utils import (
-    strip_dict_none_values,
 )
 from threedi_schema import constants
 from threedi_schema import models
