@@ -2,7 +2,16 @@ Changelog of threedi-modelchecker
 =================================
 
 
-0.35.2 (unreleased)
+1.0.0 (unreleased)
+------------------
+
+- Separate the schema to a separate package: threedi-schema.
+
+- Removed threedi_modelchecker.schema, threedi_database, threedi_model,
+  ThreediDatabase. Import these from threedi-schema.
+
+
+0.35.2 (2023-01-18)
 -------------------
 
 - Optimize check 275 (potential breach interdistance)
@@ -10,7 +19,11 @@ Changelog of threedi-modelchecker
 - Snap v2_calculation_point to their channel geometry (with a tolerance of 1E-7
   degrees) in migration 213 (v2_connected_pnt -> v2_potential_breach).
 
-- Separate the schema to a separate package: threedi-schema.
+- Added range checks on exchange_line and potential_breach (265, 276, 277).
+
+- Added check that a boundary condition timeseries starts at timestamp 0 (1204).
+
+- Add checks for completely empty rasters (extended raster range checks 781-796).
 
 
 0.35.1 (2023-01-11)

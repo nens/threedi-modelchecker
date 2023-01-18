@@ -59,7 +59,9 @@ def session_server(session, context_server):
     return session
 
 
-def create_geotiff(path, epsg=28992, width=3, height=2, bands=1, dx=0.5, dy=0.5):
+def create_geotiff(
+    path, epsg=28992, width=3, height=2, bands=1, dx=0.5, dy=0.5, value=None
+):
     ds = gdal.GetDriverByName("GTiff").Create(
         str(path), width, height, bands, gdal.GDT_Byte
     )
@@ -68,7 +70,11 @@ def create_geotiff(path, epsg=28992, width=3, height=2, bands=1, dx=0.5, dy=0.5)
     ds.SetGeoTransform((155000.0, dx, 0, 463000.0, 0, -dy))
     band = ds.GetRasterBand(1)
     band.SetNoDataValue(255)
-    band.WriteArray(np.arange(height * width).reshape(height, width))
+    if value is None:
+        data = np.arange(height * width).reshape(height, width)
+    else:
+        data = np.full((height, width), fill_value=value, dtype=int)
+    band.WriteArray(data)
     ds.FlushCache()
     return str(path)
 
@@ -302,17 +308,27 @@ def test_raster_range_ok(valid_geotiff, interface_cls):
 @pytest.mark.parametrize(
     "kwargs,msg",
     [
-        ({"min_value": 1}, "{} has values <1"),
-        ({"max_value": 4}, "{} has values >4"),
-        ({"min_value": 0, "left_inclusive": False}, "{} has values <=0"),
-        ({"max_value": 5, "right_inclusive": False}, "{} has values >=5"),
-        ({"min_value": 1, "max_value": 6}, "{} has values <1 and/or >6"),
+        ({"min_value": 1}, "{} has values <1 or is empty"),
+        ({"max_value": 4}, "{} has values >4 or is empty"),
+        ({"min_value": 0, "left_inclusive": False}, "{} has values <=0 or is empty"),
+        ({"max_value": 5, "right_inclusive": False}, "{} has values >=5 or is empty"),
+        ({"min_value": 1, "max_value": 6}, "{} has values <1 and/or >6 or is empty"),
     ],
 )
 def test_raster_range_err(valid_geotiff, kwargs, msg, interface_cls):
     check = RasterRangeCheck(column=models.GlobalSetting.dem_file, **kwargs)
     assert not check.is_valid(valid_geotiff, interface_cls)
     assert check.description() == msg.format("v2_global_settings.dem_file")
+
+
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+def test_raster_range_no_data(tmp_path, interface_cls):
+    path = tmp_path / "raster.tiff"
+    create_geotiff(path, value=255)
+    check = RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0)
+    assert not check.is_valid(path, interface_cls)
 
 
 @pytest.mark.parametrize(
