@@ -12,6 +12,8 @@ Changelog of threedi-modelchecker
 
 - Added range checks on exchange_line and potential_breach (265, 276, 277).
 
+- Added check that a boundary condition timeseries starts at timestamp 0 (1204).
+
 
 0.35.1 (2023-01-11)
 -------------------

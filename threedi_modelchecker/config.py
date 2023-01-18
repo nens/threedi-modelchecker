@@ -52,6 +52,7 @@ from .checks.raster import RasterRangeCheck
 from .checks.raster import RasterSquareCellsCheck
 from .checks.timeseries import TimeseriesIncreasingCheck
 from .checks.timeseries import TimeseriesRowCheck
+from .checks.timeseries import TimeseriesStartsAtZeroCheck
 from .checks.timeseries import TimeseriesTimestepCheck
 from .checks.timeseries import TimeseriesValueCheck
 from .threedi_model import models
@@ -2059,6 +2060,13 @@ CHECKS += [
         models.BoundaryConditions2D.timeseries,
         models.Lateral1d.timeseries,
         models.Lateral2D.timeseries,
+    ]
+]
+CHECKS += [
+    TimeseriesStartsAtZeroCheck(col, error_code=1204)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
     ]
 ]
 

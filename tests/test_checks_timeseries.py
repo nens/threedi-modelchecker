@@ -1,6 +1,7 @@
 from .factories import BoundaryConditions2DFactory
 from threedi_modelchecker.checks.timeseries import TimeseriesIncreasingCheck
 from threedi_modelchecker.checks.timeseries import TimeseriesRowCheck
+from threedi_modelchecker.checks.timeseries import TimeseriesStartsAtZeroCheck
 from threedi_modelchecker.checks.timeseries import TimeseriesTimestepCheck
 from threedi_modelchecker.checks.timeseries import TimeseriesValueCheck
 from threedi_modelchecker.threedi_model import models
@@ -106,5 +107,37 @@ def test_timeseries_increasing_check_error(session, timeseries):
     BoundaryConditions2DFactory(timeseries=timeseries)
 
     check = TimeseriesIncreasingCheck(models.BoundaryConditions2D.timeseries)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 1
+
+
+@pytest.mark.parametrize(
+    "timeseries",
+    [
+        "0,2.1",
+        "0,2.1\n1,4.2",
+        "0,2.1\n-1,4.2",
+        "0,-0.5 \n59, -0.5\n60 ,-0.5\n   ",
+        "0,-0.5,14",
+        "0,-0.5,14",
+        "foo,1.2",
+        "1,foo",
+        "",
+        None,
+    ],
+)
+def test_timeseries_starts_zero_check_ok(session, timeseries):
+    BoundaryConditions2DFactory(timeseries=timeseries)
+
+    check = TimeseriesStartsAtZeroCheck(models.BoundaryConditions2D.timeseries)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 0
+
+
+@pytest.mark.parametrize("timeseries", ["2,1.0", "2,1.0\n3,1.0"])
+def test_timeseries_starts_zero_check_err(session, timeseries):
+    BoundaryConditions2DFactory(timeseries=timeseries)
+
+    check = TimeseriesStartsAtZeroCheck(models.BoundaryConditions2D.timeseries)
     invalid = check.get_invalid(session)
     assert len(invalid) == 1
