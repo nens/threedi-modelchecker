@@ -12,6 +12,8 @@ Changelog of threedi-modelchecker
 
 - Added range checks on exchange_line and potential_breach (265, 276, 277).
 
+- Add checks for completely empty rasters (extended raster range checks 781-796).
+
 
 0.35.1 (2023-01-11)
 -------------------

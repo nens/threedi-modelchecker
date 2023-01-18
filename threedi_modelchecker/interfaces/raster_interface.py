@@ -10,6 +10,9 @@ class RasterInterface(ABC):
     class NotAvailable(Exception):
         pass
 
+    class NoData(Exception):
+        pass
+
     def __init__(self, path):
         self.path = str(path)
 

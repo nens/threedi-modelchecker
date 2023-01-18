@@ -211,7 +211,10 @@ class RasterRangeCheck(BaseRasterCheck):
         with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
-            raster_min, raster_max = raster.min_max
+            try:
+                raster_min, raster_max = raster.min_max
+            except RasterInterface.NoData:
+                return False  # no data in the raster is invalid too
 
         if raster_min is None or raster_max is None:
             return False
@@ -236,7 +239,7 @@ class RasterRangeCheck(BaseRasterCheck):
             parts.append(f"{'<' if self.left_inclusive else '<='}{self.min_value}")
         if self.max_value is not None:
             parts.append(f"{'>' if self.right_inclusive else '>='}{self.max_value}")
-        return f"{self.column_name} has values {' and/or '.join(parts)}"
+        return f"{self.column_name} has values {' and/or '.join(parts)} or is empty"
 
 
 @dataclass

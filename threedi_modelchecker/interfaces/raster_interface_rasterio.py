@@ -63,5 +63,11 @@ class RasterIORasterInterface(RasterInterface):
     def min_max(self):
         if self.band_count == 0:
             return None, None
-        statistics = self._dataset.statistics(1, approx=False, clear_cache=True)
+        try:
+            statistics = self._dataset.statistics(1, approx=False, clear_cache=True)
+        except Exception as e:
+            if "no valid pixels found" in str(e):
+                raise self.NoData()
+            else:
+                raise e
         return statistics.min, statistics.max
