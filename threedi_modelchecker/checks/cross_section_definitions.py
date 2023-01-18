@@ -1,6 +1,7 @@
-from .base import BaseCheck
 from sqlalchemy.orm import Query
 from threedi_schema import models
+
+from .base import BaseCheck
 
 
 class CrossSectionBaseCheck(BaseCheck):

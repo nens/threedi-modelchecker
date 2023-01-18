@@ -1,10 +1,9 @@
-from .raster_interface import RasterInterface
 from typing import Optional
 
+from .raster_interface import RasterInterface
 
 try:
-    from osgeo import gdal
-    from osgeo import osr
+    from osgeo import gdal, osr
 
     gdal.UseExceptions()
     osr.UseExceptions()

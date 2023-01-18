@@ -1,30 +1,30 @@
-from tests import factories
-from threedi_modelchecker.checks.raster import BaseRasterCheck
-from threedi_modelchecker.checks.raster import GDALAvailableCheck
-from threedi_modelchecker.checks.raster import LocalContext
-from threedi_modelchecker.checks.raster import RasterExistsCheck
-from threedi_modelchecker.checks.raster import RasterHasOneBandCheck
-from threedi_modelchecker.checks.raster import RasterHasProjectionCheck
-from threedi_modelchecker.checks.raster import RasterIsProjectedCheck
-from threedi_modelchecker.checks.raster import RasterIsValidCheck
-from threedi_modelchecker.checks.raster import RasterRangeCheck
-from threedi_modelchecker.checks.raster import RasterSquareCellsCheck
-from threedi_modelchecker.checks.raster import ServerContext
-from threedi_modelchecker.interfaces.raster_interface_gdal import (
-    GDALRasterInterface,
+from unittest import mock
+
+from threedi_schema import models
+
+from threedi_modelchecker.checks.raster import (
+    BaseRasterCheck,
+    GDALAvailableCheck,
+    LocalContext,
+    RasterExistsCheck,
+    RasterHasOneBandCheck,
+    RasterHasProjectionCheck,
+    RasterIsProjectedCheck,
+    RasterIsValidCheck,
+    RasterRangeCheck,
+    RasterSquareCellsCheck,
+    ServerContext,
 )
+from threedi_modelchecker.interfaces.raster_interface_gdal import GDALRasterInterface
 from threedi_modelchecker.interfaces.raster_interface_rasterio import (
     RasterIORasterInterface,
 )
-from threedi_schema import models
-from unittest import mock
 
+from . import factories
 
 try:
-    from osgeo import gdal
-    from osgeo import osr
-
     import numpy as np
+    from osgeo import gdal, osr
 except ImportError:
     gdal = osr = np = None
 

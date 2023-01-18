@@ -1,24 +1,25 @@
-from sqlalchemy import func
-from sqlalchemy.orm import Query
-from tests import factories
-from threedi_modelchecker.checks import geo_query
-from threedi_modelchecker.checks.base import _sqlalchemy_to_sqlite_types
-from threedi_modelchecker.checks.base import AllEqualCheck
-from threedi_modelchecker.checks.base import EnumCheck
-from threedi_modelchecker.checks.base import ForeignKeyCheck
-from threedi_modelchecker.checks.base import GeometryCheck
-from threedi_modelchecker.checks.base import GeometryTypeCheck
-from threedi_modelchecker.checks.base import NotNullCheck
-from threedi_modelchecker.checks.base import QueryCheck
-from threedi_modelchecker.checks.base import RangeCheck
-from threedi_modelchecker.checks.base import TypeCheck
-from threedi_modelchecker.checks.base import UniqueCheck
-from threedi_schema import constants
-from threedi_schema import custom_types
-from threedi_schema import models
-
 import factory
 import pytest
+from sqlalchemy import func
+from sqlalchemy.orm import Query
+from threedi_schema import constants, custom_types, models
+
+from threedi_modelchecker.checks import geo_query
+from threedi_modelchecker.checks.base import (
+    _sqlalchemy_to_sqlite_types,
+    AllEqualCheck,
+    EnumCheck,
+    ForeignKeyCheck,
+    GeometryCheck,
+    GeometryTypeCheck,
+    NotNullCheck,
+    QueryCheck,
+    RangeCheck,
+    TypeCheck,
+    UniqueCheck,
+)
+
+from . import factories
 
 
 def test_base_extra_filters_ok(session):

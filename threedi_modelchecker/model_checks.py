@@ -1,15 +1,10 @@
-from .checks.base import BaseCheck
-from .checks.base import CheckLevel
-from .checks.raster import LocalContext
-from .checks.raster import ServerContext
-from .config import Config
-from threedi_schema import ThreediDatabase
-from typing import Dict
-from typing import Iterator
-from typing import NamedTuple
-from typing import Optional
-from typing import Tuple
+from typing import Dict, Iterator, NamedTuple, Optional, Tuple
 
+from threedi_schema import ThreediDatabase
+
+from .checks.base import BaseCheck, CheckLevel
+from .checks.raster import LocalContext, ServerContext
+from .config import Config
 
 __all__ = ["ThreediModelChecker"]
 

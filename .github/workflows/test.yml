@@ -29,10 +29,10 @@ jobs:
             pins: ""
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
 
@@ -45,10 +45,12 @@ jobs:
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
-          pip install ${{ matrix.pins }} .[test,simulation_templates,rasterio] pytest-cov pygdal==$(gdal-config --version).*
+          pip install ${{ matrix.pins }} .[test,rasterio] pygdal==$(gdal-config --version).*
           pip list
 
       - name: Run tests
         shell: bash
         run: |
-          pytest --cov threedi_modelchecker
+          pytest
+        env:
+          SQLALCHEMY_SILENCE_UBER_WARNING: 1

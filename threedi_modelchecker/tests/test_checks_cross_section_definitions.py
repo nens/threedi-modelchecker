@@ -1,41 +1,21 @@
-from . import factories
+import pytest
+from threedi_schema import constants, models
+
 from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionEqualElementsCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionExpectEmptyCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionFirstElementNonZeroCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionFloatCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionFloatListCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionGreaterZeroCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionIncreasingCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionNullCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionYZCoordinateCountCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionYZHeightCheck,
-)
-from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionYZIncreasingWidthIfOpenCheck,
 )
-from threedi_schema import constants
-from threedi_schema import models
 
-import pytest
+from . import factories
 
 
 def test_in_use(session):

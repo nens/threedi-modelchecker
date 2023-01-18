@@ -1,19 +1,20 @@
-from . import factories
-from geoalchemy2 import functions as geo_func
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm import Query
-from threedi_modelchecker.checks.other import ConnectionNodesDistance
-from threedi_modelchecker.checks.other import ConnectionNodesLength
-from threedi_modelchecker.checks.other import CrossSectionLocationCheck
-from threedi_modelchecker.checks.other import LinestringLocationCheck
-from threedi_modelchecker.checks.other import OpenChannelsWithNestedNewton
-from threedi_modelchecker.checks.other import PotentialBreachInterdistanceCheck
-from threedi_modelchecker.checks.other import PotentialBreachStartEndCheck
-from threedi_modelchecker.checks.other import SpatialIndexCheck
-from threedi_schema import constants
-from threedi_schema import models
-
 import pytest
+from geoalchemy2 import functions as geo_func
+from sqlalchemy.orm import aliased, Query
+from threedi_schema import constants, models
+
+from threedi_modelchecker.checks.other import (
+    ConnectionNodesDistance,
+    ConnectionNodesLength,
+    CrossSectionLocationCheck,
+    LinestringLocationCheck,
+    OpenChannelsWithNestedNewton,
+    PotentialBreachInterdistanceCheck,
+    PotentialBreachStartEndCheck,
+    SpatialIndexCheck,
+)
+
+from . import factories
 
 
 def test_connection_nodes_length(session):

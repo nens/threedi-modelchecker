@@ -1,7 +1,6 @@
-from setuptools import setup
-
 import pathlib
 
+from setuptools import setup
 
 long_description = "\n\n".join([open("README.rst").read()])
 
@@ -9,11 +8,12 @@ install_requires = [
     "threedi-schema==214.*",
     "Click",
     "GeoAlchemy2>=0.9,!=0.11.*",
-    "SQLAlchemy>=1.3",
+    "SQLAlchemy>=1.3,<2",
 ]
 
 tests_require = [
     "pytest",
+    "pytest-cov",
     "pytest-asyncio",
     "factory_boy",
     "mock ; python_version<'3.8'",

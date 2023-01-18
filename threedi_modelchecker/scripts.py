@@ -1,9 +1,9 @@
+import click
+from threedi_schema import ThreediDatabase
+
 from threedi_modelchecker import exporters
 from threedi_modelchecker.checks.base import CheckLevel
 from threedi_modelchecker.model_checks import ThreediModelChecker
-from threedi_schema import ThreediDatabase
-
-import click
 
 
 @click.group()

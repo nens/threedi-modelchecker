@@ -1,12 +1,15 @@
-from .factories import BoundaryConditions2DFactory
-from threedi_modelchecker.checks.timeseries import TimeseriesIncreasingCheck
-from threedi_modelchecker.checks.timeseries import TimeseriesRowCheck
-from threedi_modelchecker.checks.timeseries import TimeseriesStartsAtZeroCheck
-from threedi_modelchecker.checks.timeseries import TimeseriesTimestepCheck
-from threedi_modelchecker.checks.timeseries import TimeseriesValueCheck
+import pytest
 from threedi_schema import models
 
-import pytest
+from threedi_modelchecker.checks.timeseries import (
+    TimeseriesIncreasingCheck,
+    TimeseriesRowCheck,
+    TimeseriesStartsAtZeroCheck,
+    TimeseriesTimestepCheck,
+    TimeseriesValueCheck,
+)
+
+from .factories import BoundaryConditions2DFactory
 
 
 @pytest.mark.parametrize(

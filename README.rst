@@ -4,11 +4,9 @@ threedi-modelchecker
 .. image:: https://img.shields.io/pypi/v/threedi-modelchecker.svg
         :target: https://pypi.org/project/threedi-modelchecker/
 
-.. Github Actions status — https://github.com/nens/threedi-modelchecker/actions
-
-.. image:: https://github.com/nens/threedi-modelchecker/actions/workflows/test-linux.yml/badge.svg
+.. image:: https://github.com/nens/threedi-modelchecker/actions/workflows/test.yml/badge.svg
 	:alt: Github Actions status
-	:target: https://github.com/nens/threedi-modelchecker/actions/workflows/test-linux.yml
+	:target: https://github.com/nens/threedi-modelchecker/actions/workflows/test.yml
 
 
 A tool to verify the correctness of a 3Di schematisation.

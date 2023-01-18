@@ -1,12 +1,14 @@
-from threedi_modelchecker.checks.base import CheckLevel
-from threedi_modelchecker.checks.factories import generate_enum_checks
-from threedi_modelchecker.checks.factories import generate_foreign_key_checks
-from threedi_modelchecker.checks.factories import generate_geometry_checks
-from threedi_modelchecker.checks.factories import generate_not_null_checks
-from threedi_modelchecker.checks.factories import generate_unique_checks
+import pytest
 from threedi_schema import models
 
-import pytest
+from threedi_modelchecker.checks.base import CheckLevel
+from threedi_modelchecker.checks.factories import (
+    generate_enum_checks,
+    generate_foreign_key_checks,
+    generate_geometry_checks,
+    generate_not_null_checks,
+    generate_unique_checks,
+)
 
 
 def test_gen_foreign_key_checks():

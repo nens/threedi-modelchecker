@@ -1,12 +1,15 @@
-from .base import EnumCheck
-from .base import ForeignKeyCheck
-from .base import GeometryCheck
-from .base import GeometryTypeCheck
-from .base import NotNullCheck
-from .base import TypeCheck
-from .base import UniqueCheck
 from geoalchemy2.types import Geometry
 from threedi_schema import custom_types
+
+from .base import (
+    EnumCheck,
+    ForeignKeyCheck,
+    GeometryCheck,
+    GeometryTypeCheck,
+    NotNullCheck,
+    TypeCheck,
+    UniqueCheck,
+)
 
 
 def get_level(table, column, level_map):

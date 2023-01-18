@@ -4,7 +4,6 @@ from sqlalchemy.orm import Query
 from sqlalchemy.sql import literal
 from threedi_schema import models
 
-
 DEFAULT_EPSG = 28992
 
 

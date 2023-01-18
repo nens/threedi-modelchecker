@@ -1,6 +1,6 @@
-from .raster_interface import RasterInterface
 from typing import Optional
 
+from .raster_interface import RasterInterface
 
 try:
     import rasterio

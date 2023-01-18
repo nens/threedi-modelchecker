@@ -1,15 +1,11 @@
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import IntEnum
+from typing import List, NamedTuple
+
 from geoalchemy2 import functions as geo_func
 from geoalchemy2.types import Geometry
-from sqlalchemy import and_
-from sqlalchemy import false
-from sqlalchemy import func
-from sqlalchemy import types
+from sqlalchemy import and_, false, func, types
 from sqlalchemy.orm.session import Session
-from typing import List
-from typing import NamedTuple
 
 
 class CheckLevel(IntEnum):

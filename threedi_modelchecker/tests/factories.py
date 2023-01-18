@@ -1,10 +1,9 @@
-from factory import Faker
-from inspect import isclass
-from threedi_schema import constants
-from threedi_schema import models
-
 import datetime
+from inspect import isclass
+
 import factory
+from factory import Faker
+from threedi_schema import constants, models
 
 
 def inject_session(session):

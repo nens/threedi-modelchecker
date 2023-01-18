@@ -1,5 +1,6 @@
-from threedi_modelchecker.checks.base import BaseCheck
 from typing import NamedTuple
+
+from threedi_modelchecker.checks.base import BaseCheck
 
 
 def print_errors(errors):

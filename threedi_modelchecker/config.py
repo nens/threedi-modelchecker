@@ -1,66 +1,72 @@
-from .checks import geo_query
-from .checks.base import AllEqualCheck
-from .checks.base import BaseCheck
-from .checks.base import CheckLevel
-from .checks.base import ForeignKeyCheck
-from .checks.base import NotNullCheck
-from .checks.base import QueryCheck
-from .checks.base import RangeCheck
-from .checks.base import UniqueCheck
-from .checks.cross_section_definitions import CrossSectionEqualElementsCheck
-from .checks.cross_section_definitions import CrossSectionExpectEmptyCheck
-from .checks.cross_section_definitions import (
-    CrossSectionFirstElementNonZeroCheck,
-)
-from .checks.cross_section_definitions import CrossSectionFirstElementZeroCheck
-from .checks.cross_section_definitions import CrossSectionFloatCheck
-from .checks.cross_section_definitions import CrossSectionFloatListCheck
-from .checks.cross_section_definitions import CrossSectionGreaterZeroCheck
-from .checks.cross_section_definitions import CrossSectionIncreasingCheck
-from .checks.cross_section_definitions import CrossSectionNullCheck
-from .checks.cross_section_definitions import (
-    CrossSectionYZCoordinateCountCheck,
-)
-from .checks.cross_section_definitions import CrossSectionYZHeightCheck
-from .checks.cross_section_definitions import (
-    CrossSectionYZIncreasingWidthIfOpenCheck,
-)
-from .checks.factories import generate_enum_checks
-from .checks.factories import generate_foreign_key_checks
-from .checks.factories import generate_geometry_checks
-from .checks.factories import generate_geometry_type_checks
-from .checks.factories import generate_not_null_checks
-from .checks.factories import generate_type_checks
-from .checks.factories import generate_unique_checks
-from .checks.other import BoundaryCondition1DObjectNumberCheck
-from .checks.other import ConnectionNodesDistance
-from .checks.other import ConnectionNodesLength
-from .checks.other import CrossSectionLocationCheck
-from .checks.other import LinestringLocationCheck
-from .checks.other import OpenChannelsWithNestedNewton
-from .checks.other import PotentialBreachInterdistanceCheck
-from .checks.other import PotentialBreachStartEndCheck
-from .checks.other import SpatialIndexCheck
-from .checks.other import Use0DFlowCheck
-from .checks.raster import GDALAvailableCheck
-from .checks.raster import RasterExistsCheck
-from .checks.raster import RasterHasOneBandCheck
-from .checks.raster import RasterHasProjectionCheck
-from .checks.raster import RasterIsProjectedCheck
-from .checks.raster import RasterIsValidCheck
-from .checks.raster import RasterRangeCheck
-from .checks.raster import RasterSquareCellsCheck
-from .checks.timeseries import TimeseriesIncreasingCheck
-from .checks.timeseries import TimeseriesRowCheck
-from .checks.timeseries import TimeseriesStartsAtZeroCheck
-from .checks.timeseries import TimeseriesTimestepCheck
-from .checks.timeseries import TimeseriesValueCheck
-from sqlalchemy import func
-from sqlalchemy.orm import Query
-from threedi_schema import constants
-from threedi_schema import models
 from typing import List
 
+from sqlalchemy import func
+from sqlalchemy.orm import Query
+from threedi_schema import constants, models
+
+from .checks import geo_query
+from .checks.base import (
+    AllEqualCheck,
+    BaseCheck,
+    CheckLevel,
+    ForeignKeyCheck,
+    NotNullCheck,
+    QueryCheck,
+    RangeCheck,
+    UniqueCheck,
+)
+from .checks.cross_section_definitions import (
+    CrossSectionEqualElementsCheck,
+    CrossSectionExpectEmptyCheck,
+    CrossSectionFirstElementNonZeroCheck,
+    CrossSectionFirstElementZeroCheck,
+    CrossSectionFloatCheck,
+    CrossSectionFloatListCheck,
+    CrossSectionGreaterZeroCheck,
+    CrossSectionIncreasingCheck,
+    CrossSectionNullCheck,
+    CrossSectionYZCoordinateCountCheck,
+    CrossSectionYZHeightCheck,
+    CrossSectionYZIncreasingWidthIfOpenCheck,
+)
+from .checks.factories import (
+    generate_enum_checks,
+    generate_foreign_key_checks,
+    generate_geometry_checks,
+    generate_geometry_type_checks,
+    generate_not_null_checks,
+    generate_type_checks,
+    generate_unique_checks,
+)
+from .checks.other import (
+    BoundaryCondition1DObjectNumberCheck,
+    ConnectionNodesDistance,
+    ConnectionNodesLength,
+    CrossSectionLocationCheck,
+    LinestringLocationCheck,
+    OpenChannelsWithNestedNewton,
+    PotentialBreachInterdistanceCheck,
+    PotentialBreachStartEndCheck,
+    SpatialIndexCheck,
+    Use0DFlowCheck,
+)
+from .checks.raster import (
+    GDALAvailableCheck,
+    RasterExistsCheck,
+    RasterHasOneBandCheck,
+    RasterHasProjectionCheck,
+    RasterIsProjectedCheck,
+    RasterIsValidCheck,
+    RasterRangeCheck,
+    RasterSquareCellsCheck,
+)
+from .checks.timeseries import (
+    TimeseriesIncreasingCheck,
+    TimeseriesRowCheck,
+    TimeseriesStartsAtZeroCheck,
+    TimeseriesTimestepCheck,
+    TimeseriesValueCheck,
+)
 
 TOLERANCE_M = 1.0
 

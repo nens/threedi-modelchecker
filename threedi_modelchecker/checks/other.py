@@ -1,19 +1,13 @@
-from .base import BaseCheck
-from .base import CheckLevel
-from .geo_query import distance
-from .geo_query import length
-from .geo_query import transform
 from dataclasses import dataclass
+from typing import List, NamedTuple
+
 from geoalchemy2 import functions as geo_func
-from sqlalchemy import func
-from sqlalchemy import text
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm import Query
-from sqlalchemy.orm import Session
-from threedi_schema import constants
-from threedi_schema import models
-from typing import List
-from typing import NamedTuple
+from sqlalchemy import func, text
+from sqlalchemy.orm import aliased, Query, Session
+from threedi_schema import constants, models
+
+from .base import BaseCheck, CheckLevel
+from .geo_query import distance, length, transform
 
 
 class CrossSectionLocationCheck(BaseCheck):

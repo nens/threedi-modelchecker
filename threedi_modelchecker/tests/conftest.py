@@ -1,12 +1,12 @@
-from . import factories
-from threedi_modelchecker.checks.raster import LocalContext
-from threedi_schema import ModelSchema
-from threedi_schema import ThreediDatabase
-
 import pathlib
-import pytest
 import shutil
 
+import pytest
+from threedi_schema import ModelSchema, ThreediDatabase
+
+from threedi_modelchecker.checks.raster import LocalContext
+
+from . import factories
 
 data_dir = pathlib.Path(__file__).parent / "data"
 

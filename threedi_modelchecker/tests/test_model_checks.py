@@ -1,11 +1,14 @@
-from threedi_modelchecker.config import CHECKS
-from threedi_modelchecker.model_checks import BaseCheck
-from threedi_modelchecker.model_checks import LocalContext
-from threedi_modelchecker.model_checks import ThreediModelChecker
-from threedi_schema import ThreediDatabase
 from unittest import mock
 
 import pytest
+from threedi_schema import ThreediDatabase
+
+from threedi_modelchecker.config import CHECKS
+from threedi_modelchecker.model_checks import (
+    BaseCheck,
+    LocalContext,
+    ThreediModelChecker,
+)
 
 
 @pytest.fixture
