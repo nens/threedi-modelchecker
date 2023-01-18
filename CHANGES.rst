@@ -10,6 +10,8 @@ Changelog of threedi-modelchecker
 - Removed threedi_modelchecker.schema, threedi_database, threedi_model,
   ThreediDatabase. Import these from threedi-schema.
 
+- Remove simulation templates generation code.
+
 
 0.35.2 (2023-01-18)
 -------------------
