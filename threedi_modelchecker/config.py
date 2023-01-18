@@ -810,6 +810,12 @@ CHECKS += [
             "v2_exchange_line.the_geom is far (> 500 m) from its corresponding channel"
         ),
     ),
+    RangeCheck(
+        error_code=265,
+        column=models.ExchangeLine.exchange_level,
+        min_value=-9998.0,
+        max_value=8848.0,
+    ),
 ]
 
 ## 027x: Potential breaches
@@ -891,6 +897,19 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.the_geom,
         min_distance=TOLERANCE_M,
+    ),
+    RangeCheck(
+        error_code=276,
+        column=models.PotentialBreach.exchange_level,
+        min_value=-9998.0,
+        max_value=8848.0,
+    ),
+    RangeCheck(
+        error_code=277,
+        column=models.PotentialBreach.maximum_breach_depth,
+        min_value=0.0,
+        max_value=100.0,
+        left_inclusive=False,
     ),
 ]
 
