@@ -124,3 +124,28 @@ class TimeseriesIncreasingCheck(BaseCheck):
 
     def description(self):
         return f"{self.column_name} should be monotonically increasing"
+
+
+class TimeseriesStartsAtZeroCheck(BaseCheck):
+    """The timesteps in a timeseries should start at 0"""
+
+    def get_invalid(self, session):
+        invalid_timeseries = []
+
+        for row in self.to_check(session).all():
+            timeserie = row.timeseries
+            try:
+                timesteps = [x[0] for x in parse_timeseries(timeserie)]
+            except (ValueError, TypeError):
+                continue  # other checks will catch these
+
+            if len(timesteps) == 0:
+                continue
+
+            if timesteps[0] != 0:
+                invalid_timeseries.append(row)
+
+        return invalid_timeseries
+
+    def description(self):
+        return f"{self.column_name} should be start at timestamp 0"
