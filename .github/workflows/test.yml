@@ -1,0 +1,58 @@
+name: Linux
+
+# Run on PR requests. And on master itself.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  TestLinux:
+    name: Linux, Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 2019
+          - python: 3.8
+            pins: "sqlalchemy==1.3.* alembic==1.8.* geoalchemy2==0.9.*"
+          # 2021
+          - python: 3.9
+            pins: "sqlalchemy==1.4.30 alembic==1.8.* geoalchemy2==0.10.*"
+          # 2022
+          - python: "3.10"
+            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.12.*"
+          # current
+          - python: "3.11"
+            pins: ""
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install GDAL, sqlite3 and spatialite
+        run: |
+          sudo apt update
+          sudo apt install --yes --no-install-recommends sqlite3 libsqlite3-mod-spatialite libgdal-dev
+  
+      - name: Install python dependencies
+        shell: bash
+        run: |
+          pip install --disable-pip-version-check --upgrade pip setuptools wheel
+          pip install ${{ matrix.pins }} .[test,rasterio] pygdal==$(gdal-config --version).*
+          pip list
+
+      - name: Run tests
+        shell: bash
+        run: |
+          pytest
+        env:
+          SQLALCHEMY_SILENCE_UBER_WARNING: 1

@@ -1,11 +1,10 @@
-from .base import BaseCheck
 from dataclasses import dataclass
 from pathlib import Path
-from threedi_modelchecker.interfaces import GDALRasterInterface
-from threedi_modelchecker.interfaces import RasterInterface
-from typing import Optional
-from typing import Set
-from typing import Type
+from typing import Optional, Set, Type
+
+from threedi_modelchecker.interfaces import GDALRasterInterface, RasterInterface
+
+from .base import BaseCheck
 
 
 class Context:

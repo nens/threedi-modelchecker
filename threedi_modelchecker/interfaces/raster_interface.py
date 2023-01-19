@@ -1,9 +1,5 @@
-from abc import ABC
-from abc import abstractmethod
-from abc import abstractproperty
-from abc import abstractstaticmethod
-from typing import Optional
-from typing import Tuple
+from abc import ABC, abstractmethod, abstractproperty, abstractstaticmethod
+from typing import Optional, Tuple
 
 
 class RasterInterface(ABC):
