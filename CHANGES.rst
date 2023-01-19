@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-1.0.0 (unreleased)
+1.0.0 (2023-01-19)
 ------------------
 
 - Separate the schema to a separate package: threedi-schema.
