@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import List, NamedTuple
 
-from geoalchemy2 import functions as geo_func
 from sqlalchemy import func, text
 from sqlalchemy.orm import aliased, Query, Session
 from threedi_schema import constants, models
@@ -268,8 +267,8 @@ class LinestringLocationCheck(BaseCheck):
         end_node = aliased(models.ConnectionNode)
 
         tol = self.max_distance
-        start_point = geo_func.ST_PointN(self.column, 1)
-        end_point = geo_func.ST_PointN(self.column, geo_func.ST_NPoints(self.column))
+        start_point = func.ST_PointN(self.column, 1)
+        end_point = func.ST_PointN(self.column, func.ST_NPoints(self.column))
 
         start_ok = distance(start_point, start_node.the_geom) <= tol
         end_ok = distance(end_point, end_node.the_geom) <= tol
@@ -373,7 +372,7 @@ class PotentialBreachStartEndCheck(BaseCheck):
         linestring = models.Channel.the_geom
         tol = self.min_distance
         breach_point = func.Line_Locate_Point(
-            transform(linestring), transform(geo_func.ST_PointN(self.column, 1))
+            transform(linestring), transform(func.ST_PointN(self.column, 1))
         )
         dist_1 = breach_point * length(linestring)
         dist_2 = (1 - breach_point) * length(linestring)
@@ -403,7 +402,7 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
         # First fetch the position of each potential breach per channel
         def get_position(point, linestring):
             breach_point = func.Line_Locate_Point(
-                transform(linestring), transform(geo_func.ST_PointN(point, 1))
+                transform(linestring), transform(func.ST_PointN(point, 1))
             )
             return (breach_point * length(linestring)).label("position")
 

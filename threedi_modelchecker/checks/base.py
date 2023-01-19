@@ -2,10 +2,9 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from typing import List, NamedTuple
 
-from geoalchemy2 import functions as geo_func
-from geoalchemy2.types import Geometry
 from sqlalchemy import and_, false, func, types
 from sqlalchemy.orm.session import Session
+from threedi_schema.domain import custom_types
 
 
 class CheckLevel(IntEnum):
@@ -253,7 +252,7 @@ def _sqlalchemy_to_sqlite_types(column_type):
         return ["integer"]
     elif isinstance(column_type, types.Date):
         return ["text"]
-    elif isinstance(column_type, Geometry):
+    elif isinstance(column_type, custom_types.Geometry):
         return ["blob"]
     elif isinstance(column_type, types.TIMESTAMP):
         return ["text"]
@@ -269,7 +268,7 @@ class GeometryCheck(BaseCheck):
     def get_invalid(self, session):
         q_invalid = self.to_check(session)
         invalid_geometries = q_invalid.filter(
-            geo_func.ST_IsValid(self.column) != True, self.column != None
+            func.ST_IsValid(self.column) != True, self.column != None
         )
         return invalid_geometries.all()
 
@@ -292,7 +291,7 @@ class GeometryTypeCheck(BaseCheck):
             # skip in case of generic GEOMETRY column
             return q_invalid.filter(false())
         invalid_geometry_types_q = q_invalid.filter(
-            geo_func.ST_GeometryType(self.column) != expected_geometry_type,
+            func.ST_GeometryType(self.column) != expected_geometry_type,
             self.column != None,
         )
         return invalid_geometry_types_q.all()

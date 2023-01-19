@@ -253,8 +253,6 @@ def test_run_spatial_function(session):
 
     Works on postgis and spatialite"""
     factories.ConnectionNodeFactory()
-    from geoalchemy2 import func
-
     q = session.query(func.ST_AsGeoJSON(models.ConnectionNode.the_geom))
     q.first()
 

@@ -1,5 +1,5 @@
 import pytest
-from geoalchemy2 import functions as geo_func
+from sqlalchemy import func
 from sqlalchemy.orm import aliased, Query
 from threedi_schema import constants, models
 
@@ -150,7 +150,7 @@ def test_node_distance(session):
     node_a = aliased(models.ConnectionNode)
     node_b = aliased(models.ConnectionNode)
     distances_query = Query(
-        geo_func.ST_Distance(node_a.the_geom, node_b.the_geom, 1)
+        func.ST_Distance(node_a.the_geom, node_b.the_geom, 1)
     ).filter(node_a.id != node_b.id)
     # Shows the distances between all 3 nodes: node 1 and 2 are too close
     distances_query.with_session(session).all()

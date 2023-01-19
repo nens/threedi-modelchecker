@@ -1,4 +1,3 @@
-from geoalchemy2.types import Geometry
 from threedi_schema import custom_types
 
 from .base import (
@@ -67,7 +66,7 @@ def generate_geometry_checks(table, custom_level_map=None, **kwargs):
     custom_level_map = custom_level_map or {}
     geometry_checks = []
     for column in table.columns:
-        if type(column.type) == Geometry:
+        if isinstance(column.type, custom_types.Geometry):
             level = get_level(table, column, custom_level_map)
             geometry_checks.append(GeometryCheck(column, level=level, **kwargs))
     return geometry_checks
@@ -77,7 +76,7 @@ def generate_geometry_type_checks(table, custom_level_map=None, **kwargs):
     custom_level_map = custom_level_map or {}
     geometry_type_checks = []
     for column in table.columns:
-        if type(column.type) == Geometry:
+        if isinstance(column.type, custom_types.Geometry):
             level = get_level(table, column, custom_level_map)
             geometry_type_checks.append(
                 GeometryTypeCheck(column, level=level, **kwargs)
