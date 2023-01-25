@@ -126,6 +126,11 @@ CONDITIONS = {
         first_setting_filter,
         models.GlobalSetting.frict_type == constants.FrictionType.CHEZY,
     ),
+    "has_groundwater_flow": Query(models.GroundWater).filter(
+        groundwater_filter,
+        models.GroundWater.groundwater_hydro_connectivity.isnot(None)
+        | ~is_none_or_empty(models.GroundWater.groundwater_hydro_connectivity_file),
+    ),
 }
 
 kmax = scalar_subquery(Query(models.GlobalSetting.kmax).filter(first_setting_filter))
@@ -352,6 +357,23 @@ CHECKS += [
     ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),
+    QueryCheck(
+        error_code=73,
+        column=models.BoundaryConditions2D.boundary_type,
+        filters=~CONDITIONS["has_groundwater_flow"].exists(),
+        invalid=Query(models.BoundaryConditions2D).filter(
+            models.BoundaryConditions2D.boundary_type.in_(
+                [
+                    constants.BoundaryType.GROUNDWATERLEVEL,
+                    constants.BoundaryType.GROUNDWATERDISCHARGE,
+                ]
+            )
+        ),
+        message=(
+            "v2_2d_boundary_conditions cannot have a groundwater type when there "
+            "is no groundwater hydraulic conductivity"
+        ),
+    ),
 ]
 
 ## 008x: CROSS SECTION DEFINITIONS

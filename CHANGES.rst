@@ -5,7 +5,8 @@ Changelog of threedi-modelchecker
 1.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added check 73: groundwater boundaries are allowed only when there is
+  groundwater hydraulic conductivity.
 
 
 1.0.0 (2023-01-19)
