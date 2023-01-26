@@ -19,11 +19,6 @@ tests_require = [
     "mock ; python_version<'3.8'",
 ]
 
-simulation_templates_require = [
-    # Note: Change when threedi-api-client has been released
-    "threedi-api-client[aio]>=4",
-]
-
 
 def get_version():
     # Edited from https://packaging.python.org/guides/single-sourcing-package-version/
@@ -60,7 +55,6 @@ setup(
     tests_require=tests_require,
     extras_require={
         "test": tests_require,
-        "simulation_templates": simulation_templates_require,
         "rasterio": ["rasterio>=1.3"],
     },
     python_requires=">=3.7",
