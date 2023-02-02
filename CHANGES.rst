@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-1.0.1 (unreleased)
+1.0.1 (2023-02-02)
 ------------------
 
 - Fixed warning 94; warn if height is not empty (instead of width).
