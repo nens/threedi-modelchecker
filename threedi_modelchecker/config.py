@@ -454,7 +454,7 @@ CHECKS += [
     CrossSectionExpectEmptyCheck(
         error_code=94,
         level=CheckLevel.WARNING,
-        column=models.CrossSectionDefinition.width,
+        column=models.CrossSectionDefinition.height,
         shapes=(
             constants.CrossSectionShape.CIRCLE,
             constants.CrossSectionShape.EGG,
