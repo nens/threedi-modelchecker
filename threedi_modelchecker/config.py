@@ -587,7 +587,8 @@ CHECKS += [
         invalid=Query(table)
         .join(
             models.ConnectionNode,
-            table.connection_node_start_id == models.ConnectionNode.id or table.connection_node_end_id == models.ConnectionNode.id,
+            table.connection_node_start_id == models.ConnectionNode.id
+            or table.connection_node_end_id == models.ConnectionNode.id,
         )
         .join(models.Manhole)
         .filter(
