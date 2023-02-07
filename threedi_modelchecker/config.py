@@ -579,6 +579,25 @@ CHECKS += [
         message="v2_manhole.drain_level cannot be null when using sub-basins (v2_global_settings.manhole_storage_area > 0) and no DEM is supplied.",
     ),
 ]
+CHECKS += [
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=108,
+        column=table.crest_level,
+        invalid=Query(table)
+        .join(
+            models.ConnectionNode,
+            (table.connection_node_start_id == models.ConnectionNode.id)
+            | (table.connection_node_end_id == models.ConnectionNode.id),
+        )
+        .join(models.Manhole)
+        .filter(
+            table.crest_level < models.Manhole.bottom_level,
+        ),
+        message=f"{table.__tablename__}.crest_level should be higher than or equal to v2_manhole.bottom_level for all the connected manholes.",
+    )
+    for table in [models.Weir, models.Orifice]
+]
 
 ## 020x: Spatial checks
 

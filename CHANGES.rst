@@ -5,7 +5,8 @@ Changelog of threedi-modelchecker
 1.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add warning 108: the crest_level of a weir or orifice cannot be lower than
+  the bottom_level of any manhole it is connected to.
 
 
 1.0.1 (2023-02-02)
