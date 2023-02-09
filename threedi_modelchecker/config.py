@@ -40,6 +40,7 @@ from .checks.factories import (
 )
 from .checks.other import (
     BoundaryCondition1DObjectNumberCheck,
+    ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
     CrossSectionLocationCheck,
@@ -597,6 +598,14 @@ CHECKS += [
         message=f"{table.__tablename__}.crest_level should be higher than or equal to v2_manhole.bottom_level for all the connected manholes.",
     )
     for table in [models.Weir, models.Orifice]
+]
+CHECKS += [
+    ChannelManholeLevelCheck(
+        level=CheckLevel.INFO, nodes_to_check="start", error_code=108
+    ),
+    ChannelManholeLevelCheck(
+        level=CheckLevel.INFO, nodes_to_check="end", error_code=109
+    ),
 ]
 
 ## 020x: Spatial checks

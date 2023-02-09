@@ -181,6 +181,63 @@ class ConnectionNodesDistance(BaseCheck):
         )
 
 
+class ChannelManholeLevelCheck(BaseCheck):
+    """Check that the reference_level of a channel is higher than or equal to the bottom_level of a manhole
+    connected to the channel as measured at the cross-section closest to the manhole. This check runs if the
+    manhole is on the channel's starting node.
+    """
+
+    def __init__(
+        self,
+        level: CheckLevel = CheckLevel.INFO,
+        nodes_to_check: str = "start",
+        *args,
+        **kwargs,
+    ):
+        """
+        :param level: severity of the check, defaults to CheckLevel.INFO. Options are
+        in checks.base.CheckLevel
+        :param nodes_to_check: whether to check for manholes at the start of the channel
+        or at the end of the channel. Options are "start" and "end", defaults to "start"
+        """
+        if nodes_to_check not in ["start", "end"]:
+            raise ValueError("nodes_to_check must be 'start' or 'end'")
+        super().__init__(column=models.Channel.id, level=level, *args, **kwargs)
+        self.nodes_to_check = nodes_to_check
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        """
+        The query GROUP BY is done by channel id rather than manhole id, because one manhole may be connected to
+        multiple channels
+        """
+        nodes_sort = "MIN" if self.nodes_to_check == "start" else "MAX"
+        query = text(
+            f"""SELECT v2_channel.id, {nodes_sort}(Line_Locate_Point(v2_channel.the_geom, v2_cross_section_location.the_geom)) FROM
+                (((v2_cross_section_location
+                LEFT JOIN v2_channel
+                    ON v2_channel.id = v2_cross_section_location.channel_id)
+                LEFT JOIN v2_connection_nodes
+                    ON v2_channel.connection_node_{self.nodes_to_check}_id = v2_connection_nodes.id)
+                LEFT JOIN v2_manhole
+                    ON v2_connection_nodes.id = v2_manhole.connection_node_id)
+                WHERE (
+                    v2_manhole.id IS NOT NULL AND v2_cross_section_location.reference_level < v2_manhole.bottom_level)
+                GROUP BY v2_channel.id
+                ORDER BY v2_channel.id;
+            """
+        )
+        results = session.connection().execute(query).fetchall()
+
+        return results
+
+    def description(self) -> str:
+        return (
+            f"The v2_manhole.bottom_level at the {self.nodes_to_check} of this v2_channel is higher than the "
+            "v2_cross_section_location.reference_level closest to the manhole. This will be "
+            "automatically fixed in threedigrid-builder."
+        )
+
+
 class OpenChannelsWithNestedNewton(BaseCheck):
     """Checks whether the model has any closed cross-section in use when the
     NumericalSettings.use_of_nested_newton is turned off.
