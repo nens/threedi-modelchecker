@@ -138,13 +138,13 @@ class ConnectionNodesDistance(BaseCheck):
     threshold
     """
 
-    def __init__(self, minimum_distance: float, *args, **kwargs):
+    def __init__(
+        self, minimum_distance: float, level=CheckLevel.WARNING, *args, **kwargs
+    ):
         """
         :param minimum_distance: threshold distance in degrees
         """
-        super().__init__(
-            column=models.ConnectionNode.id, level=CheckLevel.WARNING, *args, **kwargs
-        )
+        super().__init__(column=models.ConnectionNode.id, level=level, *args, **kwargs)
         self.minimum_distance = minimum_distance
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
@@ -188,10 +188,10 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     See https://github.com/nens/threeditoolbox/issues/522
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, level=CheckLevel.WARNING, *args, **kwargs):
         super().__init__(
             column=models.CrossSectionDefinition.id,
-            level=CheckLevel.WARNING,
+            level=level,
             filters=Query(models.NumericalSettings)
             .filter(models.NumericalSettings.use_of_nested_newton == 0)
             .exists(),
