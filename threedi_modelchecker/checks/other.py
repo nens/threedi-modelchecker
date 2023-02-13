@@ -211,18 +211,37 @@ class ChannelManholeLevelCheck(BaseCheck):
         multiple channels
         """
         func_agg = func.MIN if self.nodes_to_check == "start" else func.MAX
-        channels_with_cs_locations = session.query(
-            models.Channel.id, models.CrossSectionLocation, func_agg(func.Line_Locate_Point(models.Channel.the_geom, models.CrossSectionLocation.the_geom))
-        ).join(models.Channel, isouter=True).group_by(models.Channel.id)
+        channels_with_cs_locations = (
+            session.query(
+                models.Channel.id,
+                models.CrossSectionLocation,
+                func_agg(
+                    func.Line_Locate_Point(
+                        models.Channel.the_geom, models.CrossSectionLocation.the_geom
+                    )
+                ),
+            )
+            .join(models.Channel, isouter=True)
+            .group_by(models.Channel.id)
+        )
         if self.nodes_to_check == "start":
             channels_connection_nodes = channels_with_cs_locations.join(
-                models.ConnectionNode, models.Channel.connection_node_start_id==models.ConnectionNode.id)
+                models.ConnectionNode,
+                models.Channel.connection_node_start_id == models.ConnectionNode.id,
+            )
         else:
             channels_connection_nodes = channels_with_cs_locations.join(
-                models.ConnectionNode, models.Channel.connection_node_end_id==models.ConnectionNode.id)
-        channels_with_manholes = channels_connection_nodes.join(models.Manhole, models.ConnectionNode.id == models.Manhole.connection_node_id)
-        channels_manholes_level_checked = channels_with_manholes.having(models.CrossSectionLocation.reference_level < models.Manhole.bottom_level)
-        
+                models.ConnectionNode,
+                models.Channel.connection_node_end_id == models.ConnectionNode.id,
+            )
+        channels_with_manholes = channels_connection_nodes.join(
+            models.Manhole,
+            models.ConnectionNode.id == models.Manhole.connection_node_id,
+        )
+        channels_manholes_level_checked = channels_with_manholes.having(
+            models.CrossSectionLocation.reference_level < models.Manhole.bottom_level
+        )
+
         return channels_manholes_level_checked.all()
 
     def description(self) -> str:
