@@ -7,23 +7,9 @@ from threedi_modelchecker.model_checks import ThreediModelChecker
 
 
 @click.group()
-@click.option(
-    "-s",
-    "--sqlite",
-    type=click.Path(exists=True, readable=True),
-    help="Path to an sqlite (spatialite) file",
-    required=True,
-)
-@click.pass_context
-def main(ctx, sqlite):
-    """Checks the threedi-model for errors / warnings / info messages"""
-    ctx.ensure_object(dict)
-
-    db = ThreediDatabase(sqlite, echo=False)
-    ctx.obj["db"] = db
-
-
-@main.command()
+def cli():
+    pass
+@cli.command()
 @click.option("-f", "--file", help="Write errors to file, instead of stdout")
 @click.option(
     "-l",
@@ -32,8 +18,17 @@ def main(ctx, sqlite):
     default="ERROR",
     help="Minimum check level.",
 )
+@click.option(
+    "-s",
+    "--sqlite",
+    type=click.Path(exists=True, readable=True),
+    help="Path to an sqlite (spatialite) file",
+    required=True,
+)
 @click.pass_context
-def check(ctx, file, level):
+def check(ctx, sqlite, file, level):
+    """Checks the threedi-model for errors / warnings / info messages"""
+    db = ThreediDatabase(sqlite, echo=False)
     """Checks the threedi model schematisation for errors."""
     level = level.upper()
     if level == "ERROR":
@@ -46,7 +41,7 @@ def check(ctx, file, level):
     if file:
         click.echo("Model errors will be written to %s" % file)
 
-    mc = ThreediModelChecker(ctx.obj["db"])
+    mc = ThreediModelChecker(db)
     model_errors = mc.errors(level=level)
 
     if file:
@@ -56,6 +51,12 @@ def check(ctx, file, level):
 
     click.echo("Finished processing model")
 
+@cli.command()
+@click.pass_context
+def export_checks(ctx):
+    "Export formatted checks summary to insert in documentation"
+    click.echo("in progress")
+
 
 if __name__ == "__main__":
-    main()
+    check()
