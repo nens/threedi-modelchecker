@@ -210,25 +210,20 @@ class ChannelManholeLevelCheck(BaseCheck):
         The query GROUP BY is done by channel id rather than manhole id, because one manhole may be connected to
         multiple channels
         """
-        nodes_sort = "MIN" if self.nodes_to_check == "start" else "MAX"
-        query = text(
-            f"""SELECT v2_channel.id, {nodes_sort}(Line_Locate_Point(v2_channel.the_geom, v2_cross_section_location.the_geom)) FROM
-                (((v2_cross_section_location
-                LEFT JOIN v2_channel
-                    ON v2_channel.id = v2_cross_section_location.channel_id)
-                LEFT JOIN v2_connection_nodes
-                    ON v2_channel.connection_node_{self.nodes_to_check}_id = v2_connection_nodes.id)
-                LEFT JOIN v2_manhole
-                    ON v2_connection_nodes.id = v2_manhole.connection_node_id)
-                WHERE (
-                    v2_manhole.id IS NOT NULL AND v2_cross_section_location.reference_level < v2_manhole.bottom_level)
-                GROUP BY v2_channel.id
-                ORDER BY v2_channel.id;
-            """
-        )
-        results = session.connection().execute(query).fetchall()
-
-        return results
+        func_agg = func.MIN if self.nodes_to_check == "start" else func.MAX
+        channels_with_cs_locations = session.query(
+            models.Channel.id, models.CrossSectionLocation, func_agg(func.Line_Locate_Point(models.Channel.the_geom, models.CrossSectionLocation.the_geom))
+        ).join(models.Channel, isouter=True).group_by(models.Channel.id)
+        if self.nodes_to_check == "start":
+            channels_connection_nodes = channels_with_cs_locations.join(
+                models.ConnectionNode, models.Channel.connection_node_start_id==models.ConnectionNode.id)
+        else:
+            channels_connection_nodes = channels_with_cs_locations.join(
+                models.ConnectionNode, models.Channel.connection_node_end_id==models.ConnectionNode.id)
+        channels_with_manholes = channels_connection_nodes.join(models.Manhole, models.ConnectionNode.id == models.Manhole.connection_node_id)
+        channels_manholes_level_checked = channels_with_manholes.having(models.CrossSectionLocation.reference_level < models.Manhole.bottom_level)
+        
+        return channels_manholes_level_checked.all()
 
     def description(self) -> str:
         return (
