@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, NamedTuple
+from typing import List, NamedTuple, Literal
 
 from sqlalchemy import func, text
 from sqlalchemy.orm import aliased, Query, Session
@@ -190,7 +190,7 @@ class ChannelManholeLevelCheck(BaseCheck):
     def __init__(
         self,
         level: CheckLevel = CheckLevel.INFO,
-        nodes_to_check: str = "start",
+        nodes_to_check: Literal["start", "end"] = "start",
         *args,
         **kwargs,
     ):
