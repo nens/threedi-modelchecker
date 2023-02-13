@@ -601,10 +601,10 @@ CHECKS += [
 ]
 CHECKS += [
     ChannelManholeLevelCheck(
-        level=CheckLevel.INFO, nodes_to_check="start", error_code=108
+        level=CheckLevel.INFO, nodes_to_check="start", error_code=109
     ),
     ChannelManholeLevelCheck(
-        level=CheckLevel.INFO, nodes_to_check="end", error_code=109
+        level=CheckLevel.INFO, nodes_to_check="end", error_code=110
     ),
 ]
 
