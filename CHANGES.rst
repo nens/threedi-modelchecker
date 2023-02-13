@@ -7,6 +7,10 @@ Changelog of threedi-modelchecker
 
 - Add warning 108: the crest_level of a weir or orifice cannot be lower than
   the bottom_level of any manhole it is connected to.
+- Add info 109 and 110: the bottom level of a manhole cannot be higher than
+  the reference level of the closest cross-section of any channel it is
+  connected to. threedigrid-builder automatically fixes this, hence info
+  instead of warning.
 
 
 1.0.1 (2023-02-02)
@@ -87,6 +91,8 @@ Changelog of threedi-modelchecker
 
 - The ThreediModelChecker context now accepts a "context_type" and "raster_interface"
   fields.
+
+- Python 3.7 support is dropped.
 
 
 0.32 (2022-11-16)

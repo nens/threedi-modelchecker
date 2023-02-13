@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, NamedTuple
+from typing import List, Literal, NamedTuple
 
 from sqlalchemy import func, text
 from sqlalchemy.orm import aliased, Query, Session
@@ -178,6 +178,80 @@ class ConnectionNodesDistance(BaseCheck):
         return (
             f"The connection_node is within {self.minimum_distance} degrees of "
             f"another connection_node."
+        )
+
+
+class ChannelManholeLevelCheck(BaseCheck):
+    """Check that the reference_level of a channel is higher than or equal to the bottom_level of a manhole
+    connected to the channel as measured at the cross-section closest to the manhole. This check runs if the
+    manhole is on the channel's starting node.
+    """
+
+    def __init__(
+        self,
+        level: CheckLevel = CheckLevel.INFO,
+        nodes_to_check: Literal["start", "end"] = "start",
+        *args,
+        **kwargs,
+    ):
+        """
+        :param level: severity of the check, defaults to CheckLevel.INFO. Options are
+        in checks.base.CheckLevel
+        :param nodes_to_check: whether to check for manholes at the start of the channel
+        or at the end of the channel. Options are "start" and "end", defaults to "start"
+        """
+        if nodes_to_check not in ["start", "end"]:
+            raise ValueError("nodes_to_check must be 'start' or 'end'")
+        super().__init__(column=models.Channel.id, level=level, *args, **kwargs)
+        self.nodes_to_check = nodes_to_check
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        """
+        This query does the following:
+        channel_with_cs_locations       : left join between cross_sections and channels, to get a table containing
+                                          all cross-sections and the channels they lie on
+        channels_with_manholes          : join between channel_with_cs_locations and manholes, to get all channels with
+                                          a manhole on the channel's start node if self.nodes_to_check == "start", or all
+                                          channels with a manhole on the channel's end node if self.nodes_to_check == "start".
+        channels_manholes_level_checked : filter the query on invalid entries; that is, entries where the cross-section
+                                          reference level is indeed lower than the manhole bottom level. having is used instead
+                                          of filter because the query being filtered is a aggregate produced by groupby.
+        """
+        if self.nodes_to_check == "start":
+            func_agg = func.MIN
+            connection_node_id_col = models.Channel.connection_node_start_id
+        else:
+            func_agg = func.MAX
+            connection_node_id_col = models.Channel.connection_node_end_id
+
+        channels_with_cs_locations = (
+            session.query(
+                models.Channel.id,
+                models.CrossSectionLocation,
+                func_agg(
+                    func.Line_Locate_Point(
+                        models.Channel.the_geom, models.CrossSectionLocation.the_geom
+                    )
+                ),
+            )
+            .join(models.Channel, isouter=True)
+            .group_by(models.Channel.id)
+        )
+        channels_with_manholes = channels_with_cs_locations.join(
+            models.Manhole,
+            connection_node_id_col == models.Manhole.connection_node_id,
+        )
+        channels_manholes_level_checked = channels_with_manholes.having(
+            models.CrossSectionLocation.reference_level < models.Manhole.bottom_level
+        )
+
+        return channels_manholes_level_checked.all()
+
+    def description(self) -> str:
+        return (
+            f"The v2_manhole.bottom_level at the {self.nodes_to_check} of this v2_channel is higher than the "
+            "v2_cross_section_location.reference_level closest to the manhole. This will be "
+            "automatically fixed in threedigrid-builder."
         )
 
 
