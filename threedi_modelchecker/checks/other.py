@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, NamedTuple, Literal
+from typing import List, Literal, NamedTuple
 
 from sqlalchemy import func, text
 from sqlalchemy.orm import aliased, Query, Session
