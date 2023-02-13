@@ -207,10 +207,23 @@ class ChannelManholeLevelCheck(BaseCheck):
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         """
-        The query GROUP BY is done by channel id rather than manhole id, because one manhole may be connected to
-        multiple channels
+        This query does the following:
+        channel_with_cs_locations       : left join between cross_sections and channels, to get a table containing
+                                          all cross-sections and the channels they lie on
+        channels_with_manholes          : join between channel_with_cs_locations and manholes, to get all channels with
+                                          a manhole on the channel's start node if self.nodes_to_check == "start", or all
+                                          channels with a manhole on the channel's end node if self.nodes_to_check == "start".
+        channels_manholes_level_checked : filter the query on invalid entries; that is, entries where the cross-section
+                                          reference level is indeed lower than the manhole bottom level. having is used instead
+                                          of filter because the query being filtered is a aggregate produced by groupby.
         """
-        func_agg = func.MIN if self.nodes_to_check == "start" else func.MAX
+        if self.nodes_to_check == "start":
+            func_agg = func.MIN
+            connection_node_id_col = models.Channel.connection_node_start_id
+        else:
+            func_agg = func.MAX
+            connection_node_id_col = models.Channel.connection_node_end_id
+
         channels_with_cs_locations = (
             session.query(
                 models.Channel.id,
@@ -224,19 +237,9 @@ class ChannelManholeLevelCheck(BaseCheck):
             .join(models.Channel, isouter=True)
             .group_by(models.Channel.id)
         )
-        if self.nodes_to_check == "start":
-            channels_connection_nodes = channels_with_cs_locations.join(
-                models.ConnectionNode,
-                models.Channel.connection_node_start_id == models.ConnectionNode.id,
-            )
-        else:
-            channels_connection_nodes = channels_with_cs_locations.join(
-                models.ConnectionNode,
-                models.Channel.connection_node_end_id == models.ConnectionNode.id,
-            )
-        channels_with_manholes = channels_connection_nodes.join(
+        channels_with_manholes = channels_with_cs_locations.join(
             models.Manhole,
-            models.ConnectionNode.id == models.Manhole.connection_node_id,
+            connection_node_id_col == models.Manhole.connection_node_id,
         )
         channels_manholes_level_checked = channels_with_manholes.having(
             models.CrossSectionLocation.reference_level < models.Manhole.bottom_level
