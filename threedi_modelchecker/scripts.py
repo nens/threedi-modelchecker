@@ -54,19 +54,36 @@ def check(sqlite, file, level):
     click.echo("Finished processing model")
 
 @cli.command()
-def export_checks():
+@click.option("-f", "--file", help="Write output to file, instead of stdout")
+def export_checks(file):
     """Export formatted checks summary to insert in documentation"""
+    def generate_rst_table(checks):
+        rst_table_string = ""
+        header = (
+            ".. list-table:: Executed checks\n" +
+            "   :widths: 25 25 25\n" +
+            "   :header-rows: 1\n\n" +
+            "   * - Check number\n" +
+            "     - Check level\n" +
+            "     - Check message"
+        )
+        rst_table_string += header
+        for check in checks:
+            # pad error code with leading zeroes so it is always 4 numbers
+            formatted_error_code = str(check.error_code).zfill(4)
+            check_row = (
+                "\n" +
+                f"   * - {formatted_error_code}\n" +
+                f"     - {check.level.name.capitalize()}\n" +
+                f"     - {check.description()}"
+            )
+            rst_table_string += check_row
+        return(rst_table_string)
+
     checks = Config(models=DECLARED_MODELS).checks
-    info_checks = []
-    warning_checks = []
-    error_checks = []
-    for check in checks:
-        if check.level == CheckLevel.INFO:
-            info_checks.append(check)
-        elif check.level == CheckLevel.WARNING:
-            warning_checks.append(check)
-        elif check.level == CheckLevel.ERROR:
-            error_checks.append(check)
+    
+    rst_table = generate_rst_table(checks=checks)
+    click.echo(rst_table)
 
 if __name__ == "__main__":
     check()
