@@ -17,14 +17,14 @@ Changelog of threedi-modelchecker
 
   ``threedi_modelchecker check -s <your database>.sqlite -l <desired check level>``
 
-  Run ``threedi_modelcheck check --help`` for an overview.
+  Run ``threedi_modelchecker check --help`` for an overview.
 
   A new command, ``export-checks``, has also been added. This exports all checks
   executed by the model checker as an RsT table or in CSV format, as specified by
   the optional ``--format`` argument. The check output can also be dumped to a file
   using ``--file``.
   
-  Run ``threedi_modelcheck export-checks --help`` for an overview.
+  Run ``threedi_modelchecker export-checks --help`` for an overview.
 
 
 1.0.1 (2023-02-02)
