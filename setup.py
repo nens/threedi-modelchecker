@@ -55,7 +55,7 @@ setup(
     tests_require=tests_require,
     extras_require={
         "test": tests_require,
-        "rasterio": ["rasterio>=1.3"],
+        "rasterio": ["rasterio>=1.3,<1.3.6"],
     },
     python_requires=">=3.7",
     entry_points={
