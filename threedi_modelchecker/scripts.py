@@ -25,8 +25,7 @@ def cli():
     help="Path to an sqlite (spatialite) file",
     required=True,
 )
-@click.pass_context
-def check(ctx, sqlite, file, level):
+def check(sqlite, file, level):
     """Checks the threedi-model for errors / warnings / info messages"""
     db = ThreediDatabase(sqlite, echo=False)
     """Checks the threedi model schematisation for errors."""
@@ -52,8 +51,7 @@ def check(ctx, sqlite, file, level):
     click.echo("Finished processing model")
 
 @cli.command()
-@click.pass_context
-def export_checks(ctx):
+def export_checks():
     "Export formatted checks summary to insert in documentation"
     click.echo("in progress")
 
