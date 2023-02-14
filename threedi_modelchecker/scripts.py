@@ -1,5 +1,5 @@
-from io import StringIO
 import csv
+from io import StringIO
 
 import click
 from threedi_schema import ThreediDatabase
@@ -7,14 +7,15 @@ from threedi_schema.domain.models import DECLARED_MODELS
 
 from threedi_modelchecker import exporters
 from threedi_modelchecker.checks.base import CheckLevel
-from threedi_modelchecker.model_checks import ThreediModelChecker
 from threedi_modelchecker.config import Config
-from threedi_modelchecker.checks.base import CheckLevel
+from threedi_modelchecker.model_checks import ThreediModelChecker
 
 
 @click.group()
 def cli():
     pass
+
+
 @cli.command()
 @click.option("-f", "--file", help="Write errors to file, instead of stdout")
 @click.option(
@@ -56,6 +57,7 @@ def check(sqlite, file, level):
 
     click.echo("Finished processing model")
 
+
 @cli.command()
 @click.option("-f", "--file", help="Write output to file, instead of stdout")
 @click.option(
@@ -67,51 +69,55 @@ def check(sqlite, file, level):
 )
 def export_checks(file, format):
     """Export formatted checks summary to insert in documentation or use elsewhere"""
-    def generate_rst_table(checks):
+
+    def generate_rst_table(checks) -> str:
         "Generate an RST table to copy into the Sphinx docs with a list of checks"
         rst_table_string = ""
         header = (
-            ".. list-table:: Executed checks\n" +
-            "   :widths: 10 20 40\n" +
-            "   :header-rows: 1\n\n" +
-            "   * - Check number\n" +
-            "     - Check level\n" +
-            "     - Check message"
+            ".. list-table:: Executed checks\n"
+            + "   :widths: 10 20 40\n"
+            + "   :header-rows: 1\n\n"
+            + "   * - Check number\n"
+            + "     - Check level\n"
+            + "     - Check message"
         )
         rst_table_string += header
         for check in checks:
             # pad error code with leading zeroes so it is always 4 numbers
             formatted_error_code = str(check.error_code).zfill(4)
             check_row = (
-                "\n" +
-                f"   * - {formatted_error_code}\n" +
-                f"     - {check.level.name.capitalize()}\n" +
-                f"     - {check.description()}"
+                "\n"
+                + f"   * - {formatted_error_code}\n"
+                + f"     - {check.level.name.capitalize()}\n"
+                + f"     - {check.description()}"
             )
             rst_table_string += check_row
-        return(rst_table_string)
-    def generate_csv_table(checks):
+        return rst_table_string
+
+    def generate_csv_table(checks) -> str:
         "Generate an CSV table with a list of checks for use elsewhere"
+        # a StringIO buffer is used so that the CSV can be printed to terminal as well as written to file
         output_buffer = StringIO()
         fieldnames = ["error_code", "level", "description"]
-        writer = csv.DictWriter(output_buffer, fieldnames=fieldnames, quoting=csv.QUOTE_NONNUMERIC)
+        writer = csv.DictWriter(
+            output_buffer, fieldnames=fieldnames, quoting=csv.QUOTE_NONNUMERIC
+        )
 
         writer.writeheader()
-        
+
         for check in checks:
             writer.writerow(
                 {
                     "error_code": check.error_code,
                     "level": check.level.name,
-                    "description": check.description()
+                    "description": check.description(),
                 }
             )
-        
+
         return output_buffer.getvalue()
 
-    
     checks = Config(models=DECLARED_MODELS).checks
-    
+
     if format.lower() == "rst":
         table = generate_rst_table(checks=checks)
     elif format.lower() == "csv":
@@ -121,6 +127,7 @@ def export_checks(file, format):
             f.write(table)
     else:
         click.echo(table)
+
 
 if __name__ == "__main__":
     check()
