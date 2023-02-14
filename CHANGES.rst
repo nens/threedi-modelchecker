@@ -15,8 +15,7 @@ Changelog of threedi-modelchecker
   ``check`` command, not of the main ``threedi_modelchecker`` group. To run a check,
   the new syntax is
 
-  .. code-block:: bash
-     threedi_modelchecker check -s <your database>.sqlite -l <desired check level>
+  ``threedi_modelchecker check -s <your database>.sqlite -l <desired check level>``
 
   Run ``threedi_modelcheck check --help`` for an overview.
 
