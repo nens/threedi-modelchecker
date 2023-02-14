@@ -19,6 +19,10 @@ tests_require = [
     "mock ; python_version<'3.8'",
 ]
 
+rasterio_require = [
+    "rasterio>=1.3"
+]
+
 
 def get_version():
     # Edited from https://packaging.python.org/guides/single-sourcing-package-version/
@@ -55,7 +59,7 @@ setup(
     tests_require=tests_require,
     extras_require={
         "test": tests_require,
-        "rasterio": ["rasterio>=1.3"],
+        "rasterio": rasterio_require,
     },
     python_requires=">=3.7",
     entry_points={

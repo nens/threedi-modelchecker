@@ -7,6 +7,7 @@ Changelog of threedi-modelchecker
 
 - Add warning 108: the crest_level of a weir or orifice cannot be lower than
   the bottom_level of any manhole it is connected to.
+
 - Add info 109 and 110: the bottom level of a manhole cannot be higher than
   the reference level of the closest cross-section of any channel it is
   connected to. threedigrid-builder automatically fixes this, hence info
@@ -25,6 +26,8 @@ Changelog of threedi-modelchecker
   using ``--file``.
   
   Run ``threedi_modelchecker export-checks --help`` for an overview.
+
+- Compatibility fix with rasterio 1.3.6.
 
 
 1.0.1 (2023-02-02)
