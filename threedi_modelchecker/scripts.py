@@ -1,9 +1,12 @@
 import click
 from threedi_schema import ThreediDatabase
+from threedi_schema.domain.models import DECLARED_MODELS
 
 from threedi_modelchecker import exporters
 from threedi_modelchecker.checks.base import CheckLevel
 from threedi_modelchecker.model_checks import ThreediModelChecker
+from threedi_modelchecker.config import Config
+from threedi_modelchecker.checks.base import CheckLevel
 
 
 @click.group()
@@ -52,9 +55,18 @@ def check(sqlite, file, level):
 
 @cli.command()
 def export_checks():
-    "Export formatted checks summary to insert in documentation"
-    click.echo("in progress")
-
+    """Export formatted checks summary to insert in documentation"""
+    checks = Config(models=DECLARED_MODELS).checks
+    info_checks = []
+    warning_checks = []
+    error_checks = []
+    for check in checks:
+        if check.level == CheckLevel.INFO:
+            info_checks.append(check)
+        elif check.level == CheckLevel.WARNING:
+            warning_checks.append(check)
+        elif check.level == CheckLevel.ERROR:
+            error_checks.append(check)
 
 if __name__ == "__main__":
     check()
