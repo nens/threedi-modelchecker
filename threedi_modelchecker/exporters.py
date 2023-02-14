@@ -39,6 +39,7 @@ def format_check_results(check: BaseCheck, invalid_row: NamedTuple):
         description=check.description(),
     )
 
+
 # check overview export functions
 def generate_rst_table(checks) -> str:
     "Generate an RST table to copy into the Sphinx docs with a list of checks"
@@ -63,6 +64,7 @@ def generate_rst_table(checks) -> str:
         )
         rst_table_string += check_row
     return rst_table_string
+
 
 def generate_csv_table(checks) -> str:
     "Generate an CSV table with a list of checks for use elsewhere"
