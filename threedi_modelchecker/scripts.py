@@ -1,3 +1,6 @@
+from io import StringIO
+import csv
+
 import click
 from threedi_schema import ThreediDatabase
 from threedi_schema.domain.models import DECLARED_MODELS
@@ -55,13 +58,21 @@ def check(sqlite, file, level):
 
 @cli.command()
 @click.option("-f", "--file", help="Write output to file, instead of stdout")
-def export_checks(file):
-    """Export formatted checks summary to insert in documentation"""
+@click.option(
+    "-ft",
+    "--format",
+    type=click.Choice(["rst", "csv"], case_sensitive=False),
+    default="rst",
+    help="Export format for checks table",
+)
+def export_checks(file, format):
+    """Export formatted checks summary to insert in documentation or use elsewhere"""
     def generate_rst_table(checks):
+        "Generate an RST table to copy into the Sphinx docs with a list of checks"
         rst_table_string = ""
         header = (
             ".. list-table:: Executed checks\n" +
-            "   :widths: 25 25 25\n" +
+            "   :widths: 10 20 40\n" +
             "   :header-rows: 1\n\n" +
             "   * - Check number\n" +
             "     - Check level\n" +
@@ -79,11 +90,37 @@ def export_checks(file):
             )
             rst_table_string += check_row
         return(rst_table_string)
+    def generate_csv_table(checks):
+        "Generate an CSV table with a list of checks for use elsewhere"
+        output_buffer = StringIO()
+        fieldnames = ["error_code", "level", "description"]
+        writer = csv.DictWriter(output_buffer, fieldnames=fieldnames, quoting=csv.QUOTE_NONNUMERIC)
 
+        writer.writeheader()
+        
+        for check in checks:
+            writer.writerow(
+                {
+                    "error_code": check.error_code,
+                    "level": check.level.name,
+                    "description": check.description()
+                }
+            )
+        
+        return output_buffer.getvalue()
+
+    
     checks = Config(models=DECLARED_MODELS).checks
     
-    rst_table = generate_rst_table(checks=checks)
-    click.echo(rst_table)
+    if format.lower() == "rst":
+        table = generate_rst_table(checks=checks)
+    elif format.lower() == "csv":
+        table = generate_csv_table(checks=checks)
+    if file:
+        with open(file, "w") as f:
+            f.write(table)
+    else:
+        click.echo(table)
 
 if __name__ == "__main__":
     check()
