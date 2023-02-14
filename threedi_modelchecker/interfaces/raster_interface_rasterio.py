@@ -66,7 +66,7 @@ class RasterIORasterInterface(RasterInterface):
         try:
             statistics = self._dataset.statistics(1, approx=False, clear_cache=True)
         except Exception as e:
-            if "no valid pixels found" in str(e):
+            if "no valid pixels found" in str(e).lower():
                 raise self.NoData()
             else:
                 raise e
