@@ -76,31 +76,30 @@ def is_none_or_empty(col):
     return (col == None) | (col == "")
 
 
-def scalar_subquery(query):
-    # compatibility between sqlalchemy 1.3 and 1.4
-    try:
-        return query.scalar_subquery()
-    except AttributeError:
-        return query.as_scalar()
-
-
 # Use these to make checks only work on the first global settings entry:
-first_setting = scalar_subquery(
-    Query(models.GlobalSetting.id).order_by(models.GlobalSetting.id).limit(1)
+first_setting = (
+    Query(models.GlobalSetting.id)
+    .order_by(models.GlobalSetting.id)
+    .limit(1)
+    .scalar_subquery()
 )
 first_setting_filter = models.GlobalSetting.id == first_setting
-interflow_settings_id = scalar_subquery(
-    Query(models.GlobalSetting.interflow_settings_id).filter(first_setting_filter)
+interflow_settings_id = (
+    Query(models.GlobalSetting.interflow_settings_id)
+    .filter(first_setting_filter)
+    .scalar_subquery()
 )
 interflow_filter = models.Interflow.id == interflow_settings_id
-infiltration_settings_id = scalar_subquery(
-    Query(models.GlobalSetting.simple_infiltration_settings_id).filter(
-        first_setting_filter
-    )
+infiltration_settings_id = (
+    Query(models.GlobalSetting.simple_infiltration_settings_id)
+    .filter(first_setting_filter)
+    .scalar_subquery()
 )
 infiltration_filter = models.SimpleInfiltration.id == infiltration_settings_id
-groundwater_settings_id = scalar_subquery(
-    Query(models.GlobalSetting.groundwater_settings_id).filter(first_setting_filter)
+groundwater_settings_id = (
+    Query(models.GlobalSetting.groundwater_settings_id)
+    .filter(first_setting_filter)
+    .scalar_subquery()
 )
 groundwater_filter = models.GroundWater.id == groundwater_settings_id
 
@@ -129,7 +128,7 @@ CONDITIONS = {
     ),
 }
 
-kmax = scalar_subquery(Query(models.GlobalSetting.kmax).filter(first_setting_filter))
+kmax = Query(models.GlobalSetting.kmax).filter(first_setting_filter).scalar_subquery()
 
 
 CHECKS: List[BaseCheck] = []
