@@ -12,6 +12,15 @@ Changelog of threedi-modelchecker
   the reference level of the closest cross-section of any channel it is
   connected to. threedigrid-builder automatically fixes this, hence info
   instead of warning.
+- Rewrite command-line client. The ``--sqlite`` argument is now an argument of the
+  ``check`` command, not of the main ``threedi_modelchecker`` group. To run a check,
+  the new syntax is
+
+  ``threedi_modelchecker check -s <your database>.sqlite -l <desired check level>``
+
+- Add new command, ``export-checks``. This exports all checks executed by the model
+  checker as an RsT table or in CSV format, as specified by the optional ``--format``
+  argument. The check output can also be dumped to a file using ``--file``.
 
 - Compatibility fix with rasterio 1.3.6.
 

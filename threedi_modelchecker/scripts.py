@@ -1,29 +1,19 @@
 import click
 from threedi_schema import ThreediDatabase
+from threedi_schema.domain.models import DECLARED_MODELS
 
 from threedi_modelchecker import exporters
 from threedi_modelchecker.checks.base import CheckLevel
+from threedi_modelchecker.config import Config
 from threedi_modelchecker.model_checks import ThreediModelChecker
 
 
 @click.group()
-@click.option(
-    "-s",
-    "--sqlite",
-    type=click.Path(exists=True, readable=True),
-    help="Path to an sqlite (spatialite) file",
-    required=True,
-)
-@click.pass_context
-def main(ctx, sqlite):
-    """Checks the threedi-model for errors / warnings / info messages"""
-    ctx.ensure_object(dict)
-
-    db = ThreediDatabase(sqlite, echo=False)
-    ctx.obj["db"] = db
+def cli():
+    pass
 
 
-@main.command()
+@cli.command()
 @click.option("-f", "--file", help="Write errors to file, instead of stdout")
 @click.option(
     "-l",
@@ -32,8 +22,16 @@ def main(ctx, sqlite):
     default="ERROR",
     help="Minimum check level.",
 )
-@click.pass_context
-def check(ctx, file, level):
+@click.option(
+    "-s",
+    "--sqlite",
+    type=click.Path(exists=True, readable=True),
+    help="Path to an sqlite (spatialite) file",
+    required=True,
+)
+def check(sqlite, file, level):
+    """Checks the threedi-model for errors / warnings / info messages"""
+    db = ThreediDatabase(sqlite, echo=False)
     """Checks the threedi model schematisation for errors."""
     level = level.upper()
     if level == "ERROR":
@@ -46,7 +44,7 @@ def check(ctx, file, level):
     if file:
         click.echo("Model errors will be written to %s" % file)
 
-    mc = ThreediModelChecker(ctx.obj["db"])
+    mc = ThreediModelChecker(db)
     model_errors = mc.errors(level=level)
 
     if file:
@@ -57,5 +55,29 @@ def check(ctx, file, level):
     click.echo("Finished processing model")
 
 
+@cli.command()
+@click.option("-f", "--file", help="Write output to file, instead of stdout")
+@click.option(
+    "-ft",
+    "--format",
+    type=click.Choice(["rst", "csv"], case_sensitive=False),
+    default="rst",
+    help="Export format for checks table",
+)
+def export_checks(file, format):
+    """Export formatted checks summary to insert in documentation or use elsewhere"""
+    checks = Config(models=DECLARED_MODELS).checks
+
+    if format.lower() == "rst":
+        table = exporters.generate_rst_table(checks=checks)
+    elif format.lower() == "csv":
+        table = exporters.generate_csv_table(checks=checks)
+    if file:
+        with open(file, "w") as f:
+            f.write(table)
+    else:
+        click.echo(table)
+
+
 if __name__ == "__main__":
-    main()
+    check()
