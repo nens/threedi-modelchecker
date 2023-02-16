@@ -168,7 +168,7 @@ class ConnectionNodesDistance(BaseCheck):
         )
         results = (
             session.connection()
-            .execute(query, min_distance=self.minimum_distance)
+            .execute(query, {"min_distance": self.minimum_distance})
             .fetchall()
         )
 
