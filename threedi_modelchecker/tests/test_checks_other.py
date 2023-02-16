@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import aliased, Query
 from threedi_schema import constants, models
 
@@ -294,7 +294,7 @@ def test_spatial_index_ok(session):
 
 def test_spatial_index_disabled(empty_sqlite_v4):
     session = empty_sqlite_v4.get_session()
-    session.execute("SELECT DisableSpatialIndex('v2_connection_nodes', 'the_geom')")
+    session.execute(text("SELECT DisableSpatialIndex('v2_connection_nodes', 'the_geom')"))
     check = SpatialIndexCheck(models.ConnectionNode.the_geom)
     invalid = check.get_invalid(session)
     assert len(invalid) == 1
