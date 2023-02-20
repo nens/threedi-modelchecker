@@ -762,10 +762,7 @@ def test_check_only_first(session):
     factories.GlobalSettingsFactory(dem_obstacle_detection=False)
     factories.GlobalSettingsFactory(dem_obstacle_detection=True)
 
-    try:
-        active_settings = Query(models.GlobalSetting.id).limit(1).scalar_subquery()
-    except AttributeError:
-        active_settings = Query(models.GlobalSetting.id).limit(1).as_scalar()
+    active_settings = Query(models.GlobalSetting.id).limit(1).scalar_subquery()
 
     check = QueryCheck(
         error_code=302,

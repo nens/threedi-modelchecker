@@ -23,6 +23,7 @@ Changelog of threedi-modelchecker
   argument. The check output can also be dumped to a file using ``--file``.
 
 - Compatibility fix with rasterio 1.3.6.
+- Drop SQLAlchemy 1.3 support, add 2.0 support.
 
 
 1.0.1 (2023-02-02)

@@ -62,6 +62,6 @@ def id_func(param):
 @pytest.mark.filterwarnings("error::")
 @pytest.mark.parametrize("check", CHECKS, ids=id_func)
 def test_individual_checks(threedi_db, check):
-    session = threedi_db.get_session()
-    session.model_checker_context = LocalContext(base_path=threedi_db.base_path)
-    assert len(check.get_invalid(session)) == 0
+    with threedi_db.get_session() as session:
+        session.model_checker_context = LocalContext(base_path=threedi_db.base_path)
+        assert len(check.get_invalid(session)) == 0
