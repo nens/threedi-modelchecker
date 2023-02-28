@@ -25,6 +25,9 @@ Changelog of threedi-modelchecker
 - Compatibility fix with rasterio 1.3.6.
 - Drop SQLAlchemy 1.3 support, add 2.0 support.
 
+- Added groundwater 1D2D range checks for manholes, channels, and pipes for exchange
+  thickness, hydraulic conductivity in, and hydraulic conductivity out.
+
 
 1.0.1 (2023-02-02)
 ------------------
