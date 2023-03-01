@@ -1144,7 +1144,12 @@ CHECKS += [
         level=CheckLevel.INFO,
         column=models.SimpleInfiltration.id,
         invalid=Query(models.SimpleInfiltration)
-        .join(models.GlobalSetting, models.SimpleInfiltration.id == models.GlobalSetting.simple_infiltration_settings_id, isouter=True)
+        .join(
+            models.GlobalSetting,
+            models.SimpleInfiltration.id
+            == models.GlobalSetting.simple_infiltration_settings_id,
+            isouter=True,
+        )
         .where(models.GlobalSetting.simple_infiltration_settings_id == None),
         message="v2_simple_infiltration is defined, but not referred to in v2_global_settings.simple_infiltration_settings_id",
     ),
