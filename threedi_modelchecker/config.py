@@ -1139,15 +1139,23 @@ CHECKS += [
         ),
         message="v2_global_settings.interception_global is recommended as fallback value when using an interception_file.",
     ),
+]
+
+CHECKS += [
     QueryCheck(
         error_code=326,
-        level=CheckLevel.INFO,
-        column=models.SimpleInfiltration.id,
-        invalid=Query(models.SimpleInfiltration).filter(
-            models.SimpleInfiltration.id != Query(models.GlobalSetting.simple_infiltration_settings_id).filter(first_setting_filter).scalar_subquery()
+        column=table.id,
+        invalid=Query(table).filter(
+            table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
         ),
-        message="v2_simple_infiltration is defined, but not referred to in v2_global_settings.simple_infiltration_settings_id",
-    ),
+        message=f"{table.__tablename__} is defined, but not referred to in v2_global_settings.{setting.name}",
+    )
+    for table, setting in (
+        (models.SimpleInfiltration, models.GlobalSetting.simple_infiltration_settings_id),
+        (models.Interflow, models.GlobalSetting.interflow_settings_id),
+        (models.GroundWater, models.GlobalSetting.groundwater_settings_id),
+        (models.NumericalSettings, models.GlobalSetting.numerical_settings_id),
+    )
 ]
 
 CHECKS += [
