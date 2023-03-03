@@ -1158,6 +1158,7 @@ CHECKS += [
         (models.Interflow, models.GlobalSetting.interflow_settings_id),
         (models.GroundWater, models.GlobalSetting.groundwater_settings_id),
         (models.NumericalSettings, models.GlobalSetting.numerical_settings_id),
+        (models.ControlGroup, models.GlobalSetting.control_group_id),
     )
 ]
 
