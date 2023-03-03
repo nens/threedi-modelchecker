@@ -1151,7 +1151,10 @@ CHECKS += [
         message=f"{table.__tablename__} is defined, but not referred to in v2_global_settings.{setting.name}",
     )
     for table, setting in (
-        (models.SimpleInfiltration, models.GlobalSetting.simple_infiltration_settings_id),
+        (
+            models.SimpleInfiltration,
+            models.GlobalSetting.simple_infiltration_settings_id,
+        ),
         (models.Interflow, models.GlobalSetting.interflow_settings_id),
         (models.GroundWater, models.GlobalSetting.groundwater_settings_id),
         (models.NumericalSettings, models.GlobalSetting.numerical_settings_id),
