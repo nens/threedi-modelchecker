@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Set, Type
 
+from threedi_schema import models
+
 from threedi_modelchecker.interfaces import GDALRasterInterface, RasterInterface
 
 from .base import BaseCheck
@@ -156,6 +158,32 @@ class RasterIsProjectedCheck(BaseRasterCheck):
 
     def description(self):
         return f"The file in {self.column_name} does not use a projected CRS."
+
+
+class RasterHasMatchingEPSGCheck(BaseRasterCheck):
+    """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite.
+
+    Only works locally.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_invalid(self, session):
+        epsg_code_query = session.query(models.GlobalSetting.epsg_code).first()
+        if epsg_code_query is not None:
+            self.epsg_code = epsg_code_query[0]
+        else:
+            self.epsg_code = None
+        return super().get_invalid(session)
+
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
+            raster_epsg_code = raster.epsg_code
+            return raster_epsg_code == self.epsg_code
+
+    def description(self):
+        return f"The EPSG code for the file in {self.column_name} does not match the EPSG code in the Spatialite schematisation."
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):
