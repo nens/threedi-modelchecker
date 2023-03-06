@@ -7,6 +7,7 @@ from threedi_modelchecker.checks.raster import (
     GDALAvailableCheck,
     LocalContext,
     RasterExistsCheck,
+    RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
     RasterHasProjectionCheck,
     RasterIsProjectedCheck,
@@ -236,6 +237,20 @@ def test_has_projection_err(tmp_path, interface_cls):
     path = create_geotiff(tmp_path / "raster.tiff", epsg=None)
     check = RasterHasProjectionCheck(column=models.GlobalSetting.dem_file)
     assert not check.is_valid(path, interface_cls)
+
+
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+@pytest.mark.parametrize(
+    "raster_epsg, sqlite_epsg, validity",
+    [(28992, 28992, True), (28992, 1, False), (None, None, True), (None, 1, False)],
+)
+def test_has_epsg(tmp_path, interface_cls, raster_epsg, sqlite_epsg, validity):
+    path = create_geotiff(tmp_path / "raster.tiff", epsg=raster_epsg)
+    check = RasterHasMatchingEPSGCheck(column=models.GlobalSetting.dem_file)
+    check.epsg_code = sqlite_epsg
+    assert check.is_valid(path, interface_cls) == validity
 
 
 @pytest.mark.parametrize(
