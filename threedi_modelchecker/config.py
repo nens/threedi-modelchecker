@@ -1142,6 +1142,28 @@ CHECKS += [
 ]
 
 CHECKS += [
+    QueryCheck(
+        error_code=326,
+        level=CheckLevel.INFO,
+        column=table.id,
+        invalid=Query(table).filter(
+            table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
+        ),
+        message=f"{table.__tablename__} is defined, but not referred to in v2_global_settings.{setting.name}",
+    )
+    for table, setting in (
+        (
+            models.SimpleInfiltration,
+            models.GlobalSetting.simple_infiltration_settings_id,
+        ),
+        (models.Interflow, models.GlobalSetting.interflow_settings_id),
+        (models.GroundWater, models.GlobalSetting.groundwater_settings_id),
+        (models.NumericalSettings, models.GlobalSetting.numerical_settings_id),
+        (models.ControlGroup, models.GlobalSetting.control_group_id),
+    )
+]
+
+CHECKS += [
     AllEqualCheck(error_code=330 + i, column=column, level=CheckLevel.WARNING)
     for i, column in enumerate(
         [
