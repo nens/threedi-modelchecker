@@ -1144,6 +1144,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=326,
+        level=CheckLevel.INFO,
         column=table.id,
         invalid=Query(table).filter(
             table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
