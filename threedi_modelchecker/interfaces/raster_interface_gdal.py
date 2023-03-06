@@ -53,7 +53,10 @@ class GDALRasterInterface(RasterInterface):
 
     @property
     def epsg_code(self):
-        code = self._spatial_reference.GetAuthorityCode("PROJCS")
+        sr = self._spatial_reference
+        if sr is None:
+            return None
+        code = sr.GetAuthorityCode("PROJCS")
         return int(code) if code is not None else None
 
     @property

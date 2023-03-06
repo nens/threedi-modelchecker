@@ -49,7 +49,7 @@ class RasterIORasterInterface(RasterInterface):
 
     @property
     def epsg_code(self):
-        return self._dataset.crs.to_epsg()
+        return self._dataset.crs.to_epsg() if self._dataset.crs is not None else None
 
     @property
     def pixel_size(self):
