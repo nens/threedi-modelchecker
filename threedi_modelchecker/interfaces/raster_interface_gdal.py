@@ -32,7 +32,8 @@ class GDALRasterInterface(RasterInterface):
 
     @property
     def _spatial_reference(self):
-        projection = self._dataset.GetProjection()
+        dataset = self._dataset
+        projection = None if dataset == None else dataset.GetProjection()
         if projection:
             return osr.SpatialReference(projection)
 
