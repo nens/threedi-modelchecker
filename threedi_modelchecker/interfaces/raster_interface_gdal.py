@@ -48,16 +48,17 @@ class GDALRasterInterface(RasterInterface):
         return self._dataset.RasterCount
 
     @property
-    def is_geographic(self) -> Optional[bool]:
+    def has_projection(self) -> bool:
+        return self._spatial_reference is not None
+
+    @property
+    def is_geographic(self) -> bool:
         sr = self._spatial_reference
-        return None if sr is None else bool(sr.IsGeographic())
+        return bool(sr.IsGeographic())
 
     @property
     def epsg_code(self):
-        sr = self._spatial_reference
-        if sr is None:
-            return None
-        code = sr.GetAuthorityCode("PROJCS")
+        code = self._spatial_reference.GetAuthorityCode("PROJCS")
         return int(code) if code is not None else None
 
     @property

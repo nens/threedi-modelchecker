@@ -244,7 +244,7 @@ def test_has_projection_err(tmp_path, interface_cls):
 )
 @pytest.mark.parametrize(
     "raster_epsg, sqlite_epsg, validity",
-    [(28992, 28992, True), (28992, 1, False), (None, None, True), (None, 1, False)],
+    [(28992, 28992, True), (28992, 1, False), (None, None, False), (None, 1, False)],
 )
 def test_has_epsg(tmp_path, interface_cls, raster_epsg, sqlite_epsg, validity):
     path = create_geotiff(tmp_path / "raster.tiff", epsg=raster_epsg)
@@ -354,6 +354,7 @@ def test_raster_range_no_data(tmp_path, interface_cls):
     [
         RasterHasOneBandCheck(column=models.GlobalSetting.dem_file),
         RasterHasProjectionCheck(column=models.GlobalSetting.dem_file),
+        RasterHasMatchingEPSGCheck(column=models.GlobalSetting.dem_file),
         RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
         RasterSquareCellsCheck(column=models.GlobalSetting.dem_file),
         RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),

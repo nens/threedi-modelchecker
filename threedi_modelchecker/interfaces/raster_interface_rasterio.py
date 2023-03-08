@@ -42,14 +42,20 @@ class RasterIORasterInterface(RasterInterface):
         return self._dataset.count
 
     @property
-    def is_geographic(self) -> Optional[bool]:
+    def has_projection(self) -> bool:
         return (
-            self._dataset.crs.is_geographic if self._dataset is not None and self._dataset.crs is not None else False
+            self._dataset.crs is not None
+        )
+    
+    @property
+    def is_geographic(self) -> bool:
+        return (
+            self._dataset.crs.is_geographic
         )
 
     @property
-    def epsg_code(self):
-        return self._dataset.crs.to_epsg() if self._dataset is not None and self._dataset.crs is not None else None
+    def epsg_code(self) -> Optional[int]:
+        return self._dataset.crs.to_epsg()
 
     @property
     def pixel_size(self):
