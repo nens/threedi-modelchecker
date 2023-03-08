@@ -42,7 +42,7 @@ class RasterInterface(ABC):
     @abstractproperty
     def has_projection(self) -> bool:
         pass
-    
+
     @abstractproperty
     def is_geographic(self) -> bool:
         pass

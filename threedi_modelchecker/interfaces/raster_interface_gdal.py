@@ -1,5 +1,3 @@
-from typing import Optional
-
 from .raster_interface import RasterInterface
 
 try:
