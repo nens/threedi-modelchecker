@@ -334,6 +334,7 @@ def test_square_cells_rounding(tmp_path, interface_cls):
 @pytest.mark.parametrize(
     "raster_pixel_size, sqlite_grid_space, validity",
     [
+        (2, 7, False),
         (2, 4, True),
         (2, 3, False),
         (2, 0, False),
