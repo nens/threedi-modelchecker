@@ -184,7 +184,7 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
             return raster.epsg_code == self.epsg_code
 
     def description(self):
-        return f"The EPSG code for the file in {self.column_name} does not match the EPSG code in the Spatialite schematisation."
+        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match v2_global_settings.epsg_code"
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):
