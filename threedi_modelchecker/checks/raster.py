@@ -227,15 +227,13 @@ class RasterGridSizeCheck(BaseRasterCheck):
         with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
-            if raster.pixel_size is None:
-                return False
             # the x pixel size is used here,but it is equal to the y pixel size
             return ((self.grid_space / raster.pixel_size[0]) % 2 == 0) and (
                 self.grid_space >= (2 * raster.pixel_size[0])
             )
 
     def description(self):
-        return f"The cell size for the file in {self.column_name} is undefined, or the global grid space is not a positive even multiple of the file's cell size."
+        return f"{self.column_name} is not a positive even multiple of the raster cell size."
 
 
 class RasterRangeCheck(BaseRasterCheck):
