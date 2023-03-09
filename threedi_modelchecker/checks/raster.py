@@ -100,8 +100,6 @@ class RasterExistsCheck(BaseRasterCheck):
 
 class RasterIsValidCheck(BaseRasterCheck):
     """Check whether a file is a geotiff.
-
-    Only works locally.
     """
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
@@ -114,8 +112,6 @@ class RasterIsValidCheck(BaseRasterCheck):
 
 class RasterHasOneBandCheck(BaseRasterCheck):
     """Check whether a raster has a single band.
-
-    Only works locally.
     """
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
@@ -130,8 +126,6 @@ class RasterHasOneBandCheck(BaseRasterCheck):
 
 class RasterHasProjectionCheck(BaseRasterCheck):
     """Check whether a raster has a projected coordinate system.
-
-    Only works locally.
     """
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
@@ -146,8 +140,6 @@ class RasterHasProjectionCheck(BaseRasterCheck):
 
 class RasterIsProjectedCheck(BaseRasterCheck):
     """Check whether a raster has a projected coordinate system.
-
-    Only works locally.
     """
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
@@ -162,8 +154,6 @@ class RasterIsProjectedCheck(BaseRasterCheck):
 
 class RasterHasMatchingEPSGCheck(BaseRasterCheck):
     """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite.
-
-    Only works locally.
     """
 
     def get_invalid(self, session):
@@ -188,8 +178,6 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
 
 class RasterSquareCellsCheck(BaseRasterCheck):
     """Check whether a raster has square cells (pixels)
-
-    Only works locally.
     """
 
     def __init__(self, *args, decimals=7, **kwargs):
@@ -211,8 +199,6 @@ class RasterSquareCellsCheck(BaseRasterCheck):
 
 class RasterGridSizeCheck(BaseRasterCheck):
     """Check whether the global settings' grid size is an even multiple of a raster's cell size (at least 2x).
-
-    Only works locally.
     """
 
     def get_invalid(self, session):
@@ -239,7 +225,7 @@ class RasterGridSizeCheck(BaseRasterCheck):
 class RasterRangeCheck(BaseRasterCheck):
     """Check whether a raster has values outside of provided range.
 
-    Also fails when there are no values in the raster. Only works locally.
+    Also fails when there are no values in the raster.
     """
 
     def __init__(
