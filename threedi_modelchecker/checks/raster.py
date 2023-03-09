@@ -176,7 +176,6 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         with interface_cls(path) as raster:
-            pass
             if not raster.is_valid_geotiff or not raster.has_projection:
                 return True
             if self.epsg_code is None or raster.epsg_code is None:
@@ -208,6 +207,31 @@ class RasterSquareCellsCheck(BaseRasterCheck):
 
     def description(self):
         return f"The raster in {self.column_name} has non-square raster cells."
+
+
+class RasterGridSizeCheck(BaseRasterCheck):
+    """Check whether the global settings' grid size is an even multiple of a raster's cell size (at least 2x).
+
+    Only works locally.
+    """
+
+    def get_invalid(self, session):
+        self.grid_space = session.query(models.GlobalSetting.grid_space).first()[0]
+        return super().get_invalid(session)
+
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
+            if not raster.is_valid_geotiff:
+                return True
+            if raster.pixel_size is None:
+                return False
+            # the x pixel size is used here,but it is equal to the y pixel size
+            return ((self.grid_space / raster.pixel_size[0]) % 2 == 0) and (
+                self.grid_space >= (2 * raster.pixel_size[0])
+            )
+
+    def description(self):
+        return f"The cell size for the file in {self.column_name} is undefined, or the global grid space is not a positive even multiple of the file's cell size."
 
 
 class RasterRangeCheck(BaseRasterCheck):
