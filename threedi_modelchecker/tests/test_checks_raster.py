@@ -7,6 +7,7 @@ from threedi_modelchecker.checks.raster import (
     GDALAvailableCheck,
     LocalContext,
     RasterExistsCheck,
+    RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
     RasterHasProjectionCheck,
     RasterIsProjectedCheck,
@@ -66,7 +67,11 @@ def create_geotiff(
         str(path), width, height, bands, gdal.GDT_Byte
     )
     if epsg is not None:
-        ds.SetProjection(osr.GetUserInputAsWKT(f"EPSG:{epsg}"))
+        if isinstance(epsg, int):
+            wkt = osr.GetUserInputAsWKT(f"EPSG:{epsg}")
+        else:
+            wkt = epsg
+        ds.SetProjection(wkt)
     ds.SetGeoTransform((155000.0, dx, 0, 463000.0, 0, -dy))
     band = ds.GetRasterBand(1)
     band.SetNoDataValue(255)
@@ -238,6 +243,36 @@ def test_has_projection_err(tmp_path, interface_cls):
     assert not check.is_valid(path, interface_cls)
 
 
+NULL_EPSG_CODE = (
+    'PROJCS["unnamed",GEOGCS["GRS 1980(IUGG, 1980)"'
+    + ',DATUM["unknown",SPHEROID["GRS80",6378137,298.257222101]],'
+    + 'PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],'
+    + 'PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",-18],'
+    + 'PARAMETER["standard_parallel_2",-36],PARAMETER["latitude_of_center",-33.264],'
+    + 'PARAMETER["longitude_of_center",150.874],PARAMETER["false_easting",0],'
+    + 'PARAMETER["false_northing",0],UNIT["kilometre",1000]]'
+)
+
+
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+@pytest.mark.parametrize(
+    "raster_epsg, sqlite_epsg, validity",
+    [
+        (28992, 28992, True),
+        (28992, 27700, False),
+        (NULL_EPSG_CODE, 28992, False),
+        (27700, None, False),
+    ],
+)
+def test_has_epsg(tmp_path, interface_cls, raster_epsg, sqlite_epsg, validity):
+    path = create_geotiff(tmp_path / "raster.tiff", epsg=raster_epsg)
+    check = RasterHasMatchingEPSGCheck(column=models.GlobalSetting.dem_file)
+    check.epsg_code = sqlite_epsg
+    assert check.is_valid(path, interface_cls) == validity
+
+
 @pytest.mark.parametrize(
     "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
 )
@@ -339,6 +374,7 @@ def test_raster_range_no_data(tmp_path, interface_cls):
     [
         RasterHasOneBandCheck(column=models.GlobalSetting.dem_file),
         RasterHasProjectionCheck(column=models.GlobalSetting.dem_file),
+        RasterHasMatchingEPSGCheck(column=models.GlobalSetting.dem_file),
         RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
         RasterSquareCellsCheck(column=models.GlobalSetting.dem_file),
         RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),

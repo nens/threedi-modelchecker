@@ -54,6 +54,7 @@ from .checks.other import (
 from .checks.raster import (
     GDALAvailableCheck,
     RasterExistsCheck,
+    RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
     RasterHasProjectionCheck,
     RasterIsProjectedCheck,
@@ -1838,6 +1839,12 @@ CHECKS += [
         & (models.GlobalSetting.groundwater_settings_id != None),
         min_value=-9998.0,
         max_value=8848.0,
+    ),
+    RasterHasMatchingEPSGCheck(
+        error_code=797,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
     ),
 ]
 

@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Set, Type
 
+from threedi_schema import models
+
 from threedi_modelchecker.interfaces import GDALRasterInterface, RasterInterface
 
 from .base import BaseCheck
@@ -136,7 +138,7 @@ class RasterHasProjectionCheck(BaseRasterCheck):
         with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
-            return raster.is_geographic is not None
+            return raster.has_projection
 
     def description(self):
         return f"The file in {self.column_name} has no CRS."
@@ -150,12 +152,39 @@ class RasterIsProjectedCheck(BaseRasterCheck):
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         with interface_cls(path) as raster:
-            if not raster.is_valid_geotiff:
+            if not raster.is_valid_geotiff or not raster.has_projection:
                 return True
-            return raster.is_geographic is not True
+            return not raster.is_geographic
 
     def description(self):
         return f"The file in {self.column_name} does not use a projected CRS."
+
+
+class RasterHasMatchingEPSGCheck(BaseRasterCheck):
+    """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite.
+
+    Only works locally.
+    """
+
+    def get_invalid(self, session):
+        epsg_code_query = session.query(models.GlobalSetting.epsg_code).first()
+        if epsg_code_query is not None:
+            self.epsg_code = epsg_code_query[0]
+        else:
+            self.epsg_code = None
+        return super().get_invalid(session)
+
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
+            pass
+            if not raster.is_valid_geotiff or not raster.has_projection:
+                return True
+            if self.epsg_code is None or raster.epsg_code is None:
+                return False
+            return raster.epsg_code == self.epsg_code
+
+    def description(self):
+        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match v2_global_settings.epsg_code"
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):
