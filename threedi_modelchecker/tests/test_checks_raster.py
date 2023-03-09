@@ -67,7 +67,11 @@ def create_geotiff(
         str(path), width, height, bands, gdal.GDT_Byte
     )
     if epsg is not None:
-        ds.SetProjection(osr.GetUserInputAsWKT(f"EPSG:{epsg}"))
+        if isinstance(epsg, int):
+            wkt = osr.GetUserInputAsWKT(f"EPSG:{epsg}")
+        else:
+            wkt = epsg
+        ds.SetProjection(wkt)
     ds.SetGeoTransform((155000.0, dx, 0, 463000.0, 0, -dy))
     band = ds.GetRasterBand(1)
     band.SetNoDataValue(255)
@@ -239,12 +243,32 @@ def test_has_projection_err(tmp_path, interface_cls):
     assert not check.is_valid(path, interface_cls)
 
 
+NULL_EPSG_CODE = (
+    'PROJCS["Amersfoort / RD New",'
+    + 'GEOGCS["Amersfoort",DATUM["Amersfoort",'
+    + 'SPHEROID["Bessel 1841",6377397.155,299.1528128,AUTHORITY["EPSG","7004"]],'
+    + 'AUTHORITY["EPSG","6289"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],'
+    + 'UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],'
+    + 'AUTHORITY["EPSG","4289"]],PROJECTION["Oblique_Stereographic"],'
+    + 'PARAMETER["latitude_of_origin",52.1561605555556],'
+    + 'PARAMETER["central_meridian",5.38763888888889],'
+    + 'PARAMETER["scale_factor",0.9999079],PARAMETER["false_easting",155000],'
+    + 'PARAMETER["false_northing",463000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],'
+    + 'AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+)
+
+
 @pytest.mark.parametrize(
     "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
 )
 @pytest.mark.parametrize(
     "raster_epsg, sqlite_epsg, validity",
-    [(28992, 28992, True), (28992, 1, False), (None, None, False), (None, 1, False)],
+    [
+        (28992, 28992, True),
+        (28992, 27700, False),
+        (NULL_EPSG_CODE, 28992, False),
+        (27700, None, False),
+    ],
 )
 def test_has_epsg(tmp_path, interface_cls, raster_epsg, sqlite_epsg, validity):
     path = create_geotiff(tmp_path / "raster.tiff", epsg=raster_epsg)
