@@ -99,10 +99,7 @@ class RasterExistsCheck(BaseRasterCheck):
 
 
 class RasterIsValidCheck(BaseRasterCheck):
-    """Check whether a file is a geotiff.
-
-    Only works locally.
-    """
+    """Check whether a file is a geotiff."""
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         with interface_cls(path) as raster:
@@ -113,10 +110,7 @@ class RasterIsValidCheck(BaseRasterCheck):
 
 
 class RasterHasOneBandCheck(BaseRasterCheck):
-    """Check whether a raster has a single band.
-
-    Only works locally.
-    """
+    """Check whether a raster has a single band."""
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         with interface_cls(path) as raster:
@@ -129,10 +123,7 @@ class RasterHasOneBandCheck(BaseRasterCheck):
 
 
 class RasterHasProjectionCheck(BaseRasterCheck):
-    """Check whether a raster has a projected coordinate system.
-
-    Only works locally.
-    """
+    """Check whether a raster has a projected coordinate system."""
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         with interface_cls(path) as raster:
@@ -145,10 +136,7 @@ class RasterHasProjectionCheck(BaseRasterCheck):
 
 
 class RasterIsProjectedCheck(BaseRasterCheck):
-    """Check whether a raster has a projected coordinate system.
-
-    Only works locally.
-    """
+    """Check whether a raster has a projected coordinate system."""
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         with interface_cls(path) as raster:
@@ -161,10 +149,7 @@ class RasterIsProjectedCheck(BaseRasterCheck):
 
 
 class RasterHasMatchingEPSGCheck(BaseRasterCheck):
-    """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite.
-
-    Only works locally.
-    """
+    """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite."""
 
     def get_invalid(self, session):
         epsg_code_query = session.query(models.GlobalSetting.epsg_code).first()
@@ -176,7 +161,6 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         with interface_cls(path) as raster:
-            pass
             if not raster.is_valid_geotiff or not raster.has_projection:
                 return True
             if self.epsg_code is None or raster.epsg_code is None:
@@ -188,10 +172,7 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):
-    """Check whether a raster has square cells (pixels)
-
-    Only works locally.
-    """
+    """Check whether a raster has square cells (pixels)"""
 
     def __init__(self, *args, decimals=7, **kwargs):
         super().__init__(*args, **kwargs)
@@ -210,10 +191,34 @@ class RasterSquareCellsCheck(BaseRasterCheck):
         return f"The raster in {self.column_name} has non-square raster cells."
 
 
+class RasterGridSizeCheck(BaseRasterCheck):
+    """Check whether the global settings' grid size is an even multiple of a raster's cell size (at least 2x)."""
+
+    def get_invalid(self, session):
+        grid_space_query = session.query(models.GlobalSetting.grid_space).first()
+        if grid_space_query is not None:
+            self.grid_space = grid_space_query[0]
+        else:
+            return []
+        return super().get_invalid(session)
+
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
+            if not raster.is_valid_geotiff:
+                return True
+            # the x pixel size is used here,but it is equal to the y pixel size
+            return ((self.grid_space / raster.pixel_size[0]) % 2 == 0) and (
+                self.grid_space >= (2 * raster.pixel_size[0])
+            )
+
+    def description(self):
+        return "v2_global_settings.grid_space is not a positive even multiple of the raster cell size."
+
+
 class RasterRangeCheck(BaseRasterCheck):
     """Check whether a raster has values outside of provided range.
 
-    Also fails when there are no values in the raster. Only works locally.
+    Also fails when there are no values in the raster.
     """
 
     def __init__(

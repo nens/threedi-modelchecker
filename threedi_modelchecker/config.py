@@ -54,6 +54,7 @@ from .checks.other import (
 from .checks.raster import (
     GDALAvailableCheck,
     RasterExistsCheck,
+    RasterGridSizeCheck,
     RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
     RasterHasProjectionCheck,
@@ -1843,6 +1844,11 @@ CHECKS += [
     RasterHasMatchingEPSGCheck(
         error_code=797,
         level=CheckLevel.WARNING,
+        column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
+    ),
+    RasterGridSizeCheck(
+        error_code=798,
         column=models.GlobalSetting.dem_file,
         filters=first_setting_filter,
     ),

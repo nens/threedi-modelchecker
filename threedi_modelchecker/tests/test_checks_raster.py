@@ -7,6 +7,7 @@ from threedi_modelchecker.checks.raster import (
     GDALAvailableCheck,
     LocalContext,
     RasterExistsCheck,
+    RasterGridSizeCheck,
     RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
     RasterHasProjectionCheck,
@@ -330,6 +331,30 @@ def test_square_cells_rounding(tmp_path, interface_cls):
 @pytest.mark.parametrize(
     "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
 )
+@pytest.mark.parametrize(
+    "raster_pixel_size, sqlite_grid_space, validity",
+    [
+        (2, 7, False),
+        (2, 4, True),
+        (2, 3, False),
+        (2, 0, False),
+        (2, -4, False),
+    ],
+)
+def test_raster_grid_size(
+    tmp_path, interface_cls, raster_pixel_size, sqlite_grid_space, validity
+):
+    path = create_geotiff(
+        tmp_path / "raster.tiff", dx=raster_pixel_size, dy=raster_pixel_size
+    )
+    check = RasterGridSizeCheck(column=models.GlobalSetting.dem_file)
+    check.grid_space = sqlite_grid_space
+    assert check.is_valid(path, interface_cls) == validity
+
+
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
 def test_raster_range_ok(valid_geotiff, interface_cls):
     check = RasterRangeCheck(
         column=models.GlobalSetting.dem_file, min_value=0, max_value=5
@@ -377,6 +402,7 @@ def test_raster_range_no_data(tmp_path, interface_cls):
         RasterHasMatchingEPSGCheck(column=models.GlobalSetting.dem_file),
         RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
         RasterSquareCellsCheck(column=models.GlobalSetting.dem_file),
+        RasterGridSizeCheck(column=models.GlobalSetting.dem_file),
         RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),
     ],
 )
