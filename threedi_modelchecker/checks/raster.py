@@ -212,7 +212,7 @@ class RasterGridSizeCheck(BaseRasterCheck):
             )
 
     def description(self):
-        return f"{self.column_name} is not a positive even multiple of the raster cell size."
+        return f"v2_global_settings.grid_space is not a positive even multiple of the raster cell size."
 
 
 class RasterRangeCheck(BaseRasterCheck):

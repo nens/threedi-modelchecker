@@ -1849,7 +1849,7 @@ CHECKS += [
     ),
     RasterGridSizeCheck(
         error_code=798,
-        column=models.GlobalSetting.grid_space,
+        column=models.GlobalSetting.dem_file,
         filters=first_setting_filter,
     ),
 ]
