@@ -244,17 +244,13 @@ def test_has_projection_err(tmp_path, interface_cls):
 
 
 NULL_EPSG_CODE = (
-    'PROJCS["Amersfoort / RD New",'
-    + 'GEOGCS["Amersfoort",DATUM["Amersfoort",'
-    + 'SPHEROID["Bessel 1841",6377397.155,299.1528128,AUTHORITY["EPSG","7004"]],'
-    + 'AUTHORITY["EPSG","6289"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],'
-    + 'UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],'
-    + 'AUTHORITY["EPSG","4289"]],PROJECTION["Oblique_Stereographic"],'
-    + 'PARAMETER["latitude_of_origin",52.1561605555556],'
-    + 'PARAMETER["central_meridian",5.38763888888889],'
-    + 'PARAMETER["scale_factor",0.9999079],PARAMETER["false_easting",155000],'
-    + 'PARAMETER["false_northing",463000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],'
-    + 'AXIS["Easting",EAST],AXIS["Northing",NORTH]]'
+    'PROJCS["unnamed",GEOGCS["GRS 1980(IUGG, 1980)"'
+    + ',DATUM["unknown",SPHEROID["GRS80",6378137,298.257222101]],'
+    + 'PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],'
+    + 'PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",-18],'
+    + 'PARAMETER["standard_parallel_2",-36],PARAMETER["latitude_of_center",-33.264],'
+    + 'PARAMETER["longitude_of_center",150.874],PARAMETER["false_easting",0],'
+    + 'PARAMETER["false_northing",0],UNIT["kilometre",1000]]'
 )
 
 
