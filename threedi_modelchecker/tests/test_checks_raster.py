@@ -346,7 +346,7 @@ def test_raster_grid_size(
     path = create_geotiff(
         tmp_path / "raster.tiff", dx=raster_pixel_size, dy=raster_pixel_size
     )
-    check = RasterGridSizeCheck(column=models.GlobalSetting.dem_file)
+    check = RasterGridSizeCheck(column=models.GlobalSetting.grid_space)
     check.grid_space = sqlite_grid_space
     assert check.is_valid(path, interface_cls) == validity
 
@@ -401,6 +401,7 @@ def test_raster_range_no_data(tmp_path, interface_cls):
         RasterHasMatchingEPSGCheck(column=models.GlobalSetting.dem_file),
         RasterIsProjectedCheck(column=models.GlobalSetting.dem_file),
         RasterSquareCellsCheck(column=models.GlobalSetting.dem_file),
+        RasterGridSizeCheck(column=models.GlobalSetting.grid_space),
         RasterRangeCheck(column=models.GlobalSetting.dem_file, min_value=0),
     ],
 )

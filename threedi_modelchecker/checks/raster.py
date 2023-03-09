@@ -216,7 +216,11 @@ class RasterGridSizeCheck(BaseRasterCheck):
     """
 
     def get_invalid(self, session):
-        self.grid_space = session.query(models.GlobalSetting.grid_space).first()[0]
+        grid_space_query = session.query(models.GlobalSetting.grid_space).first()
+        if grid_space_query is not None:
+            self.grid_space = grid_space_query[0]
+        else:
+            return []
         return super().get_invalid(session)
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
