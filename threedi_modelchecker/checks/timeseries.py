@@ -96,7 +96,10 @@ class TimeseriesValueCheck(BaseCheck):
                     invalid_timeseries.append(row)
 
                 # do not check timeseries for lateral 1d
-                if self.column_name in ["v2_1d_boundary_conditions.timeseries", "v2_2d_boundary_conditions.timeseries"]:
+                if self.column_name in [
+                    "v2_1d_boundary_conditions.timeseries",
+                    "v2_2d_boundary_conditions.timeseries",
+                ]:
                     if str(value) == "":
                         invalid_timeseries.append(row)
 
