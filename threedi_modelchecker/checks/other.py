@@ -507,7 +507,7 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
 
 
 class PumpStorageTimestepCheck(BaseCheck):
-    """Checks whether a will empty its storage area within one timestep"""
+    """Check that a pumpstation will not empty its storage area within one timestep"""
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         return (
@@ -519,7 +519,7 @@ class PumpStorageTimestepCheck(BaseCheck):
             .filter(
                 (models.ConnectionNode.storage_area != None)
                 & (
-                    (
+                    (  # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
                         (
                             models.ConnectionNode.storage_area
                             * (
