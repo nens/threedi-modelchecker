@@ -70,7 +70,7 @@ class TimeseriesTimestepCheck(BaseCheck):
 
 
 class TimeseriesValueCheck(BaseCheck):
-    """Check that each record in a timeserie ends with a float"""
+    """Check that each record in a timeserie ends with a float and, if part of a boundary condition, is not an invalid or empty string"""
 
     def get_invalid(self, session):
         invalid_timeseries = []
@@ -94,6 +94,11 @@ class TimeseriesValueCheck(BaseCheck):
 
                 if str(value) in {"nan", "inf", "-inf"}:
                     invalid_timeseries.append(row)
+
+                # do not check timeseries for lateral 1d
+                if self.column_name in ["v2_1d_boundary_conditions.timeseries", "v2_2d_boundary_conditions.timeseries"]:
+                    if str(value) == "":
+                        invalid_timeseries.append(row)
 
         return invalid_timeseries
 
