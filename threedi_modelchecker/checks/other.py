@@ -504,3 +504,38 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
 
     def description(self) -> str:
         return f"{self.column_name} must be more than {self.min_distance} m apart (or exactly on the same position)"
+
+
+class PumpStorageTimestepCheck(BaseCheck):
+    """Checks whether a will empty its storage area within one timestep"""
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        return (
+            session.query(models.Pumpstation)
+            .join(
+                models.ConnectionNode,
+                models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+            )
+            .filter(
+                (models.ConnectionNode.storage_area != None)
+                & (
+                    (
+                        (
+                            models.ConnectionNode.storage_area
+                            * (
+                                models.Pumpstation.start_level
+                                - models.Pumpstation.lower_stop_level
+                            )
+                        )
+                        / models.Pumpstation.capacity
+                    )
+                    < Query(models.GlobalSetting.sim_time_step)
+                    .filter(models.GlobalSetting.id == 1)
+                    .scalar_subquery()
+                )
+            )
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"{self.column_name} will empty its storage faster than one timestep, which can cause simulation instabilities"

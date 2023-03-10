@@ -48,6 +48,7 @@ from .checks.other import (
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
+    PumpStorageTimestepCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
 )
@@ -332,36 +333,10 @@ CHECKS += [
         invalid=Query(models.Pumpstation).filter(models.Pumpstation.capacity == 0.0),
         message="v2_pumpstation.capacity should be be greater than 0",
     ),
-    QueryCheck(
+    PumpStorageTimestepCheck(
         error_code=66,
         level=CheckLevel.WARNING,
         column=models.Pumpstation.capacity,
-        invalid=Query(models.Pumpstation)
-        .join(
-            models.ConnectionNode,
-            models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
-        )
-        .filter(
-            (models.ConnectionNode.storage_area != None)
-            & (
-                (
-                    (
-                        models.ConnectionNode.storage_area
-                        * (
-                            models.Pumpstation.start_level
-                            - models.Pumpstation.lower_stop_level
-                        )
-                    )
-                    / models.Pumpstation.capacity
-                )
-                < (
-                    Query(models.GlobalSetting.sim_time_step)
-                    .filter(first_setting_filter)
-                    .scalar_subquery()
-                )
-            )
-        ),
-        message="v2_pumpstation will empty its storage faster than one timestep, which can cause simulation instabilities",
     ),
 ]
 
