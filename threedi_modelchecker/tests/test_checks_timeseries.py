@@ -75,7 +75,7 @@ def test_timeseries_value_check_ok(session, timeseries):
     assert len(invalid) == 0
 
 
-@pytest.mark.parametrize("timeseries", ["1,foo", "1,nan", "1,inf"])
+@pytest.mark.parametrize("timeseries", ["1,foo", "1,nan", "1,inf", "1,''"])
 def test_timeseries_value_check_error(session, timeseries):
     BoundaryConditions2DFactory(timeseries=timeseries)
 
