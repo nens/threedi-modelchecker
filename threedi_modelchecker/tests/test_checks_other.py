@@ -12,6 +12,7 @@ from threedi_modelchecker.checks.other import (
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
+    PumpStorageTimestepCheck,
     SpatialIndexCheck,
 )
 
@@ -366,3 +367,26 @@ def test_potential_breach_interdistance_other_channel(session):
     )
     invalid = check.get_invalid(session)
     assert len(invalid) == 0
+
+
+@pytest.mark.parametrize(
+    "storage_area,time_step,expected_result",
+    [
+        (0.64, 30, 1),
+        (600, 30, 0),
+    ],
+)
+def test_pumpstation_storage_timestep(
+    session, storage_area, time_step, expected_result
+):
+    connection_node = factories.ConnectionNodeFactory(storage_area=storage_area)
+    factories.PumpstationFactory(
+        connection_node_start=connection_node,
+        start_level=-4,
+        lower_stop_level=-4.78,
+        capacity=12.5,
+    )
+    factories.GlobalSettingsFactory(sim_time_step=time_step)
+    check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
