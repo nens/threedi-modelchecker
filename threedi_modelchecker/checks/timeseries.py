@@ -92,7 +92,7 @@ class TimeseriesValueCheck(BaseCheck):
                     invalid_timeseries.append(row)
                     continue
 
-                if str(value) in {"nan", "inf", "-inf", ""}:
+                if str(value) in {"nan", "inf", "-inf"}:
                     invalid_timeseries.append(row)
 
         return invalid_timeseries
