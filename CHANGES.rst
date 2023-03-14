@@ -29,6 +29,8 @@ Changelog of threedi-modelchecker
 - Add check 326: this gives an info message if a record exists in the simple_infiltration
   table, but is not referenced from the global settings.
 
+- Add check 1205 to make sure that a timeseries is not an empty string.
+
 
 1.0.1 (2023-02-02)
 ------------------

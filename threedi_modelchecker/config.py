@@ -64,6 +64,7 @@ from .checks.raster import (
     RasterSquareCellsCheck,
 )
 from .checks.timeseries import (
+    TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
     TimeseriesRowCheck,
     TimeseriesStartsAtZeroCheck,
@@ -2132,6 +2133,13 @@ CHECKS += [
 ]
 CHECKS += [
     TimeseriesStartsAtZeroCheck(col, error_code=1204)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+    ]
+]
+CHECKS += [
+    TimeseriesExistenceCheck(col, error_code=1205)
     for col in [
         models.BoundaryCondition1D.timeseries,
         models.BoundaryConditions2D.timeseries,

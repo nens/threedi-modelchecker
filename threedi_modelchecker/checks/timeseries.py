@@ -12,6 +12,22 @@ def parse_timeseries(timeseries_str):
     return output
 
 
+class TimeseriesExistenceCheck(BaseCheck):
+    """Check that an empty timeseries has not been provided."""
+
+    def get_invalid(self, session):
+        invalid_rows = []
+        for row in self.to_check(session).all():
+            # this will catch False, None, "", and any other falsy value
+            if not row.timeseries:
+                invalid_rows.append(row)
+
+        return invalid_rows
+
+    def description(self):
+        return f"{self.column_name} contains an empty timeseries; remove the {self.table.name} instance or provide valid timeseries."
+
+
 class TimeseriesRowCheck(BaseCheck):
     """Check that each record in a timeserie contains 2 elements"""
 
@@ -70,7 +86,7 @@ class TimeseriesTimestepCheck(BaseCheck):
 
 
 class TimeseriesValueCheck(BaseCheck):
-    """Check that each record in a timeserie ends with a float"""
+    """Check that each record in a timeserie ends with a float and is not an invalid or empty string"""
 
     def get_invalid(self, session):
         invalid_timeseries = []
