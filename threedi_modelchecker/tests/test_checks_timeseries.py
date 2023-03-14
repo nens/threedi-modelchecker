@@ -13,16 +13,20 @@ from threedi_modelchecker.checks.timeseries import (
 from .factories import BoundaryConditions2DFactory
 
 
-def test_timeseries_existence_ok(session):
-    BoundaryConditions2DFactory(timeseries=["0,-0.5", "0,-0.5 \n59,-0.5\n60,-0.5\n   "])
+@pytest.mark.parametrize(
+    "timeseries", ["0,-0.5", "0,-0.5 \n59,-0.5\n60,-0.5\n   "]
+)
+def test_timeseries_existence_ok(session, timeseries):
+    BoundaryConditions2DFactory(timeseries=timeseries)
 
     check = TimeseriesExistenceCheck(models.BoundaryConditions2D.timeseries)
     invalid = check.get_invalid(session)
     assert len(invalid) == 0
 
 
-def test_timeseries_existence_error(session):
-    BoundaryConditions2DFactory(timeseries=[""])
+@pytest.mark.parametrize("timeseries", ["", None])
+def test_timeseries_existence_error(session, timeseries):
+    BoundaryConditions2DFactory(timeseries=timeseries)
 
     check = TimeseriesExistenceCheck(models.BoundaryConditions2D.timeseries)
     invalid = check.get_invalid(session)

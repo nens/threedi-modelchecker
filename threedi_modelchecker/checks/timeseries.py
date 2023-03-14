@@ -18,8 +18,8 @@ class TimeseriesExistenceCheck(BaseCheck):
     def get_invalid(self, session):
         invalid_rows = []
         for row in self.to_check(session).all():
-            # a None value is already prevented by `nullable=False` in the schema model definition
-            if row.timeseries == "":
+            # this will catch False, None, "", and any other falsy value
+            if not row.timeseries:
                 invalid_rows.append(row)
 
         return invalid_rows
