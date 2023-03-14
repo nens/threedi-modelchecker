@@ -13,9 +13,7 @@ from threedi_modelchecker.checks.timeseries import (
 from .factories import BoundaryConditions2DFactory
 
 
-@pytest.mark.parametrize(
-    "timeseries", ["0,-0.5", "0,-0.5 \n59,-0.5\n60,-0.5\n   "]
-)
+@pytest.mark.parametrize("timeseries", ["0,-0.5", "0,-0.5 \n59,-0.5\n60,-0.5\n   "])
 def test_timeseries_existence_ok(session, timeseries):
     BoundaryConditions2DFactory(timeseries=timeseries)
 
