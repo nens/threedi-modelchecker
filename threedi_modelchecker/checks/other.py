@@ -529,7 +529,7 @@ class PumpStorageTimestepCheck(BaseCheck):
                 (  # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
                     (
                         # Arithmetic operations on None return None, so without this
-                        # conditional type cast, 0 invalid results would be returned
+                        # conditional type cast, no invalid results would be returned
                         # even if the storage_area was set to None.
                         case(
                             (models.ConnectionNode.storage_area == None, 0),
