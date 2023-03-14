@@ -8,6 +8,15 @@ from threedi_schema import constants, models
 from .base import BaseCheck, CheckLevel
 from .geo_query import distance, length, transform
 
+# Use these to make checks only work on the first global settings entry:
+first_setting = (
+    Query(models.GlobalSetting.id)
+    .order_by(models.GlobalSetting.id)
+    .limit(1)
+    .scalar_subquery()
+)
+first_setting_filter = models.GlobalSetting.id == first_setting
+
 
 class CrossSectionLocationCheck(BaseCheck):
     """Check if cross section locations are within {max_distance} of their channel."""
@@ -504,3 +513,41 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
 
     def description(self) -> str:
         return f"{self.column_name} must be more than {self.min_distance} m apart (or exactly on the same position)"
+
+
+class PumpStorageTimestepCheck(BaseCheck):
+    """Check that a pumpstation will not empty its storage area within one timestep"""
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        return (
+            session.query(models.Pumpstation)
+            .join(
+                models.ConnectionNode,
+                models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+            )
+            .filter(
+                (models.ConnectionNode.storage_area != None)
+                & (
+                    (  # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
+                        (
+                            # Arithmetic operations on None return None, so without this
+                            # conditional type cast, no invalid results would be returned
+                            # even if the storage_area was set to None.
+                            models.ConnectionNode.storage_area
+                            * (
+                                models.Pumpstation.start_level
+                                - models.Pumpstation.lower_stop_level
+                            )
+                        )
+                    )
+                    / models.Pumpstation.capacity
+                    < Query(models.GlobalSetting.sim_time_step)
+                    .filter(first_setting_filter)
+                    .scalar_subquery()
+                )
+            )
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"{self.column_name} will empty its storage faster than one timestep, which can cause simulation instabilities"

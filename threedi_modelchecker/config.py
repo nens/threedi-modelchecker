@@ -48,6 +48,7 @@ from .checks.other import (
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
+    PumpStorageTimestepCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
 )
@@ -332,6 +333,11 @@ CHECKS += [
         column=models.Pumpstation.capacity,
         invalid=Query(models.Pumpstation).filter(models.Pumpstation.capacity == 0.0),
         message="v2_pumpstation.capacity should be be greater than 0",
+    ),
+    PumpStorageTimestepCheck(
+        error_code=66,
+        level=CheckLevel.WARNING,
+        column=models.Pumpstation.capacity,
     ),
 ]
 
