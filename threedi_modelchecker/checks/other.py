@@ -8,6 +8,15 @@ from threedi_schema import constants, models
 from .base import BaseCheck, CheckLevel
 from .geo_query import distance, length, transform
 
+# Use these to make checks only work on the first global settings entry:
+first_setting = (
+    Query(models.GlobalSetting.id)
+    .order_by(models.GlobalSetting.id)
+    .limit(1)
+    .scalar_subquery()
+)
+first_setting_filter = models.GlobalSetting.id == first_setting
+
 
 class CrossSectionLocationCheck(BaseCheck):
     """Check if cross section locations are within {max_distance} of their channel."""
@@ -517,22 +526,19 @@ class PumpStorageTimestepCheck(BaseCheck):
                 models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
             )
             .filter(
-                (models.ConnectionNode.storage_area != None)
-                & (
-                    (  # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
-                        (
-                            models.ConnectionNode.storage_area
-                            * (
-                                models.Pumpstation.start_level
-                                - models.Pumpstation.lower_stop_level
-                            )
+                (  # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
+                    (
+                        models.ConnectionNode.storage_area
+                        * (
+                            models.Pumpstation.start_level
+                            - models.Pumpstation.lower_stop_level
                         )
-                        / models.Pumpstation.capacity
                     )
-                    < Query(models.GlobalSetting.sim_time_step)
-                    .filter(models.GlobalSetting.id == 1)
-                    .scalar_subquery()
+                    / models.Pumpstation.capacity
                 )
+                < Query(models.GlobalSetting.sim_time_step)
+                .filter(first_setting_filter)
+                .scalar_subquery()
             )
             .all()
         )
