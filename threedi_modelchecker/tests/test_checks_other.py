@@ -374,7 +374,7 @@ def test_potential_breach_interdistance_other_channel(session):
     [
         (0.64, 30, 1, 12.5),
         (600, 30, 0, 12.5),
-        (None, 30, 1, 12.5),
+        (None, 30, 0, 12.5),  # no storage --> open water --> no check
         (600, 30, 0, 0),
     ],
 )

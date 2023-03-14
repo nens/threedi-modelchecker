@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
-from sqlalchemy import case, func, text
+from sqlalchemy import func, text
 from sqlalchemy.orm import aliased, Query, Session
 from threedi_schema import constants, models
 
@@ -526,25 +526,25 @@ class PumpStorageTimestepCheck(BaseCheck):
                 models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
             )
             .filter(
-                (  # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
-                    (
-                        # Arithmetic operations on None return None, so without this
-                        # conditional type cast, no invalid results would be returned
-                        # even if the storage_area was set to None.
-                        case(
-                            (models.ConnectionNode.storage_area == None, 0),
-                            else_=models.ConnectionNode.storage_area,
-                        )
-                        * (
-                            models.Pumpstation.start_level
-                            - models.Pumpstation.lower_stop_level
+                (models.ConnectionNode.storage_area != None)
+                & (
+                    (  # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
+                        (
+                            # Arithmetic operations on None return None, so without this
+                            # conditional type cast, no invalid results would be returned
+                            # even if the storage_area was set to None.
+                            models.ConnectionNode.storage_area
+                            * (
+                                models.Pumpstation.start_level
+                                - models.Pumpstation.lower_stop_level
+                            )
                         )
                     )
+                    / models.Pumpstation.capacity
+                    < Query(models.GlobalSetting.sim_time_step)
+                    .filter(first_setting_filter)
+                    .scalar_subquery()
                 )
-                / models.Pumpstation.capacity
-                < Query(models.GlobalSetting.sim_time_step)
-                .filter(first_setting_filter)
-                .scalar_subquery()
             )
             .all()
         )
