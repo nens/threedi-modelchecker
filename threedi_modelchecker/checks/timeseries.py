@@ -12,6 +12,22 @@ def parse_timeseries(timeseries_str):
     return output
 
 
+class TimeseriesExistenceCheck(BaseCheck):
+    """Check that an empty timeseries has not been provided."""
+
+    def get_invalid(self, session):
+        invalid_rows = []
+        for row in self.to_check(session).all():
+            # a None value is already prevented by `nullable=False` in the schema model definition
+            if row.timeseries == "":
+                invalid_rows.append(row)
+
+        return invalid_rows
+
+    def description(self):
+        return f"{self.column_name} contains an empty timeseries; remove the {self.table.name} instance or provide valid timeseries."
+
+
 class TimeseriesRowCheck(BaseCheck):
     """Check that each record in a timeserie contains 2 elements"""
 
