@@ -2,6 +2,7 @@ import pytest
 from threedi_schema import models
 
 from threedi_modelchecker.checks.timeseries import (
+    TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
     TimeseriesRowCheck,
     TimeseriesStartsAtZeroCheck,
@@ -10,6 +11,24 @@ from threedi_modelchecker.checks.timeseries import (
 )
 
 from .factories import BoundaryConditions2DFactory
+
+
+@pytest.mark.parametrize("timeseries", ["0,-0.5", "0,-0.5 \n59,-0.5\n60,-0.5\n   "])
+def test_timeseries_existence_ok(session, timeseries):
+    BoundaryConditions2DFactory(timeseries=timeseries)
+
+    check = TimeseriesExistenceCheck(models.BoundaryConditions2D.timeseries)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 0
+
+
+@pytest.mark.parametrize("timeseries", ["", None])
+def test_timeseries_existence_error(session, timeseries):
+    BoundaryConditions2DFactory(timeseries=timeseries)
+
+    check = TimeseriesExistenceCheck(models.BoundaryConditions2D.timeseries)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 1
 
 
 @pytest.mark.parametrize(
@@ -75,7 +94,7 @@ def test_timeseries_value_check_ok(session, timeseries):
     assert len(invalid) == 0
 
 
-@pytest.mark.parametrize("timeseries", ["1,foo", "1,nan", "1,inf"])
+@pytest.mark.parametrize("timeseries", ["1,foo", "1,nan", "1,inf", "1,''"])
 def test_timeseries_value_check_error(session, timeseries):
     BoundaryConditions2DFactory(timeseries=timeseries)
 

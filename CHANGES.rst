@@ -31,6 +31,8 @@ Changelog of threedi-modelchecker
 
 - Add check 66: this raises a warning if a pumpstation empties its storage area in less than one timestep.
 
+- Add check 1205 to make sure that a timeseries is not an empty string.
+
 
 1.0.1 (2023-02-02)
 ------------------
