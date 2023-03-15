@@ -104,6 +104,12 @@ groundwater_settings_id = (
     .scalar_subquery()
 )
 groundwater_filter = models.GroundWater.id == groundwater_settings_id
+vegetation_drag_settings_id = (
+    Query(models.GlobalSetting.vegetation_drag_settings_id)
+    .filter(first_setting_filter)
+    .scalar_subquery()
+)
+vegetation_drag_filter = models.VegetationDrag.id == vegetation_drag_settings_id
 
 CONDITIONS = {
     "has_dem": Query(models.GlobalSetting).filter(
@@ -1162,6 +1168,7 @@ CHECKS += [
         (models.GroundWater, models.GlobalSetting.groundwater_settings_id),
         (models.NumericalSettings, models.GlobalSetting.numerical_settings_id),
         (models.ControlGroup, models.GlobalSetting.control_group_id),
+        (models.VegetationDrag, models.GlobalSetting.vegetation_drag_settings_id),
     )
 ]
 
@@ -1192,6 +1199,7 @@ CHECKS += [
             models.GlobalSetting.interflow_settings_id,
             models.GlobalSetting.simple_infiltration_settings_id,
             models.GlobalSetting.groundwater_settings_id,
+            models.GlobalSetting.vegetation_drag_settings_id,
         ]
     )
 ]
@@ -1552,6 +1560,118 @@ CHECKS += [
     ),
 ]
 
+## 05xx: VEGETATION DRAG
+CHECKS += [
+    RangeCheck(
+        error_code=501,
+        column=models.VegetationDrag.height,
+        filters=vegetation_drag_filter,
+        min_value=0,
+    ),
+    QueryCheck(
+        error_code=502,
+        column=models.VegetationDrag.height,
+        invalid=Query(models.VegetationDrag).filter(
+            vegetation_drag_filter,
+            models.VegetationDrag.height == None,
+            is_none_or_empty(models.VegetationDrag.height),
+        ),
+        message="v2_vegetation_drag.height must be defined.",
+    ),
+    QueryCheck(
+        error_code=503,
+        level=CheckLevel.WARNING,
+        column=models.VegetationDrag.height,
+        invalid=Query(models.VegetationDrag).filter(
+            vegetation_drag_filter,
+            models.VegetationDrag.height == None,
+            ~is_none_or_empty(models.VegetationDrag.height_file),
+        ),
+        message="v2_vegetation_drag.height is recommended as fallback value when using an height_file.",
+    ),
+    RangeCheck(
+        error_code=504,
+        column=models.VegetationDrag.stem_count,
+        filters=vegetation_drag_filter,
+        min_value=0,
+    ),
+    QueryCheck(
+        error_code=505,
+        column=models.VegetationDrag.stem_count,
+        invalid=Query(models.VegetationDrag).filter(
+            vegetation_drag_filter,
+            models.VegetationDrag.stem_count == None,
+            is_none_or_empty(models.VegetationDrag.stem_count),
+        ),
+        message="v2_vegetation_drag.stem_count must be defined.",
+    ),
+    QueryCheck(
+        error_code=506,
+        level=CheckLevel.WARNING,
+        column=models.VegetationDrag.stem_count,
+        invalid=Query(models.VegetationDrag).filter(
+            vegetation_drag_filter,
+            models.VegetationDrag.stem_count == None,
+            ~is_none_or_empty(models.VegetationDrag.stem_count_file),
+        ),
+        message="v2_vegetation_drag.stem_count is recommended as fallback value when using an stem_count_file.",
+    ),
+    RangeCheck(
+        error_code=507,
+        column=models.VegetationDrag.stem_diameter,
+        filters=vegetation_drag_filter,
+        min_value=0,
+    ),
+    QueryCheck(
+        error_code=508,
+        column=models.VegetationDrag.stem_diameter,
+        invalid=Query(models.VegetationDrag).filter(
+            vegetation_drag_filter,
+            models.VegetationDrag.stem_diameter == None,
+            is_none_or_empty(models.VegetationDrag.stem_diameter),
+        ),
+        message="v2_vegetation_drag.stem_diameter must be defined.",
+    ),
+    QueryCheck(
+        error_code=509,
+        level=CheckLevel.WARNING,
+        column=models.VegetationDrag.stem_diameter,
+        invalid=Query(models.VegetationDrag).filter(
+            vegetation_drag_filter,
+            models.VegetationDrag.stem_diameter == None,
+            ~is_none_or_empty(models.VegetationDrag.stem_diameter_file),
+        ),
+        message="v2_vegetation_drag.stem_diameter is recommended as fallback value when using an stem_diameter_file.",
+    ),
+    RangeCheck(
+        error_code=510,
+        column=models.VegetationDrag.drag_coefficient,
+        filters=vegetation_drag_filter,
+        min_value=0,
+        max_value=1,
+    ),
+    QueryCheck(
+        error_code=511,
+        column=models.VegetationDrag.drag_coefficient,
+        invalid=Query(models.VegetationDrag).filter(
+            vegetation_drag_filter,
+            models.VegetationDrag.drag_coefficient == None,
+            is_none_or_empty(models.VegetationDrag.drag_coefficient),
+        ),
+        message="v2_vegetation_drag.drag_coefficient must be defined.",
+    ),
+    QueryCheck(
+        error_code=512,
+        level=CheckLevel.WARNING,
+        column=models.VegetationDrag.drag_coefficient,
+        invalid=Query(models.VegetationDrag).filter(
+            vegetation_drag_filter,
+            models.VegetationDrag.drag_coefficient == None,
+            ~is_none_or_empty(models.VegetationDrag.drag_coefficient_file),
+        ),
+        message="v2_vegetation_drag.drag_coefficient is recommended as fallback value when using an drag_coefficient_file.",
+    ),
+]
 
 ## 06xx: INFLOW
 for (surface, surface_map, filters) in [
@@ -1693,6 +1813,10 @@ RASTER_COLUMNS_FILTERS = [
         models.GlobalSetting.initial_groundwater_level_file,
         first_setting_filter & (models.GlobalSetting.groundwater_settings_id != None),
     ),
+    (models.VegetationDrag.height_file, vegetation_drag_filter),
+    (models.VegetationDrag.stem_count_file, vegetation_drag_filter),
+    (models.VegetationDrag.stem_diameter_file, vegetation_drag_filter),
+    (models.VegetationDrag.drag_coefficient_file, vegetation_drag_filter)
 ]
 CHECKS += [
     GDALAvailableCheck(
