@@ -14,6 +14,11 @@ def parse_timeseries(timeseries_str):
         output.append([timestep, float(value.strip())])
     return output
 
+def compare_timesteps(first_timeseries: str, second_timeseries: str) -> bool:
+    first_timesteps = [pair[0] for pair in parse_timeseries(first_timeseries)]
+    second_timesteps = [pair[0] for pair in parse_timeseries(second_timeseries)]
+    return first_timesteps == second_timesteps
+
 
 class TimeseriesExistenceCheck(BaseCheck):
     """Check that an empty timeseries has not been provided."""
@@ -33,54 +38,17 @@ class TimeseriesExistenceCheck(BaseCheck):
 
 class TimeSeriesEqualTimestepsCheck(BaseCheck):
     """
-    Check that the timesteps in all boundary condition timeseries are equal.
+    Check that the timesteps in all timeseries in a column are equal.
 
-    This checks the timesteps for all timeseries against the timesteps in the first 1D boundary
-    condition timeseries, or if that doesn't exist, the first 2D boundary condition timeseries.
-    Consequently, if the first timeseries is wrong, all the other boundary conditions will raise
-    give a warning.
+    This checks the timesteps for all timeseries in a column against the timesteps in the first
+    timeseries in that column. Consequently, if the first timeseries is wrong, all the other boundary
+    conditions will raise a warning.
     """
-
-    def compare_timesteps(self, first_timeseries: str, second_timeseries: str) -> bool:
-        first_timesteps = [pair[0] for pair in parse_timeseries(first_timeseries)]
-        second_timesteps = [pair[0] for pair in parse_timeseries(second_timeseries)]
-        return first_timesteps == second_timesteps
 
     def get_invalid(self, session):
         invalid_timeseries = []
 
-        # set the first timeseries variable to None if the timeseries column is empty
-        # using a walrus operator avoids running the query both for checking emptiness and for fetching the value
-        first_1d_timeseries = (
-            timeseries_query[0][0]
-            if (
-                timeseries_query := session.execute(
-                    select(models.BoundaryCondition1D.timeseries)
-                    .order_by(models.BoundaryCondition1D.id)
-                    .limit(1)
-                ).all()
-            )
-            else None
-        )
-
-        first_2d_timeseries = (
-            timeseries_query[0][0]
-            if (
-                timeseries_query := session.execute(
-                    select(models.BoundaryConditions2D.timeseries)
-                    .order_by(models.BoundaryConditions2D.id)
-                    .limit(1)
-                ).all()
-            )
-            else None
-        )
-
-        # if both the 1d and 2d boundary conditions are empty there are no timeseries, so also no nonmatching ones
-        if not first_1d_timeseries and not first_2d_timeseries:
-            return []
-
-        # use to properly format the error description
-        self.one_d_timeseries_used = True if first_1d_timeseries else False
+        first_timeseries = None
 
         for row in self.to_check(session).all():
             timeseries = row.timeseries
@@ -88,10 +56,12 @@ class TimeSeriesEqualTimestepsCheck(BaseCheck):
             if not timeseries:
                 continue
 
-            if not self.compare_timesteps(
-                first_timeseries=(
-                    first_1d_timeseries if first_1d_timeseries else first_2d_timeseries
-                ),
+            if not first_timeseries:
+                first_timeseries = timeseries
+                continue  # don't compare first timeseries with itself
+
+            if not compare_timesteps(
+                first_timeseries=first_timeseries,
                 second_timeseries=timeseries,
             ):
                 invalid_timeseries.append(row)
@@ -100,8 +70,7 @@ class TimeSeriesEqualTimestepsCheck(BaseCheck):
 
     def description(self):
         return (
-            f"One or more timesteps in {self.column_name} did not match the first timeseries in this "
-            + f"models.BoundaryCondition{'1D' if self.one_d_timeseries_used else 's2D'}.timeseries. "
+            f"One or more timesteps in {self.column_name} did not match the timesteps in the first timeseries in the column."
             + "The timesteps in all timeseries must be the same."
         )
 
