@@ -1,4 +1,3 @@
-from sqlalchemy import select
 from threedi_schema import models
 
 from .base import BaseCheck
@@ -13,6 +12,7 @@ def parse_timeseries(timeseries_str):
         timestep = int(timestep.strip())
         output.append([timestep, float(value.strip())])
     return output
+
 
 def compare_timesteps(first_timeseries: str, second_timeseries: str) -> bool:
     first_timesteps = [pair[0] for pair in parse_timeseries(first_timeseries)]
@@ -93,22 +93,24 @@ class FirstTimeSeriesEqualTimestepsCheck(BaseCheck):
     def get_invalid(self, session):
         invalid_timeseries = []
 
-        first_1d_timeseries = session.query(
-            models.BoundaryCondition1D.timeseries.table
-        ).order_by(
-            models.BoundaryCondition1D.id
-        ).limit(1).all()
+        first_1d_timeseries = (
+            session.query(models.BoundaryCondition1D.timeseries.table)
+            .order_by(models.BoundaryCondition1D.id)
+            .limit(1)
+            .all()
+        )
 
-        first_2d_timeseries = session.query(
-            models.BoundaryConditions2D.timeseries.table
-        ).order_by(
-            models.BoundaryConditions2D.id
-        ).limit(1).all()
+        first_2d_timeseries = (
+            session.query(models.BoundaryConditions2D.timeseries.table)
+            .order_by(models.BoundaryConditions2D.id)
+            .limit(1)
+            .all()
+        )
 
         if first_1d_timeseries and first_2d_timeseries:
             if not compare_timesteps(
                 first_timeseries=first_1d_timeseries[0][2],
-                second_timeseries=first_2d_timeseries[0][2]
+                second_timeseries=first_2d_timeseries[0][2],
             ):
                 invalid_timeseries.append(first_1d_timeseries[0])
 
@@ -116,8 +118,8 @@ class FirstTimeSeriesEqualTimestepsCheck(BaseCheck):
 
     def description(self):
         return (
-            "The timesteps for the first v2_1d_boundary_conditions.timeseries did not match the timesteps for the first v2_2d_boundary_conditions. " +
-            "All boundary conditions must have the same timesteps in their timeseries."
+            "The timesteps for the first v2_1d_boundary_conditions.timeseries did not match the timesteps for the first v2_2d_boundary_conditions. "
+            + "All boundary conditions must have the same timesteps in their timeseries."
         )
 
 

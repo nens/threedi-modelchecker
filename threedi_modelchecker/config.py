@@ -65,8 +65,8 @@ from .checks.raster import (
     RasterSquareCellsCheck,
 )
 from .checks.timeseries import (
-    TimeSeriesEqualTimestepsCheck,
     FirstTimeSeriesEqualTimestepsCheck,
+    TimeSeriesEqualTimestepsCheck,
     TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
     TimeseriesRowCheck,
