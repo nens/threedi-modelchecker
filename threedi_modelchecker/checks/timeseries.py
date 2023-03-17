@@ -41,8 +41,10 @@ class TimeSeriesEqualTimestepsCheck(BaseCheck):
     Check that the timesteps in all timeseries in a column are equal.
 
     This checks the timesteps for all timeseries in a column against the timesteps in the first
-    timeseries in that column. Consequently, if the first timeseries is wrong, all the other boundary
-    conditions will raise a warning.
+    timeseries in that column. Consequently, if the first timeseries is wrong, all the other timeseries
+    in that column will raise a warning.
+    This check does not compare timeseries between different columns; for that, FirstTimeSeriesEqualTimestepsCheck
+    is used.
     """
 
     def get_invalid(self, session):
@@ -72,6 +74,50 @@ class TimeSeriesEqualTimestepsCheck(BaseCheck):
         return (
             f"One or more timesteps in {self.column_name} did not match the timesteps in the first timeseries in the column."
             + "The timesteps in all timeseries must be the same."
+        )
+
+
+class FirstTimeSeriesEqualTimestepsCheck(BaseCheck):
+    """
+    Check that the timesteps in the first timeseries in the boundary condition columns are equal, if they both exist.
+
+    This is used in conjunction with TimeSeriesEqualTimestepsCheck to confirm that the timeseries in all the boundary
+    conditions have the same timesteps. If each timeseries within each column has the same timesteps, and the first
+    timeseries of each column matches timesteps with the first timeseries of each other column, then the timesteps of
+    all the timeseries must be the same.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.BoundaryCondition1D.timeseries, *args, **kwargs)
+
+    def get_invalid(self, session):
+        invalid_timeseries = []
+
+        first_1d_timeseries = session.query(
+            models.BoundaryCondition1D.timeseries.table
+        ).order_by(
+            models.BoundaryCondition1D.id
+        ).limit(1).all()
+
+        first_2d_timeseries = session.query(
+            models.BoundaryConditions2D.timeseries.table
+        ).order_by(
+            models.BoundaryConditions2D.id
+        ).limit(1).all()
+
+        if first_1d_timeseries and first_2d_timeseries:
+            if not compare_timesteps(
+                first_timeseries=first_1d_timeseries[0][2],
+                second_timeseries=first_2d_timeseries[0][2]
+            ):
+                invalid_timeseries.append(first_1d_timeseries[0])
+
+        return invalid_timeseries
+
+    def description(self):
+        return (
+            "The timesteps for the first v2_1d_boundary_conditions.timeseries did not match the timesteps for the first v2_2d_boundary_conditions. " +
+            "All boundary conditions must have the same timesteps in their timeseries."
         )
 
 

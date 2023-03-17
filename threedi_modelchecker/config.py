@@ -66,6 +66,7 @@ from .checks.raster import (
 )
 from .checks.timeseries import (
     TimeSeriesEqualTimestepsCheck,
+    FirstTimeSeriesEqualTimestepsCheck,
     TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
     TimeseriesRowCheck,
@@ -2159,6 +2160,7 @@ CHECKS += [
         models.BoundaryConditions2D.timeseries,
     ]
 ]
+CHECKS += [FirstTimeSeriesEqualTimestepsCheck()]
 
 ## 122x Structure controls
 
