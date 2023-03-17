@@ -2160,7 +2160,7 @@ CHECKS += [
         models.BoundaryConditions2D.timeseries,
     ]
 ]
-CHECKS += [FirstTimeSeriesEqualTimestepsCheck()]
+CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 
 ## 122x Structure controls
 
