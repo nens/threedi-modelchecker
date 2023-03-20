@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.0.1 (unreleased)
+2.0.1 (2023-03-20)
 ------------------
 
 - Pin minor version for threede-schema dependency.
