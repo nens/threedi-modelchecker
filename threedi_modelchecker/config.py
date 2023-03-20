@@ -65,6 +65,8 @@ from .checks.raster import (
     RasterSquareCellsCheck,
 )
 from .checks.timeseries import (
+    FirstTimeSeriesEqualTimestepsCheck,
+    TimeSeriesEqualTimestepsCheck,
     TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
     TimeseriesRowCheck,
@@ -2151,6 +2153,14 @@ CHECKS += [
         models.BoundaryConditions2D.timeseries,
     ]
 ]
+CHECKS += [
+    TimeSeriesEqualTimestepsCheck(col, error_code=1206)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+    ]
+]
+CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 
 ## 122x Structure controls
 

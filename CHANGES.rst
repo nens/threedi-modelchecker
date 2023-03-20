@@ -33,6 +33,8 @@ Changelog of threedi-modelchecker
 
 - Add check 1205 to make sure that a timeseries is not an empty string.
 
+- Add checks 1206 to confirm that the timesteps in all boundary condition timesteps are the same.
+
 
 1.0.1 (2023-02-02)
 ------------------
