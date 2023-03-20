@@ -108,17 +108,20 @@ class FirstTimeSeriesEqualTimestepsCheck(BaseCheck):
         )
 
         if first_1d_timeseries and first_2d_timeseries:
-            if not compare_timesteps(
-                first_timeseries=first_1d_timeseries[0][2],
-                second_timeseries=first_2d_timeseries[0][2],
-            ):
-                invalid_timeseries.append(first_1d_timeseries[0])
+            try:
+                if not compare_timesteps(
+                    first_timeseries=first_1d_timeseries[0].timeseries,
+                    second_timeseries=first_2d_timeseries[0].timeseries,
+                ):
+                    invalid_timeseries.append(first_1d_timeseries[0])
+            except Exception:  # other checks will catch these
+                pass
 
         return invalid_timeseries
 
     def description(self):
         return (
-            "The timesteps for the first v2_1d_boundary_conditions.timeseries did not match the timesteps for the first v2_2d_boundary_conditions. "
+            "The timesteps for the first v2_1d_boundary_conditions.timeseries did not match the timesteps for the first v2_2d_boundary_conditions.timeseries. "
             + "All boundary conditions must have the same timesteps in their timeseries."
         )
 
