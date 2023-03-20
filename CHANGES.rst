@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-1.0.2 (unreleased)
+2.0.0 (2023-03-20)
 ------------------
 
 - Add warning 108: the crest_level of a weir or orifice cannot be lower than
