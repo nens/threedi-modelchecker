@@ -62,11 +62,14 @@ class TimeSeriesEqualTimestepsCheck(BaseCheck):
                 first_timeseries = timeseries
                 continue  # don't compare first timeseries with itself
 
-            if not compare_timesteps(
-                first_timeseries=first_timeseries,
-                second_timeseries=timeseries,
-            ):
-                invalid_timeseries.append(row)
+            try:
+                if not compare_timesteps(
+                    first_timeseries=first_timeseries,
+                    second_timeseries=timeseries,
+                ):
+                    invalid_timeseries.append(row)
+            except Exception:  # other checks will catch these
+                pass
 
         return invalid_timeseries
 
