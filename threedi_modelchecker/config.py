@@ -3,8 +3,8 @@ from typing import List
 from sqlalchemy import func
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
+from threedi_schema.beta_features import BETA_FEATURES
 
-from .beta_features import BETA_FEATURES
 from .checks import geo_query
 from .checks.base import (
     AllEqualCheck,
