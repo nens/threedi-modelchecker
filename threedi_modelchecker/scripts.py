@@ -29,7 +29,13 @@ def cli():
     help="Path to an sqlite (spatialite) file",
     required=True,
 )
-def check(sqlite, file, level):
+@click.option(
+    "--allow-beta",
+    is_flag=True,
+    default=False,
+    help="Don't check whether beta features were used in the database.",
+)
+def check(sqlite, file, level, allow_beta):
     """Checks the threedi-model for errors / warnings / info messages"""
     db = ThreediDatabase(sqlite, echo=False)
     """Checks the threedi model schematisation for errors."""
@@ -44,7 +50,7 @@ def check(sqlite, file, level):
     if file:
         click.echo("Model errors will be written to %s" % file)
 
-    mc = ThreediModelChecker(db)
+    mc = ThreediModelChecker(threedi_db=db, allow_beta_features=allow_beta)
     model_errors = mc.errors(level=level)
 
     if file:

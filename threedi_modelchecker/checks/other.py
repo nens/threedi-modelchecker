@@ -551,3 +551,13 @@ class PumpStorageTimestepCheck(BaseCheck):
 
     def description(self) -> str:
         return f"{self.column_name} will empty its storage faster than one timestep, which can cause simulation instabilities"
+
+
+class BetaFeaturesCheck(BaseCheck):
+    """Check that no beta features were used in the database"""
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        return session.query(self.table).filter(self.column.isnot(None)).all()
+
+    def description(self) -> str:
+        return f"{self.column_name} is a beta feature, which is still under development; please do not use it yet."
