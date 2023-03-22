@@ -2232,7 +2232,7 @@ CHECKS += [
 # This check is optional, depending on a command line argument
 beta_features_check = [
     BetaFeaturesCheck(
-        error_code=2000,
+        error_code=1300,
         column=col,
         level=CheckLevel.ERROR,
     )

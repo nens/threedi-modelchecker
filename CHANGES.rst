@@ -5,13 +5,16 @@ Changelog of threedi-modelchecker
 2.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add support for designating beta features in threedi-schema. If a user puts a
+  non-null value in a column marked as beta in threedi-schema, a BetaFeaturesCheck
+  error 1300 will be raised by the modelchecker. The allow-beta flag has been added
+  to the CLI interface to disable this check temporarily.
 
 
 2.0.1 (2023-03-20)
 ------------------
 
-- Pin minor version for threede-schema dependency.
+- Pin minor version for threedi-schema dependency.
 
 
 2.0.0 (2023-03-20)
