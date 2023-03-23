@@ -39,7 +39,7 @@ def session(threedi_db):
 
     :return: sqlalchemy.orm.session.Session
     """
-    s = threedi_db.get_session()
+    s = threedi_db.get_session(future=True)
 
     factories.inject_session(s)
     s.model_checker_context = LocalContext(base_path=data_dir)

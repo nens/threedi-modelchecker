@@ -8,10 +8,7 @@ DEFAULT_EPSG = 28992
 
 
 def epsg_code_query():
-    try:
-        epsg_code = Query(models.GlobalSetting.epsg_code).limit(1).scalar_subquery()
-    except AttributeError:
-        epsg_code = Query(models.GlobalSetting.epsg_code).limit(1).as_scalar()
+    epsg_code = Query(models.GlobalSetting.epsg_code).limit(1).scalar_subquery()
     return func.coalesce(epsg_code, literal(DEFAULT_EPSG)).label("epsg_code")
 
 

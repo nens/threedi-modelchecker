@@ -1,9 +1,10 @@
 import pytest
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import aliased, Query
 from threedi_schema import constants, models
 
 from threedi_modelchecker.checks.other import (
+    ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
     CrossSectionLocationCheck,
@@ -11,6 +12,7 @@ from threedi_modelchecker.checks.other import (
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
+    PumpStorageTimestepCheck,
     SpatialIndexCheck,
 )
 
@@ -134,6 +136,64 @@ def test_open_channels_with_nested_newton(session):
     assert len(errors) == 2
 
 
+channel_manhole_level_testdata = [
+    ("start", -1, -3, -2, 0),
+    ("start", -3, -1, -2, 1),
+    ("end", -3, -1, -2, 0),
+    ("end", -1, -3, -2, 1),
+]
+
+
+@pytest.mark.parametrize(
+    "manhole_location,starting_reference_level,ending_reference_level,manhole_level,errors_number",
+    channel_manhole_level_testdata,
+)
+def test_channel_manhole_level_check(
+    session,
+    manhole_location,
+    starting_reference_level,
+    ending_reference_level,
+    manhole_level,
+    errors_number,
+):
+    # using factories, create one minimal test case which passes, and one which fails
+    # once that works, parametrise.
+    # use nested factories for channel and connectionNode
+    starting_coordinates = "4.718300 52.696686"
+    ending_coordinates = "4.718255 52.696709"
+    start_node = factories.ConnectionNodeFactory(
+        the_geom=f"SRID=4326;POINT({starting_coordinates})"
+    )
+    end_node = factories.ConnectionNodeFactory(
+        the_geom=f"SRID=4326;POINT({ending_coordinates})"
+    )
+    channel = factories.ChannelFactory(
+        the_geom=f"SRID=4326;LINESTRING({starting_coordinates}, {ending_coordinates})",
+        connection_node_start=start_node,
+        connection_node_end=end_node,
+    )
+    # starting cross-section location
+    factories.CrossSectionLocationFactory(
+        the_geom="SRID=4326;POINT(4.718278 52.696697)",
+        reference_level=starting_reference_level,
+        channel=channel,
+    )
+    # ending cross-section location
+    factories.CrossSectionLocationFactory(
+        the_geom="SRID=4326;POINT(4.718264 52.696704)",
+        reference_level=ending_reference_level,
+        channel=channel,
+    )
+    # manhole
+    factories.ManholeFactory(
+        connection_node=end_node if manhole_location == "end" else start_node,
+        bottom_level=manhole_level,
+    )
+    check = ChannelManholeLevelCheck(nodes_to_check=manhole_location)
+    errors = check.get_invalid(session)
+    assert len(errors) == errors_number
+
+
 def test_node_distance(session):
     con1_too_close = factories.ConnectionNodeFactory(
         the_geom="SRID=4326;POINT(4.728282 52.64579283592512)"
@@ -235,7 +295,9 @@ def test_spatial_index_ok(session):
 
 def test_spatial_index_disabled(empty_sqlite_v4):
     session = empty_sqlite_v4.get_session()
-    session.execute("SELECT DisableSpatialIndex('v2_connection_nodes', 'the_geom')")
+    session.execute(
+        text("SELECT DisableSpatialIndex('v2_connection_nodes', 'the_geom')")
+    )
     check = SpatialIndexCheck(models.ConnectionNode.the_geom)
     invalid = check.get_invalid(session)
     assert len(invalid) == 1
@@ -305,3 +367,28 @@ def test_potential_breach_interdistance_other_channel(session):
     )
     invalid = check.get_invalid(session)
     assert len(invalid) == 0
+
+
+@pytest.mark.parametrize(
+    "storage_area,time_step,expected_result,capacity",
+    [
+        (0.64, 30, 1, 12.5),
+        (600, 30, 0, 12.5),
+        (None, 30, 0, 12.5),  # no storage --> open water --> no check
+        (600, 30, 0, 0),
+    ],
+)
+def test_pumpstation_storage_timestep(
+    session, storage_area, time_step, expected_result, capacity
+):
+    connection_node = factories.ConnectionNodeFactory(storage_area=storage_area)
+    factories.PumpstationFactory(
+        connection_node_start=connection_node,
+        start_level=-4,
+        lower_stop_level=-4.78,
+        capacity=capacity,
+    )
+    factories.GlobalSettingsFactory(sim_time_step=time_step)
+    check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result

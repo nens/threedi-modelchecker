@@ -8,7 +8,7 @@ install_requires = [
     "threedi-schema==0.214.*",
     "Click",
     "GeoAlchemy2>=0.9,!=0.11.*",
-    "SQLAlchemy>=1.3,<2",
+    "SQLAlchemy>=1.4",
 ]
 
 tests_require = [
@@ -19,9 +19,8 @@ tests_require = [
     "mock ; python_version<'3.8'",
 ]
 
-simulation_templates_require = [
-    # Note: Change when threedi-api-client has been released
-    "threedi-api-client[aio]>=4",
+rasterio_require = [
+    "rasterio>=1.3"
 ]
 
 
@@ -60,13 +59,12 @@ setup(
     tests_require=tests_require,
     extras_require={
         "test": tests_require,
-        "simulation_templates": simulation_templates_require,
-        "rasterio": ["rasterio>=1.3"],
+        "rasterio": rasterio_require,
     },
     python_requires=">=3.7",
     entry_points={
         "console_scripts": [
-            "threedi_modelchecker = threedi_modelchecker.scripts:threedi_modelchecker"
+            "threedi_modelchecker = threedi_modelchecker.scripts:cli"
         ]
     },
 )

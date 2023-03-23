@@ -2,11 +2,59 @@ Changelog of threedi-modelchecker
 =================================
 
 
-1.0.1 (unreleased)
+2.0.2 (unreleased)
 ------------------
 
 - Added check 73: groundwater boundaries are allowed only when there is
   groundwater hydraulic conductivity.
+
+
+2.0.1 (2023-03-20)
+------------------
+
+- Pin minor version for threede-schema dependency.
+
+
+2.0.0 (2023-03-20)
+------------------
+
+- Add warning 108: the crest_level of a weir or orifice cannot be lower than
+  the bottom_level of any manhole it is connected to.
+
+- Add info 109 and 110: the bottom level of a manhole cannot be higher than
+  the reference level of the closest cross-section of any channel it is
+  connected to. threedigrid-builder automatically fixes this, hence info
+  instead of warning.
+- Rewrite command-line client. The ``--sqlite`` argument is now an argument of the
+  ``check`` command, not of the main ``threedi_modelchecker`` group. To run a check,
+  the new syntax is
+
+  ``threedi_modelchecker check -s <your database>.sqlite -l <desired check level>``
+
+- Add new command, ``export-checks``. This exports all checks executed by the model
+  checker as an RsT table or in CSV format, as specified by the optional ``--format``
+  argument. The check output can also be dumped to a file using ``--file``.
+
+- Compatibility fix with rasterio 1.3.6.
+
+- Drop SQLAlchemy 1.3 support, add 2.0 support.
+
+- Add check 326: this gives an info message if a record exists in the simple_infiltration
+  table, but is not referenced from the global settings.
+
+- Add check 66: this raises a warning if a pumpstation empties its storage area in less than one timestep.
+
+- Add check 1205 to make sure that a timeseries is not an empty string.
+
+- Add checks 1206 to confirm that the timesteps in all boundary condition timesteps are the same.
+
+
+1.0.1 (2023-02-02)
+------------------
+
+- Fixed warning 94; warn if height is not empty (instead of width).
+
+- Fixed bug in check 81.
 
 
 1.0.0 (2023-01-19)
@@ -79,6 +127,8 @@ Changelog of threedi-modelchecker
 
 - The ThreediModelChecker context now accepts a "context_type" and "raster_interface"
   fields.
+
+- Python 3.7 support is dropped.
 
 
 0.32 (2022-11-16)

@@ -13,6 +13,8 @@ class CrossSectionBaseCheck(BaseCheck):
 
     @property
     def shape_msg(self):
+        if self.shapes is None:
+            return "{all}"
         return {x.value for x in self.shapes}
 
     def to_check(self, session):

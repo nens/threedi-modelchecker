@@ -40,6 +40,7 @@ from .checks.factories import (
 )
 from .checks.other import (
     BoundaryCondition1DObjectNumberCheck,
+    ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
     CrossSectionLocationCheck,
@@ -47,12 +48,15 @@ from .checks.other import (
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
+    PumpStorageTimestepCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
 )
 from .checks.raster import (
     GDALAvailableCheck,
     RasterExistsCheck,
+    RasterGridSizeCheck,
+    RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
     RasterHasProjectionCheck,
     RasterIsProjectedCheck,
@@ -61,6 +65,9 @@ from .checks.raster import (
     RasterSquareCellsCheck,
 )
 from .checks.timeseries import (
+    FirstTimeSeriesEqualTimestepsCheck,
+    TimeSeriesEqualTimestepsCheck,
+    TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
     TimeseriesRowCheck,
     TimeseriesStartsAtZeroCheck,
@@ -75,31 +82,30 @@ def is_none_or_empty(col):
     return (col == None) | (col == "")
 
 
-def scalar_subquery(query):
-    # compatibility between sqlalchemy 1.3 and 1.4
-    try:
-        return query.scalar_subquery()
-    except AttributeError:
-        return query.as_scalar()
-
-
 # Use these to make checks only work on the first global settings entry:
-first_setting = scalar_subquery(
-    Query(models.GlobalSetting.id).order_by(models.GlobalSetting.id).limit(1)
+first_setting = (
+    Query(models.GlobalSetting.id)
+    .order_by(models.GlobalSetting.id)
+    .limit(1)
+    .scalar_subquery()
 )
 first_setting_filter = models.GlobalSetting.id == first_setting
-interflow_settings_id = scalar_subquery(
-    Query(models.GlobalSetting.interflow_settings_id).filter(first_setting_filter)
+interflow_settings_id = (
+    Query(models.GlobalSetting.interflow_settings_id)
+    .filter(first_setting_filter)
+    .scalar_subquery()
 )
 interflow_filter = models.Interflow.id == interflow_settings_id
-infiltration_settings_id = scalar_subquery(
-    Query(models.GlobalSetting.simple_infiltration_settings_id).filter(
-        first_setting_filter
-    )
+infiltration_settings_id = (
+    Query(models.GlobalSetting.simple_infiltration_settings_id)
+    .filter(first_setting_filter)
+    .scalar_subquery()
 )
 infiltration_filter = models.SimpleInfiltration.id == infiltration_settings_id
-groundwater_settings_id = scalar_subquery(
-    Query(models.GlobalSetting.groundwater_settings_id).filter(first_setting_filter)
+groundwater_settings_id = (
+    Query(models.GlobalSetting.groundwater_settings_id)
+    .filter(first_setting_filter)
+    .scalar_subquery()
 )
 groundwater_filter = models.GroundWater.id == groundwater_settings_id
 
@@ -133,7 +139,7 @@ CONDITIONS = {
     ),
 }
 
-kmax = scalar_subquery(Query(models.GlobalSetting.kmax).filter(first_setting_filter))
+kmax = Query(models.GlobalSetting.kmax).filter(first_setting_filter).scalar_subquery()
 
 
 CHECKS: List[BaseCheck] = []
@@ -335,6 +341,11 @@ CHECKS += [
         invalid=Query(models.Pumpstation).filter(models.Pumpstation.capacity == 0.0),
         message="v2_pumpstation.capacity should be be greater than 0",
     ),
+    PumpStorageTimestepCheck(
+        error_code=66,
+        level=CheckLevel.WARNING,
+        column=models.Pumpstation.capacity,
+    ),
 ]
 
 ## 007x: BOUNDARY CONDITIONS
@@ -476,7 +487,7 @@ CHECKS += [
     CrossSectionExpectEmptyCheck(
         error_code=94,
         level=CheckLevel.WARNING,
-        column=models.CrossSectionDefinition.width,
+        column=models.CrossSectionDefinition.height,
         shapes=(
             constants.CrossSectionShape.CIRCLE,
             constants.CrossSectionShape.EGG,
@@ -599,6 +610,33 @@ CHECKS += [
             models.Manhole.drain_level == None,
         ),
         message="v2_manhole.drain_level cannot be null when using sub-basins (v2_global_settings.manhole_storage_area > 0) and no DEM is supplied.",
+    ),
+]
+CHECKS += [
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=108,
+        column=table.crest_level,
+        invalid=Query(table)
+        .join(
+            models.ConnectionNode,
+            (table.connection_node_start_id == models.ConnectionNode.id)
+            | (table.connection_node_end_id == models.ConnectionNode.id),
+        )
+        .join(models.Manhole)
+        .filter(
+            table.crest_level < models.Manhole.bottom_level,
+        ),
+        message=f"{table.__tablename__}.crest_level should be higher than or equal to v2_manhole.bottom_level for all the connected manholes.",
+    )
+    for table in [models.Weir, models.Orifice]
+]
+CHECKS += [
+    ChannelManholeLevelCheck(
+        level=CheckLevel.INFO, nodes_to_check="start", error_code=109
+    ),
+    ChannelManholeLevelCheck(
+        level=CheckLevel.INFO, nodes_to_check="end", error_code=110
     ),
 ]
 
@@ -1134,6 +1172,28 @@ CHECKS += [
         ),
         message="v2_global_settings.interception_global is recommended as fallback value when using an interception_file.",
     ),
+]
+
+CHECKS += [
+    QueryCheck(
+        error_code=326,
+        level=CheckLevel.INFO,
+        column=table.id,
+        invalid=Query(table).filter(
+            table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
+        ),
+        message=f"{table.__tablename__} is defined, but not referred to in v2_global_settings.{setting.name}",
+    )
+    for table, setting in (
+        (
+            models.SimpleInfiltration,
+            models.GlobalSetting.simple_infiltration_settings_id,
+        ),
+        (models.Interflow, models.GlobalSetting.interflow_settings_id),
+        (models.GroundWater, models.GlobalSetting.groundwater_settings_id),
+        (models.NumericalSettings, models.GlobalSetting.numerical_settings_id),
+        (models.ControlGroup, models.GlobalSetting.control_group_id),
+    )
 ]
 
 CHECKS += [
@@ -1812,6 +1872,17 @@ CHECKS += [
         min_value=-9998.0,
         max_value=8848.0,
     ),
+    RasterHasMatchingEPSGCheck(
+        error_code=797,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
+    ),
+    RasterGridSizeCheck(
+        error_code=798,
+        column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
+    ),
 ]
 
 ## 080x: refinement levels
@@ -2097,6 +2168,21 @@ CHECKS += [
         models.BoundaryConditions2D.timeseries,
     ]
 ]
+CHECKS += [
+    TimeseriesExistenceCheck(col, error_code=1205)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+    ]
+]
+CHECKS += [
+    TimeSeriesEqualTimestepsCheck(col, error_code=1206)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+    ]
+]
+CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 
 ## 122x Structure controls
 

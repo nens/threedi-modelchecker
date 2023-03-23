@@ -1,5 +1,3 @@
-from typing import Optional
-
 from .raster_interface import RasterInterface
 
 try:
@@ -32,7 +30,8 @@ class GDALRasterInterface(RasterInterface):
 
     @property
     def _spatial_reference(self):
-        projection = self._dataset.GetProjection()
+        dataset = self._dataset
+        projection = None if dataset == None else dataset.GetProjection()
         if projection:
             return osr.SpatialReference(projection)
 
@@ -47,9 +46,13 @@ class GDALRasterInterface(RasterInterface):
         return self._dataset.RasterCount
 
     @property
-    def is_geographic(self) -> Optional[bool]:
+    def has_projection(self) -> bool:
+        return self._spatial_reference is not None
+
+    @property
+    def is_geographic(self) -> bool:
         sr = self._spatial_reference
-        return None if sr is None else bool(sr.IsGeographic())
+        return bool(sr.IsGeographic())
 
     @property
     def epsg_code(self):

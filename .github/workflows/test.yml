@@ -17,13 +17,13 @@ jobs:
         include:
           # 2019
           - python: 3.8
-            pins: "sqlalchemy==1.3.* alembic==1.8.* geoalchemy2==0.9.*"
+            pins: "sqlalchemy==1.4.0 alembic==1.8.* geoalchemy2==0.9.* rasterio==1.3.0"
           # 2021
           - python: 3.9
-            pins: "sqlalchemy==1.4.30 alembic==1.8.* geoalchemy2==0.10.*"
+            pins: "sqlalchemy==1.4.30 alembic==1.8.* geoalchemy2==0.10.* rasterio==1.3.3"
           # 2022
           - python: "3.10"
-            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.12.*"
+            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.12.* rasterio==1.3.5.post1"
           # current
           - python: "3.11"
             pins: ""
@@ -54,5 +54,3 @@ jobs:
         shell: bash
         run: |
           pytest
-        env:
-          SQLALCHEMY_SILENCE_UBER_WARNING: 1
