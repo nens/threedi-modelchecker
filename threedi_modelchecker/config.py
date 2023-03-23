@@ -1985,6 +1985,31 @@ CHECKS += [
         column=models.GlobalSetting.dem_file,
         filters=first_setting_filter,
     ),
+## 100xx: We continue raster checks from 10000    
+    RasterRangeCheck(
+        error_code=10001,
+        column=models.VegetationDrag.height_file,
+        filters=vegetation_drag_filter,
+        min_value=0,
+    ),
+    RasterRangeCheck(
+        error_code=10002,
+        column=models.VegetationDrag.stem_count_file,
+        filters=vegetation_drag_filter,
+        min_value=0,
+    ),
+    RasterRangeCheck(
+        error_code=10003,
+        column=models.VegetationDrag.stem_diameter_file,
+        filters=vegetation_drag_filter,
+        min_value=0,
+    ),
+    RasterRangeCheck(
+        error_code=10004,
+        column=models.VegetationDrag.drag_coefficient_file,
+        filters=vegetation_drag_filter,
+        min_value=0,
+    ),
 ]
 
 ## 080x: refinement levels
