@@ -1825,8 +1825,9 @@ RASTER_COLUMNS_FILTERS = [
     (models.VegetationDrag.height_file, vegetation_drag_filter),
     (models.VegetationDrag.stem_count_file, vegetation_drag_filter),
     (models.VegetationDrag.stem_diameter_file, vegetation_drag_filter),
-    (models.VegetationDrag.drag_coefficient_file, vegetation_drag_filter)
+    (models.VegetationDrag.drag_coefficient_file, vegetation_drag_filter),
 ]
+
 CHECKS += [
     GDALAvailableCheck(
         error_code=700, level=CheckLevel.WARNING, column=models.GlobalSetting.dem_file
@@ -1985,7 +1986,7 @@ CHECKS += [
         column=models.GlobalSetting.dem_file,
         filters=first_setting_filter,
     ),
-## 100xx: We continue raster checks from 10000    
+    ## 100xx: We continue raster checks from 10000    
     RasterRangeCheck(
         error_code=10001,
         column=models.VegetationDrag.height_file,
