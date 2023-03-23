@@ -48,6 +48,7 @@ from .checks.other import (
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
+    PumpStorageTimestepCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
 )
@@ -64,6 +65,9 @@ from .checks.raster import (
     RasterSquareCellsCheck,
 )
 from .checks.timeseries import (
+    FirstTimeSeriesEqualTimestepsCheck,
+    TimeSeriesEqualTimestepsCheck,
+    TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
     TimeseriesRowCheck,
     TimeseriesStartsAtZeroCheck,
@@ -337,6 +341,11 @@ CHECKS += [
         column=models.Pumpstation.capacity,
         invalid=Query(models.Pumpstation).filter(models.Pumpstation.capacity == 0.0),
         message="v2_pumpstation.capacity should be be greater than 0",
+    ),
+    PumpStorageTimestepCheck(
+        error_code=66,
+        level=CheckLevel.WARNING,
+        column=models.Pumpstation.capacity,
     ),
 ]
 
@@ -2261,6 +2270,21 @@ CHECKS += [
         models.BoundaryConditions2D.timeseries,
     ]
 ]
+CHECKS += [
+    TimeseriesExistenceCheck(col, error_code=1205)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+    ]
+]
+CHECKS += [
+    TimeSeriesEqualTimestepsCheck(col, error_code=1206)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+    ]
+]
+CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 
 ## 122x Structure controls
 
