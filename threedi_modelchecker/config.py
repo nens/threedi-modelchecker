@@ -1563,6 +1563,7 @@ CHECKS += [
         error_code=429,
         column=models.Manhole.exchange_thickness,
         min_value=0,
+        left_inclusive=False,
     ),
     RangeCheck(
         error_code=430,
@@ -1578,6 +1579,7 @@ CHECKS += [
         error_code=432,
         column=models.Channel.exchange_thickness,
         min_value=0,
+        left_inclusive=False,
     ),
     RangeCheck(
         error_code=433,
@@ -1593,6 +1595,7 @@ CHECKS += [
         error_code=435,
         column=models.Pipe.exchange_thickness,
         min_value=0,
+        left_inclusive=False,
     ),
     RangeCheck(
         error_code=436,
