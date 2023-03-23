@@ -553,11 +553,25 @@ class PumpStorageTimestepCheck(BaseCheck):
         return f"{self.column_name} will empty its storage faster than one timestep, which can cause simulation instabilities"
 
 
-class BetaFeaturesCheck(BaseCheck):
-    """Check that no beta features were used in the database"""
+class BetaColumnsCheck(BaseCheck):
+    """Check that no beta columns were used in the database"""
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         return session.query(self.table).filter(self.column.isnot(None)).all()
 
     def description(self) -> str:
         return f"{self.column_name} is a beta feature, which is still under development; please do not use it yet."
+
+
+class BetaValuesCheck(BaseCheck):
+    """Check that no beta features were used in the database"""
+
+    def __init__(self, *args, values: list = [], **kwargs):
+        super().__init__(*args, **kwargs)
+        self.values = values
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        return session.query(self.table).filter(self.column.in_(self.values)).all()
+
+    def description(self) -> str:
+        return f"The value you have used for {self.column_name} is still in beta; please do not use it yet."

@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import func
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
-from threedi_schema.beta_features import BETA_FEATURES
+from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
 from .checks import geo_query
 from .checks.base import (
@@ -40,7 +40,8 @@ from .checks.factories import (
     generate_unique_checks,
 )
 from .checks.other import (
-    BetaFeaturesCheck,
+    BetaColumnsCheck,
+    BetaValuesCheck,
     BoundaryCondition1DObjectNumberCheck,
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
@@ -2229,15 +2230,26 @@ CHECKS += [
     for control_table in (models.ControlMemory, models.ControlTable)
 ]
 
-# This check is optional, depending on a command line argument
-beta_features_check = [
-    BetaFeaturesCheck(
+# These checks are optional, depending on a command line argument
+beta_features_check = []
+beta_features_check += [
+    BetaColumnsCheck(
         error_code=1300,
         column=col,
         level=CheckLevel.ERROR,
     )
-    for col in BETA_FEATURES
+    for col in BETA_COLUMNS
 ]
+for pair in BETA_VALUES:
+    beta_features_check += [
+        BetaValuesCheck(
+            error_code=1300,
+            column=col,
+            values=pair["values"],
+            level=CheckLevel.ERROR,
+        )
+        for col in pair["columns"]
+    ]
 
 
 class Config:
