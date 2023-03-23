@@ -2,7 +2,20 @@ Changelog of threedi-modelchecker
 =================================
 
 
-1.0.2 (unreleased)
+2.0.2 (unreleased)
+------------------
+
+- Added groundwater 1D2D range checks for manholes, channels, and pipes for
+  exchange_thickness, hydraulic_conductivity_in, and hydraulic_conductivity_out.
+
+
+2.0.1 (2023-03-20)
+------------------
+
+- Pin minor version for threede-schema dependency.
+
+
+2.0.0 (2023-03-20)
 ------------------
 
 - Add warning 108: the crest_level of a weir or orifice cannot be lower than
@@ -23,10 +36,17 @@ Changelog of threedi-modelchecker
   argument. The check output can also be dumped to a file using ``--file``.
 
 - Compatibility fix with rasterio 1.3.6.
+
 - Drop SQLAlchemy 1.3 support, add 2.0 support.
 
-- Added groundwater 1D2D range checks for manholes, channels, and pipes for
-  exchange_thickness, hydraulic_conductivity_in, and hydraulic_conductivity_out.
+- Add check 326: this gives an info message if a record exists in the simple_infiltration
+  table, but is not referenced from the global settings.
+
+- Add check 66: this raises a warning if a pumpstation empties its storage area in less than one timestep.
+
+- Add check 1205 to make sure that a timeseries is not an empty string.
+
+- Add checks 1206 to confirm that the timesteps in all boundary condition timesteps are the same.
 
 
 1.0.1 (2023-02-02)

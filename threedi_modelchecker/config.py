@@ -48,12 +48,15 @@ from .checks.other import (
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
+    PumpStorageTimestepCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
 )
 from .checks.raster import (
     GDALAvailableCheck,
     RasterExistsCheck,
+    RasterGridSizeCheck,
+    RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
     RasterHasProjectionCheck,
     RasterIsProjectedCheck,
@@ -62,6 +65,9 @@ from .checks.raster import (
     RasterSquareCellsCheck,
 )
 from .checks.timeseries import (
+    FirstTimeSeriesEqualTimestepsCheck,
+    TimeSeriesEqualTimestepsCheck,
+    TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
     TimeseriesRowCheck,
     TimeseriesStartsAtZeroCheck,
@@ -329,6 +335,11 @@ CHECKS += [
         column=models.Pumpstation.capacity,
         invalid=Query(models.Pumpstation).filter(models.Pumpstation.capacity == 0.0),
         message="v2_pumpstation.capacity should be be greater than 0",
+    ),
+    PumpStorageTimestepCheck(
+        error_code=66,
+        level=CheckLevel.WARNING,
+        column=models.Pumpstation.capacity,
     ),
 ]
 
@@ -1142,6 +1153,28 @@ CHECKS += [
 ]
 
 CHECKS += [
+    QueryCheck(
+        error_code=326,
+        level=CheckLevel.INFO,
+        column=table.id,
+        invalid=Query(table).filter(
+            table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
+        ),
+        message=f"{table.__tablename__} is defined, but not referred to in v2_global_settings.{setting.name}",
+    )
+    for table, setting in (
+        (
+            models.SimpleInfiltration,
+            models.GlobalSetting.simple_infiltration_settings_id,
+        ),
+        (models.Interflow, models.GlobalSetting.interflow_settings_id),
+        (models.GroundWater, models.GlobalSetting.groundwater_settings_id),
+        (models.NumericalSettings, models.GlobalSetting.numerical_settings_id),
+        (models.ControlGroup, models.GlobalSetting.control_group_id),
+    )
+]
+
+CHECKS += [
     AllEqualCheck(error_code=330 + i, column=column, level=CheckLevel.WARNING)
     for i, column in enumerate(
         [
@@ -1862,6 +1895,17 @@ CHECKS += [
         min_value=-9998.0,
         max_value=8848.0,
     ),
+    RasterHasMatchingEPSGCheck(
+        error_code=797,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
+    ),
+    RasterGridSizeCheck(
+        error_code=798,
+        column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
+    ),
 ]
 
 ## 080x: refinement levels
@@ -2147,6 +2191,21 @@ CHECKS += [
         models.BoundaryConditions2D.timeseries,
     ]
 ]
+CHECKS += [
+    TimeseriesExistenceCheck(col, error_code=1205)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+    ]
+]
+CHECKS += [
+    TimeSeriesEqualTimestepsCheck(col, error_code=1206)
+    for col in [
+        models.BoundaryCondition1D.timeseries,
+        models.BoundaryConditions2D.timeseries,
+    ]
+]
+CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 
 ## 122x Structure controls
 

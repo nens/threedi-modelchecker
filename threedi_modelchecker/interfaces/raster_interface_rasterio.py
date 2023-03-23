@@ -42,13 +42,15 @@ class RasterIORasterInterface(RasterInterface):
         return self._dataset.count
 
     @property
-    def is_geographic(self) -> Optional[bool]:
-        return (
-            self._dataset.crs.is_geographic if self._dataset.crs is not None else None
-        )
+    def has_projection(self) -> bool:
+        return self._dataset.crs is not None
 
     @property
-    def epsg_code(self):
+    def is_geographic(self) -> bool:
+        return self._dataset.crs.is_geographic
+
+    @property
+    def epsg_code(self) -> Optional[int]:
         return self._dataset.crs.to_epsg()
 
     @property
