@@ -385,6 +385,19 @@ CHECKS += [
             "is no groundwater hydraulic conductivity"
         ),
     ),
+    QueryCheck(
+        error_code=74,
+        column=models.BoundaryCondition1D.boundary_type,
+        invalid=Query(models.BoundaryCondition1D).filter(
+            models.BoundaryCondition1D.boundary_type.in_(
+                [
+                    constants.BoundaryType.GROUNDWATERLEVEL,
+                    constants.BoundaryType.GROUNDWATERDISCHARGE,
+                ]
+            )
+        ),
+        message=("v2_1d_boundary_conditions cannot have a groundwater type"),
+    ),
 ]
 
 ## 008x: CROSS SECTION DEFINITIONS

@@ -5,7 +5,7 @@ from setuptools import setup
 long_description = "\n\n".join([open("README.rst").read()])
 
 install_requires = [
-    "threedi-schema==0.214.*",
+    "threedi-schema==0.216.*",
     "Click",
     "GeoAlchemy2>=0.9,!=0.11.*",
     "SQLAlchemy>=1.4",
