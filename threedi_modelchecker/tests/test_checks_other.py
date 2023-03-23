@@ -4,6 +4,7 @@ from sqlalchemy.orm import aliased, Query
 from threedi_schema import constants, models
 
 from threedi_modelchecker.checks.other import (
+    BetaColumnsCheck,
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
@@ -392,3 +393,17 @@ def test_pumpstation_storage_timestep(
     check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
+
+
+def test_beta_columns(session):
+    factories.GlobalSettingsFactory(vegetation_drag_settings_id=None)
+    check = BetaColumnsCheck(models.GlobalSetting.vegetation_drag_settings_id)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 0
+
+
+def test_beta_columns_invalid(session):
+    factories.GlobalSettingsFactory(vegetation_drag_settings_id=1)
+    check = BetaColumnsCheck(models.GlobalSetting.vegetation_drag_settings_id)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 1
