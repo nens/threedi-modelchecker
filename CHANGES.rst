@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add warnings for vegetation_drag input. Both rasters and global values.
 
 
 2.0.1 (2023-03-20)
