@@ -8,6 +8,9 @@ Changelog of threedi-modelchecker
 - Added check 73: groundwater boundaries are allowed only when there is
   groundwater hydraulic conductivity.
 
+- Added check 74: groundwater boundary types are not allowed on 1D boundary
+  conditions.
+
 
 2.0.1 (2023-03-20)
 ------------------
