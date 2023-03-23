@@ -1986,7 +1986,7 @@ CHECKS += [
         column=models.GlobalSetting.dem_file,
         filters=first_setting_filter,
     ),
-    ## 100xx: We continue raster checks from 10000    
+    ## 100xx: We continue raster checks from 10000
     RasterRangeCheck(
         error_code=10001,
         column=models.VegetationDrag.height_file,
