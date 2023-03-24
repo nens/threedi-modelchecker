@@ -395,15 +395,15 @@ def test_pumpstation_storage_timestep(
     assert len(invalid) == expected_result
 
 
-def test_beta_columns(session):
-    factories.GlobalSettingsFactory(vegetation_drag_settings_id=None)
+@pytest.mark.parametrize(
+    "value,expected_result",
+    [
+        (None, 0), # column not set, valid result
+        (5, 1), # column set, invalid result
+    ],
+)
+def test_beta_columns(session, value, expected_result):
+    factories.GlobalSettingsFactory(vegetation_drag_settings_id=value)
     check = BetaColumnsCheck(models.GlobalSetting.vegetation_drag_settings_id)
     invalid = check.get_invalid(session)
-    assert len(invalid) == 0
-
-
-def test_beta_columns_invalid(session):
-    factories.GlobalSettingsFactory(vegetation_drag_settings_id=1)
-    check = BetaColumnsCheck(models.GlobalSetting.vegetation_drag_settings_id)
-    invalid = check.get_invalid(session)
-    assert len(invalid) == 1
+    assert len(invalid) == expected_result
