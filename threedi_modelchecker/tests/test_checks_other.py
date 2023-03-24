@@ -5,6 +5,7 @@ from threedi_schema import constants, models
 
 from threedi_modelchecker.checks.other import (
     BetaColumnsCheck,
+    BetaValuesCheck,
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
@@ -405,5 +406,31 @@ def test_pumpstation_storage_timestep(
 def test_beta_columns(session, value, expected_result):
     factories.GlobalSettingsFactory(vegetation_drag_settings_id=value)
     check = BetaColumnsCheck(models.GlobalSetting.vegetation_drag_settings_id)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "value,expected_result",
+    [
+        (
+            constants.BoundaryType.RIEMANN,
+            0,
+        ),  # column not in beta columns, valid result
+        (
+            constants.BoundaryType.GROUNDWATERDISCHARGE,
+            1,
+        ),  # column in beta columns, invalid result
+    ],
+)
+def test_beta_values(session, value, expected_result):
+    beta_values = [
+        constants.BoundaryType.GROUNDWATERLEVEL,
+        constants.BoundaryType.GROUNDWATERDISCHARGE,
+    ]
+    factories.BoundaryConditions1DFactory(boundary_type=value)
+    check = BetaValuesCheck(
+        column=models.BoundaryCondition1D.boundary_type, values=beta_values
+    )
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
