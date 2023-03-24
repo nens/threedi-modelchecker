@@ -566,7 +566,14 @@ class BetaColumnsCheck(BaseCheck):
 class BetaValuesCheck(BaseCheck):
     """Check that no beta features were used in the database"""
 
-    def __init__(self, column, values: list = [], filters=None, level=CheckLevel.ERROR, error_code=0):
+    def __init__(
+        self,
+        column,
+        values: list = [],
+        filters=None,
+        level=CheckLevel.ERROR,
+        error_code=0,
+    ):
         super().__init__(column, filters, level, error_code)
         self.values = values
 

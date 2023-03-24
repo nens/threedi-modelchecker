@@ -398,8 +398,8 @@ def test_pumpstation_storage_timestep(
 @pytest.mark.parametrize(
     "value,expected_result",
     [
-        (None, 0), # column not set, valid result
-        (5, 1), # column set, invalid result
+        (None, 0),  # column not set, valid result
+        (5, 1),  # column set, invalid result
     ],
 )
 def test_beta_columns(session, value, expected_result):
