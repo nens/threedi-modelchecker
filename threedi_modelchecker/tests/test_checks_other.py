@@ -1,9 +1,14 @@
+from unittest import mock
+
 import pytest
 from sqlalchemy import func, text
 from sqlalchemy.orm import aliased, Query
-from threedi_schema import constants, models
+from threedi_schema import constants, models, ThreediDatabase
+from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
 from threedi_modelchecker.checks.other import (
+    BetaColumnsCheck,
+    BetaValuesCheck,
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
@@ -15,6 +20,7 @@ from threedi_modelchecker.checks.other import (
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
 )
+from threedi_modelchecker.model_checks import ThreediModelChecker
 
 from . import factories
 
@@ -392,3 +398,70 @@ def test_pumpstation_storage_timestep(
     check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "value,expected_result",
+    [
+        (None, 0),  # column not set, valid result
+        (5, 1),  # column set, invalid result
+    ],
+)
+def test_beta_columns(session, value, expected_result):
+    factories.GlobalSettingsFactory(vegetation_drag_settings_id=value)
+    check = BetaColumnsCheck(models.GlobalSetting.vegetation_drag_settings_id)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "value,expected_result",
+    [
+        (
+            constants.BoundaryType.RIEMANN,
+            0,
+        ),  # column not in beta columns, valid result
+        (
+            constants.BoundaryType.GROUNDWATERDISCHARGE,
+            1,
+        ),  # column in beta columns, invalid result
+    ],
+)
+def test_beta_values(session, value, expected_result):
+    beta_values = [
+        constants.BoundaryType.GROUNDWATERLEVEL,
+        constants.BoundaryType.GROUNDWATERDISCHARGE,
+    ]
+    factories.BoundaryConditions1DFactory(boundary_type=value)
+    check = BetaValuesCheck(
+        column=models.BoundaryCondition1D.boundary_type, values=beta_values
+    )
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.skipif(
+    condition=(not BETA_COLUMNS and not BETA_VALUES),
+    reason="requires beta features to be defined in threedi-schema to run",
+)
+@pytest.mark.parametrize(
+    "allow_beta_features, no_checks_expected",
+    [
+        (False, False),
+        (True, True),
+    ],
+)
+def test_beta_features_in_server(threedi_db, allow_beta_features, no_checks_expected):
+    with mock.patch.object(ThreediDatabase, "schema"):
+        model_checker = ThreediModelChecker(
+            threedi_db, allow_beta_features=allow_beta_features
+        )
+    model_beta_checks = [
+        check
+        for check in model_checker.config.checks
+        if type(check) in [BetaColumnsCheck, BetaValuesCheck]
+    ]
+    if no_checks_expected:
+        assert len(model_beta_checks) == 0
+    else:
+        assert len(model_beta_checks) > 0

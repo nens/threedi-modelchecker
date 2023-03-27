@@ -52,9 +52,10 @@ Command-line interface
 
 Use the modelchecker from the command line as follows::
 
-    threedi_modelchecker -s path/to/model.sqlite check -l warning 
+    threedi_modelchecker check -s path/to/model.sqlite -l warning 
 
-By default, WARNING and INFO checks are ignored.
+By default, WARNING and INFO checks are ignored. To skip the beta features check,
+add the --allow-beta flag.
 
 
 Development
@@ -71,7 +72,7 @@ Run the tests:
 
     docker-compose run modelchecker pytest
 
-See `Creating revisions <threedi_modelchecker/migrations/README.rst>`_ for 
+See `Creating revisions <https://github.com/nens/threedi-schema/blob/master/threedi_schema/migrations/README.rst>`_ for 
 instructions on how to change the 3Di model schematisation.
 
 Release

@@ -10,7 +10,12 @@ __all__ = ["ThreediModelChecker"]
 
 
 class ThreediModelChecker:
-    def __init__(self, threedi_db: ThreediDatabase, context: Optional[Dict] = None):
+    def __init__(
+        self,
+        threedi_db: ThreediDatabase,
+        context: Optional[Dict] = None,
+        allow_beta_features=False,
+    ):
         """Initialize the model checker.
 
         Optionally, supply the context of the model check:
@@ -23,7 +28,9 @@ class ThreediModelChecker:
         self.db = threedi_db
         self.schema = self.db.schema
         self.schema.validate_schema()
-        self.config = Config(self.models)
+        self.config = Config(
+            models=self.models, allow_beta_features=allow_beta_features
+        )
         context = {} if context is None else context.copy()
         context_type = context.pop("context_type", "local")
         if context_type == "local":
