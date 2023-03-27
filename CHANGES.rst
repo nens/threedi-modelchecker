@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.0.2 (unreleased)
+2.1.0 (2023-03-27)
 ------------------
 
 - Add support for designating beta features in threedi-schema. If a user puts a
