@@ -1583,7 +1583,7 @@ CHECKS += [
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
             models.VegetationDrag.height == None,
-            is_none_or_empty(models.VegetationDrag.height),
+            is_none_or_empty(models.VegetationDrag.height_file),
         ),
         message="v2_vegetation_drag.height must be defined.",
     ),
