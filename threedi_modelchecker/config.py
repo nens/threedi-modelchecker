@@ -1594,6 +1594,54 @@ CHECKS += [
         ),
         message="v2_groundwater.groundwater_hydro_connectivity is recommended as fallback value when using a groundwater_hydro_connectivity_file.",
     ),
+    RangeCheck(
+        error_code=429,
+        column=models.Manhole.exchange_thickness,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=430,
+        column=models.Manhole.hydraulic_conductivity_in,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=431,
+        column=models.Manhole.hydraulic_conductivity_out,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=432,
+        column=models.Channel.exchange_thickness,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=433,
+        column=models.Channel.hydraulic_conductivity_in,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=434,
+        column=models.Channel.hydraulic_conductivity_out,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=435,
+        column=models.Pipe.exchange_thickness,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=436,
+        column=models.Pipe.hydraulic_conductivity_in,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=437,
+        column=models.Pipe.hydraulic_conductivity_out,
+        min_value=0,
+    ),
 ]
 
 
