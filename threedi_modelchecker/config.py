@@ -1596,7 +1596,7 @@ CHECKS += [
             models.VegetationDrag.height == None,
             ~is_none_or_empty(models.VegetationDrag.height_file),
         ),
-        message="v2_vegetation_drag.height is recommended as fallback value when using an height_file.",
+        message="v2_vegetation_drag.height is recommended as fallback value when using a height_file.",
     ),
     RangeCheck(
         error_code=504,
@@ -1610,7 +1610,7 @@ CHECKS += [
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
             models.VegetationDrag.stem_count == None,
-            is_none_or_empty(models.VegetationDrag.stem_count),
+            is_none_or_empty(models.VegetationDrag.stem_count_file),
         ),
         message="v2_vegetation_drag.stem_count must be defined.",
     ),
@@ -1623,7 +1623,7 @@ CHECKS += [
             models.VegetationDrag.stem_count == None,
             ~is_none_or_empty(models.VegetationDrag.stem_count_file),
         ),
-        message="v2_vegetation_drag.stem_count is recommended as fallback value when using an stem_count_file.",
+        message="v2_vegetation_drag.stem_count is recommended as fallback value when using a stem_count_file.",
     ),
     RangeCheck(
         error_code=507,
@@ -1637,7 +1637,7 @@ CHECKS += [
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
             models.VegetationDrag.stem_diameter == None,
-            is_none_or_empty(models.VegetationDrag.stem_diameter),
+            is_none_or_empty(models.VegetationDrag.stem_diameter_file),
         ),
         message="v2_vegetation_drag.stem_diameter must be defined.",
     ),
@@ -1650,7 +1650,7 @@ CHECKS += [
             models.VegetationDrag.stem_diameter == None,
             ~is_none_or_empty(models.VegetationDrag.stem_diameter_file),
         ),
-        message="v2_vegetation_drag.stem_diameter is recommended as fallback value when using an stem_diameter_file.",
+        message="v2_vegetation_drag.stem_diameter is recommended as fallback value when using a stem_diameter_file.",
     ),
     RangeCheck(
         error_code=510,
@@ -1665,7 +1665,7 @@ CHECKS += [
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
             models.VegetationDrag.drag_coefficient == None,
-            is_none_or_empty(models.VegetationDrag.drag_coefficient),
+            is_none_or_empty(models.VegetationDrag.drag_coefficient_file),
         ),
         message="v2_vegetation_drag.drag_coefficient must be defined.",
     ),
@@ -1678,7 +1678,7 @@ CHECKS += [
             models.VegetationDrag.drag_coefficient == None,
             ~is_none_or_empty(models.VegetationDrag.drag_coefficient_file),
         ),
-        message="v2_vegetation_drag.drag_coefficient is recommended as fallback value when using an drag_coefficient_file.",
+        message="v2_vegetation_drag.drag_coefficient is recommended as fallback value when using a drag_coefficient_file.",
     ),
 ]
 
