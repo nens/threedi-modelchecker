@@ -1710,14 +1710,6 @@ CHECKS += [
         min_value=0,
         left_inclusive=False,
     ),
-    RangeCheck(
-        error_code=510,
-        level=CheckLevel.WARNING,
-        column=models.VegetationDrag.drag_coefficient,
-        filters=vegetation_drag_filter,
-        min_value=1.0,
-        left_inclusive=False,
-    ),
     QueryCheck(
         error_code=511,
         column=models.VegetationDrag.drag_coefficient,
