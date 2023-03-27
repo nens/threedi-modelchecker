@@ -5,7 +5,10 @@ Changelog of threedi-modelchecker
 2.0.2 (unreleased)
 ------------------
 
-- Add warnings for vegetation_drag input. Both rasters and global values.
+- Add errors and warnings for vegetation_drag input. Both rasters and global values.
+
+- Added groundwater 1D2D range checks for manholes, channels, and pipes for
+  exchange_thickness, hydraulic_conductivity_in, and hydraulic_conductivity_out.
 
 
 2.0.1 (2023-03-20)
