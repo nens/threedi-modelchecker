@@ -1,7 +1,10 @@
+from unittest import mock
+
 import pytest
 from sqlalchemy import func, text
 from sqlalchemy.orm import aliased, Query
-from threedi_schema import constants, models
+from threedi_schema import constants, models, ThreediDatabase
+from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
 from threedi_modelchecker.checks.other import (
     BetaColumnsCheck,
@@ -17,6 +20,7 @@ from threedi_modelchecker.checks.other import (
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
 )
+from threedi_modelchecker.model_checks import ThreediModelChecker
 
 from . import factories
 
@@ -434,3 +438,30 @@ def test_beta_values(session, value, expected_result):
     )
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
+
+
+@pytest.mark.skipif(
+    condition=(not BETA_COLUMNS and not BETA_VALUES),
+    reason="requires beta features to be defined in threedi-schema to run",
+)
+@pytest.mark.parametrize(
+    "allow_beta_features, no_checks_expected",
+    [
+        (False, False),
+        (True, True),
+    ],
+)
+def test_beta_features_in_server(threedi_db, allow_beta_features, no_checks_expected):
+    with mock.patch.object(ThreediDatabase, "schema"):
+        model_checker = ThreediModelChecker(
+            threedi_db, allow_beta_features=allow_beta_features
+        )
+    model_beta_checks = [
+        check
+        for check in model_checker.config.checks
+        if type(check) in [BetaColumnsCheck, BetaValuesCheck]
+    ]
+    if no_checks_expected:
+        assert len(model_beta_checks) == 0
+    else:
+        assert len(model_beta_checks) > 0
