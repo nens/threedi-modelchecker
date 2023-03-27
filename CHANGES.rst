@@ -5,6 +5,8 @@ Changelog of threedi-modelchecker
 2.0.2 (unreleased)
 ------------------
 
+- Add errors and warnings for vegetation_drag input. Both rasters and global values.
+
 - Added check 73: groundwater boundaries are allowed only when there is
   groundwater hydraulic conductivity.
 
