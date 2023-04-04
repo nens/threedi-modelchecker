@@ -2075,27 +2075,27 @@ CHECKS += [
         column=models.GlobalSetting.dem_file,
         filters=first_setting_filter,
     ),
-    ## 100xx: We continue raster checks from 10000
+    ## 100xx: We continue raster checks from 1400
     RasterRangeCheck(
-        error_code=10001,
+        error_code=1401,
         column=models.VegetationDrag.height_file,
         filters=vegetation_drag_filter,
         min_value=0,
     ),
     RasterRangeCheck(
-        error_code=10002,
+        error_code=1402,
         column=models.VegetationDrag.stem_count_file,
         filters=vegetation_drag_filter,
         min_value=0,
     ),
     RasterRangeCheck(
-        error_code=10003,
+        error_code=1403,
         column=models.VegetationDrag.stem_diameter_file,
         filters=vegetation_drag_filter,
         min_value=0,
     ),
     RasterRangeCheck(
-        error_code=10004,
+        error_code=1404,
         column=models.VegetationDrag.drag_coefficient_file,
         filters=vegetation_drag_filter,
         min_value=0,
