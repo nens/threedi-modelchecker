@@ -338,6 +338,21 @@ CHECKS += [
         ),
         message="v2_pumpstation.lower_stop_level should be less than v2_pumpstation.start_level",
     ),
+    QueryCheck(
+        error_code=63,
+        level=CheckLevel.ERROR,
+        column=models.Pumpstation.capacity,
+        invalid=Query(models.Pumpstation)
+        .join(
+            models.ConnectionNode,
+            models.Pumpstation.connection_node_end_id == models.ConnectionNode.id,
+        )
+        .filter(models.ConnectionNode.storage_area != None)
+        .filter(
+            models.ConnectionNode.storage_area * 1000 <= models.Pumpstation.capacity
+        ),
+        message="v2_pumpstation.capacity/1000 must be less than v2_connection_nodes.storage_area for the pumpstation's end connection node",
+    ),
     RangeCheck(
         error_code=64,
         column=models.Pumpstation.capacity,
