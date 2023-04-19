@@ -351,7 +351,7 @@ CHECKS += [
         .filter(
             models.ConnectionNode.storage_area * 1000 <= models.Pumpstation.capacity
         ),
-        message="v2_pumpstation.capacity/1000 must be less than v2_connection_nodes.storage_area for the pumpstation's end connection node",
+        message="v2_connection_nodes.storage_area * 1000 for each pumpstation's end connection node must be greater than v2_pumpstation.capacity",
     ),
     RangeCheck(
         error_code=64,
