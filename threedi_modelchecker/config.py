@@ -2465,6 +2465,23 @@ CHECKS += [
     )
     for control_table in (models.ControlMemory, models.ControlTable)
 ]
+CHECKS += [
+    QueryCheck(
+        error_code=1227,
+        column=models.Control.id,
+        invalid=Query(models.Control).filter(
+            (
+                (models.Control.control_type == "memory")
+                & models.Control.control_id.not_in(Query(models.ControlMemory.id))
+            )
+            | (
+                (models.Control.control_type == "table")
+                & models.Control.control_id.not_in(Query(models.ControlTable.id))
+            )
+        ),
+        message="v2_control.control_id references an id in v2_control_memory or v2_control_table, but the table it references does not contain an entry with that id.",
+    )
+]
 
 # These checks are optional, depending on a command line argument
 beta_features_check = []
