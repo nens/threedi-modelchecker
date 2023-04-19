@@ -47,6 +47,7 @@ from .checks.other import (
     ConnectionNodesDistance,
     ConnectionNodesLength,
     CrossSectionLocationCheck,
+    CrossSectionSameConfigurationCheck,
     LinestringLocationCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
@@ -316,6 +317,11 @@ CHECKS += [
             ~models.Channel.cross_section_locations.any()
         ),
         message="v2_channel has no cross section locations",
+    ),
+    CrossSectionSameConfigurationCheck(
+        error_code=56,
+        column=models.Channel.id,
+        level=CheckLevel.ERROR,
     ),
 ]
 

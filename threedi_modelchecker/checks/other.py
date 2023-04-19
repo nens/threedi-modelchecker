@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
-from sqlalchemy import func, text
+from sqlalchemy import case, cast, distinct, func, REAL, select, text
 from sqlalchemy.orm import aliased, Query, Session
 from threedi_schema import constants, models
 
@@ -42,6 +42,143 @@ class CrossSectionLocationCheck(BaseCheck):
             f"v2_cross_section_location.the_geom is invalid: the cross-section location "
             f"should be located on the channel geometry (tolerance = {self.max_distance} m)"
         )
+
+
+class CrossSectionSameConfigurationCheck(BaseCheck):
+    """Check the cross-sections on the object are either all open or all closed."""
+
+    def get_invalid(self, session):
+        # get all channels with more than 1 cross section location
+        cross_sections = (
+            select(
+                models.CrossSectionLocation.id.label("cross_section_id"),
+                models.CrossSectionLocation.channel_id,
+                models.CrossSectionDefinition.shape,
+                models.CrossSectionDefinition.width,
+                models.CrossSectionDefinition.height,
+                cast(
+                    func.substr(
+                        models.CrossSectionDefinition.width,
+                        1,
+                        func.instr(models.CrossSectionDefinition.width, " ") - 1,
+                    ),
+                    REAL,
+                ).label(
+                    "first_width"
+                ),  # dirty hack to get the first number in a space-separated list
+                cast(
+                    func.substr(
+                        models.CrossSectionDefinition.height,
+                        1,
+                        func.instr(models.CrossSectionDefinition.height, " ") - 1,
+                    ),
+                    REAL,
+                ).label("first_height"),
+                cast(
+                    func.replace(
+                        models.CrossSectionDefinition.width,
+                        func.rtrim(
+                            models.CrossSectionDefinition.width,
+                            func.replace(models.CrossSectionDefinition.width, " ", ""),
+                        ),
+                        "",
+                    ),
+                    REAL,
+                ).label(
+                    "last_width"
+                ),  # even dirtier hack to get the last number in a space-separated list
+                cast(
+                    func.replace(
+                        models.CrossSectionDefinition.height,
+                        func.rtrim(
+                            models.CrossSectionDefinition.height,
+                            func.replace(models.CrossSectionDefinition.height, " ", ""),
+                        ),
+                        "",
+                    ),
+                    REAL,
+                ).label("last_height"),
+            )
+            .select_from(models.CrossSectionLocation)
+            .join(
+                models.CrossSectionDefinition,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .subquery()
+        )
+        cross_sections_with_configuration = select(
+            cross_sections.c.cross_section_id,
+            cross_sections.c.shape,
+            cross_sections.c.last_width,
+            cross_sections.c.channel_id,
+            case(
+                (
+                    (
+                        (cross_sections.c.shape.in_([0, 2, 3, 8]))
+                        | (
+                            cross_sections.c.shape.in_([5, 6])
+                            & (cross_sections.c.last_width == 0)
+                        )
+                        | (
+                            (cross_sections.c.shape == 7)
+                            & (
+                                cross_sections.c.first_width
+                                == cross_sections.c.last_width
+                            )
+                            & (
+                                cross_sections.c.first_height
+                                == cross_sections.c.last_height
+                            )
+                        )
+                    ),
+                    "closed",
+                ),
+                (
+                    (
+                        (cross_sections.c.shape == 1)
+                        | (
+                            (
+                                cross_sections.c.shape.in_([5, 6])
+                                & (cross_sections.c.last_width > 0)
+                            )
+                        )
+                        | (
+                            (cross_sections.c.shape == 7)
+                            & (
+                                (
+                                    cross_sections.c.first_width
+                                    != cross_sections.c.last_width
+                                )
+                                | (
+                                    cross_sections.c.first_height
+                                    != cross_sections.c.last_height
+                                )
+                            )
+                        )
+                    ),
+                    "open",
+                ),
+                else_="open",
+            ).label("configuration"),
+        ).subquery()
+        filtered_cross_sections = (
+            select(cross_sections_with_configuration)
+            .group_by(cross_sections_with_configuration.c.channel_id)
+            .having(
+                func.count(distinct(cross_sections_with_configuration.c.configuration))
+                > 1
+            )
+            .subquery()
+        )
+        return (
+            self.to_check(session)
+            .filter(self.column == filtered_cross_sections.c.channel_id)
+            .all()
+        )
+
+    def description(self):
+        return f"{self.column} has both open and closed cross-sections along its length. All cross-sections on a {self.column} object must be either open or closed."
 
 
 class Use0DFlowCheck(BaseCheck):
