@@ -56,6 +56,7 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
                 models.CrossSectionDefinition.shape,
                 models.CrossSectionDefinition.width,
                 models.CrossSectionDefinition.height,
+                # dirty hack to get the first number in a space-separated list
                 cast(
                     func.substr(
                         models.CrossSectionDefinition.width,
@@ -63,9 +64,7 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
                         func.instr(models.CrossSectionDefinition.width, " ") - 1,
                     ),
                     REAL,
-                ).label(
-                    "first_width"
-                ),  # dirty hack to get the first number in a space-separated list
+                ).label("first_width"),
                 cast(
                     func.substr(
                         models.CrossSectionDefinition.height,
@@ -74,6 +73,7 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
                     ),
                     REAL,
                 ).label("first_height"),
+                # even dirtier hack to get the last number in a space-separated list
                 cast(
                     func.replace(
                         models.CrossSectionDefinition.width,
@@ -84,9 +84,7 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
                         "",
                     ),
                     REAL,
-                ).label(
-                    "last_width"
-                ),  # even dirtier hack to get the last number in a space-separated list
+                ).label("last_width"),
                 cast(
                     func.replace(
                         models.CrossSectionDefinition.height,
@@ -178,7 +176,7 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
         )
 
     def description(self):
-        return f"{self.column} has both open and closed cross-sections along its length. All cross-sections on a {self.column} object must be either open or closed."
+        return f"{self.column_name} has both open and closed cross-sections along its length. All cross-sections on a {self.column_name} object must be either open or closed."
 
 
 class Use0DFlowCheck(BaseCheck):
