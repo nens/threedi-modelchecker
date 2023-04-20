@@ -81,10 +81,18 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
                 models.CrossSectionDefinition.shape,
                 models.CrossSectionDefinition.width,
                 models.CrossSectionDefinition.height,
-                self.first_number_in_spaced_string(models.CrossSectionDefinition.width).label("first_width"),
-                self.first_number_in_spaced_string(models.CrossSectionDefinition.height).label("first_height"),
-                self.last_number_in_spaced_string(models.CrossSectionDefinition.width).label("last_width"),
-                self.last_number_in_spaced_string(models.CrossSectionDefinition.height).label("last_height"),
+                self.first_number_in_spaced_string(
+                    models.CrossSectionDefinition.width
+                ).label("first_width"),
+                self.first_number_in_spaced_string(
+                    models.CrossSectionDefinition.height
+                ).label("first_height"),
+                self.last_number_in_spaced_string(
+                    models.CrossSectionDefinition.width
+                ).label("last_width"),
+                self.last_number_in_spaced_string(
+                    models.CrossSectionDefinition.height
+                ).label("last_height"),
             )
             .select_from(models.CrossSectionLocation)
             .join(
