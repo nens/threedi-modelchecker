@@ -320,8 +320,8 @@ CHECKS += [
     ),
     CrossSectionSameConfigurationCheck(
         error_code=56,
-        column=models.Channel.id,
         level=CheckLevel.ERROR,
+        column=models.Channel.id,
     ),
 ]
 
