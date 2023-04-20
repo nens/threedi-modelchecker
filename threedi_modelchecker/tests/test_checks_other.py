@@ -13,6 +13,7 @@ from threedi_modelchecker.checks.other import (
     ConnectionNodesDistance,
     ConnectionNodesLength,
     CrossSectionLocationCheck,
+    CrossSectionSameConfigurationCheck,
     LinestringLocationCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
@@ -291,6 +292,69 @@ def test_cross_section_location(session):
     )
     errors = CrossSectionLocationCheck(0.1).get_invalid(session)
     assert len(errors) == 1
+
+
+@pytest.mark.parametrize(
+    "shape, width, height, ok",
+    [
+        # --- closed cross-sections ---
+        # shapes 0, 2, 3 and 8 are always closed
+        *[
+            (
+                i,
+                "0 4.142 5.143 5.143 5.869 5.869",
+                "0 0.174 0.348 0.522 0.696 0.87",
+                False,
+            )
+            for i in [0, 2, 3, 8]
+        ],
+        # shapes 5 and 6 are closed if the width at the highest increment (last number in the width string) is 0
+        *[
+            (i, "0 4.142 5.143 5.143 5.869 0", "0 0.174 0.348 0.522 0.696 0.87", False)
+            for i in [5, 6]
+        ],
+        # shape 7 is closed if the first and last (width, height) coordinates are the same
+        (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 3", False),
+        #
+        # --- open cross-sections ---
+        # shape 1 is always open
+        (1, "0 4.142 5.143 5.143 5.869 5.869", "0 0.174 0.348 0.522 0.696 0.87", True),
+        # shapes 5 and 6 are open if the width at the highest increment (last number in the width string) is > 0
+        *[
+            (i, "0 4.142 5.143 5.143 5.869 1", "0 0.174 0.348 0.522 0.696 0.87", True)
+            for i in [5, 6]
+        ],
+        # shape 7 is open if the first and last (width, height) coordinates are not the same
+        (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 4", True),
+    ],
+)
+def test_cross_section_same_configuration(session, shape, width, height, ok):
+    """
+    This test checks two cross-sections on a channel against each other; they should both be open or both be closed.
+    In this test, the first cross-section has been set to always be open.
+    Therefore, the channel should be invalid when the second cross-section is closed, and valid when it is open.
+    """
+    channel = factories.ChannelFactory(
+        the_geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
+    )
+    # shape 1 is always open
+    open_definition = factories.CrossSectionDefinitionFactory(id=1, shape=1)
+    factories.CrossSectionLocationFactory(
+        channel=channel,
+        the_geom="SRID=4326;POINT(4.718278 52.696697)",
+        definition=open_definition,
+    )
+    testing_definition = factories.CrossSectionDefinitionFactory(
+        id=2, width=width, height=height, shape=shape
+    )
+    # the second one is parametrised
+    factories.CrossSectionLocationFactory(
+        channel=channel,
+        the_geom="SRID=4326;POINT(4.718265 52.696704)",
+        definition=testing_definition,
+    )
+    errors = CrossSectionSameConfigurationCheck(models.Channel.id).get_invalid(session)
+    assert len(errors) == (0 if ok else 1)
 
 
 def test_spatial_index_ok(session):
