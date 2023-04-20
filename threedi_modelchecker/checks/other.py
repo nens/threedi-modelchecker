@@ -72,6 +72,36 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             REAL,
         )
 
+    def configuration_type(
+        self, shape, first_width, last_width, first_height, last_height
+    ):
+        return case(
+            (
+                (
+                    (shape.in_([0, 2, 3, 8]))
+                    | (shape.in_([5, 6]) & (last_width == 0))
+                    | (
+                        (shape == 7)
+                        & (first_width == last_width)
+                        & (first_height == last_height)
+                    )
+                ),
+                "closed",
+            ),
+            (
+                (
+                    (shape == 1)
+                    | ((shape.in_([5, 6]) & (last_width > 0)))
+                    | (
+                        (shape == 7)
+                        & ((first_width != last_width) | (first_height != last_height))
+                    )
+                ),
+                "open",
+            ),
+            else_="open",
+        )
+
     def get_invalid(self, session):
         # get all channels with more than 1 cross section location
         cross_sections = (
@@ -107,54 +137,12 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             cross_sections.c.shape,
             cross_sections.c.last_width,
             cross_sections.c.channel_id,
-            case(
-                (
-                    (
-                        (cross_sections.c.shape.in_([0, 2, 3, 8]))
-                        | (
-                            cross_sections.c.shape.in_([5, 6])
-                            & (cross_sections.c.last_width == 0)
-                        )
-                        | (
-                            (cross_sections.c.shape == 7)
-                            & (
-                                cross_sections.c.first_width
-                                == cross_sections.c.last_width
-                            )
-                            & (
-                                cross_sections.c.first_height
-                                == cross_sections.c.last_height
-                            )
-                        )
-                    ),
-                    "closed",
-                ),
-                (
-                    (
-                        (cross_sections.c.shape == 1)
-                        | (
-                            (
-                                cross_sections.c.shape.in_([5, 6])
-                                & (cross_sections.c.last_width > 0)
-                            )
-                        )
-                        | (
-                            (cross_sections.c.shape == 7)
-                            & (
-                                (
-                                    cross_sections.c.first_width
-                                    != cross_sections.c.last_width
-                                )
-                                | (
-                                    cross_sections.c.first_height
-                                    != cross_sections.c.last_height
-                                )
-                            )
-                        )
-                    ),
-                    "open",
-                ),
-                else_="open",
+            self.configuration_type(
+                shape=cross_sections.c.shape,
+                first_width=cross_sections.c.first_width,
+                last_width=cross_sections.c.last_width,
+                first_height=cross_sections.c.first_height,
+                last_height=cross_sections.c.last_height,
             ).label("configuration"),
         ).subquery()
         filtered_cross_sections = (
