@@ -47,6 +47,31 @@ class CrossSectionLocationCheck(BaseCheck):
 class CrossSectionSameConfigurationCheck(BaseCheck):
     """Check the cross-sections on the object are either all open or all closed."""
 
+    def first_number_in_spaced_string(self, spaced_string):
+        """return the first number in a space-separated string like '1 2 3'"""
+        return cast(
+            func.substr(
+                spaced_string,
+                1,
+                func.instr(spaced_string, " ") - 1,
+            ),
+            REAL,
+        )
+
+    def last_number_in_spaced_string(self, spaced_string):
+        """return the last number in a space-separated string like '1 2 3'"""
+        return cast(
+            func.replace(
+                spaced_string,
+                func.rtrim(
+                    spaced_string,
+                    func.replace(spaced_string, " ", ""),
+                ),
+                "",
+            ),
+            REAL,
+        )
+
     def get_invalid(self, session):
         # get all channels with more than 1 cross section location
         cross_sections = (
@@ -56,46 +81,10 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
                 models.CrossSectionDefinition.shape,
                 models.CrossSectionDefinition.width,
                 models.CrossSectionDefinition.height,
-                # dirty hack to get the first number in a space-separated list
-                cast(
-                    func.substr(
-                        models.CrossSectionDefinition.width,
-                        1,
-                        func.instr(models.CrossSectionDefinition.width, " ") - 1,
-                    ),
-                    REAL,
-                ).label("first_width"),
-                cast(
-                    func.substr(
-                        models.CrossSectionDefinition.height,
-                        1,
-                        func.instr(models.CrossSectionDefinition.height, " ") - 1,
-                    ),
-                    REAL,
-                ).label("first_height"),
-                # even dirtier hack to get the last number in a space-separated list
-                cast(
-                    func.replace(
-                        models.CrossSectionDefinition.width,
-                        func.rtrim(
-                            models.CrossSectionDefinition.width,
-                            func.replace(models.CrossSectionDefinition.width, " ", ""),
-                        ),
-                        "",
-                    ),
-                    REAL,
-                ).label("last_width"),
-                cast(
-                    func.replace(
-                        models.CrossSectionDefinition.height,
-                        func.rtrim(
-                            models.CrossSectionDefinition.height,
-                            func.replace(models.CrossSectionDefinition.height, " ", ""),
-                        ),
-                        "",
-                    ),
-                    REAL,
-                ).label("last_height"),
+                self.first_number_in_spaced_string(models.CrossSectionDefinition.width).label("first_width"),
+                self.first_number_in_spaced_string(models.CrossSectionDefinition.height).label("first_height"),
+                self.last_number_in_spaced_string(models.CrossSectionDefinition.width).label("last_width"),
+                self.last_number_in_spaced_string(models.CrossSectionDefinition.height).label("last_height"),
             )
             .select_from(models.CrossSectionLocation)
             .join(
