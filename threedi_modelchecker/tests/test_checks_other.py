@@ -337,6 +337,9 @@ def test_cross_section_location(session):
         (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 4", True),
         # different height and width
         (7, "2 4.142 5.143 5.143 5.869 3", "4 0.174 0.348 0.522 0.696 5", True),
+        #
+        # Bad data
+        (7, "foo", "bar", False),
     ],
 )
 def test_cross_section_same_configuration(session, shape, width, height, ok):
@@ -349,7 +352,7 @@ def test_cross_section_same_configuration(session, shape, width, height, ok):
         the_geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
     )
     # shape 1 is always open
-    open_definition = factories.CrossSectionDefinitionFactory(id=1, shape=1)
+    open_definition = factories.CrossSectionDefinitionFactory(id=1, shape=1, width="3", height="4")
     factories.CrossSectionLocationFactory(
         channel=channel,
         the_geom="SRID=4326;POINT(4.718278 52.696697)",
