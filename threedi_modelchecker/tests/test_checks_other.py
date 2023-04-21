@@ -299,14 +299,20 @@ def test_cross_section_location(session):
     [
         # --- closed cross-sections ---
         # shapes 0, 2, 3 and 8 are always closed
+        (
+            0,
+            "3",
+            "4",
+            False,
+        ),
         *[
             (
                 i,
-                "0 4.142 5.143 5.143 5.869 5.869",
-                "0 0.174 0.348 0.522 0.696 0.87",
+                "3",
+                None,
                 False,
             )
-            for i in [0, 2, 3, 8]
+            for i in [2, 3, 8]
         ],
         # shapes 5 and 6 are closed if the width at the highest increment (last number in the width string) is 0
         *[
@@ -318,14 +324,19 @@ def test_cross_section_location(session):
         #
         # --- open cross-sections ---
         # shape 1 is always open
-        (1, "0 4.142 5.143 5.143 5.869 5.869", "0 0.174 0.348 0.522 0.696 0.87", True),
+        (1, "3", "4", True),
         # shapes 5 and 6 are open if the width at the highest increment (last number in the width string) is > 0
         *[
             (i, "0 4.142 5.143 5.143 5.869 1", "0 0.174 0.348 0.522 0.696 0.87", True)
             for i in [5, 6]
         ],
         # shape 7 is open if the first and last (width, height) coordinates are not the same
+        # different width
+        (7, "2 4.142 5.143 5.143 5.869 3", "4 0.174 0.348 0.522 0.696 4", True),
+        # different height
         (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 4", True),
+        # different height and width
+        (7, "2 4.142 5.143 5.143 5.869 3", "4 0.174 0.348 0.522 0.696 5", True),
     ],
 )
 def test_cross_section_same_configuration(session, shape, width, height, ok):
