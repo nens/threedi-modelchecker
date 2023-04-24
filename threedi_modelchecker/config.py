@@ -351,7 +351,10 @@ CHECKS += [
         .filter(
             models.ConnectionNode.storage_area * 1000 <= models.Pumpstation.capacity
         ),
-        message="v2_connection_nodes.storage_area * 1000 for each pumpstation's end connection node must be greater than v2_pumpstation.capacity",
+        message=(
+            "v2_connection_nodes.storage_area * 1000 for each pumpstation's end connection node must be greater than v2_pumpstation.capacity; "
+            + "water level should not rise >= 1 m in one second"
+        ),
     ),
     RangeCheck(
         error_code=64,
