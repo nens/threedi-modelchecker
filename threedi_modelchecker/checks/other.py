@@ -175,11 +175,12 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             )
         )
 
+        error_in_cross_sections = False
+
         for row in all_cross_sections.all():
             if not is_valid_value(row[0]) or not is_valid_value(row[1]):
                 error_in_cross_sections = True
                 break  # no need to continue checking; one error is enough to not run the check
-            error_in_cross_sections = False
 
         # only run the check if all the cross-section definitions have a parsable widht and height
         # otherwise sqlalchemy will throw an exception
