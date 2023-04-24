@@ -154,11 +154,44 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             )
             .subquery()
         )
-        return (
-            self.to_check(session)
-            .filter(self.column == filtered_cross_sections.c.channel_id)
-            .all()
+
+        def is_valid_series(input):
+            try:
+                [float(i) for i in input.split(" ")]
+                return True
+            except ValueError:
+                return False
+
+        def is_valid_value(input):
+            if input in ["", None] or is_valid_series(input):
+                return True
+            else:
+                return False
+
+        all_cross_sections = session.execute(
+            select(
+                models.CrossSectionDefinition.width,
+                models.CrossSectionDefinition.height,
+            )
         )
+
+        for row in all_cross_sections.all():
+            if not is_valid_value(row[0]) or not is_valid_value(row[1]):
+                error_in_cross_sections = True
+                break  # no need to continue checking; one error is enough to not run the check
+            error_in_cross_sections = False
+
+        # only run the check if all the cross-section definitions have a parsable widht and height
+        # otherwise sqlalchemy will throw an exception
+        # this is also checked in checks 87 and 88 (CrossSectionFloatListCheck), where it gives an error to the user
+        if not error_in_cross_sections:
+            return (
+                self.to_check(session)
+                .filter(self.column == filtered_cross_sections.c.channel_id)
+                .all()
+            )
+        else:
+            return []
 
     def description(self):
         return f"{self.column_name} has both open and closed cross-sections along its length. All cross-sections on a {self.column_name} object must be either open or closed."
