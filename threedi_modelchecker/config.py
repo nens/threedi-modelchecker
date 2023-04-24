@@ -49,13 +49,13 @@ from .checks.other import (
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     LinestringLocationCheck,
+    NodeInflowAreaCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
-    NodeInflowAreaCheck,
 )
 from .checks.raster import (
     GDALAvailableCheck,
