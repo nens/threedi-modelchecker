@@ -721,7 +721,7 @@ class NodeInflowAreaCheck(BaseCheck):
             )
             .group_by(models.ImperviousSurfaceMap.connection_node_id)
             .having(func.sum(models.ImperviousSurface.area) > 10000)
-        )
+        ).subquery()
         return (
             session.query(models.ConnectionNode)
             .filter(
