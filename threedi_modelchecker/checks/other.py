@@ -182,7 +182,7 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
                 error_in_cross_sections = True
                 break  # no need to continue checking; one error is enough to not run the check
 
-        # only run the check if all the cross-section definitions have a parsable widht and height
+        # only run the check if all the cross-section definitions have a parsable width and height
         # otherwise sqlalchemy will throw an exception
         # this is also checked in checks 87 and 88 (CrossSectionFloatListCheck), where it gives an error to the user
         if not error_in_cross_sections:
