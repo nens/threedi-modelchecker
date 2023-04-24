@@ -13,6 +13,7 @@ from threedi_modelchecker.checks.other import (
     ConnectionNodesDistance,
     ConnectionNodesLength,
     CrossSectionLocationCheck,
+    CrossSectionSameConfigurationCheck,
     LinestringLocationCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
@@ -291,6 +292,93 @@ def test_cross_section_location(session):
     )
     errors = CrossSectionLocationCheck(0.1).get_invalid(session)
     assert len(errors) == 1
+
+
+@pytest.mark.parametrize(
+    "shape, width, height, same_channels, ok",
+    [
+        # --- closed cross-sections ---
+        # shapes 0, 2, 3 and 8 are always closed
+        (0, "3", "4", True, False),
+        *[(i, "3", None, True, False) for i in [2, 3, 8]],
+        # shapes 5 and 6 are closed if the width at the highest increment (last number in the width string) is 0
+        *[
+            (
+                i,
+                "0 4.142 5.143 5.143 5.869 0",
+                "0 0.174 0.348 0.522 0.696 0.87",
+                True,
+                False,
+            )
+            for i in [5, 6]
+        ],
+        # shape 7 is closed if the first and last (width, height) coordinates are the same
+        (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 3", True, False),
+        #
+        # --- open cross-sections ---
+        # shape 1 is always open
+        (1, "3", "4", True, True),
+        # shapes 5 and 6 are open if the width at the highest increment (last number in the width string) is > 0
+        *[
+            (
+                i,
+                "0 4.142 5.143 5.143 5.869 1",
+                "0 0.174 0.348 0.522 0.696 0.87",
+                True,
+                True,
+            )
+            for i in [5, 6]
+        ],
+        # shape 7 is open if the first and last (width, height) coordinates are not the same
+        # different width
+        (7, "2 4.142 5.143 5.143 5.869 3", "4 0.174 0.348 0.522 0.696 4", True, True),
+        # different height
+        (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 4", True, True),
+        # different height and width
+        (7, "2 4.142 5.143 5.143 5.869 3", "4 0.174 0.348 0.522 0.696 5", True, True),
+        #
+        # Bad data, should silently fail, returning no invalid rows. The data is checked in other checks.
+        (7, "foo", "bar", True, True),
+        #
+        # Check on different channels
+        # this should fail if the cross-sections are on the same channel, but pass on different channels
+        (0, "3", "4", False, True),
+    ],
+)
+def test_cross_section_same_configuration(
+    session, shape, width, height, same_channels, ok
+):
+    """
+    This test checks two cross-sections on a channel against each other; they should both be open or both be closed.
+    In this test, the first cross-section has been set to always be open.
+    Therefore, the channel should be invalid when the second cross-section is closed, and valid when it is open.
+    """
+    first_channel = factories.ChannelFactory(
+        the_geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
+    )
+    second_channel = factories.ChannelFactory(
+        the_geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
+    )
+    # shape 1 is always open
+    open_definition = factories.CrossSectionDefinitionFactory(
+        id=1, shape=1, width="3", height="4"
+    )
+    factories.CrossSectionLocationFactory(
+        channel=first_channel,
+        the_geom="SRID=4326;POINT(4.718278 52.696697)",
+        definition=open_definition,
+    )
+    testing_definition = factories.CrossSectionDefinitionFactory(
+        id=2, width=width, height=height, shape=shape
+    )
+    # the second one is parametrised
+    factories.CrossSectionLocationFactory(
+        channel=first_channel if same_channels else second_channel,
+        the_geom="SRID=4326;POINT(4.718265 52.696704)",
+        definition=testing_definition,
+    )
+    errors = CrossSectionSameConfigurationCheck(models.Channel.id).get_invalid(session)
+    assert len(errors) == (0 if ok else 1)
 
 
 def test_spatial_index_ok(session):

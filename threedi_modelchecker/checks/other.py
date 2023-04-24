@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
-from sqlalchemy import func, text
+from sqlalchemy import case, cast, distinct, func, REAL, select, text
 from sqlalchemy.orm import aliased, Query, Session
 from threedi_schema import constants, models
 
@@ -42,6 +42,160 @@ class CrossSectionLocationCheck(BaseCheck):
             f"v2_cross_section_location.the_geom is invalid: the cross-section location "
             f"should be located on the channel geometry (tolerance = {self.max_distance} m)"
         )
+
+
+class CrossSectionSameConfigurationCheck(BaseCheck):
+    """Check the cross-sections on the object are either all open or all closed."""
+
+    def first_number_in_spaced_string(self, spaced_string):
+        """return the first number in a space-separated string like '1 2 3'"""
+        return cast(
+            func.substr(
+                spaced_string,
+                1,
+                func.instr(spaced_string, " ") - 1,
+            ),
+            REAL,
+        )
+
+    def last_number_in_spaced_string(self, spaced_string):
+        """return the last number in a space-separated string like '1 2 3'"""
+        return cast(
+            func.replace(
+                spaced_string,
+                func.rtrim(
+                    spaced_string,
+                    func.replace(spaced_string, " ", ""),
+                ),
+                "",
+            ),
+            REAL,
+        )
+
+    def configuration_type(
+        self, shape, first_width, last_width, first_height, last_height
+    ):
+        return case(
+            (
+                (
+                    (shape.in_([0, 2, 3, 8]))
+                    | (shape.in_([5, 6]) & (last_width == 0))
+                    | (
+                        (shape == 7)
+                        & (first_width == last_width)
+                        & (first_height == last_height)
+                    )
+                ),
+                "closed",
+            ),
+            (
+                (
+                    (shape == 1)
+                    | ((shape.in_([5, 6]) & (last_width > 0)))
+                    | (
+                        (shape == 7)
+                        & ((first_width != last_width) | (first_height != last_height))
+                    )
+                ),
+                "open",
+            ),
+            else_="open",
+        )
+
+    def get_invalid(self, session):
+        # get all channels with more than 1 cross section location
+        cross_sections = (
+            select(
+                models.CrossSectionLocation.id.label("cross_section_id"),
+                models.CrossSectionLocation.channel_id,
+                models.CrossSectionDefinition.shape,
+                models.CrossSectionDefinition.width,
+                models.CrossSectionDefinition.height,
+                self.first_number_in_spaced_string(
+                    models.CrossSectionDefinition.width
+                ).label("first_width"),
+                self.first_number_in_spaced_string(
+                    models.CrossSectionDefinition.height
+                ).label("first_height"),
+                self.last_number_in_spaced_string(
+                    models.CrossSectionDefinition.width
+                ).label("last_width"),
+                self.last_number_in_spaced_string(
+                    models.CrossSectionDefinition.height
+                ).label("last_height"),
+            )
+            .select_from(models.CrossSectionLocation)
+            .join(
+                models.CrossSectionDefinition,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .subquery()
+        )
+        cross_sections_with_configuration = select(
+            cross_sections.c.cross_section_id,
+            cross_sections.c.shape,
+            cross_sections.c.last_width,
+            cross_sections.c.channel_id,
+            self.configuration_type(
+                shape=cross_sections.c.shape,
+                first_width=cross_sections.c.first_width,
+                last_width=cross_sections.c.last_width,
+                first_height=cross_sections.c.first_height,
+                last_height=cross_sections.c.last_height,
+            ).label("configuration"),
+        ).subquery()
+        filtered_cross_sections = (
+            select(cross_sections_with_configuration)
+            .group_by(cross_sections_with_configuration.c.channel_id)
+            .having(
+                func.count(distinct(cross_sections_with_configuration.c.configuration))
+                > 1
+            )
+            .subquery()
+        )
+
+        def is_valid_series(input):
+            try:
+                [float(i) for i in input.split(" ")]
+                return True
+            except ValueError:
+                return False
+
+        def is_valid_value(input):
+            if input in ["", None] or is_valid_series(input):
+                return True
+            else:
+                return False
+
+        all_cross_sections = session.execute(
+            select(
+                models.CrossSectionDefinition.width,
+                models.CrossSectionDefinition.height,
+            )
+        )
+
+        error_in_cross_sections = False
+
+        for row in all_cross_sections.all():
+            if not is_valid_value(row[0]) or not is_valid_value(row[1]):
+                error_in_cross_sections = True
+                break  # no need to continue checking; one error is enough to not run the check
+
+        # only run the check if all the cross-section definitions have a parsable width and height
+        # otherwise sqlalchemy will throw an exception
+        # this is also checked in checks 87 and 88 (CrossSectionFloatListCheck), where it gives an error to the user
+        if not error_in_cross_sections:
+            return (
+                self.to_check(session)
+                .filter(self.column == filtered_cross_sections.c.channel_id)
+                .all()
+            )
+        else:
+            return []
+
+    def description(self):
+        return f"{self.column_name} has both open and closed cross-sections along its length. All cross-sections on a {self.column_name} object must be either open or closed."
 
 
 class Use0DFlowCheck(BaseCheck):
