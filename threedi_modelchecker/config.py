@@ -341,10 +341,10 @@ CHECKS += [
     QueryCheck(
         error_code=63,
         level=CheckLevel.ERROR,
-        column=models.Pumpstation.capacity,
-        invalid=Query(models.Pumpstation)
+        column=models.ConnectionNode.storage_area,
+        invalid=Query(models.ConnectionNode)
         .join(
-            models.ConnectionNode,
+            models.Pumpstation,
             models.Pumpstation.connection_node_end_id == models.ConnectionNode.id,
         )
         .filter(models.ConnectionNode.storage_area != None)
