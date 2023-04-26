@@ -707,33 +707,6 @@ class PumpStorageTimestepCheck(BaseCheck):
         return f"{self.column_name} will empty its storage faster than one timestep, which can cause simulation instabilities"
 
 
-class NodeInflowAreaCheck(BaseCheck):
-    """Check that total inflow area per connection node is no larger than 10,000 square metres"""
-
-    def get_invalid(self, session: Session) -> List[NamedTuple]:
-        impervious_surfaces = (
-            select(models.ImperviousSurfaceMap.connection_node_id)
-            .select_from(models.ImperviousSurfaceMap)
-            .join(
-                models.ImperviousSurface,
-                models.ImperviousSurfaceMap.impervious_surface_id
-                == models.ImperviousSurface.id,
-            )
-            .group_by(models.ImperviousSurfaceMap.connection_node_id)
-            .having(func.sum(models.ImperviousSurface.area) > 10000)
-        ).subquery()
-        return (
-            session.query(models.ConnectionNode)
-            .filter(
-                models.ConnectionNode.id == impervious_surfaces.c.connection_node_id
-            )
-            .all()
-        )
-
-    def description(self) -> str:
-        return f"{self.column_name} has a an associated inflow area larger than 10,000 m2; this might be an error."
-
-
 class BetaColumnsCheck(BaseCheck):
     """Check that no beta columns were used in the database"""
 
