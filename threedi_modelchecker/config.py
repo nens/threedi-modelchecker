@@ -49,7 +49,6 @@ from .checks.other import (
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     LinestringLocationCheck,
-    NodeInflowAreaCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
@@ -1833,13 +1832,6 @@ for (surface, surface_map, filters) in [
             message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
         ),
     ]
-CHECKS += [
-    NodeInflowAreaCheck(
-        error_code=613,
-        column=models.ConnectionNode.id,
-        level=CheckLevel.WARNING,
-    )
-]
 
 
 CHECKS += [
