@@ -344,6 +344,24 @@ CHECKS += [
         ),
         message="v2_pumpstation.lower_stop_level should be less than v2_pumpstation.start_level",
     ),
+    QueryCheck(
+        error_code=63,
+        level=CheckLevel.ERROR,
+        column=models.ConnectionNode.storage_area,
+        invalid=Query(models.ConnectionNode)
+        .join(
+            models.Pumpstation,
+            models.Pumpstation.connection_node_end_id == models.ConnectionNode.id,
+        )
+        .filter(models.ConnectionNode.storage_area != None)
+        .filter(
+            models.ConnectionNode.storage_area * 1000 <= models.Pumpstation.capacity
+        ),
+        message=(
+            "v2_connection_nodes.storage_area * 1000 for each pumpstation's end connection node must be greater than v2_pumpstation.capacity; "
+            + "water level should not rise >= 1 m in one second"
+        ),
+    ),
     RangeCheck(
         error_code=64,
         column=models.Pumpstation.capacity,
