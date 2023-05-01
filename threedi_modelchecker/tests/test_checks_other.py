@@ -492,8 +492,8 @@ def test_pumpstation_storage_timestep(
 @pytest.mark.parametrize(
     "value,expected_result",
     [
-        (1000, 0),  # total area = 1000 + 9000 = 10,000 <= 10,000; no error
-        (1001, 1),  # total area = 1001 + 9000 = 10,001 > 10,000; error
+        (1000, 0),  # total area = 1000 + 9000 = 10000 <= 10000; no error
+        (1001, 1),  # total area = 1001 + 9000 = 10001 > 10000; error
     ],
 )
 def test_connection_node_inflow_area(session, value, expected_result):

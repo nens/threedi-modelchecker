@@ -708,7 +708,7 @@ class PumpStorageTimestepCheck(BaseCheck):
 
 
 class NodeInflowAreaCheck(BaseCheck):
-    """Check that total inflow area per connection node is no larger than 10,000 square metres"""
+    """Check that total inflow area per connection node is no larger than 10000 square metres"""
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         impervious_surfaces = (
@@ -731,7 +731,7 @@ class NodeInflowAreaCheck(BaseCheck):
         )
 
     def description(self) -> str:
-        return f"{self.column_name} has a an associated inflow area larger than 10,000 m2; this might be an error."
+        return f"{self.column_name} has a an associated inflow area larger than 10000 m2; this might be an error."
 
 
 class BetaColumnsCheck(BaseCheck):
