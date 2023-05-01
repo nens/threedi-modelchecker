@@ -48,9 +48,10 @@ from .checks.other import (
     ConnectionNodesLength,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
+    ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
-    NodeInflowAreaCheck,
     OpenChannelsWithNestedNewton,
+    PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
@@ -1834,11 +1835,12 @@ for (surface, surface_map, filters) in [
         ),
     ]
 CHECKS += [
-    NodeInflowAreaCheck(
-        error_code=613,
-        column=models.ConnectionNode.id,
-        level=CheckLevel.WARNING,
-    )
+    ImperviousNodeInflowAreaCheck(
+        error_code=613, level=CheckLevel.WARNING, filters=CONDITIONS["0d_imp"].exists()
+    ),
+    PerviousNodeInflowAreaCheck(
+        error_code=613, level=CheckLevel.WARNING, filters=CONDITIONS["0d_surf"].exists()
+    ),
 ]
 
 
