@@ -2576,6 +2576,15 @@ class Config:
                     "v2_pipe.material": "INFO",
                 },
             )
+            self.checks += [
+                RangeCheck(
+                    column=model.id,
+                    error_code=8,
+                    min_value=0,
+                    max_value=2147483647,
+                    message=f"{model.id.name} must be a positive signed 32-bit integer.",
+                )
+            ]
 
         self.checks += CHECKS
         if not self.allow_beta_features:
