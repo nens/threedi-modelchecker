@@ -2362,7 +2362,20 @@ CHECKS += [
             )
         ),
         message="v2_aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables.",
-    )
+    ),
+    AllEqualCheck(error_code=1151, column=models.AggregationSettings.timestep),
+    QueryCheck(
+        error_code=1152,
+        level=CheckLevel.INFO,
+        column=models.AggregationSettings.timestep,
+        invalid=Query(models.AggregationSettings.timestep).filter(
+            models.AggregationSettings.timestep
+            < Query(models.GlobalSetting.output_time_step)
+            .filter(first_setting_filter)
+            .scalar_subquery()
+        ),
+        message="v2_aggregation_settings.timestep is smaller than v2_global_settings.output_time_step",
+    ),
 ]
 
 ## 12xx  SIMULATION, timeseries
