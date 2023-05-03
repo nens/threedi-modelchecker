@@ -14,8 +14,10 @@ from threedi_modelchecker.checks.other import (
     ConnectionNodesLength,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
+    ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
     OpenChannelsWithNestedNewton,
+    PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
@@ -484,6 +486,46 @@ def test_pumpstation_storage_timestep(
     )
     factories.GlobalSettingsFactory(sim_time_step=time_step)
     check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "value,expected_result",
+    [
+        (1000, 0),  # total area = 1000 + 9000 = 10000 <= 10000; no error
+        (1001, 1),  # total area = 1001 + 9000 = 10001 > 10000; error
+    ],
+)
+def test_impervious_connection_node_inflow_area(session, value, expected_result):
+    connection_node = factories.ConnectionNodeFactory()
+    first_impervious_surface = factories.ImperviousSurfaceFactory(area=9000)
+    second_impervious_surface = factories.ImperviousSurfaceFactory(area=value)
+    factories.ImperviousSurfaceMapFactory(
+        impervious_surface=first_impervious_surface, connection_node=connection_node
+    )
+    factories.ImperviousSurfaceMapFactory(
+        impervious_surface=second_impervious_surface, connection_node=connection_node
+    )
+    check = ImperviousNodeInflowAreaCheck()
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "value,expected_result",
+    [
+        (1000, 0),  # total area = 1000 + 9000 = 10000 <= 10000; no error
+        (1001, 1),  # total area = 1001 + 9000 = 10001 > 10000; error
+    ],
+)
+def test_pervious_connection_node_inflow_area(session, value, expected_result):
+    factories.ConnectionNodeFactory(id=1)
+    factories.SurfaceFactory(id=1, area=9000)
+    factories.SurfaceFactory(id=2, area=value)
+    factories.SurfaceMapFactory(surface_id=1, connection_node_id=1)
+    factories.SurfaceMapFactory(surface_id=2, connection_node_id=1)
+    check = PerviousNodeInflowAreaCheck()
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 

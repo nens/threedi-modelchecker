@@ -48,8 +48,10 @@ from .checks.other import (
     ConnectionNodesLength,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
+    ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
     OpenChannelsWithNestedNewton,
+    PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
@@ -1850,6 +1852,14 @@ for (surface, surface_map, filters) in [
             message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
         ),
     ]
+CHECKS += [
+    ImperviousNodeInflowAreaCheck(
+        error_code=613, level=CheckLevel.WARNING, filters=CONDITIONS["0d_imp"].exists()
+    ),
+    PerviousNodeInflowAreaCheck(
+        error_code=613, level=CheckLevel.WARNING, filters=CONDITIONS["0d_surf"].exists()
+    ),
+]
 
 
 CHECKS += [
