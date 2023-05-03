@@ -2363,10 +2363,14 @@ CHECKS += [
         ),
         message="v2_aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables.",
     ),
-    AllEqualCheck(error_code=1151, column=models.AggregationSettings.timestep),
+    AllEqualCheck(
+        error_code=1151,
+        level=CheckLevel.WARNING,
+        column=models.AggregationSettings.timestep,
+    ),
     QueryCheck(
         error_code=1152,
-        level=CheckLevel.INFO,
+        level=CheckLevel.WARNING,
         column=models.AggregationSettings.timestep,
         invalid=Query(models.AggregationSettings.timestep).filter(
             models.AggregationSettings.timestep
