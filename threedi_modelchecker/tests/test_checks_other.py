@@ -16,6 +16,7 @@ from threedi_modelchecker.checks.other import (
     CrossSectionSameConfigurationCheck,
     ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
+    NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
@@ -526,6 +527,34 @@ def test_pervious_connection_node_inflow_area(session, value, expected_result):
     factories.SurfaceMapFactory(surface_id=1, connection_node_id=1)
     factories.SurfaceMapFactory(surface_id=2, connection_node_id=1)
     check = PerviousNodeInflowAreaCheck()
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "surface_type",
+    [("impervious"), ("pervious")],
+)
+@pytest.mark.parametrize(
+    "connected_surfaces_count,expected_result",
+    [
+        (50, 0),
+        (51, 1),
+    ],
+)
+def test_connection_node_mapped_surfaces(
+    session, surface_type, connected_surfaces_count, expected_result
+):
+    factories.ConnectionNodeFactory(id=1)
+    if surface_type == "pervious":
+        for i in range(connected_surfaces_count):
+            factories.SurfaceMapFactory(connection_node_id=1, surface_id=i + 1)
+    elif surface_type == "impervious":
+        for i in range(connected_surfaces_count):
+            factories.ImperviousSurfaceMapFactory(
+                connection_node_id=1, impervious_surface_id=i + 1
+            )
+    check = NodeSurfaceConnectionsCheck(check_type=surface_type)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 

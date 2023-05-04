@@ -766,6 +766,45 @@ class PerviousNodeInflowAreaCheck(BaseCheck):
         return f"{self.column_name} has a an associated inflow area larger than 10000 m2; this might be an error."
 
 
+class NodeSurfaceConnectionsCheck(BaseCheck):
+    """Check that no more than 50 surfaces are mapped to a connection node"""
+
+    def __init__(
+        self,
+        check_type: Literal["impervious", "pervious"] = "impervious",
+        *args,
+        **kwargs,
+    ):
+        super().__init__(column=models.ConnectionNode.id, *args, **kwargs)
+
+        self.surface_column = None
+        if check_type == "impervious":
+            self.surface_column = models.ImperviousSurfaceMap
+        elif check_type == "pervious":
+            self.surface_column = models.SurfaceMap
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        if self.surface_column is None:
+            return []
+
+        overloaded_connections = (
+            select(self.surface_column.connection_node_id)
+            .group_by(self.surface_column.connection_node_id)
+            .having(func.count(self.surface_column.connection_node_id) > 50)
+        ).subquery()
+
+        return (
+            session.query(models.ConnectionNode)
+            .filter(
+                models.ConnectionNode.id == overloaded_connections.c.connection_node_id
+            )
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"{self.column_name} has more than 50 surface areas mapped to it; this might be an error."
+
+
 class BetaColumnsCheck(BaseCheck):
     """Check that no beta columns were used in the database"""
 
