@@ -25,11 +25,11 @@ from .checks.cross_section_definitions import (
     CrossSectionFloatListCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
+    CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
-    CrossSectionMinimumDiameterCheck,
 )
 from .checks.factories import (
     generate_enum_checks,
@@ -559,7 +559,6 @@ CHECKS += [
     CrossSectionMinimumDiameterCheck(
         error_code=98,
         level=CheckLevel.WARNING,
-        column=models.CrossSectionDefinition.id,
     ),
 ]
 
