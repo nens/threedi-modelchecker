@@ -319,3 +319,97 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
 
     def description(self):
         return f"{self.column_name} should be monotonically increasing for open YZ profiles. Perhaps this is actually a closed profile?"
+
+
+class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
+    """Check if cross section widths and heights are large enough"""
+
+
+    def configuration_type(
+        self, shape, first_width, last_width, first_height, last_height
+    ):
+        if (
+            (shape in [0, 2, 3, 8])
+            or (shape in [5, 6] and last_width == 0)
+            or (shape == 7 and last_width == 0)
+        ):
+            return "closed"
+        elif (
+            (shape == 1)
+            or (shape in [5, 6] and last_width > 0)
+            or (
+                shape == 7
+                and ((first_width, first_height) != (last_width, last_height))
+            )
+        ):
+            return "open"
+        else:
+            return "open"
+
+
+    def get_heights(self, shape, widths, heights):
+        if shape == 2:
+            heights = widths 
+        if shape in [3, 8]:
+            heights = [1.5*i for i in widths]
+
+        first_width = widths[0]
+        last_width = widths[-1]
+
+        if shape == 7:
+            max_width = max(widths) - min(widths)
+        else:
+            max_width = max(widths)
+
+        if heights:
+            first_height = heights[0]
+            last_height = heights[-1]
+            if shape == 7:
+                max_height = max(heights) - min(heights)
+            else:
+                max_height = max(heights)
+        else:
+            first_height = None
+            last_height = None
+            max_height = None
+
+        return first_height, last_height, max_height, first_width, last_width, max_width
+
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (models.CrossSectionDefinition.width != None)
+            & (models.CrossSectionDefinition.width != "")
+        ):
+            try:
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = [float(x) for x in record.height.split(" ")] if record.height not in [None, ""] else []
+            except ValueError:
+                continue  # other check catches this
+
+            first_height, last_height, max_height, first_width, last_width, max_width = self.get_heights(record.shape, widths, heights)
+
+            configuration = self.configuration_type(
+                shape=record.shape,
+                first_width=first_width,
+                last_width=last_width,
+                first_height=first_height,
+                last_height=last_height,
+            )
+            
+            # See nens/threedi-modelchecker#251
+            minimum_diameter = 0.1
+            if configuration == "closed":
+                if (max_height < minimum_diameter) or (max_width < minimum_diameter):
+                    invalids.append(record)
+            # the profile height does not need checking on an open cross-section
+            elif configuration == "open":
+                if max_width < minimum_diameter:
+                    invalids.append(record)
+                
+
+        return invalids
+
+    def description(self):
+        return f"the largest values in v2_cross_section_definition.width and (if the cross-section is closed) v2_cross_section_definition.height should be at least 0.1m"
