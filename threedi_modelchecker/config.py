@@ -697,7 +697,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=table.id,
         invalid=Query(table).filter(geo_query.length(table.the_geom) < 0.05),
-        message=f"Length of a {table} is very short (< 0.05 m). A length of at least 1.0 m is recommended.",
+        message=f"The length of {table.__tablename__} is very short (< 0.05 m). A length of at least 1.0 m is recommended.",
     )
     for table in [models.Channel, models.Culvert]
 ]
@@ -734,7 +734,7 @@ CHECKS += [
         invalid=Query(models.ConnectionNode).filter(
             models.ConnectionNode.the_geom_linestring != None
         ),
-        message="The 'the_geom_linestring' column of v2_connection_nodes must be NULL",
+        message=f"{models.ConnectionNode.the_geom_linestring} must be NULL",
     )
 ]
 CHECKS += [
