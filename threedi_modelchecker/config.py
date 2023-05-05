@@ -1202,16 +1202,8 @@ CHECKS += [
         ),
         message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.table_step_size.",
     ),
-    UniqueCheck(
-        error_code=324,
-        level=CheckLevel.WARNING,
-        columns=(
-            models.AggregationSettings.flow_variable,
-            models.AggregationSettings.aggregation_method,
-        ),
-    ),
     QueryCheck(
-        error_code=325,
+        error_code=324,
         level=CheckLevel.WARNING,
         column=models.GlobalSetting.interception_global,
         invalid=Query(models.GlobalSetting).filter(
@@ -1224,7 +1216,7 @@ CHECKS += [
 
 CHECKS += [
     QueryCheck(
-        error_code=326,
+        error_code=325,
         level=CheckLevel.INFO,
         column=table.id,
         invalid=Query(table).filter(
@@ -2372,7 +2364,15 @@ CHECKS += [
             )
         ),
         message="v2_aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables.",
-    )
+    ),
+    UniqueCheck(
+        error_code=1151,
+        level=CheckLevel.WARNING,
+        columns=(
+            models.AggregationSettings.flow_variable,
+            models.AggregationSettings.aggregation_method,
+        ),
+    ),
 ]
 
 ## 12xx  SIMULATION, timeseries
