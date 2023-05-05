@@ -1,3 +1,5 @@
+import re
+
 import click
 from threedi_schema import ThreediDatabase
 from threedi_schema.domain.models import DECLARED_MODELS
@@ -35,7 +37,13 @@ def cli():
     default=False,
     help="Don't check whether beta features were used in the database.",
 )
-def check(sqlite, file, level, allow_beta):
+@click.option(
+    "--ignore-checks",
+    type=str,
+    help="Regex pattern; check codes matching this pattern are ignored.",
+    default=None,
+)
+def check(sqlite, file, level, allow_beta, ignore_checks):
     """Checks the threedi-model for errors / warnings / info messages"""
     db = ThreediDatabase(sqlite, echo=False)
     """Checks the threedi model schematisation for errors."""
@@ -49,9 +57,11 @@ def check(sqlite, file, level, allow_beta):
     click.echo("Parsing schematisation for any %s" % msg)
     if file:
         click.echo("Model errors will be written to %s" % file)
+    if ignore_checks:
+        ignore_checks = re.compile(ignore_checks)
 
     mc = ThreediModelChecker(threedi_db=db, allow_beta_features=allow_beta)
-    model_errors = mc.errors(level=level)
+    model_errors = mc.errors(level=level, ignore_checks=ignore_checks)
 
     if file:
         exporters.export_to_file(model_errors, file)

@@ -1,3 +1,4 @@
+import re
 from typing import List
 
 from sqlalchemy import func
@@ -2600,9 +2601,13 @@ class Config:
         if not self.allow_beta_features:
             self.checks += beta_features_check
 
-    def iter_checks(self, level=CheckLevel.ERROR):
+    def iter_checks(self, level=CheckLevel.ERROR, ignore_checks=None):
         """Iterate over checks with at least 'level'"""
         level = CheckLevel.get(level)  # normalize
         for check in self.checks:
             if check.level >= level:
-                yield check
+                if ignore_checks:
+                    if not re.match(ignore_checks, str(check.error_code).zfill(4)):
+                        yield check
+                else:
+                    yield check
