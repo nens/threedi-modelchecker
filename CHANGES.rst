@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.1.1 (unreleased)
+2.1.1 (2023-05-08)
 ------------------
 
 - Vegetation_drag column names have changed. Update column names in code.
