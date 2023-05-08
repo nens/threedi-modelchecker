@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Query
-from threedi_schema import models
+from threedi_schema import constants, models
 
 from .base import BaseCheck
 
@@ -327,58 +327,6 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
     def __init__(self, *args, **kwargs):
         super().__init__(column=models.CrossSectionDefinition.id, *args, **kwargs)
 
-    def configuration_type(
-        self, shape, first_width, last_width, first_height, last_height
-    ):
-        if (
-            (shape in [0, 2, 3, 8])
-            or (shape in [5, 6] and last_width == 0)
-            or (
-                shape == 7
-                and ((first_width, first_height) == (last_width, last_height))
-            )
-        ):
-            return "closed"
-        elif (
-            (shape == 1)
-            or (shape in [5, 6] and last_width > 0)
-            or (
-                shape == 7
-                and ((first_width, first_height) != (last_width, last_height))
-            )
-        ):
-            return "open"
-        else:
-            return "open"
-
-    def get_heights(self, shape, widths, heights):
-        if shape == 2:
-            heights = widths
-        if shape in [3, 8]:
-            heights = [1.5 * i for i in widths]
-
-        first_width = widths[0]
-        last_width = widths[-1]
-
-        if shape == 7:
-            max_width = round((max(widths) - min(widths)), 9)
-        else:
-            max_width = max(widths)
-
-        if heights:
-            first_height = heights[0]
-            last_height = heights[-1]
-            if shape == 7:
-                max_height = round((max(heights) - min(heights)), 9)
-            else:
-                max_height = max(heights)
-        else:
-            first_height = None
-            last_height = None
-            max_height = None
-
-        return first_height, last_height, max_height, first_width, last_width, max_width
-
     def get_invalid(self, session):
         invalids = []
         for record in self.to_check(session).filter(
@@ -395,22 +343,50 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
             except ValueError:
                 continue  # other check catches this
 
-            (
-                first_height,
-                last_height,
-                max_height,
-                first_width,
-                last_width,
-                max_width,
-            ) = self.get_heights(record.shape.value, widths, heights)
-
-            configuration = self.configuration_type(
-                shape=record.shape.value,
-                first_width=first_width,
-                last_width=last_width,
-                first_height=first_height,
-                last_height=last_height,
-            )
+            if record.shape.value == constants.CrossSectionShape.CLOSED_RECTANGLE.value:
+                max_height = max(heights)
+                max_width = max(widths)
+                configuration = "closed"
+            elif record.shape.value == constants.CrossSectionShape.RECTANGLE.value:
+                max_width = max(widths)
+                configuration = "open"
+            elif record.shape.value == constants.CrossSectionShape.CIRCLE.value:
+                # any value filled in for heights will be overwritten by the widths value, also in the simulation
+                max_height = max_width = max(widths)
+                configuration = "closed"
+            elif record.shape.value in [
+                constants.CrossSectionShape.EGG.value,
+                constants.CrossSectionShape.INVERTED_EGG.value,
+            ]:
+                # any value filled in for heights will be overwritten by 1.5 times the widths value, also in the simulation
+                max_width = max(widths)
+                max_height = 1.5 * max_width
+                configuration = "closed"
+            elif record.shape.value in [
+                constants.CrossSectionShape.TABULATED_RECTANGLE.value,
+                constants.CrossSectionShape.TABULATED_TRAPEZIUM.value,
+            ]:
+                last_width = widths[-1]
+                max_height = max(heights)
+                max_width = max(widths)
+                if last_width == 0:
+                    configuration = "closed"
+                elif last_width > 0:
+                    configuration = "open"
+                else:
+                    continue
+            elif record.shape.value == constants.CrossSectionShape.TABULATED_YZ.value:
+                # without the rounding, floating-point errors occur
+                max_width = round((max(widths) - min(widths)), 9)
+                max_height = round((max(heights) - min(heights)), 9)
+                first_width = widths[0]
+                last_width = widths[-1]
+                first_height = heights[0]
+                last_height = heights[-1]
+                if (first_width, first_height) == (last_width, last_height):
+                    configuration = "closed"
+                else:
+                    configuration = "open"
 
             # See nens/threedi-modelchecker#251
             minimum_diameter = 0.1
