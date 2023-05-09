@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added check 98: cross-section diameters must not be smaller than 0.1 m.
 
 
 2.1.1 (2023-05-08)
