@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Query
-from threedi_schema import models
+from threedi_schema import constants, models
 
 from .base import BaseCheck
 
@@ -319,3 +319,86 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
 
     def description(self):
         return f"{self.column_name} should be monotonically increasing for open YZ profiles. Perhaps this is actually a closed profile?"
+
+
+class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
+    """Check if cross section widths and heights are large enough"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionDefinition.id, *args, **kwargs)
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (models.CrossSectionDefinition.width != None)
+            & (models.CrossSectionDefinition.width != "")
+        ):
+            try:
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = (
+                    [float(x) for x in record.height.split(" ")]
+                    if record.height not in [None, ""]
+                    else []
+                )
+            except ValueError:
+                continue  # other check catches this
+
+            if record.shape.value == constants.CrossSectionShape.CLOSED_RECTANGLE.value:
+                max_height = max(heights)
+                max_width = max(widths)
+                configuration = "closed"
+            elif record.shape.value == constants.CrossSectionShape.RECTANGLE.value:
+                max_width = max(widths)
+                configuration = "open"
+            elif record.shape.value == constants.CrossSectionShape.CIRCLE.value:
+                # any value filled in for heights will be overwritten by the widths value, also in the simulation
+                max_height = max_width = max(widths)
+                configuration = "closed"
+            elif record.shape.value in [
+                constants.CrossSectionShape.EGG.value,
+                constants.CrossSectionShape.INVERTED_EGG.value,
+            ]:
+                # any value filled in for heights will be overwritten by 1.5 times the widths value, also in the simulation
+                max_width = max(widths)
+                max_height = 1.5 * max_width
+                configuration = "closed"
+            elif record.shape.value in [
+                constants.CrossSectionShape.TABULATED_RECTANGLE.value,
+                constants.CrossSectionShape.TABULATED_TRAPEZIUM.value,
+            ]:
+                last_width = widths[-1]
+                max_height = max(heights)
+                max_width = max(widths)
+                if last_width == 0:
+                    configuration = "closed"
+                elif last_width > 0:
+                    configuration = "open"
+                else:
+                    continue
+            elif record.shape.value == constants.CrossSectionShape.TABULATED_YZ.value:
+                # without the rounding, floating-point errors occur
+                max_width = round((max(widths) - min(widths)), 9)
+                max_height = round((max(heights) - min(heights)), 9)
+                first_width = widths[0]
+                last_width = widths[-1]
+                first_height = heights[0]
+                last_height = heights[-1]
+                if (first_width, first_height) == (last_width, last_height):
+                    configuration = "closed"
+                else:
+                    configuration = "open"
+
+            # See nens/threedi-modelchecker#251
+            minimum_diameter = 0.1
+            if configuration == "closed":
+                if (max_height < minimum_diameter) or (max_width < minimum_diameter):
+                    invalids.append(record)
+            # the profile height does not need checking on an open cross-section
+            elif configuration == "open":
+                if max_width < minimum_diameter:
+                    invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return "v2_cross_section_definition.width and/or height should probably be at least 0.1m"
