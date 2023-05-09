@@ -51,6 +51,7 @@ from .checks.other import (
     CrossSectionSameConfigurationCheck,
     ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
+    NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
@@ -1856,6 +1857,18 @@ CHECKS += [
     PerviousNodeInflowAreaCheck(
         error_code=613, level=CheckLevel.WARNING, filters=CONDITIONS["0d_surf"].exists()
     ),
+]
+CHECKS += [
+    NodeSurfaceConnectionsCheck(
+        check_type=check_type,
+        error_code=614,
+        level=CheckLevel.WARNING,
+        filters=CONDITIONS[filter_key].exists(),
+    )
+    for check_type, filter_key in [
+        ("pervious", "0d_surf"),
+        ("impervious", "0d_imp"),
+    ]
 ]
 
 

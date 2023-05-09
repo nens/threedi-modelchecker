@@ -11,7 +11,9 @@ Changelog of threedi-modelchecker
 
 - Clarified error message for check 206 and Use0DFlowCheck.
 
-- Add --ignore-checks option on the modelchecker check command to ignore all checks matching a regex pattern.
+- Added --ignore-checks option on the modelchecker check command to ignore all checks matching a regex pattern.
+
+- Added check 614 to make sure that no more than 50 surfaces are linked to a connection node.
 
 
 2.1.1 (2023-05-08)
