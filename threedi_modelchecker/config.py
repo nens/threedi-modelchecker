@@ -702,7 +702,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=table.id,
         invalid=Query(table).filter(geo_query.length(table.the_geom) < 0.05),
-        message=f"Length of a {table} is very short (< 0.05 m). A length of at least 1.0 m is recommended.",
+        message=f"The length of {table.__tablename__} is very short (< 0.05 m). A length of at least 1.0 m is recommended.",
     )
     for table in [models.Channel, models.Culvert]
 ]
@@ -739,7 +739,7 @@ CHECKS += [
         invalid=Query(models.ConnectionNode).filter(
             models.ConnectionNode.the_geom_linestring != None
         ),
-        message="The 'the_geom_linestring' column of v2_connection_nodes must be NULL",
+        message=f"{models.ConnectionNode.the_geom_linestring} must be NULL",
     )
 ]
 CHECKS += [
@@ -1206,14 +1206,6 @@ CHECKS += [
             < models.GlobalSetting.table_step_size,
         ),
         message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.table_step_size.",
-    ),
-    UniqueCheck(
-        error_code=324,
-        level=CheckLevel.WARNING,
-        columns=(
-            models.AggregationSettings.flow_variable,
-            models.AggregationSettings.aggregation_method,
-        ),
     ),
     QueryCheck(
         error_code=325,
@@ -2377,7 +2369,15 @@ CHECKS += [
             )
         ),
         message="v2_aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables.",
-    )
+    ),
+    UniqueCheck(
+        error_code=1151,
+        level=CheckLevel.WARNING,
+        columns=(
+            models.AggregationSettings.flow_variable,
+            models.AggregationSettings.aggregation_method,
+        ),
+    ),
 ]
 
 ## 12xx  SIMULATION, timeseries
