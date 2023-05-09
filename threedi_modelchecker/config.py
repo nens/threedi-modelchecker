@@ -25,6 +25,7 @@ from .checks.cross_section_definitions import (
     CrossSectionFloatListCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
+    CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
@@ -48,8 +49,11 @@ from .checks.other import (
     ConnectionNodesLength,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
+    ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
+    NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
+    PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
@@ -553,6 +557,10 @@ CHECKS += [
         error_code=97,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     ),
+    CrossSectionMinimumDiameterCheck(
+        error_code=98,
+        level=CheckLevel.WARNING,
+    ),
 ]
 
 
@@ -695,7 +703,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=table.id,
         invalid=Query(table).filter(geo_query.length(table.the_geom) < 0.05),
-        message=f"Length of a {table} is very short (< 0.05 m). A length of at least 1.0 m is recommended.",
+        message=f"The length of {table.__tablename__} is very short (< 0.05 m). A length of at least 1.0 m is recommended.",
     )
     for table in [models.Channel, models.Culvert]
 ]
@@ -732,7 +740,7 @@ CHECKS += [
         invalid=Query(models.ConnectionNode).filter(
             models.ConnectionNode.the_geom_linestring != None
         ),
-        message="The 'the_geom_linestring' column of v2_connection_nodes must be NULL",
+        message=f"{models.ConnectionNode.the_geom_linestring} must be NULL",
     )
 ]
 CHECKS += [
@@ -1199,14 +1207,6 @@ CHECKS += [
             < models.GlobalSetting.table_step_size,
         ),
         message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.table_step_size.",
-    ),
-    UniqueCheck(
-        error_code=324,
-        level=CheckLevel.WARNING,
-        columns=(
-            models.AggregationSettings.flow_variable,
-            models.AggregationSettings.aggregation_method,
-        ),
     ),
     QueryCheck(
         error_code=325,
@@ -1683,115 +1683,115 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=501,
-        column=models.VegetationDrag.height,
+        column=models.VegetationDrag.vegetation_height,
         filters=vegetation_drag_filter,
         min_value=0,
         left_inclusive=False,
     ),
     QueryCheck(
         error_code=502,
-        column=models.VegetationDrag.height,
+        column=models.VegetationDrag.vegetation_height,
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
-            models.VegetationDrag.height == None,
-            is_none_or_empty(models.VegetationDrag.height_file),
+            models.VegetationDrag.vegetation_height == None,
+            is_none_or_empty(models.VegetationDrag.vegetation_height_file),
         ),
         message="v2_vegetation_drag.height must be defined.",
     ),
     QueryCheck(
         error_code=503,
         level=CheckLevel.WARNING,
-        column=models.VegetationDrag.height,
+        column=models.VegetationDrag.vegetation_height,
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
-            models.VegetationDrag.height == None,
-            ~is_none_or_empty(models.VegetationDrag.height_file),
+            models.VegetationDrag.vegetation_height == None,
+            ~is_none_or_empty(models.VegetationDrag.vegetation_height_file),
         ),
-        message="v2_vegetation_drag.height is recommended as fallback value when using a height_file.",
+        message="v2_vegetation_drag.height is recommended as fallback value when using a vegetation_height_file.",
     ),
     RangeCheck(
         error_code=504,
-        column=models.VegetationDrag.stem_count,
+        column=models.VegetationDrag.vegetation_stem_count,
         filters=vegetation_drag_filter,
         min_value=0,
         left_inclusive=False,
     ),
     QueryCheck(
         error_code=505,
-        column=models.VegetationDrag.stem_count,
+        column=models.VegetationDrag.vegetation_stem_count,
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
-            models.VegetationDrag.stem_count == None,
-            is_none_or_empty(models.VegetationDrag.stem_count_file),
+            models.VegetationDrag.vegetation_stem_count == None,
+            is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
         ),
-        message="v2_vegetation_drag.stem_count must be defined.",
+        message="v2_vegetation_drag.vegetation_stem_count must be defined.",
     ),
     QueryCheck(
         error_code=506,
         level=CheckLevel.WARNING,
-        column=models.VegetationDrag.stem_count,
+        column=models.VegetationDrag.vegetation_stem_count,
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
-            models.VegetationDrag.stem_count == None,
-            ~is_none_or_empty(models.VegetationDrag.stem_count_file),
+            models.VegetationDrag.vegetation_stem_count == None,
+            ~is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
         ),
-        message="v2_vegetation_drag.stem_count is recommended as fallback value when using a stem_count_file.",
+        message="v2_vegetation_drag.vegetation_stem_count is recommended as fallback value when using a vegetation_stem_count_file.",
     ),
     RangeCheck(
         error_code=507,
-        column=models.VegetationDrag.stem_diameter,
+        column=models.VegetationDrag.vegetation_stem_diameter,
         filters=vegetation_drag_filter,
         min_value=0,
         left_inclusive=False,
     ),
     QueryCheck(
         error_code=508,
-        column=models.VegetationDrag.stem_diameter,
+        column=models.VegetationDrag.vegetation_stem_diameter,
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
-            models.VegetationDrag.stem_diameter == None,
-            is_none_or_empty(models.VegetationDrag.stem_diameter_file),
+            models.VegetationDrag.vegetation_stem_diameter == None,
+            is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
         ),
-        message="v2_vegetation_drag.stem_diameter must be defined.",
+        message="v2_vegetation_drag.vegetation_stem_diameter must be defined.",
     ),
     QueryCheck(
         error_code=509,
         level=CheckLevel.WARNING,
-        column=models.VegetationDrag.stem_diameter,
+        column=models.VegetationDrag.vegetation_stem_diameter,
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
-            models.VegetationDrag.stem_diameter == None,
-            ~is_none_or_empty(models.VegetationDrag.stem_diameter_file),
+            models.VegetationDrag.vegetation_stem_diameter == None,
+            ~is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
         ),
-        message="v2_vegetation_drag.stem_diameter is recommended as fallback value when using a stem_diameter_file.",
+        message="v2_vegetation_drag.vegetation_stem_diameter is recommended as fallback value when using a vegetation_stem_diameter_file.",
     ),
     RangeCheck(
         error_code=510,
-        column=models.VegetationDrag.drag_coefficient,
+        column=models.VegetationDrag.vegetation_drag_coefficient,
         filters=vegetation_drag_filter,
         min_value=0,
         left_inclusive=False,
     ),
     QueryCheck(
         error_code=511,
-        column=models.VegetationDrag.drag_coefficient,
+        column=models.VegetationDrag.vegetation_drag_coefficient,
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
-            models.VegetationDrag.drag_coefficient == None,
-            is_none_or_empty(models.VegetationDrag.drag_coefficient_file),
+            models.VegetationDrag.vegetation_drag_coefficient == None,
+            is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
         ),
-        message="v2_vegetation_drag.drag_coefficient must be defined.",
+        message="v2_vegetation_drag.vegetation_drag_coefficient must be defined.",
     ),
     QueryCheck(
         error_code=512,
         level=CheckLevel.WARNING,
-        column=models.VegetationDrag.drag_coefficient,
+        column=models.VegetationDrag.vegetation_drag_coefficient,
         invalid=Query(models.VegetationDrag).filter(
             vegetation_drag_filter,
-            models.VegetationDrag.drag_coefficient == None,
-            ~is_none_or_empty(models.VegetationDrag.drag_coefficient_file),
+            models.VegetationDrag.vegetation_drag_coefficient == None,
+            ~is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
         ),
-        message="v2_vegetation_drag.drag_coefficient is recommended as fallback value when using a drag_coefficient_file.",
+        message="v2_vegetation_drag.vegetation_drag_coefficient is recommended as fallback value when using a vegetation_drag_coefficient_file.",
     ),
 ]
 
@@ -1850,6 +1850,26 @@ for (surface, surface_map, filters) in [
             message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
         ),
     ]
+CHECKS += [
+    ImperviousNodeInflowAreaCheck(
+        error_code=613, level=CheckLevel.WARNING, filters=CONDITIONS["0d_imp"].exists()
+    ),
+    PerviousNodeInflowAreaCheck(
+        error_code=613, level=CheckLevel.WARNING, filters=CONDITIONS["0d_surf"].exists()
+    ),
+]
+CHECKS += [
+    NodeSurfaceConnectionsCheck(
+        check_type=check_type,
+        error_code=614,
+        level=CheckLevel.WARNING,
+        filters=CONDITIONS[filter_key].exists(),
+    )
+    for check_type, filter_key in [
+        ("pervious", "0d_surf"),
+        ("impervious", "0d_imp"),
+    ]
+]
 
 
 CHECKS += [
@@ -1935,10 +1955,10 @@ RASTER_COLUMNS_FILTERS = [
         models.GlobalSetting.initial_groundwater_level_file,
         first_setting_filter & (models.GlobalSetting.groundwater_settings_id != None),
     ),
-    (models.VegetationDrag.height_file, vegetation_drag_filter),
-    (models.VegetationDrag.stem_count_file, vegetation_drag_filter),
-    (models.VegetationDrag.stem_diameter_file, vegetation_drag_filter),
-    (models.VegetationDrag.drag_coefficient_file, vegetation_drag_filter),
+    (models.VegetationDrag.vegetation_height_file, vegetation_drag_filter),
+    (models.VegetationDrag.vegetation_stem_count_file, vegetation_drag_filter),
+    (models.VegetationDrag.vegetation_stem_diameter_file, vegetation_drag_filter),
+    (models.VegetationDrag.vegetation_drag_coefficient_file, vegetation_drag_filter),
 ]
 
 CHECKS += [
@@ -2102,25 +2122,25 @@ CHECKS += [
     ## 100xx: We continue raster checks from 1400
     RasterRangeCheck(
         error_code=1401,
-        column=models.VegetationDrag.height_file,
+        column=models.VegetationDrag.vegetation_height_file,
         filters=vegetation_drag_filter,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=1402,
-        column=models.VegetationDrag.stem_count_file,
+        column=models.VegetationDrag.vegetation_stem_count_file,
         filters=vegetation_drag_filter,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=1403,
-        column=models.VegetationDrag.stem_diameter_file,
+        column=models.VegetationDrag.vegetation_stem_diameter_file,
         filters=vegetation_drag_filter,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=1404,
-        column=models.VegetationDrag.drag_coefficient_file,
+        column=models.VegetationDrag.vegetation_drag_coefficient_file,
         filters=vegetation_drag_filter,
         min_value=0,
     ),
@@ -2363,6 +2383,14 @@ CHECKS += [
         ),
         message="v2_aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables.",
     ),
+    UniqueCheck(
+        error_code=1151,
+        level=CheckLevel.WARNING,
+        columns=(
+            models.AggregationSettings.flow_variable,
+            models.AggregationSettings.aggregation_method,
+        ),
+    ),
     AllEqualCheck(
         error_code=1152,
         level=CheckLevel.WARNING,
@@ -2593,14 +2621,27 @@ class Config:
                     "v2_pipe.material": "INFO",
                 },
             )
+            self.checks += [
+                RangeCheck(
+                    column=model.id,
+                    error_code=8,
+                    min_value=0,
+                    max_value=2147483647,
+                    message=f"{model.id.name} must be a positive signed 32-bit integer.",
+                )
+            ]
 
         self.checks += CHECKS
         if not self.allow_beta_features:
             self.checks += beta_features_check
 
-    def iter_checks(self, level=CheckLevel.ERROR):
+    def iter_checks(self, level=CheckLevel.ERROR, ignore_checks=None):
         """Iterate over checks with at least 'level'"""
         level = CheckLevel.get(level)  # normalize
         for check in self.checks:
             if check.level >= level:
-                yield check
+                if ignore_checks:
+                    if not ignore_checks.match(str(check.error_code).zfill(4)):
+                        yield check
+                else:
+                    yield check

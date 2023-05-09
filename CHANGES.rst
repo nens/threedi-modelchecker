@@ -2,10 +2,38 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.1.1 (unreleased)
+2.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added check 98: cross-section diameters must not be smaller than 0.1 m.
+
+- Changed check 324 to 1151, to keep the aggregation settings checks grouped together.
+
+- Clarified error message for check 206 and Use0DFlowCheck.
+
+- Added --ignore-checks option on the modelchecker check command to ignore all checks matching a regex pattern.
+
+- Added check 614 to make sure that no more than 50 surfaces are linked to a connection node.
+
+
+2.1.1 (2023-05-08)
+------------------
+
+- Vegetation_drag column names have changed. Update column names in code.
+
+- Bump threedi-schema version to 0.217.0.
+
+- Raster checks 10001-10004 have been renamed to 1401-1404 to stay within 4 digits.
+
+- Added check 1227: if v2_control.control_id references an id, the table it references must contain that id.
+
+- Added check 56: the cross-sections on a channel must either all be open or all be closed.
+
+- Added check 63: pumpstation capacity and storage at the end node must be set so the water level doesn't rise more than 1 m/s.
+
+- Added check 613: the combined surface area linked to a connection node must not be more than 10000 m2.
+
+- Added check 8: all of the ids in the database must be a positive signed 32-bit integer.
 
 
 2.1.0 (2023-03-27)

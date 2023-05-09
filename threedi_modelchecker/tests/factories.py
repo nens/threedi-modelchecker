@@ -346,14 +346,14 @@ class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     display_name = Faker("name")
-    height = 1.0
-    height_file = "height_file.txt"
+    vegetation_height = 1.0
+    vegetation_height_file = "vegetation_height_file.txt"
 
-    stem_count = 50000
-    stem_count_file = "stem_count_file.txt"
+    vegetation_stem_count = 50000
+    vegetation_stem_count_file = "vegetation_stem_count_file.txt"
 
-    stem_diameter = 0.5
-    stem_diameter_file = "stem_diameter_file.txt"
+    vegetation_stem_diameter = 0.5
+    vegetation_stem_diameter_file = "vegetation_stem_diameter_file.txt"
 
-    drag_coefficient = 0.4
-    drag_coefficient_file = "drag_coefficient_file.txt"
+    vegetation_drag_coefficient = 0.4
+    vegetation_drag_coefficient_file = "vegetation_drag_coefficient_file.txt"
