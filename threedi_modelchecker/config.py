@@ -2612,7 +2612,7 @@ class Config:
         for check in self.checks:
             if check.level >= level:
                 if ignore_checks:
-                    if not re.match(ignore_checks, str(check.error_code).zfill(4)):
+                    if not ignore_checks.match(str(check.error_code).zfill(4)):
                         yield check
                 else:
                     yield check
