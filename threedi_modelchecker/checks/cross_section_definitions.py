@@ -401,4 +401,4 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
-        return "The largest values in v2_cross_section_definition.width and (if the cross-section is closed) v2_cross_section_definition.height should be at least 0.1m"
+        return "v2_cross_section_definition.width and/or height should probably be at least 0.1m"
