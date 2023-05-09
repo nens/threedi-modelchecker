@@ -1208,7 +1208,7 @@ CHECKS += [
         message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.table_step_size.",
     ),
     QueryCheck(
-        error_code=324,
+        error_code=325,
         level=CheckLevel.WARNING,
         column=models.GlobalSetting.interception_global,
         invalid=Query(models.GlobalSetting).filter(
@@ -1221,7 +1221,7 @@ CHECKS += [
 
 CHECKS += [
     QueryCheck(
-        error_code=325,
+        error_code=326,
         level=CheckLevel.INFO,
         column=table.id,
         invalid=Query(table).filter(
