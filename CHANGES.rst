@@ -15,6 +15,18 @@ Changelog of threedi-modelchecker
 
 - Bump threedi-schema version to 0.217.0.
 
+- Raster checks 10001-10004 have been renamed to 1401-1404 to stay within 4 digits.
+
+- Added check 1227: if v2_control.control_id references an id, the table it references must contain that id.
+
+- Added check 56: the cross-sections on a channel must either all be open or all be closed.
+
+- Added check 63: pumpstation capacity and storage at the end node must be set so the water level doesn't rise more than 1 m/s.
+
+- Added check 613: the combined surface area linked to a connection node must not be more than 10000 m2.
+
+- Added check 8: all of the ids in the database must be a positive signed 32-bit integer.
+
 
 2.1.0 (2023-03-27)
 ------------------
