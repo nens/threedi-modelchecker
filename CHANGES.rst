@@ -11,6 +11,8 @@ Changelog of threedi-modelchecker
 
 - Clarified error message for check 206 and Use0DFlowCheck.
 
+- Add --ignore-checks option on the modelchecker check command to ignore all checks matching a regex pattern.
+
 
 2.1.1 (2023-05-08)
 ------------------
