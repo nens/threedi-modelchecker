@@ -25,6 +25,7 @@ from .checks.cross_section_definitions import (
     CrossSectionFloatListCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
+    CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
@@ -554,6 +555,10 @@ CHECKS += [
     CrossSectionYZIncreasingWidthIfOpenCheck(
         error_code=97,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    ),
+    CrossSectionMinimumDiameterCheck(
+        error_code=98,
+        level=CheckLevel.WARNING,
     ),
 ]
 
