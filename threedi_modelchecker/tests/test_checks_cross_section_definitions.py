@@ -9,6 +9,7 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionFloatListCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
+    CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
@@ -302,3 +303,158 @@ def test_check_yz_increasing_if_open_valid(session, width, height):
     check = CrossSectionYZIncreasingWidthIfOpenCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
+
+
+@pytest.mark.parametrize(
+    "shape,width,height,expected_result",
+    [
+        (0, "0.1", "0.2", 0),  # closed rectangle, sufficient width and height, pass
+        (0, "0.05", "0.2", 1),  # closed rectangle, insufficient width, fail
+        (0, "0.1", "0.03", 1),  # closed rectangle, insufficient height, fail
+        (1, "0.1", None, 0),  # open rectangle, sufficient width, no height, pass
+        (
+            1,
+            "0.1",
+            "0.03",
+            0,
+        ),  # open rectangle, sufficient width, insufficient height should be ignored, pass
+        (1, "0.05", "0.2", 1),  # open rectangle, insufficient width, fail
+        (
+            2,
+            "0.2",
+            "0.05",
+            0,
+        ),  # circle, insufficient height should be overwritten by width, pass
+        (2, "0.05", "0.2", 1),  # circle, insufficient width, fail
+        (
+            3,
+            "0.1",
+            "0.03",
+            0,
+        ),  # egg, insufficient height should be overwritten by 1.5 * width, pass
+        (3, "0.05", "0.2", 1),  # egg, insufficient width, fail
+        (
+            8,
+            "0.1",
+            "0.03",
+            0,
+        ),  # inverted egg, insufficient height should be overwritten by 1.5 * width, pass
+        (8, "0.05", "0.2", 1),  # inverted egg, insufficient width, fail
+        (
+            5,
+            "0.04 0.1",
+            "0.06 0.2",
+            0,
+        ),  # open tabulated rectangle, sufficient width and height, pass
+        (
+            5,
+            "0.04 0.05",
+            "0.06 0.2",
+            1,
+        ),  # open tabulated rectangle, insufficient width, fail
+        (
+            5,
+            "0.04 0.1",
+            "0.06 0.03",
+            0,
+        ),  # open tabulated rectangle, insufficient height, should be ignored, pass
+        (
+            5,
+            "0.04 0.1 0",
+            "0.06 0.2",
+            0,
+        ),  # closed tabulated rectangle, sufficient width and height, pass
+        (
+            5,
+            "0.04 0.05 0",
+            "0.06 0.2",
+            1,
+        ),  # closed tabulated rectangle, insufficient width, fail
+        (
+            5,
+            "0.04 0.1 0",
+            "0.06 0.03",
+            1,
+        ),  # closed tabulated rectangle, insufficient height, fail
+        (
+            6,
+            "0.04 0.1",
+            "0.06 0.2",
+            0,
+        ),  # open tabulated trapezium, sufficient width and height, pass
+        (
+            6,
+            "0.04 0.05",
+            "0.06 0.2",
+            1,
+        ),  # open tabulated trapezium, insufficient width, fail
+        (
+            6,
+            "0.04 0.1",
+            "0.06 0.03",
+            0,
+        ),  # open tabulated trapezium, insufficient height, should be ignored, pass
+        (
+            6,
+            "0.04 0.1 0",
+            "0.06 0.2",
+            0,
+        ),  # closed tabulated trapezium, sufficient width and height, pass
+        (
+            6,
+            "0.04 0.05 0",
+            "0.06 0.2",
+            1,
+        ),  # closed tabulated trapezium, insufficient width, fail
+        (
+            6,
+            "0.04 0.1 0",
+            "0.06 0.03",
+            1,
+        ),  # closed tabulated trapezium, insufficient height, fail
+        (
+            7,
+            "0.01 0.11",
+            "0.11 0.21",
+            0,
+        ),  # open tabulated yz, sufficient width and height, pass
+        (7, "0.01 0.10", "0.11 0.21", 1),  # open tabulated yz, insufficient width, fail
+        (
+            7,
+            "0.01 0.11",
+            "0.11 0.20",
+            0,
+        ),  # open tabulated yz, insufficient height, should be ignored, pass
+        (
+            7,
+            "0.01 0.11 0.01",
+            "0.11 0.21 0.11",
+            0,
+        ),  # closed tabulated yz, sufficient width and height, pass
+        (
+            7,
+            "0.01 0.10 0.01",
+            "0.11 0.21 0.11",
+            1,
+        ),  # closed tabulated yz, insufficient width, fail
+        (
+            7,
+            "0.01 0.11 0.01",
+            "0.11 0.20 0.11",
+            1,
+        ),  # closed tabulated yz, insufficient height, fail
+        (0, "foo", "", 0),  # bad data, pass
+    ],
+)
+def test_check_cross_section_minimum_diameter(
+    session, shape, width, height, expected_result
+):
+    definition = factories.CrossSectionDefinitionFactory(
+        shape=shape,
+        width=width,
+        height=height,
+    )
+    factories.CrossSectionLocationFactory(definition=definition)
+    check = CrossSectionMinimumDiameterCheck()
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == expected_result

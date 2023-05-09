@@ -235,8 +235,8 @@ class Use0DFlowCheck(BaseCheck):
 
     def description(self):
         return (
-            "When %s is used, there should exist at least one "
-            "(impervious) surface." % self.column
+            f"When {self.column_name} is used, there should exist at least one "
+            "(impervious) surface."
         )
 
 
