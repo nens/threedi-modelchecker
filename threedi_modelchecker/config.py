@@ -1,4 +1,3 @@
-import re
 from typing import List
 
 from sqlalchemy import func
