@@ -7,6 +7,10 @@ Changelog of threedi-modelchecker
 
 - Added check 98: cross-section diameters must not be smaller than 0.1 m.
 
+- Changed check 324 to 1151, to keep the aggregation settings checks grouped together.
+
+- Clarified error message for check 206 and Use0DFlowCheck.
+
 
 2.1.1 (2023-05-08)
 ------------------
