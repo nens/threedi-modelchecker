@@ -47,6 +47,7 @@ from .checks.other import (
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
+    CorrectAggregationSettings,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     ImperviousNodeInflowAreaCheck,
@@ -2408,6 +2409,28 @@ CHECKS += [
         ),
         message="v2_aggregation_settings.timestep is smaller than v2_global_settings.output_time_step",
     ),
+]
+CHECKS += [
+    CorrectAggregationSettings(
+        error_code=1154,
+        level=CheckLevel.WARNING,
+        aggregation_method=aggregation_method,
+        flow_variable=flow_variable,
+    )
+    for (aggregation_method, flow_variable) in (
+        ("cum", "pump_discharge"),
+        ("cum", "lateral_discharge"),
+        ("cum", "simple_infiltration"),
+        ("cum", "rain"),
+        ("cum", "leakage"),
+        ("current", "interception"),
+        ("cum", "discharge"),
+        ("cum_negative", "discharge"),
+        ("cum_positive", "discharge"),
+        ("current", "volume"),
+        ("cum_negative", "surface_source_sink_discharge"),
+        ("cum_positive", "surface_source_sink_discharge"),
+    )
 ]
 
 ## 12xx  SIMULATION, timeseries

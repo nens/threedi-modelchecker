@@ -18,6 +18,36 @@ first_setting = (
 first_setting_filter = models.GlobalSetting.id == first_setting
 
 
+class CorrectAggregationSettings(BaseCheck):
+    """Check if aggregation settings are correctly filled with aggregation_method and flow_variable as required"""
+
+    def __init__(self, aggregation_method: str, flow_variable: str, *args, **kwargs):
+        super().__init__(column=models.GlobalSetting.id, *args, **kwargs)
+        self.aggregation_method = aggregation_method
+        self.flow_variable = flow_variable
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        correctly_defined = session.execute(
+            select(models.AggregationSettings).filter(
+                models.AggregationSettings.aggregation_method
+                == self.aggregation_method,
+                models.AggregationSettings.flow_variable == self.flow_variable,
+            )
+        ).all()
+
+        return (
+            self.to_check(session).filter(first_setting_filter).all()
+            if len(correctly_defined) == 0
+            else []
+        )
+
+    def description(self) -> str:
+        return (
+            "To use the water balance tool, v2_aggregation_settings should have a row where "
+            f"aggregation_method is {self.aggregation_method} and flow_variable is {self.flow_variable}."
+        )
+
+
 class CrossSectionLocationCheck(BaseCheck):
     """Check if cross section locations are within {max_distance} of their channel."""
 
