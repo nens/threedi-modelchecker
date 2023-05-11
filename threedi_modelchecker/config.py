@@ -2418,18 +2418,36 @@ CHECKS += [
         flow_variable=flow_variable,
     )
     for (aggregation_method, flow_variable) in (
-        ("cum", "pump_discharge"),
-        ("cum", "lateral_discharge"),
-        ("cum", "simple_infiltration"),
-        ("cum", "rain"),
-        ("cum", "leakage"),
-        ("current", "interception"),
-        ("cum", "discharge"),
-        ("cum_negative", "discharge"),
-        ("cum_positive", "discharge"),
-        ("current", "volume"),
-        ("cum_negative", "surface_source_sink_discharge"),
-        ("cum_positive", "surface_source_sink_discharge"),
+        (constants.AggregationMethod.CUMULATIVE, constants.FlowVariable.PUMP_DISCHARGE),
+        (
+            constants.AggregationMethod.CUMULATIVE,
+            constants.FlowVariable.LATERAL_DISCHARGE,
+        ),
+        (
+            constants.AggregationMethod.CUMULATIVE,
+            constants.FlowVariable.SIMPLE_INFILTRATION,
+        ),
+        (constants.AggregationMethod.CUMULATIVE, constants.FlowVariable.RAIN),
+        (constants.AggregationMethod.CUMULATIVE, constants.FlowVariable.LEAKAGE),
+        (constants.AggregationMethod.CURRENT, constants.FlowVariable.INTERCEPTION),
+        (constants.AggregationMethod.CUMULATIVE, constants.FlowVariable.DISCHARGE),
+        (
+            constants.AggregationMethod.CUMULATIVE_NEGATIVE,
+            constants.FlowVariable.DISCHARGE,
+        ),
+        (
+            constants.AggregationMethod.CUMULATIVE_POSITIVE,
+            constants.FlowVariable.DISCHARGE,
+        ),
+        (constants.AggregationMethod.CURRENT, constants.FlowVariable.VOLUM),
+        (
+            constants.AggregationMethod.CUMULATIVE_NEGATIVE,
+            constants.FlowVariable.SURFACE_SOURCE_SINK_DISCHARGE,
+        ),
+        (
+            constants.AggregationMethod.CUMULATIVE_POSITIVE,
+            constants.FlowVariable.SURFACE_SOURCE_SINK_DISCHARGE,
+        ),
     )
 ]
 

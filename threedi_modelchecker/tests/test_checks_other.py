@@ -33,14 +33,29 @@ from . import factories
 @pytest.mark.parametrize(
     "aggregation_method,flow_variable,expected_result",
     [
-        ("cum", "pump_discharge", 0),  # entries in aggregation settings, valid
-        ("cum", "discharge", 1),  # entries not in aggregation settings, invalid
+        (
+            constants.AggregationMethod.CUMULATIVE,
+            constants.FlowVariable.PUMP_DISCHARGE,
+            0,
+        ),  # entries in aggregation settings, valid
+        (
+            constants.AggregationMethod.CUMULATIVE,
+            constants.FlowVariable.DISCHARGE,
+            1,
+        ),  # entries not in aggregation settings, invalid
     ],
 )
-def test_aggregation_settings(session, aggregation_method, flow_variable, expected_result):
+def test_aggregation_settings(
+    session, aggregation_method, flow_variable, expected_result
+):
     factories.GlobalSettingsFactory()
-    factories.AggregationSettingsFactory(aggregation_method=constants.AggregationMethod.CUMULATIVE, flow_variable=constants.FlowVariable.PUMP_DISCHARGE)
-    check = CorrectAggregationSettings(aggregation_method=aggregation_method, flow_variable=flow_variable)
+    factories.AggregationSettingsFactory(
+        aggregation_method=constants.AggregationMethod.CUMULATIVE,
+        flow_variable=constants.FlowVariable.PUMP_DISCHARGE,
+    )
+    check = CorrectAggregationSettings(
+        aggregation_method=aggregation_method, flow_variable=flow_variable
+    )
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
