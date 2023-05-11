@@ -295,6 +295,17 @@ CHECKS += [
         message="v2_connection_nodes.storage_area is not greater than or equal to 0",
     ),
 ]
+CHECKS += [
+    RangeCheck(
+        error_code=45,
+        level=CheckLevel.WARNING,
+        column=table.dist_calc_points,
+        min_value=5,
+        left_inclusive=True,
+        message=f"{table.__tablename__}.dist_calc_points should be at least 5.0 metres to prevent simulation timestep reduction.",
+    )
+    for table in [models.Channel, models.Pipe, models.Culvert]
+]
 
 
 ## 005x: CROSS SECTIONS
