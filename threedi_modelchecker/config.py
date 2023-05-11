@@ -2400,7 +2400,7 @@ CHECKS += [
         error_code=1153,
         level=CheckLevel.WARNING,
         column=models.AggregationSettings.timestep,
-        invalid=Query(models.AggregationSettings.timestep).filter(
+        invalid=Query(models.AggregationSettings).filter(
             models.AggregationSettings.timestep
             < Query(models.GlobalSetting.output_time_step)
             .filter(first_setting_filter)
