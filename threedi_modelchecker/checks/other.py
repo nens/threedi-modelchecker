@@ -264,7 +264,15 @@ class ConnectionNodesLength(BaseCheck):
     GlobalSettings.epsg_code.
     """
 
-    def __init__(self, start_node, end_node, min_distance: float, *args, **kwargs):
+    def __init__(
+        self,
+        start_node,
+        end_node,
+        min_distance: float,
+        rec_distance: float = 1.0,
+        *args,
+        **kwargs,
+    ):
         """
 
         :param start_node: column name of the start node
@@ -275,6 +283,7 @@ class ConnectionNodesLength(BaseCheck):
         self.start_node = start_node
         self.end_node = end_node
         self.min_distance = min_distance
+        self.rec_distance = rec_distance
 
     def get_invalid(self, session):
         start_node = aliased(models.ConnectionNode)
@@ -292,7 +301,7 @@ class ConnectionNodesLength(BaseCheck):
     def description(self) -> str:
         return (
             f"The length of {self.table} is "
-            f"very short (< {self.min_distance}). A length of at least 1.0 m is recommended."
+            f"very short (< {self.min_distance}). A length of at least {self.rec_distance} m is recommended to avoid timestep reduction."
         )
 
 
