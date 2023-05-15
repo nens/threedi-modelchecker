@@ -12,7 +12,7 @@ from threedi_modelchecker.checks.other import (
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
-    CorrectAggregationSettings,
+    CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     ImperviousNodeInflowAreaCheck,
@@ -48,12 +48,13 @@ from . import factories
 def test_aggregation_settings(
     session, aggregation_method, flow_variable, expected_result
 ):
-    factories.GlobalSettingsFactory()
+    factories.GlobalSettingsFactory(id=1)
     factories.AggregationSettingsFactory(
+        global_settings_id=1,
         aggregation_method=constants.AggregationMethod.CUMULATIVE,
         flow_variable=constants.FlowVariable.PUMP_DISCHARGE,
     )
-    check = CorrectAggregationSettings(
+    check = CorrectAggregationSettingsExist(
         aggregation_method=aggregation_method, flow_variable=flow_variable
     )
     invalid = check.get_invalid(session)
