@@ -35,18 +35,19 @@ class CorrectAggregationSettingsExist(BaseCheck):
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         global_settings = self.to_check(session).filter(first_setting_filter)
         correctly_defined = session.execute(
-            select(models.AggregationSettings).filter(
+            select(models.AggregationSettings)
+            .filter(
                 models.AggregationSettings.aggregation_method
                 == self.aggregation_method,
                 models.AggregationSettings.flow_variable == self.flow_variable,
-            ).filter(
-                models.AggregationSettings.global_settings_id == global_settings.subquery().c.id
+            )
+            .filter(
+                models.AggregationSettings.global_settings_id
+                == global_settings.subquery().c.id
             )
         ).all()
 
-        return (
-            global_settings.all() if len(correctly_defined) == 0 else []
-        )
+        return global_settings.all() if len(correctly_defined) == 0 else []
 
     def description(self) -> str:
         return (

@@ -2401,12 +2401,13 @@ CHECKS += [
         error_code=1153,
         level=CheckLevel.WARNING,
         column=models.AggregationSettings.timestep,
-        invalid=Query(models.AggregationSettings).join(
+        invalid=Query(models.AggregationSettings)
+        .join(
             models.GlobalSetting,
-            models.AggregationSettings.global_settings_id == models.GlobalSetting.id
-        ).filter(
-            first_setting_filter
-        ).filter(
+            models.AggregationSettings.global_settings_id == models.GlobalSetting.id,
+        )
+        .filter(first_setting_filter)
+        .filter(
             models.AggregationSettings.timestep < models.GlobalSetting.output_time_step
         ),
         message="v2_aggregation_settings.timestep is smaller than v2_global_settings.output_time_step",
