@@ -295,6 +295,17 @@ CHECKS += [
         message="v2_connection_nodes.storage_area is not greater than or equal to 0",
     ),
 ]
+CHECKS += [
+    RangeCheck(
+        error_code=45,
+        level=CheckLevel.WARNING,
+        column=table.dist_calc_points,
+        min_value=5,
+        left_inclusive=True,
+        message=f"{table.__tablename__}.dist_calc_points should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
+    )
+    for table in [models.Channel, models.Pipe, models.Culvert]
+]
 
 
 ## 005x: CROSS SECTIONS
@@ -702,8 +713,8 @@ CHECKS += [
         error_code=202,
         level=CheckLevel.WARNING,
         column=table.id,
-        invalid=Query(table).filter(geo_query.length(table.the_geom) < 0.05),
-        message=f"The length of {table.__tablename__} is very short (< 0.05 m). A length of at least 1.0 m is recommended.",
+        invalid=Query(table).filter(geo_query.length(table.the_geom) < 5),
+        message=f"The length of {table.__tablename__} is very short (< 5 m). A length of at least 5.0 m is recommended to avoid timestep reduction.",
     )
     for table in [models.Channel, models.Culvert]
 ]
@@ -714,7 +725,8 @@ CHECKS += [
         column=models.Pipe.id,
         start_node=models.Pipe.connection_node_start,
         end_node=models.Pipe.connection_node_end,
-        min_distance=0.05,
+        min_distance=5.0,
+        recommended_distance=5.0,
     )
 ]
 CHECKS += [
@@ -725,7 +737,8 @@ CHECKS += [
         filters=table.crest_type == constants.CrestType.BROAD_CRESTED,
         start_node=table.connection_node_start,
         end_node=table.connection_node_end,
-        min_distance=0.05,
+        min_distance=5.0,
+        recommended_distance=5.0,
     )
     for table in [models.Orifice, models.Weir]
 ]
@@ -1272,6 +1285,17 @@ CHECKS += [
             models.GlobalSetting.groundwater_settings_id,
             models.GlobalSetting.vegetation_drag_settings_id,
         ]
+    )
+]
+CHECKS += [
+    RangeCheck(
+        error_code=360,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.dist_calc_points,
+        filters=first_setting_filter,
+        min_value=5.0,
+        left_inclusive=True,  # 0 itself is not allowed
+        message="v2_global_settings.dist_calc_points should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
     )
 ]
 
