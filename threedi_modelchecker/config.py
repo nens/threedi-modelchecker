@@ -726,7 +726,7 @@ CHECKS += [
         start_node=models.Pipe.connection_node_start,
         end_node=models.Pipe.connection_node_end,
         min_distance=5.0,
-        rec_distance=5.0,
+        recommended_distance=5.0,
     )
 ]
 CHECKS += [
@@ -738,7 +738,7 @@ CHECKS += [
         start_node=table.connection_node_start,
         end_node=table.connection_node_end,
         min_distance=5.0,
-        rec_distance=5.0,
+        recommended_distance=5.0,
     )
     for table in [models.Orifice, models.Weir]
 ]

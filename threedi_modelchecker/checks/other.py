@@ -269,7 +269,7 @@ class ConnectionNodesLength(BaseCheck):
         start_node,
         end_node,
         min_distance: float,
-        rec_distance: float = 1.0,
+        recommended_distance: float = 1.0,
         *args,
         **kwargs,
     ):
@@ -283,7 +283,7 @@ class ConnectionNodesLength(BaseCheck):
         self.start_node = start_node
         self.end_node = end_node
         self.min_distance = min_distance
-        self.rec_distance = rec_distance
+        self.recommended_distance = recommended_distance
 
     def get_invalid(self, session):
         start_node = aliased(models.ConnectionNode)
@@ -301,7 +301,7 @@ class ConnectionNodesLength(BaseCheck):
     def description(self) -> str:
         return (
             f"The length of {self.table} is "
-            f"very short (< {self.min_distance}). A length of at least {self.rec_distance} m is recommended to avoid timestep reduction."
+            f"very short (< {self.min_distance}). A length of at least {self.recommended_distance} m is recommended to avoid timestep reduction."
         )
 
 
