@@ -15,6 +15,14 @@ Changelog of threedi-modelchecker
 
 - Added check 614 to make sure that no more than 50 surfaces are linked to a connection node.
 
+- Added check 1152 to ensure all aggregation setting timesteps are the same.
+
+- Added check 1153 to ensure all aggregation setting timesteps are less than the global settings timestep.
+
+- Added check 1154 to ensure aggregation settings are present with all the aggregation_method-flow_variable pairs listed in the docs.
+
+- Added checks 45 and 360 to ensure that channel, pipe and culvert dist_calc_points and global_settings dist_calc_points, respectively, are at least 5 metres.
+
 
 2.1.1 (2023-05-08)
 ------------------
