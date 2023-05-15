@@ -18,7 +18,7 @@ first_setting = (
 first_setting_filter = models.GlobalSetting.id == first_setting
 
 
-class CorrectAggregationSettings(BaseCheck):
+class CorrectAggregationSettingsExist(BaseCheck):
     """Check if aggregation settings are correctly filled with aggregation_method and flow_variable as required"""
 
     def __init__(
@@ -33,18 +33,19 @@ class CorrectAggregationSettings(BaseCheck):
         self.flow_variable = flow_variable.value
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
+        global_settings = self.to_check(session).filter(first_setting_filter)
         correctly_defined = session.execute(
             select(models.AggregationSettings).filter(
                 models.AggregationSettings.aggregation_method
                 == self.aggregation_method,
                 models.AggregationSettings.flow_variable == self.flow_variable,
+            ).filter(
+                models.AggregationSettings.global_settings_id == global_settings.subquery().c.id
             )
         ).all()
 
         return (
-            self.to_check(session).filter(first_setting_filter).all()
-            if len(correctly_defined) == 0
-            else []
+            global_settings.all() if len(correctly_defined) == 0 else []
         )
 
     def description(self) -> str:

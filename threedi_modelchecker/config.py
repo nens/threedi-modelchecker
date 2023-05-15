@@ -47,7 +47,7 @@ from .checks.other import (
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
-    CorrectAggregationSettings,
+    CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     ImperviousNodeInflowAreaCheck,
@@ -2411,7 +2411,7 @@ CHECKS += [
     ),
 ]
 CHECKS += [
-    CorrectAggregationSettings(
+    CorrectAggregationSettingsExist(
         error_code=1154,
         level=CheckLevel.WARNING,
         aggregation_method=aggregation_method,
