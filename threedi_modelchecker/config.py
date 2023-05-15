@@ -47,6 +47,7 @@ from .checks.other import (
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
+    CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     ImperviousNodeInflowAreaCheck,
@@ -2415,6 +2416,66 @@ CHECKS += [
             models.AggregationSettings.aggregation_method,
         ),
     ),
+    AllEqualCheck(
+        error_code=1152,
+        level=CheckLevel.WARNING,
+        column=models.AggregationSettings.timestep,
+    ),
+    QueryCheck(
+        error_code=1153,
+        level=CheckLevel.WARNING,
+        column=models.AggregationSettings.timestep,
+        invalid=Query(models.AggregationSettings)
+        .join(
+            models.GlobalSetting,
+            models.AggregationSettings.global_settings_id == models.GlobalSetting.id,
+        )
+        .filter(first_setting_filter)
+        .filter(
+            models.AggregationSettings.timestep < models.GlobalSetting.output_time_step
+        ),
+        message="v2_aggregation_settings.timestep is smaller than v2_global_settings.output_time_step",
+    ),
+]
+CHECKS += [
+    CorrectAggregationSettingsExist(
+        error_code=1154,
+        level=CheckLevel.WARNING,
+        aggregation_method=aggregation_method,
+        flow_variable=flow_variable,
+    )
+    for (aggregation_method, flow_variable) in (
+        (constants.AggregationMethod.CUMULATIVE, constants.FlowVariable.PUMP_DISCHARGE),
+        (
+            constants.AggregationMethod.CUMULATIVE,
+            constants.FlowVariable.LATERAL_DISCHARGE,
+        ),
+        (
+            constants.AggregationMethod.CUMULATIVE,
+            constants.FlowVariable.SIMPLE_INFILTRATION,
+        ),
+        (constants.AggregationMethod.CUMULATIVE, constants.FlowVariable.RAIN),
+        (constants.AggregationMethod.CUMULATIVE, constants.FlowVariable.LEAKAGE),
+        (constants.AggregationMethod.CURRENT, constants.FlowVariable.INTERCEPTION),
+        (constants.AggregationMethod.CUMULATIVE, constants.FlowVariable.DISCHARGE),
+        (
+            constants.AggregationMethod.CUMULATIVE_NEGATIVE,
+            constants.FlowVariable.DISCHARGE,
+        ),
+        (
+            constants.AggregationMethod.CUMULATIVE_POSITIVE,
+            constants.FlowVariable.DISCHARGE,
+        ),
+        (constants.AggregationMethod.CURRENT, constants.FlowVariable.VOLUM),
+        (
+            constants.AggregationMethod.CUMULATIVE_NEGATIVE,
+            constants.FlowVariable.SURFACE_SOURCE_SINK_DISCHARGE,
+        ),
+        (
+            constants.AggregationMethod.CUMULATIVE_POSITIVE,
+            constants.FlowVariable.SURFACE_SOURCE_SINK_DISCHARGE,
+        ),
+    )
 ]
 
 ## 12xx  SIMULATION, timeseries

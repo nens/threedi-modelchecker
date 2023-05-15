@@ -12,6 +12,7 @@ from threedi_modelchecker.checks.other import (
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
+    CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     ImperviousNodeInflowAreaCheck,
@@ -27,6 +28,37 @@ from threedi_modelchecker.checks.other import (
 from threedi_modelchecker.model_checks import ThreediModelChecker
 
 from . import factories
+
+
+@pytest.mark.parametrize(
+    "aggregation_method,flow_variable,expected_result",
+    [
+        (
+            constants.AggregationMethod.CUMULATIVE,
+            constants.FlowVariable.PUMP_DISCHARGE,
+            0,
+        ),  # entries in aggregation settings, valid
+        (
+            constants.AggregationMethod.CUMULATIVE,
+            constants.FlowVariable.DISCHARGE,
+            1,
+        ),  # entries not in aggregation settings, invalid
+    ],
+)
+def test_aggregation_settings(
+    session, aggregation_method, flow_variable, expected_result
+):
+    factories.GlobalSettingsFactory(id=1)
+    factories.AggregationSettingsFactory(
+        global_settings_id=1,
+        aggregation_method=constants.AggregationMethod.CUMULATIVE,
+        flow_variable=constants.FlowVariable.PUMP_DISCHARGE,
+    )
+    check = CorrectAggregationSettingsExist(
+        aggregation_method=aggregation_method, flow_variable=flow_variable
+    )
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
 
 
 def test_connection_nodes_length(session):
