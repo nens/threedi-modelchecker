@@ -302,7 +302,7 @@ CHECKS += [
         column=table.dist_calc_points,
         min_value=5,
         left_inclusive=True,
-        message=f"{table.__tablename__}.dist_calc_points should be at least 5.0 metres to prevent simulation timestep reduction.",
+        message=f"{table.__tablename__}.dist_calc_points should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
     )
     for table in [models.Channel, models.Pipe, models.Culvert]
 ]
@@ -1285,6 +1285,17 @@ CHECKS += [
             models.GlobalSetting.groundwater_settings_id,
             models.GlobalSetting.vegetation_drag_settings_id,
         ]
+    )
+]
+CHECKS += [
+    RangeCheck(
+        error_code=360,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.dist_calc_points,
+        filters=first_setting_filter,
+        min_value=5.0,
+        left_inclusive=True,  # 0 itself is not allowed
+        message="v2_global_settings.dist_calc_points should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
     )
 ]
 
