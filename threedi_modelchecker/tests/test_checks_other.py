@@ -501,9 +501,9 @@ def test_potential_breach_interdistance_other_channel(session):
 @pytest.mark.parametrize(
     "storage_area,time_step,expected_result,capacity",
     [
-        (0.64, 30, 1, 12.5),
-        (600, 30, 0, 12.5),
-        (None, 30, 0, 12.5),  # no storage --> open water --> no check
+        (0.64, 30, 1, 12500),
+        (600, 30, 0, 12500),
+        (None, 30, 0, 12500),  # no storage --> open water --> no check
         (600, 30, 0, 0),
     ],
 )
