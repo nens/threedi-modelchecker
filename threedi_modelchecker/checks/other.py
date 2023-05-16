@@ -741,7 +741,7 @@ class PumpStorageTimestepCheck(BaseCheck):
                             )
                         )
                     )
-                    / models.Pumpstation.capacity
+                    / (models.Pumpstation.capacity / 1000)
                     < Query(models.GlobalSetting.sim_time_step)
                     .filter(first_setting_filter)
                     .scalar_subquery()
