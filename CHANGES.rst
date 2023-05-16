@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.2.1 (unreleased)
+2.2.1 (2023-05-16)
 ------------------
 
 - Fixed incorrect units in pumpstation check 66.
