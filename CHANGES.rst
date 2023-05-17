@@ -5,7 +5,9 @@ Changelog of threedi-modelchecker
 2.2.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Rewrite release workflow to use a supported github action for github release.
+- Build the release with the build package instead of setuptools.
+
 
 
 2.2.1 (2023-05-16)
