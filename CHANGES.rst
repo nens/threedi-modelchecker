@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.2.2 (unreleased)
+2.2.2 (2023-05-17)
 ------------------
 
 - Rewrite release workflow to use a supported github action for github release.
