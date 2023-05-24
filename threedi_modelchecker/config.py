@@ -1258,6 +1258,19 @@ CHECKS += [
 ]
 
 CHECKS += [
+    QueryCheck(
+        error_code=327,
+        column=models.GlobalSetting.vegetation_drag_settings_id,
+        invalid=Query(models.GlobalSetting).filter(
+            first_setting_filter,
+            ~is_none_or_empty(models.GlobalSetting.vegetation_drag_settings_id),
+            models.GlobalSetting.frict_type != constants.FrictionType.CHEZY.value,
+        ),
+        message="Vegetation drag can only be used in combination with friction type 1 (Chézy)",
+    )
+]
+
+CHECKS += [
     AllEqualCheck(error_code=330 + i, column=column, level=CheckLevel.WARNING)
     for i, column in enumerate(
         [
