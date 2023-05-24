@@ -339,6 +339,7 @@ def test_square_cells_rounding(tmp_path, interface_cls):
         (2, 3, False),
         (2, 0, False),
         (2, -4, False),
+        (2, 7.9999999999999999, True),
     ],
 )
 def test_raster_grid_size(

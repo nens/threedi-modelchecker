@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.2.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Ignore tiny floating-point deviations in RasterGridSizeCheck (check 798).
 
 
 2.2.2 (2023-05-17)
