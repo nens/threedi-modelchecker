@@ -6,15 +6,18 @@ Changelog of threedi-modelchecker
 ------------------
 
 - Ignore tiny floating-point deviations in RasterGridSizeCheck (check 798).
+
 - Add check 327 to make sure vegetation drag is only used if the friction type is Chezy.
+
+- Change log level of check 63 from ERROR to WARNING
 
 
 2.2.2 (2023-05-17)
 ------------------
 
 - Rewrite release workflow to use a supported github action for github release.
-- Build the release with the build package instead of setuptools.
 
+- Build the release with the build package instead of setuptools.
 
 
 2.2.1 (2023-05-16)
