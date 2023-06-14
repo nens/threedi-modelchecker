@@ -362,7 +362,7 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=63,
-        level=CheckLevel.ERROR,
+        level=CheckLevel.WARNING,
         column=models.ConnectionNode.storage_area,
         invalid=Query(models.ConnectionNode)
         .join(
