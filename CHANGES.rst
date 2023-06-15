@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.2.4 (unreleased)
+2.2.4 (2023-06-15)
 ------------------
 
 - Fixed check 204; it now only applies to broad crested weirs/orifices.
