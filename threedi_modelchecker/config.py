@@ -30,6 +30,7 @@ from .checks.cross_section_definitions import (
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
+    OpenIncreasingCrossSectionConveyanceFrictionCheck,
 )
 from .checks.factories import (
     generate_enum_checks,
@@ -238,11 +239,13 @@ CHECKS += [
     QueryCheck(
         error_code=26,
         column=table.friction_type,
-        filters=table.friction_type.in_(
-            [
-                constants.FrictionType.CHEZY_CONVEYANCE,
-                constants.FrictionType.MANNING_CONVEYANCE,
-            ]
+        invalid=Query(table).filter(
+            table.friction_type.in_(
+                [
+                    constants.FrictionType.CHEZY_CONVEYANCE,
+                    constants.FrictionType.MANNING_CONVEYANCE,
+                ]
+            ),
         ),
         message=(
             "Friction with conveyance, such as chezy_conveyance and "
@@ -256,7 +259,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=27,
-        column=models.CrossSectionLocation,
+        column=models.CrossSectionLocation.id,
         invalid=Query(
             models.CrossSectionLocation
         ).join(
