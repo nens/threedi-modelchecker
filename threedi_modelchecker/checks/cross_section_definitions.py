@@ -321,6 +321,54 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
         return f"{self.column_name} should be monotonically increasing for open YZ profiles. Perhaps this is actually a closed profile?"
 
 
+def cross_section_configuration(shape, heights, widths):
+    if shape.value == constants.CrossSectionShape.CLOSED_RECTANGLE.value:
+        max_height = max(heights)
+        max_width = max(widths)
+        configuration = "closed"
+    elif shape.value == constants.CrossSectionShape.RECTANGLE.value:
+        max_width = max(widths)
+        configuration = "open"
+    elif shape.value == constants.CrossSectionShape.CIRCLE.value:
+        # any value filled in for heights will be overwritten by the widths value, also in the simulation
+        max_height = max_width = max(widths)
+        configuration = "closed"
+    elif shape.value in [
+        constants.CrossSectionShape.EGG.value,
+        constants.CrossSectionShape.INVERTED_EGG.value,
+    ]:
+        # any value filled in for heights will be overwritten by 1.5 times the widths value, also in the simulation
+        max_width = max(widths)
+        max_height = 1.5 * max_width
+        configuration = "closed"
+    elif shape.value in [
+        constants.CrossSectionShape.TABULATED_RECTANGLE.value,
+        constants.CrossSectionShape.TABULATED_TRAPEZIUM.value,
+    ]:
+        last_width = widths[-1]
+        max_height = max(heights)
+        max_width = max(widths)
+        if last_width == 0:
+            configuration = "closed"
+        elif last_width > 0:
+            configuration = "open"
+
+    elif shape.value == constants.CrossSectionShape.TABULATED_YZ.value:
+        # without the rounding, floating-point errors occur
+        max_width = round((max(widths) - min(widths)), 9)
+        max_height = round((max(heights) - min(heights)), 9)
+        first_width = widths[0]
+        last_width = widths[-1]
+        first_height = heights[0]
+        last_height = heights[-1]
+        if (first_width, first_height) == (last_width, last_height):
+            configuration = "closed"
+        else:
+            configuration = "open"
+
+    return max_width, max_height, configuration
+
+
 class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
     """Check if cross section widths and heights are large enough"""
 
@@ -343,50 +391,11 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
             except ValueError:
                 continue  # other check catches this
 
-            if record.shape.value == constants.CrossSectionShape.CLOSED_RECTANGLE.value:
-                max_height = max(heights)
-                max_width = max(widths)
-                configuration = "closed"
-            elif record.shape.value == constants.CrossSectionShape.RECTANGLE.value:
-                max_width = max(widths)
-                configuration = "open"
-            elif record.shape.value == constants.CrossSectionShape.CIRCLE.value:
-                # any value filled in for heights will be overwritten by the widths value, also in the simulation
-                max_height = max_width = max(widths)
-                configuration = "closed"
-            elif record.shape.value in [
-                constants.CrossSectionShape.EGG.value,
-                constants.CrossSectionShape.INVERTED_EGG.value,
-            ]:
-                # any value filled in for heights will be overwritten by 1.5 times the widths value, also in the simulation
-                max_width = max(widths)
-                max_height = 1.5 * max_width
-                configuration = "closed"
-            elif record.shape.value in [
-                constants.CrossSectionShape.TABULATED_RECTANGLE.value,
-                constants.CrossSectionShape.TABULATED_TRAPEZIUM.value,
-            ]:
-                last_width = widths[-1]
-                max_height = max(heights)
-                max_width = max(widths)
-                if last_width == 0:
-                    configuration = "closed"
-                elif last_width > 0:
-                    configuration = "open"
-                else:
-                    continue
-            elif record.shape.value == constants.CrossSectionShape.TABULATED_YZ.value:
-                # without the rounding, floating-point errors occur
-                max_width = round((max(widths) - min(widths)), 9)
-                max_height = round((max(heights) - min(heights)), 9)
-                first_width = widths[0]
-                last_width = widths[-1]
-                first_height = heights[0]
-                last_height = heights[-1]
-                if (first_width, first_height) == (last_width, last_height):
-                    configuration = "closed"
-                else:
-                    configuration = "open"
+            max_width, max_height, configuration = cross_section_configuration(
+                shape=record.shape.value,
+                heights=heights,
+                widths=widths
+            )
 
             # See nens/threedi-modelchecker#251
             minimum_diameter = 0.1
