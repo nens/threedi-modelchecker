@@ -281,6 +281,11 @@ CHECKS += [
         ),
     )
 ]
+CHECKS += [
+    OpenIncreasingCrossSectionConveyanceFrictionCheck(
+        error_code=28,
+    )
+]
 
 
 ## 003x: CALCULATION TYPE

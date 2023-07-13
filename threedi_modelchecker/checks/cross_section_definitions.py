@@ -412,3 +412,54 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
 
     def description(self):
         return "v2_cross_section_definition.width and/or height should probably be at least 0.1m"
+
+
+class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
+    """
+    Check if cross sections used with friction with conveyance
+    are open and monotonically increasing in width
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionLocation.id, *args, **kwargs)
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).join(
+            models.CrossSectionDefinition
+        ).filter(
+            (models.CrossSectionDefinition.width != None)
+            & (models.CrossSectionDefinition.width != "")
+        ):
+            try:
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = (
+                    [float(x) for x in record.height.split(" ")]
+                    if record.height not in [None, ""]
+                    else []
+                )
+            except ValueError:
+                continue  # other check catches this
+
+            _, _, configuration = cross_section_configuration(
+                shape=record.shape.value,
+                heights=heights,
+                widths=widths
+            )
+
+            # friction with conveyance can only be used for cross-sections
+            # which are open *and* have a monotonically increasing width
+            if configuration == "closed" or (len(widths) > 1 and any(
+                next_width >= previous_width for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+            )):
+                invalids.append(record)
+
+
+        return invalids
+
+    def description(self):
+        return (
+            "v2_cross_section_location.friction_type can only "
+            "have conveyance if the associated definition is "
+            "an open shape, and its width is monotonically increasing"
+        )
