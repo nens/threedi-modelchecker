@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.2.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add check 26 to make sure friction types with conveyance are only used on v2_cross_section_location
 
 
 2.2.4 (2023-06-15)

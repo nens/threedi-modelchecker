@@ -232,6 +232,27 @@ CHECKS += [
     )
     for table in [models.Orifice, models.Weir]
 ]
+# Friction with conveyance should raise an error when used
+# on a column other than models.CrossSectionLocation
+CHECKS += [
+    QueryCheck(
+        error_code=26,
+        column=table.friction_type,
+        filters=table.friction_type.in_(
+            [
+                constants.FrictionType.CHEZY_CONVEYANCE,
+                constants.FrictionType.MANNING_CONVEYANCE,
+            ]
+        ),
+        message=(
+            "Friction with conveyance, such as "
+            f"{constants.FrictionType.CHEZY_CONVEYANCE} "
+            f"and {constants.FrictionType.MANNING_CONVEYANCE}, "
+            "may only be used with v2_cross_section_location"
+        ),
+    )
+    for table in [models.Pipe, models.Culvert, models.Weir, models.Orifice]
+]
 
 
 ## 003x: CALCULATION TYPE
