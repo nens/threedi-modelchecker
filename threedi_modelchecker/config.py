@@ -253,6 +253,33 @@ CHECKS += [
     )
     for table in [models.Pipe, models.Culvert, models.Weir, models.Orifice]
 ]
+# Friction with conveyance should only be used on
+# tabulated rectangle, tabulated trapezium, or tabulated yz shapes
+CHECKS += [
+    QueryCheck(
+        error_code=27,
+        column=models.CrossSectionLocation,
+        invalid=Query(
+            models.CrossSectionLocation
+        ).join(
+            models.CrossSectionDefinition
+        ).filter(
+            models.CrossSectionDefinition.shape.not_in(
+                [
+                    constants.CrossSectionShape.TABULATED_RECTANGLE,
+                    constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+                    constants.CrossSectionShape.TABULATED_YZ,
+                ]
+            )
+        ),
+        message=(
+            "Friction with conveyance, such as chezy_conveyance"
+            "and manning_conveyance, may only be used with "
+            "tabulated rectangle (3), tabulated trapezium (4), "
+            "or tabulated yz (5) shapes"
+        ),
+    )
+]
 
 
 ## 003x: CALCULATION TYPE
