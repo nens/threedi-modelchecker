@@ -245,10 +245,8 @@ CHECKS += [
             ]
         ),
         message=(
-            "Friction with conveyance, such as "
-            f"{constants.FrictionType.CHEZY_CONVEYANCE} "
-            f"and {constants.FrictionType.MANNING_CONVEYANCE}, "
-            "may only be used with v2_cross_section_location"
+            "Friction with conveyance, such as chezy_conveyance and "
+            "manning_conveyance, may only be used with v2_cross_section_location"
         ),
     )
     for table in [models.Pipe, models.Culvert, models.Weir, models.Orifice]
