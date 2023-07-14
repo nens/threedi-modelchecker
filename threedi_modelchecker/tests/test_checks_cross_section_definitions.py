@@ -14,6 +14,7 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
+    OpenIncreasingCrossSectionConveyanceFrictionCheck,
 )
 
 from . import factories
@@ -456,5 +457,98 @@ def test_check_cross_section_minimum_diameter(
     )
     factories.CrossSectionLocationFactory(definition=definition)
     check = CrossSectionMinimumDiameterCheck()
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == expected_result
+
+@pytest.mark.parametrize(
+    "shape,width,height,expected_result",
+    [
+        (0, "0.1", "0.2", 1),  # closed rectangle, fail
+        (1, "0.1", None, 0),  # open rectangle, pass
+        (
+            5,
+            "0.04 0.1",
+            "0.06 0.2",
+            0,
+        ),  # open tabulated rectangle, increasing width, pass
+        (
+            5,
+            "0.04 0.1 0.1",
+            "0.06 0.2 0.3",
+            0,
+        ),  # open tabulated rectangle, equal width segments, pass
+        (
+            5,
+            "0.2 0.1",
+            "0.06 0.2",
+            1,
+        ),  # open tabulated rectangle, decreasing width, fail
+        (
+            5,
+            "0.04 0.1 0",
+            "0.06 0.2",
+            1,
+        ),  # closed tabulated rectangle, fail
+        (
+            6,
+            "0.04 0.1",
+            "0.06 0.2",
+            0,
+        ),  # open tabulated trapezium, increasing width, pass
+        (
+            6,
+            "0.04 0.1 0.1",
+            "0.06 0.2 0.3",
+            0,
+        ),  # open tabulated trapezium, equal width segments, pass
+        (
+            6,
+            "0.2 0.1",
+            "0.06 0.3",
+            1,
+        ),  # open tabulated trapezium, decreasing width, fail
+        (
+            6,
+            "0.04 0.1 0",
+            "0.06 0.2",
+            1,
+        ),  # closed tabulated trapezium, fail
+        (
+            7,
+            "0.01 0.11",
+            "0.11 0.21",
+            0,
+        ),  # open tabulated yz, increasing width, pass
+        (
+            7,
+            "0.01 0.10 0.10",
+            "0.11 0.21 0.31",
+            0,
+        ),  # open tabulated yz, equal width segments, pass
+        (
+            7,
+            "0.11 0.01",
+            "0.11 0.20",
+            1,
+        ),  # open tabulated yz, decreasing width, fail
+        (
+            7,
+            "0.01 0.11 0.01",
+            "0.11 0.21 0.11",
+            1,
+        ),  # closed tabulated yz,  fail
+        (0, "foo", "", 0),  # bad data, pass
+    ],
+)
+def test_check_cross_section_increasing_open_with_conveyance_friction(
+    session, shape, width, height, expected_result
+):
+    definition = factories.CrossSectionDefinitionFactory(
+        shape=shape,
+        width=width,
+        height=height,
+    )
+    factories.CrossSectionLocationFactory(definition=definition)
+    check = OpenIncreasingCrossSectionConveyanceFrictionCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
