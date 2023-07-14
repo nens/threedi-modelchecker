@@ -460,6 +460,7 @@ def test_check_cross_section_minimum_diameter(
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
 
+
 @pytest.mark.parametrize(
     "shape,width,height,expected_result",
     [

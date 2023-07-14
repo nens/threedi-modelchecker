@@ -394,9 +394,7 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
                 continue  # other check catches this
 
             max_width, max_height, configuration = cross_section_configuration(
-                shape=record.shape.value,
-                heights=heights,
-                widths=widths
+                shape=record.shape.value, heights=heights, widths=widths
             )
 
             # See nens/threedi-modelchecker#251
@@ -432,10 +430,9 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
                 models.CrossSectionDefinition.shape,
                 models.CrossSectionDefinition.width,
                 models.CrossSectionDefinition.height,
-            ).join(
-                models.CrossSectionDefinition,
-                isouter=True
-            ).where(
+            )
+            .join(models.CrossSectionDefinition, isouter=True)
+            .where(
                 (models.CrossSectionDefinition.width != None)
                 & (models.CrossSectionDefinition.width != "")
             )
@@ -451,18 +448,78 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
                 continue  # other check catches this
 
             _, _, configuration = cross_section_configuration(
-                shape=record.shape.value,
-                heights=heights,
-                widths=widths
+                shape=record.shape.value, heights=heights, widths=widths
             )
 
             # friction with conveyance can only be used for cross-sections
             # which are open *and* have a monotonically increasing width
-            if configuration == "closed" or (len(widths) > 1 and any(
-                next_width < previous_width for (previous_width, next_width) in zip(widths[:-1], widths[1:])
-            )):
+            if configuration == "closed" or (
+                len(widths) > 1
+                and any(
+                    next_width < previous_width
+                    for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+                )
+            ):
                 invalids.append(record)
 
+        return invalids
+
+    def description(self):
+        return (
+            "v2_cross_section_location.friction_type can only "
+            "have conveyance if the associated definition is "
+            "an open shape, and its width is monotonically increasing"
+        )
+
+
+class CrossSectionConveyanceFrictionAdviceCheck(CrossSectionBaseCheck):
+    """
+    Check if cross sections used with friction with conveyance
+    are open and monotonically increasing in width
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionLocation.id, *args, **kwargs)
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in session.execute(
+            select(
+                models.CrossSectionLocation.id,
+                models.CrossSectionDefinition.shape,
+                models.CrossSectionDefinition.width,
+                models.CrossSectionDefinition.height,
+            )
+            .join(models.CrossSectionDefinition, isouter=True)
+            .where(
+                (models.CrossSectionDefinition.width != None)
+                & (models.CrossSectionDefinition.width != "")
+            )
+        ):
+            try:
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = (
+                    [float(x) for x in record.height.split(" ")]
+                    if record.height not in [None, ""]
+                    else []
+                )
+            except ValueError:
+                continue  # other check catches this
+
+            _, _, configuration = cross_section_configuration(
+                shape=record.shape.value, heights=heights, widths=widths
+            )
+
+            # friction with conveyance can only be used for cross-sections
+            # which are open *and* have a monotonically increasing width
+            if configuration == "closed" or (
+                len(widths) > 1
+                and any(
+                    next_width < previous_width
+                    for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+                )
+            ):
+                invalids.append(record)
 
         return invalids
 

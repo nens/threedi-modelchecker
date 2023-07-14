@@ -260,11 +260,9 @@ CHECKS += [
     QueryCheck(
         error_code=27,
         column=models.CrossSectionLocation.id,
-        invalid=Query(
-            models.CrossSectionLocation
-        ).join(
-            models.CrossSectionDefinition
-        ).filter(
+        invalid=Query(models.CrossSectionLocation)
+        .join(models.CrossSectionDefinition)
+        .filter(
             models.CrossSectionDefinition.shape.not_in(
                 [
                     constants.CrossSectionShape.TABULATED_RECTANGLE,
