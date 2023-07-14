@@ -427,6 +427,7 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
         for record in session.execute(
             select(
                 models.CrossSectionLocation.id,
+                models.CrossSectionLocation.friction_type,
                 models.CrossSectionDefinition.shape,
                 models.CrossSectionDefinition.width,
                 models.CrossSectionDefinition.height,
@@ -435,6 +436,12 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
             .where(
                 (models.CrossSectionDefinition.width != None)
                 & (models.CrossSectionDefinition.width != "")
+                & (models.CrossSectionLocation.friction_type.in_(
+                    [
+                        constants.FrictionType.CHEZY_CONVEYANCE,
+                        constants.FrictionType.MANNING_CONVEYANCE,
+                    ]
+                ))
             )
         ):
             try:
