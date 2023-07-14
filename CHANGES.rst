@@ -7,6 +7,14 @@ Changelog of threedi-modelchecker
 
 - Add check 26 to make sure friction types with conveyance are only used on v2_cross_section_location
 
+- Add check 27 to make sure friction types with conveyance are only used on tabulated rectangle,
+  tabulated trapezium, or tabulated yz shapes.
+
+- Add check 28 to make sure cross-sections with conveyance friction monotonically increase in width
+
+- Add check 29 to advise users to use friction with conveyance on cross-sections where it is possible,
+  but they haven't done so.
+
 
 2.2.4 (2023-06-15)
 ------------------
