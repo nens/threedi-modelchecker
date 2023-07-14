@@ -568,3 +568,117 @@ def test_check_cross_section_increasing_open_with_conveyance_friction(
         expected_result = 0
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
+
+
+@pytest.mark.parametrize(
+    "shape,width,height,expected_result",
+    [
+        (0, "0.1", "0.2", 0),  # closed rectangle, pass
+        (1, "0.1", None, 1),  # open rectangle, fail
+        (
+            5,
+            "0.04 0.1",
+            "0.06 0.2",
+            1,
+        ),  # open tabulated rectangle, increasing width, fail
+        (
+            5,
+            "0.04 0.1 0.1",
+            "0.06 0.2 0.3",
+            1,
+        ),  # open tabulated rectangle, equal width segments, fail
+        (
+            5,
+            "0.2 0.1",
+            "0.06 0.2",
+            0,
+        ),  # open tabulated rectangle, decreasing width, pass
+        (
+            5,
+            "0.04 0.1 0",
+            "0.06 0.2",
+            0,
+        ),  # closed tabulated rectangle, pass
+        (
+            6,
+            "0.04 0.1",
+            "0.06 0.2",
+            1,
+        ),  # open tabulated trapezium, increasing width, fail
+        (
+            6,
+            "0.04 0.1 0.1",
+            "0.06 0.2 0.3",
+            1,
+        ),  # open tabulated trapezium, equal width segments, fail
+        (
+            6,
+            "0.2 0.1",
+            "0.06 0.3",
+            0,
+        ),  # open tabulated trapezium, decreasing width, pass
+        (
+            6,
+            "0.04 0.1 0",
+            "0.06 0.2",
+            0,
+        ),  # closed tabulated trapezium, pass
+        (
+            7,
+            "0.01 0.11",
+            "0.11 0.21",
+            1,
+        ),  # open tabulated yz, increasing width, fail
+        (
+            7,
+            "0.01 0.10 0.10",
+            "0.11 0.21 0.31",
+            1,
+        ),  # open tabulated yz, equal width segments, fail
+        (
+            7,
+            "0.11 0.01",
+            "0.11 0.20",
+            0,
+        ),  # open tabulated yz, decreasing width, pass
+        (
+            7,
+            "0.01 0.11 0.01",
+            "0.11 0.21 0.11",
+            0,
+        ),  # closed tabulated yz,  pass
+        (0, "foo", "", 0),  # bad data, pass
+    ],
+)
+@pytest.mark.parametrize(
+    "friction_type,conveyance",
+    [
+        (constants.FrictionType.CHEZY, False),
+        (constants.FrictionType.MANNING, False),
+        (constants.FrictionType.CHEZY_CONVEYANCE, True),
+        (constants.FrictionType.MANNING_CONVEYANCE, True),
+    ],
+)
+def test_check_cross_section_increasing_open_with_conveyance_friction(
+    session, shape, width, height, expected_result, friction_type, conveyance
+):
+    """
+    When a cross-section is expected to fail, that means
+    it may use friction with conveyance, but isn't, so an
+    info message will be given to inform the user of that.
+    """
+    definition = factories.CrossSectionDefinitionFactory(
+        shape=shape,
+        width=width,
+        height=height,
+    )
+    factories.CrossSectionLocationFactory(
+        definition=definition, friction_type=friction_type
+    )
+    check = OpenIncreasingCrossSectionConveyanceFrictionCheck()
+    # this check should pass on cross-section locations which use conveyance,
+    # regardless of their other parameters
+    if not conveyance:
+        expected_result = 0
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == expected_result
