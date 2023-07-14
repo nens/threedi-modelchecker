@@ -541,15 +541,30 @@ def test_check_cross_section_minimum_diameter(
         (0, "foo", "", 0),  # bad data, pass
     ],
 )
+@pytest.mark.parametrize(
+    "friction_type,conveyance",
+    [
+        (constants.FrictionType.CHEZY, False),
+        (constants.FrictionType.MANNING, False),
+        (constants.FrictionType.CHEZY_CONVEYANCE, True),
+        (constants.FrictionType.MANNING_CONVEYANCE, True),
+    ],
+)
 def test_check_cross_section_increasing_open_with_conveyance_friction(
-    session, shape, width, height, expected_result
+    session, shape, width, height, expected_result, friction_type, conveyance
 ):
     definition = factories.CrossSectionDefinitionFactory(
         shape=shape,
         width=width,
         height=height,
     )
-    factories.CrossSectionLocationFactory(definition=definition)
+    factories.CrossSectionLocationFactory(
+        definition=definition, friction_type=friction_type
+    )
     check = OpenIncreasingCrossSectionConveyanceFrictionCheck()
+    # this check should pass on cross-section locations which don't use conveyance,
+    # regardless of their other parameters
+    if not conveyance:
+        expected_result = 0
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
