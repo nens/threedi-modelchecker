@@ -2,6 +2,7 @@ import pytest
 from threedi_schema import constants, models
 
 from threedi_modelchecker.checks.cross_section_definitions import (
+    CrossSectionConveyanceFrictionAdviceCheck,
     CrossSectionEqualElementsCheck,
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
@@ -574,7 +575,7 @@ def test_check_cross_section_increasing_open_with_conveyance_friction(
     "shape,width,height,expected_result",
     [
         (0, "0.1", "0.2", 0),  # closed rectangle, pass
-        (1, "0.1", None, 1),  # open rectangle, fail
+        (1, "0.1", None, 0),  # open rectangle, pass because it isn't tabulated
         (
             5,
             "0.04 0.1",
@@ -659,7 +660,7 @@ def test_check_cross_section_increasing_open_with_conveyance_friction(
         (constants.FrictionType.MANNING_CONVEYANCE, True),
     ],
 )
-def test_check_cross_section_increasing_open_with_conveyance_friction(
+def test_check_cross_section_conveyance_friction_info_message(
     session, shape, width, height, expected_result, friction_type, conveyance
 ):
     """
@@ -675,10 +676,10 @@ def test_check_cross_section_increasing_open_with_conveyance_friction(
     factories.CrossSectionLocationFactory(
         definition=definition, friction_type=friction_type
     )
-    check = OpenIncreasingCrossSectionConveyanceFrictionCheck()
+    check = CrossSectionConveyanceFrictionAdviceCheck()
     # this check should pass on cross-section locations which use conveyance,
     # regardless of their other parameters
-    if not conveyance:
+    if conveyance:
         expected_result = 0
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
