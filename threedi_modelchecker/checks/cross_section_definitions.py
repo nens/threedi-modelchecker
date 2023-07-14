@@ -474,8 +474,11 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
 
 class CrossSectionConveyanceFrictionAdviceCheck(CrossSectionBaseCheck):
     """
-    Check if cross sections used with friction with conveyance
-    are open and monotonically increasing in width
+    Check if cross sections:
+    - Are of shape tabulated rectangle, tabulated trapezium, or tabulated YZ
+    - Monotonically increase in width
+    but do not use the new friction type with conveyance.
+    If so, advise the user that they may wish to use a friction type with conveyance.
     """
 
     def __init__(self, *args, **kwargs):
@@ -486,6 +489,7 @@ class CrossSectionConveyanceFrictionAdviceCheck(CrossSectionBaseCheck):
         for record in session.execute(
             select(
                 models.CrossSectionLocation.id,
+                models.CrossSectionLocation.friction_type,
                 models.CrossSectionDefinition.shape,
                 models.CrossSectionDefinition.width,
                 models.CrossSectionDefinition.height,
@@ -510,13 +514,29 @@ class CrossSectionConveyanceFrictionAdviceCheck(CrossSectionBaseCheck):
                 shape=record.shape.value, heights=heights, widths=widths
             )
 
-            # friction with conveyance can only be used for cross-sections
-            # which are open *and* have a monotonically increasing width
-            if configuration == "closed" or (
-                len(widths) > 1
-                and any(
-                    next_width < previous_width
-                    for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+            if (
+                configuration == "open"
+                and (
+                    len(widths) > 1
+                    and all(
+                        next_width >= previous_width
+                        for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+                    )
+                )
+                and (
+                    record.shape.value
+                    in [
+                        constants.CrossSectionShape.TABULATED_RECTANGLE.value,
+                        constants.CrossSectionShape.TABULATED_TRAPEZIUM.value,
+                        constants.CrossSectionShape.TABULATED_YZ.value,
+                    ]
+                )
+                and (
+                    record.friction_type.value
+                    not in [
+                        constants.FrictionType.CHEZY_CONVEYANCE.value,
+                        constants.FrictionType.MANNING_CONVEYANCE.value,
+                    ]
                 )
             ):
                 invalids.append(record)
@@ -525,7 +545,8 @@ class CrossSectionConveyanceFrictionAdviceCheck(CrossSectionBaseCheck):
 
     def description(self):
         return (
-            "v2_cross_section_location.friction_type can only "
-            "have conveyance if the associated definition is "
-            "an open shape, and its width is monotonically increasing"
+            "Friction for this cross-section will be calculated without conveyance. "
+            "For open Tabulated or YZ cross-sections, using conveyance in the calculation "
+            "of friction is recommended in case there is a significant variation "
+            "of the bed level (for instance, in a scenario with overflowing floodplains)."
         )
