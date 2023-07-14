@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 
@@ -425,11 +426,19 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
 
     def get_invalid(self, session):
         invalids = []
-        for record in self.to_check(session).join(
-            models.CrossSectionDefinition
-        ).filter(
-            (models.CrossSectionDefinition.width != None)
-            & (models.CrossSectionDefinition.width != "")
+        for record in session.execute(
+            select(
+                models.CrossSectionLocation.id,
+                models.CrossSectionDefinition.shape,
+                models.CrossSectionDefinition.width,
+                models.CrossSectionDefinition.height,
+            ).join(
+                models.CrossSectionDefinition,
+                isouter=True
+            ).where(
+                (models.CrossSectionDefinition.width != None)
+                & (models.CrossSectionDefinition.width != "")
+            )
         ):
             try:
                 widths = [float(x) for x in record.width.split(" ")]
@@ -450,7 +459,7 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
             # friction with conveyance can only be used for cross-sections
             # which are open *and* have a monotonically increasing width
             if configuration == "closed" or (len(widths) > 1 and any(
-                next_width >= previous_width for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+                next_width < previous_width for (previous_width, next_width) in zip(widths[:-1], widths[1:])
             )):
                 invalids.append(record)
 
