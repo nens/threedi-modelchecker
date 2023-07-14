@@ -436,12 +436,14 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
             .where(
                 (models.CrossSectionDefinition.width != None)
                 & (models.CrossSectionDefinition.width != "")
-                & (models.CrossSectionLocation.friction_type.in_(
-                    [
-                        constants.FrictionType.CHEZY_CONVEYANCE,
-                        constants.FrictionType.MANNING_CONVEYANCE,
-                    ]
-                ))
+                & (
+                    models.CrossSectionLocation.friction_type.in_(
+                        [
+                            constants.FrictionType.CHEZY_CONVEYANCE,
+                            constants.FrictionType.MANNING_CONVEYANCE,
+                        ]
+                    )
+                )
             )
         ):
             try:
