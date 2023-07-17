@@ -273,10 +273,11 @@ CHECKS += [
             )
         ),
         message=(
-            "Friction with conveyance, such as chezy_conveyance"
-            "and manning_conveyance, may only be used with "
-            "tabulated rectangle (3), tabulated trapezium (4), "
-            "or tabulated yz (5) shapes"
+            "in v2_cross_section_location, friction with "
+            "conveyance, such as chezy_conveyance and "
+            "manning_conveyance, may only be used with "
+            "tabulated rectangle (5), tabulated trapezium (6), "
+            "or tabulated yz (7) shapes"
         ),
     )
 ]
