@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 
@@ -321,6 +322,55 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
         return f"{self.column_name} should be monotonically increasing for open YZ profiles. Perhaps this is actually a closed profile?"
 
 
+def cross_section_configuration(shape, heights, widths):
+    if shape == constants.CrossSectionShape.CLOSED_RECTANGLE.value:
+        max_height = max(heights)
+        max_width = max(widths)
+        configuration = "closed"
+    elif shape == constants.CrossSectionShape.RECTANGLE.value:
+        max_height = None
+        max_width = max(widths)
+        configuration = "open"
+    elif shape == constants.CrossSectionShape.CIRCLE.value:
+        # any value filled in for heights will be overwritten by the widths value, also in the simulation
+        max_height = max_width = max(widths)
+        configuration = "closed"
+    elif shape in [
+        constants.CrossSectionShape.EGG.value,
+        constants.CrossSectionShape.INVERTED_EGG.value,
+    ]:
+        # any value filled in for heights will be overwritten by 1.5 times the widths value, also in the simulation
+        max_width = max(widths)
+        max_height = 1.5 * max_width
+        configuration = "closed"
+    elif shape in [
+        constants.CrossSectionShape.TABULATED_RECTANGLE.value,
+        constants.CrossSectionShape.TABULATED_TRAPEZIUM.value,
+    ]:
+        last_width = widths[-1]
+        max_height = max(heights)
+        max_width = max(widths)
+        if last_width == 0:
+            configuration = "closed"
+        elif last_width > 0:
+            configuration = "open"
+
+    elif shape == constants.CrossSectionShape.TABULATED_YZ.value:
+        # without the rounding, floating-point errors occur
+        max_width = round((max(widths) - min(widths)), 9)
+        max_height = round((max(heights) - min(heights)), 9)
+        first_width = widths[0]
+        last_width = widths[-1]
+        first_height = heights[0]
+        last_height = heights[-1]
+        if (first_width, first_height) == (last_width, last_height):
+            configuration = "closed"
+        else:
+            configuration = "open"
+
+    return max_width, max_height, configuration
+
+
 class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
     """Check if cross section widths and heights are large enough"""
 
@@ -343,50 +393,9 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
             except ValueError:
                 continue  # other check catches this
 
-            if record.shape.value == constants.CrossSectionShape.CLOSED_RECTANGLE.value:
-                max_height = max(heights)
-                max_width = max(widths)
-                configuration = "closed"
-            elif record.shape.value == constants.CrossSectionShape.RECTANGLE.value:
-                max_width = max(widths)
-                configuration = "open"
-            elif record.shape.value == constants.CrossSectionShape.CIRCLE.value:
-                # any value filled in for heights will be overwritten by the widths value, also in the simulation
-                max_height = max_width = max(widths)
-                configuration = "closed"
-            elif record.shape.value in [
-                constants.CrossSectionShape.EGG.value,
-                constants.CrossSectionShape.INVERTED_EGG.value,
-            ]:
-                # any value filled in for heights will be overwritten by 1.5 times the widths value, also in the simulation
-                max_width = max(widths)
-                max_height = 1.5 * max_width
-                configuration = "closed"
-            elif record.shape.value in [
-                constants.CrossSectionShape.TABULATED_RECTANGLE.value,
-                constants.CrossSectionShape.TABULATED_TRAPEZIUM.value,
-            ]:
-                last_width = widths[-1]
-                max_height = max(heights)
-                max_width = max(widths)
-                if last_width == 0:
-                    configuration = "closed"
-                elif last_width > 0:
-                    configuration = "open"
-                else:
-                    continue
-            elif record.shape.value == constants.CrossSectionShape.TABULATED_YZ.value:
-                # without the rounding, floating-point errors occur
-                max_width = round((max(widths) - min(widths)), 9)
-                max_height = round((max(heights) - min(heights)), 9)
-                first_width = widths[0]
-                last_width = widths[-1]
-                first_height = heights[0]
-                last_height = heights[-1]
-                if (first_width, first_height) == (last_width, last_height):
-                    configuration = "closed"
-                else:
-                    configuration = "open"
+            max_width, max_height, configuration = cross_section_configuration(
+                shape=record.shape.value, heights=heights, widths=widths
+            )
 
             # See nens/threedi-modelchecker#251
             minimum_diameter = 0.1
@@ -402,3 +411,151 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
 
     def description(self):
         return "v2_cross_section_definition.width and/or height should probably be at least 0.1m"
+
+
+class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
+    """
+    Check if cross sections used with friction with conveyance
+    are open and monotonically increasing in width
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionLocation.id, *args, **kwargs)
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in session.execute(
+            select(
+                models.CrossSectionLocation.id,
+                models.CrossSectionLocation.friction_type,
+                models.CrossSectionDefinition.shape,
+                models.CrossSectionDefinition.width,
+                models.CrossSectionDefinition.height,
+            )
+            .join(models.CrossSectionDefinition, isouter=True)
+            .where(
+                (models.CrossSectionDefinition.width != None)
+                & (models.CrossSectionDefinition.width != "")
+                & (
+                    models.CrossSectionLocation.friction_type.in_(
+                        [
+                            constants.FrictionType.CHEZY_CONVEYANCE,
+                            constants.FrictionType.MANNING_CONVEYANCE,
+                        ]
+                    )
+                )
+            )
+        ):
+            try:
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = (
+                    [float(x) for x in record.height.split(" ")]
+                    if record.height not in [None, ""]
+                    else []
+                )
+            except ValueError:
+                continue  # other check catches this
+
+            _, _, configuration = cross_section_configuration(
+                shape=record.shape.value, heights=heights, widths=widths
+            )
+
+            # friction with conveyance can only be used for cross-sections
+            # which are open *and* have a monotonically increasing width
+            if configuration == "closed" or (
+                len(widths) > 1
+                and any(
+                    next_width < previous_width
+                    for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+                )
+            ):
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return (
+            "v2_cross_section_location.friction_type can only "
+            "have conveyance if the associated definition is "
+            "an open shape, and its width is monotonically increasing"
+        )
+
+
+class CrossSectionConveyanceFrictionAdviceCheck(CrossSectionBaseCheck):
+    """
+    Check if cross sections:
+    - Are of shape tabulated rectangle, tabulated trapezium, or tabulated YZ
+    - Monotonically increase in width
+    but do not use the new friction type with conveyance.
+    If so, advise the user that they may wish to use a friction type with conveyance.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.CrossSectionLocation.id, *args, **kwargs)
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in session.execute(
+            select(
+                models.CrossSectionLocation.id,
+                models.CrossSectionLocation.friction_type,
+                models.CrossSectionDefinition.shape,
+                models.CrossSectionDefinition.width,
+                models.CrossSectionDefinition.height,
+            )
+            .join(models.CrossSectionDefinition, isouter=True)
+            .where(
+                (models.CrossSectionDefinition.width != None)
+                & (models.CrossSectionDefinition.width != "")
+            )
+        ):
+            try:
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = (
+                    [float(x) for x in record.height.split(" ")]
+                    if record.height not in [None, ""]
+                    else []
+                )
+            except ValueError:
+                continue  # other check catches this
+
+            _, _, configuration = cross_section_configuration(
+                shape=record.shape.value, heights=heights, widths=widths
+            )
+
+            if (
+                configuration == "open"
+                and (
+                    len(widths) > 1
+                    and all(
+                        next_width >= previous_width
+                        for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+                    )
+                )
+                and (
+                    record.shape.value
+                    in [
+                        constants.CrossSectionShape.TABULATED_RECTANGLE.value,
+                        constants.CrossSectionShape.TABULATED_TRAPEZIUM.value,
+                        constants.CrossSectionShape.TABULATED_YZ.value,
+                    ]
+                )
+                and (
+                    record.friction_type.value
+                    not in [
+                        constants.FrictionType.CHEZY_CONVEYANCE.value,
+                        constants.FrictionType.MANNING_CONVEYANCE.value,
+                    ]
+                )
+            ):
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return (
+            "Friction for this cross-section will be calculated without conveyance. "
+            "For open Tabulated or YZ cross-sections, using conveyance in the calculation "
+            "of friction is recommended in case there is a significant variation "
+            "of the bed level (for instance, in a scenario with overflowing floodplains)."
+        )
