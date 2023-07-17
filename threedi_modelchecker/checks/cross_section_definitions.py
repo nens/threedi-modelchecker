@@ -323,15 +323,28 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
 
 
 def cross_section_configuration(shape, heights, widths):
+    """
+    Calculate maximum heights, maximum width and open/closed configuration for cross-sections.
+    If the heights or widths list is empty, but will be called, it is set to [] to avoid ValueErrors.
+    A different checks will error on the empty list instead so the user knows to fix it.
+    """
     if shape == constants.CrossSectionShape.CLOSED_RECTANGLE.value:
+        if not widths:
+            widths = [0]
+        if not heights:
+            heights = [0]
         max_height = max(heights)
         max_width = max(widths)
         configuration = "closed"
     elif shape == constants.CrossSectionShape.RECTANGLE.value:
+        if not widths:
+            widths = [0]
         max_height = None
         max_width = max(widths)
         configuration = "open"
     elif shape == constants.CrossSectionShape.CIRCLE.value:
+        if not widths:
+            widths = [0]
         # any value filled in for heights will be overwritten by the widths value, also in the simulation
         max_height = max_width = max(widths)
         configuration = "closed"
@@ -339,6 +352,8 @@ def cross_section_configuration(shape, heights, widths):
         constants.CrossSectionShape.EGG.value,
         constants.CrossSectionShape.INVERTED_EGG.value,
     ]:
+        if not widths:
+            widths = [0]
         # any value filled in for heights will be overwritten by 1.5 times the widths value, also in the simulation
         max_width = max(widths)
         max_height = 1.5 * max_width
@@ -347,6 +362,10 @@ def cross_section_configuration(shape, heights, widths):
         constants.CrossSectionShape.TABULATED_RECTANGLE.value,
         constants.CrossSectionShape.TABULATED_TRAPEZIUM.value,
     ]:
+        if not widths:
+            widths = [0]
+        if not heights:
+            heights = [0]
         last_width = widths[-1]
         max_height = max(heights)
         max_width = max(widths)
@@ -356,6 +375,10 @@ def cross_section_configuration(shape, heights, widths):
             configuration = "open"
 
     elif shape == constants.CrossSectionShape.TABULATED_YZ.value:
+        if not widths:
+            widths = [0]
+        if not heights:
+            heights = [0]
         # without the rounding, floating-point errors occur
         max_width = round((max(widths) - min(widths)), 9)
         max_height = round((max(heights) - min(heights)), 9)
