@@ -264,12 +264,21 @@ CHECKS += [
         invalid=Query(models.CrossSectionLocation)
         .join(models.CrossSectionDefinition)
         .filter(
-            models.CrossSectionDefinition.shape.not_in(
-                [
-                    constants.CrossSectionShape.TABULATED_RECTANGLE,
-                    constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-                    constants.CrossSectionShape.TABULATED_YZ,
-                ]
+            (
+                models.CrossSectionDefinition.shape.not_in(
+                    [
+                        constants.CrossSectionShape.TABULATED_RECTANGLE,
+                        constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+                        constants.CrossSectionShape.TABULATED_YZ,
+                    ]
+                )
+            ) & (
+                models.CrossSectionLocation.friction_type.in_(
+                    [
+                        constants.FrictionType.CHEZY_CONVEYANCE,
+                        constants.FrictionType.MANNING_CONVEYANCE
+                    ]
+                )
             )
         ),
         message=(
