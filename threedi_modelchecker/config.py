@@ -272,11 +272,12 @@ CHECKS += [
                         constants.CrossSectionShape.TABULATED_YZ,
                     ]
                 )
-            ) & (
+            )
+            & (
                 models.CrossSectionLocation.friction_type.in_(
                     [
                         constants.FrictionType.CHEZY_CONVEYANCE,
-                        constants.FrictionType.MANNING_CONVEYANCE
+                        constants.FrictionType.MANNING_CONVEYANCE,
                     ]
                 )
             )
