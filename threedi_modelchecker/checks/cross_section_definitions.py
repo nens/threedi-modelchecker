@@ -312,14 +312,15 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
             if widths[0] == widths[-1] and heights[0] == heights[-1]:
                 continue
             elif len(widths) > 1 and any(
-                x >= y for (x, y) in zip(widths[:-1], widths[1:])
+                previous_width >= next_width
+                for (previous_width, next_width) in zip(widths[:-1], widths[1:])
             ):
                 invalids.append(record)
 
         return invalids
 
     def description(self):
-        return f"{self.column_name} should be monotonically increasing for open YZ profiles. Perhaps this is actually a closed profile?"
+        return f"{self.column_name} should be strictly increasing for open YZ profiles. Perhaps this is actually a closed profile?"
 
 
 def cross_section_configuration(shape, heights, widths):
