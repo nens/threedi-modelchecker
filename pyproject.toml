@@ -40,6 +40,9 @@ threedi_modelchecker = "threedi_modelchecker.scripts:cli"
 [project.urls]
 Repository = "https://github.com/nens/threedi-modelchecker"
 
+[tool.setuptools]
+packages = ["threedi_modelchecker"]
+
 [tool.setuptools.dynamic]
 version = {attr = "threedi_modelchecker.__version__"}
 
