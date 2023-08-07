@@ -208,11 +208,17 @@ class RasterGridSizeCheck(BaseRasterCheck):
             if not raster.is_valid_geotiff:
                 return True
             # the x pixel size is used here,but it is equal to the y pixel size
-            return (
-                isclose(
-                    a=((self.grid_space / raster.pixel_size[0]) % 2), b=0, rel_tol=1e-09
-                )
-            ) and (self.grid_space >= (2 * raster.pixel_size[0]))
+            try:
+                return (
+                    isclose(
+                        a=((self.grid_space / raster.pixel_size[0]) % 2),
+                        b=0,
+                        rel_tol=1e-09,
+                    )
+                ) and (self.grid_space >= (2 * raster.pixel_size[0]))
+            # if one of the fields is a NoneType it will be caught elsewhere
+            except TypeError:
+                return True
 
     def description(self):
         return "v2_global_settings.grid_space is not a positive even multiple of the raster cell size."

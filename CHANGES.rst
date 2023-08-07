@@ -15,6 +15,8 @@ Changelog of threedi-modelchecker
 - Add check 29 to advise users to use friction with conveyance on cross-sections where it is possible,
   but they haven't done so.
 
+- Ignore TypeError raised on check 797 when grid_space is null.
+
 
 2.2.4 (2023-06-15)
 ------------------
