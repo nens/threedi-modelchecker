@@ -252,6 +252,7 @@ CHECKS += [
             "Friction with conveyance, such as chezy_conveyance and "
             "manning_conveyance, may only be used with v2_cross_section_location"
         ),
+        is_beta_check=True,
     )
     for table in [models.Pipe, models.Culvert, models.Weir, models.Orifice]
 ]
@@ -289,17 +290,20 @@ CHECKS += [
             "tabulated rectangle (5), tabulated trapezium (6), "
             "or tabulated yz (7) shapes"
         ),
+        is_beta_check=True,
     )
 ]
 CHECKS += [
     OpenIncreasingCrossSectionConveyanceFrictionCheck(
         error_code=28,
+        is_beta_check=True,
     )
 ]
 CHECKS += [
     CrossSectionConveyanceFrictionAdviceCheck(
         error_code=29,
         level=CheckLevel.INFO,
+        is_beta_check=True,
     )
 ]
 
