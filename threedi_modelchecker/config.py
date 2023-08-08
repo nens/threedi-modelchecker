@@ -2790,6 +2790,8 @@ class Config:
         """Iterate over checks with at least 'level'"""
         level = CheckLevel.get(level)  # normalize
         for check in self.checks:
+            if check.is_beta_check and not self.allow_beta_features:
+                continue
             if check.level >= level:
                 if ignore_checks:
                     if not ignore_checks.match(str(check.error_code).zfill(4)):
