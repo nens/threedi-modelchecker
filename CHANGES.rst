@@ -5,14 +5,16 @@ Changelog of threedi-modelchecker
 2.2.5 (unreleased)
 ------------------
 
-- Add check 26 to make sure friction types with conveyance are only used on v2_cross_section_location
+- Support marking checks as beta, so they will only be executed with allow_beta_features=True
 
-- Add check 27 to make sure friction types with conveyance are only used on tabulated rectangle,
+- Add beta check 26 to make sure friction types with conveyance are only used on v2_cross_section_location
+
+- Add beta check 27 to make sure friction types with conveyance are only used on tabulated rectangle,
   tabulated trapezium, or tabulated yz shapes.
 
-- Add check 28 to make sure cross-sections with conveyance friction monotonically increase in width
+- Add beta check 28 to make sure cross-sections with conveyance friction monotonically increase in width
 
-- Add check 29 to advise users to use friction with conveyance on cross-sections where it is possible,
+- Add beta check 29 to advise users to use friction with conveyance on cross-sections where it is possible,
   but they haven't done so.
 
 - Ignore TypeError raised on check 797 when grid_space is null.
