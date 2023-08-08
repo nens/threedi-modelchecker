@@ -37,12 +37,14 @@ class BaseCheck(ABC):
         filters=None,
         level=CheckLevel.ERROR,
         error_code=0,
+        is_beta_check=False,
     ):
         self.column = column
         self.table = column.table
         self.filters = filters
         self.error_code = int(error_code)
         self.level = CheckLevel.get(level)
+        self.is_beta_check = is_beta_check
 
     @abstractmethod
     def get_invalid(self, session: Session) -> List[NamedTuple]:
@@ -109,8 +111,11 @@ class QueryCheck(BaseCheck):
         filters=None,
         level=CheckLevel.ERROR,
         error_code=0,
+        is_beta_check=False,
     ):
-        super().__init__(column, level=level, error_code=error_code)
+        super().__init__(
+            column, level=level, error_code=error_code, is_beta_check=is_beta_check
+        )
         self.invalid = invalid
         self.message = message
         self.filters = filters

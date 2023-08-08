@@ -252,6 +252,7 @@ CHECKS += [
             "Friction with conveyance, such as chezy_conveyance and "
             "manning_conveyance, may only be used with v2_cross_section_location"
         ),
+        is_beta_check=True,
     )
     for table in [models.Pipe, models.Culvert, models.Weir, models.Orifice]
 ]
@@ -289,17 +290,20 @@ CHECKS += [
             "tabulated rectangle (5), tabulated trapezium (6), "
             "or tabulated yz (7) shapes"
         ),
+        is_beta_check=True,
     )
 ]
 CHECKS += [
     OpenIncreasingCrossSectionConveyanceFrictionCheck(
         error_code=28,
+        is_beta_check=True,
     )
 ]
 CHECKS += [
     CrossSectionConveyanceFrictionAdviceCheck(
         error_code=29,
         level=CheckLevel.INFO,
+        is_beta_check=True,
     )
 ]
 
@@ -2790,6 +2794,8 @@ class Config:
         """Iterate over checks with at least 'level'"""
         level = CheckLevel.get(level)  # normalize
         for check in self.checks:
+            if check.is_beta_check and not self.allow_beta_features:
+                continue
             if check.level >= level:
                 if ignore_checks:
                     if not ignore_checks.match(str(check.error_code).zfill(4)):
