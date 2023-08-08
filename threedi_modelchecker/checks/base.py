@@ -113,7 +113,9 @@ class QueryCheck(BaseCheck):
         error_code=0,
         is_beta_check=False,
     ):
-        super().__init__(column, level=level, error_code=error_code, is_beta_check=is_beta_check)
+        super().__init__(
+            column, level=level, error_code=error_code, is_beta_check=is_beta_check
+        )
         self.invalid = invalid
         self.message = message
         self.filters = filters
