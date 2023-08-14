@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.2.5 (unreleased)
+2.3.0 (2023-08-14)
 ------------------
 
 - Support marking checks as beta, so they will only be executed with allow_beta_features=True
