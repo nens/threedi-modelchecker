@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.3.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Unmark checks 26, 27, 28 and 29 as beta.
 
 
 2.3.0 (2023-08-14)
