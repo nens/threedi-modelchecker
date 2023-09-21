@@ -52,6 +52,7 @@ from .checks.other import (
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
+    FeatureClosedCrossSectionCheck,
     ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
     NodeSurfaceConnectionsCheck,
@@ -409,6 +410,12 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.Channel.id,
     ),
+]
+CHECKS += [
+    FeatureClosedCrossSectionCheck(
+        error_code=57, level=CheckLevel.INFO, column=table.id
+    )
+    for table in [models.Pipe, models.Culvert]
 ]
 
 ## 006x: PUMPSTATIONS
