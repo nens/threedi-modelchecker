@@ -15,6 +15,7 @@ from threedi_modelchecker.checks.other import (
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
+    FeatureClosedCrossSectionCheck,
     ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
     NodeSurfaceConnectionsCheck,
@@ -587,6 +588,27 @@ def test_connection_node_mapped_surfaces(
                 connection_node_id=1, impervious_surface_id=i + 1
             )
     check = NodeSurfaceConnectionsCheck(check_type=surface_type)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "configuration,expected_result",
+    [
+        ("closed", 0),
+        ("open", 1),
+    ],
+)
+def test_feature_closed_cross_section(session, configuration, expected_result):
+    if configuration == "closed":
+        shape = constants.CrossSectionShape.CLOSED_RECTANGLE
+    else:
+        shape = constants.CrossSectionShape.RECTANGLE
+    cross_section_definition = factories.CrossSectionDefinitionFactory(
+        shape=shape, height=1, width=1
+    )
+    factories.CulvertFactory(cross_section_definition=cross_section_definition)
+    check = FeatureClosedCrossSectionCheck(models.Culvert.id)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 

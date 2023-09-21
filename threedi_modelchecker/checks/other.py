@@ -6,6 +6,7 @@ from sqlalchemy.orm import aliased, Query, Session
 from threedi_schema import constants, models
 
 from .base import BaseCheck, CheckLevel
+from .cross_section_definitions import cross_section_configuration
 from .geo_query import distance, length, transform
 
 # Use these to make checks only work on the first global settings entry:
@@ -850,6 +851,56 @@ class NodeSurfaceConnectionsCheck(BaseCheck):
 
     def description(self) -> str:
         return f"{self.column_name} has more than 50 surface areas mapped to it; this might be an error."
+
+
+class FeatureClosedCrossSectionCheck(BaseCheck):
+    """
+    Check if feature has a closed cross-section
+    """
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in session.execute(
+            select(
+                self.table.c.id,
+                self.table.c.cross_section_definition_id,
+                models.CrossSectionDefinition.shape,
+                models.CrossSectionDefinition.width,
+                models.CrossSectionDefinition.height,
+            )
+            .join(
+                models.CrossSectionDefinition,
+                self.table.c.cross_section_definition_id
+                == models.CrossSectionDefinition.id,
+                isouter=True,
+            )
+            .where(
+                (models.CrossSectionDefinition.width != None)
+                & (models.CrossSectionDefinition.width != "")
+            )
+        ):
+            try:
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = (
+                    [float(x) for x in record.height.split(" ")]
+                    if record.height not in [None, ""]
+                    else []
+                )
+            except ValueError:
+                continue  # other check catches this
+
+            _, _, configuration = cross_section_configuration(
+                shape=record.shape.value, heights=heights, widths=widths
+            )
+
+            # Pipes and culverts should generally have a closed cross-section
+            if configuration == "open":
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return f"{self.column_name} has an open cross-section, which is unusual for this feature. Please make sure this is not a mistake."
 
 
 class BetaColumnsCheck(BaseCheck):

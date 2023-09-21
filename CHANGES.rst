@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.4.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add info check 57 to check if pipes and culverts have closed cross-sections.
 
 
 2.4.0 (2023-09-19)
