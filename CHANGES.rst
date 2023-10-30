@@ -6,6 +6,7 @@ Changelog of threedi-modelchecker
 ------------------
 
 - Add info check 57 to check if pipes and culverts have closed cross-sections.
+- Fix check 325; it was giving a warning whenever an interception_file was used.
 
 
 2.4.0 (2023-09-19)
