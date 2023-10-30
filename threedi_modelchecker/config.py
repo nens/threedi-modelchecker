@@ -1306,6 +1306,7 @@ CHECKS += [
         invalid=Query(models.GlobalSetting).filter(
             first_setting_filter,
             ~is_none_or_empty(models.GlobalSetting.interception_file),
+            is_none_or_empty(models.GlobalSetting.interception_global),
         ),
         message="v2_global_settings.interception_global is recommended as fallback value when using an interception_file.",
     ),
