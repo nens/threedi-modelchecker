@@ -15,6 +15,7 @@ from threedi_modelchecker.checks.other import (
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
+    DefinedAreaCheck,
     FeatureClosedCrossSectionCheck,
     ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
@@ -609,6 +610,23 @@ def test_feature_closed_cross_section(session, configuration, expected_result):
     )
     factories.CulvertFactory(cross_section_definition=cross_section_definition)
     check = FeatureClosedCrossSectionCheck(models.Culvert.id)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "defined_area, max_difference, expected_result",
+    [
+        (1.5, 1.2, 0),
+        (2, 1, 1),
+        (1, 0.5, 1),
+    ],
+)
+def test_defined_area(session, defined_area, max_difference, expected_result):
+    # this geometry has an area of approximately 0.3778
+    the_geom = "SRID=4326;MULTIPOLYGON(((4.7 52.5, 4.7 52.50001, 4.70001 52.50001, 4.70001 52.50001)))"
+    factories.SurfaceFactory(area=defined_area, the_geom=the_geom)
+    check = DefinedAreaCheck(models.Surface.area, max_difference=max_difference)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
