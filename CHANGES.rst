@@ -5,7 +5,11 @@ Changelog of threedi-modelchecker
 2.4.1 (unreleased)
 ------------------
 
+- Add warning check 208 to check if a(n) (impervious) surface's geometrical area
+  differs by more than 1 m2 from its defined area
+
 - Add info check 57 to check if pipes and culverts have closed cross-sections.
+
 - Fix check 325; it was giving a warning whenever an interception_file was used.
 
 

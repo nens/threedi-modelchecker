@@ -52,6 +52,7 @@ from .checks.other import (
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
+    DefinedAreaCheck,
     FeatureClosedCrossSectionCheck,
     ImperviousNodeInflowAreaCheck,
     LinestringLocationCheck,
@@ -838,6 +839,10 @@ CHECKS += [
     SpatialIndexCheck(
         error_code=207, column=models.ConnectionNode.the_geom, level=CheckLevel.WARNING
     )
+]
+CHECKS += [
+    DefinedAreaCheck(error_code=208, column=table.area, level=CheckLevel.WARNING)
+    for table in [models.Surface, models.ImperviousSurface]
 ]
 
 
