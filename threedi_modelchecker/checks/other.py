@@ -906,14 +906,24 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
 class DefinedAreaCheck(BaseCheck):
     """Check if the value in the 'area' column matches the surface area of 'the_geom'"""
 
+    def __init__(self, *args, max_difference=1, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.max_difference = max_difference
+
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         all_results = select(
             self.table.c.id,
             self.table.c.area,
+            self.table.c.the_geom,
             func.ST_Area(transform(self.table.c.the_geom)).label("calculated_area"),
         ).subquery()
-        return session.query(all_results).filter(
-            func.abs(all_results.c.area - all_results.c.calculated_area) > 1
+        return (
+            session.query(all_results)
+            .filter(
+                func.abs(all_results.c.area - all_results.c.calculated_area)
+                > self.max_difference
+            )
+            .all()
         )
 
     def description(self):
