@@ -2288,6 +2288,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=802,
+        level=CheckLevel.INFO,
         column=model.refinement_level,
         invalid=Query(model).filter(model.refinement_level == kmax),
         message=f"{model.__table__.name}.refinement_level is equal to v2_global_settings.kmax and will "
