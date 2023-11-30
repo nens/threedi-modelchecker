@@ -12,6 +12,8 @@ Changelog of threedi-modelchecker
 
 - Fix check 325; it was giving a warning whenever an interception_file was used.
 
+- Add info check 802 for grid refinement levels equal to kmax.
+
 
 2.4.0 (2023-09-19)
 ------------------
