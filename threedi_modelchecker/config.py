@@ -2285,6 +2285,16 @@ CHECKS += [
     )
     for model in (models.GridRefinement, models.GridRefinementArea)
 ]
+CHECKS += [
+    QueryCheck(
+        error_code=802,
+        column=model.refinement_level,
+        invalid=Query(model).filter(model.refinement_level == kmax),
+        message=f"{model.__table__.name}.refinement_level is equal to v2_global_settings.kmax and will "\
+            "therefore not have any effect. Lower the refinement_level to make the cells smaller.",
+    )
+    for model in (models.GridRefinement, models.GridRefinementArea)
+]
 
 ## 110x: SIMULATION SETTINGS, timestep
 CHECKS += [
