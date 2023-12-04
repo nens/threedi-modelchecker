@@ -14,6 +14,8 @@ Changelog of threedi-modelchecker
 
 - Add info check 802 for grid refinement levels equal to kmax.
 
+- Add warning check 615 to check if a surface map references an invalid surface.
+
 
 2.4.0 (2023-09-19)
 ------------------
