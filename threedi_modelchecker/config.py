@@ -1992,6 +1992,27 @@ CHECKS += [
     ]
 ]
 
+CHECKS += [
+    QueryCheck(
+        error_code=615,
+        level=CheckLevel.WARNING,
+        column=column.table.c.id,
+        invalid=Query(column.table).filter(
+            column.not_in(Query(referenced_table.id).scalar_subquery())
+        ),
+        message=f"{column.table.name}.{column.name} references a {referenced_table.__tablename__} feature that does not exist.",
+    )
+    for column, referenced_table in (
+        (
+            models.SurfaceMap.surface_id,
+            models.Surface,
+        ),
+        (models.ImperviousSurfaceMap.impervious_surface_id, models.ImperviousSurface),
+        (models.SurfaceMap.connection_node_id, models.ConnectionNode),
+        (models.ImperviousSurfaceMap.connection_node_id, models.ConnectionNode),
+    )
+]
+
 
 CHECKS += [
     RangeCheck(
