@@ -224,6 +224,18 @@ class RasterGridSizeCheck(BaseRasterCheck):
         return "v2_global_settings.grid_space is not a positive even multiple of the raster cell size."
 
 
+class RasterPixelCountCheck(BaseRasterCheck):
+    """Check if the grid does not contain more than 5 billion pixels"""
+
+    def is_valid(self, path: str, interface_cls: type[RasterInterface]):
+        with interface_cls(path) as raster:
+            width, height = raster.shape
+            return True if width * height <= 5e9 else False
+
+    def description(self):
+        return f"The file in {self.column_name} exceeds 5 billion pixels."
+
+
 class RasterRangeCheck(BaseRasterCheck):
     """Check whether a raster has values outside of provided range.
 
