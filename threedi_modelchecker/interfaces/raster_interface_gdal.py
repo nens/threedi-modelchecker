@@ -84,4 +84,4 @@ class GDALRasterInterface(RasterInterface):
 
     @property
     def shape(self):
-        return (self._dataset.RasterXSize, self._dataset.RasterYSize)
+        return (self._dataset.RasterYSize, self._dataset.RasterXSize)

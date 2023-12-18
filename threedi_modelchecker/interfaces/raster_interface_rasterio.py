@@ -76,4 +76,4 @@ class RasterIORasterInterface(RasterInterface):
 
     @property
     def shape(self):
-        return (self._dataset.width, self._dataset.height)
+        return (self._dataset.height, self._dataset.width)
