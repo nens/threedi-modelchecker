@@ -13,6 +13,7 @@ from threedi_modelchecker.checks.raster import (
     RasterHasProjectionCheck,
     RasterIsProjectedCheck,
     RasterIsValidCheck,
+    RasterPixelCountCheck,
     RasterRangeCheck,
     RasterSquareCellsCheck,
     ServerContext,
@@ -350,6 +351,28 @@ def test_raster_grid_size(
     )
     check = RasterGridSizeCheck(column=models.GlobalSetting.dem_file)
     check.grid_space = sqlite_grid_space
+    assert check.is_valid(path, interface_cls) == validity
+
+
+@pytest.mark.parametrize(
+    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
+)
+@pytest.mark.parametrize(
+    "pixel_count_side, validity",
+    [
+        (70710, True),  # total less than 5e9
+        (70711, False),  # total more than 5e9
+    ],
+)
+def test_raster_pixel_count(tmp_path, interface_cls, pixel_count_side, validity):
+    path = create_geotiff(
+        tmp_path / "raster.tiff",
+        width=pixel_count_side,
+        height=pixel_count_side,
+        dx=pixel_count_side,
+        dy=pixel_count_side,
+    )
+    check = RasterPixelCountCheck(column=models.GlobalSetting.dem_file)
     assert check.is_valid(path, interface_cls) == validity
 
 

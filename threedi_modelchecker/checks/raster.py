@@ -225,15 +225,19 @@ class RasterGridSizeCheck(BaseRasterCheck):
 
 
 class RasterPixelCountCheck(BaseRasterCheck):
-    """Check if the grid does not contain more than 5 billion pixels"""
+    """Check if the grid does not contain more than a given amount of pixels, default 5 billion"""
+
+    def __init__(self, *args, max_pixels=5e9, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.max_pixels = max_pixels
 
     def is_valid(self, path: str, interface_cls: type[RasterInterface]):
         with interface_cls(path) as raster:
             width, height = raster.shape
-            return True if width * height <= 5e9 else False
+            return True if width * height <= self.max_pixels else False
 
     def description(self):
-        return f"The file in {self.column_name} exceeds 5 billion pixels."
+        return f"The file in {self.column_name} exceeds {self.max_pixels} pixels."
 
 
 class RasterRangeCheck(BaseRasterCheck):
