@@ -81,3 +81,7 @@ class GDALRasterInterface(RasterInterface):
                 raise self.NoData()
             else:
                 raise e
+
+    @property
+    def shape(self):
+        return (self._dataset.RasterYSize, self._dataset.RasterXSize)

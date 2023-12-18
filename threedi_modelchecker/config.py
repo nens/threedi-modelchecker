@@ -74,6 +74,7 @@ from .checks.raster import (
     RasterHasProjectionCheck,
     RasterIsProjectedCheck,
     RasterIsValidCheck,
+    RasterPixelCountCheck,
     RasterRangeCheck,
     RasterSquareCellsCheck,
 )
@@ -2285,6 +2286,11 @@ CHECKS += [
         column=models.VegetationDrag.vegetation_drag_coefficient_file,
         filters=vegetation_drag_filter,
         min_value=0,
+    ),
+    RasterPixelCountCheck(
+        error_code=1405,
+        column=models.GlobalSetting.dem_file,
+        filters=first_setting_filter,
     ),
 ]
 
