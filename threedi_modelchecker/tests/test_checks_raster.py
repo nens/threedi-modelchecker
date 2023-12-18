@@ -360,8 +360,9 @@ def test_raster_grid_size(
 @pytest.mark.parametrize(
     "pixel_count_side, validity",
     [
-        (70710, True),  # total less than 5e9
-        (70711, False),  # total more than 5e9
+        (4, True),  # total less than threshold
+        (5, True),  # total equal to threshold
+        (6, False),  # total more than threshold
     ],
 )
 def test_raster_pixel_count(tmp_path, interface_cls, pixel_count_side, validity):
@@ -372,7 +373,8 @@ def test_raster_pixel_count(tmp_path, interface_cls, pixel_count_side, validity)
         dx=pixel_count_side,
         dy=pixel_count_side,
     )
-    check = RasterPixelCountCheck(column=models.GlobalSetting.dem_file)
+    # max_pixels is x pixels times y pixels
+    check = RasterPixelCountCheck(column=models.GlobalSetting.dem_file, max_pixels=25)
     assert check.is_valid(path, interface_cls) == validity
 
 
