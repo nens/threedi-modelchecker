@@ -16,6 +16,8 @@ Changelog of threedi-modelchecker
 
 - Add warning check 615 to check if a surface map references an invalid surface.
 
+- Add error check 1405 to make sure that a DEM does not have more than 5e9 pixels.
+
 
 2.4.0 (2023-09-19)
 ------------------
