@@ -73,3 +73,7 @@ class RasterIORasterInterface(RasterInterface):
             else:
                 raise e
         return statistics.min, statistics.max
+
+    @property
+    def shape(self):
+        return (self._dataset.width, self._dataset.height)

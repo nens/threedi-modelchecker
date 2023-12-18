@@ -62,3 +62,7 @@ class RasterInterface(ABC):
     @abstractproperty
     def min_max(self) -> Tuple[Optional[float], Optional[float]]:
         pass
+
+    @abstractproperty
+    def shape(self) -> Tuple[int, int]:
+        pass
