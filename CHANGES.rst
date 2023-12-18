@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.4.1 (unreleased)
+2.5.0 (2023-12-18)
 ------------------
 
 - Add warning check 208 to check if a(n) (impervious) surface's geometrical area
