@@ -231,7 +231,7 @@ class RasterPixelCountCheck(BaseRasterCheck):
         super().__init__(*args, **kwargs)
         self.max_pixels = max_pixels
 
-    def is_valid(self, path: str, interface_cls: type[RasterInterface]):
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         with interface_cls(path) as raster:
             width, height = raster.shape
             return True if width * height <= self.max_pixels else False
