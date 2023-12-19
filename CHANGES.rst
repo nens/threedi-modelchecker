@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.5.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Use Type instead of type so the library works on Python 3.8.
 
 
 2.5.0 (2023-12-18)
