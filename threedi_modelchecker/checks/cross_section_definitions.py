@@ -583,3 +583,27 @@ class CrossSectionConveyanceFrictionAdviceCheck(CrossSectionBaseCheck):
             "of friction is recommended in case there is a significant variation "
             "of the bed level (for instance, in a scenario with overflowing floodplains)."
         )
+
+
+class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
+    """Variable friction and vegetation properties should 1 value for each element; len(var_property) = len(width)-1"""
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column.name != None) & (self.column.name != "")
+        ):
+            try:
+                # only take widths because another check already ensures len(widths) = len(heights)
+                widths = [float(x) for x in record.width.split(" ")]
+                values = [
+                    float(x) for x in getattr(record, self.column.name).split(" ")
+                ]
+            except ValueError:
+                continue  # other check catches this
+            if not (len(widths) - 1 == len(values)):
+                invalids.append(record)
+        return invalids
+
+    def description(self):
+        return f"{self.column.name} should contain exactly 1 value less as the profile"

@@ -28,6 +28,7 @@ from .checks.cross_section_definitions import (
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
+    CrossSectionVariableCorrectLengthCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -161,10 +162,11 @@ CONDITIONS = {
 
 kmax = Query(models.GlobalSetting.kmax).filter(first_setting_filter).scalar_subquery()
 
-
 CHECKS: List[BaseCheck] = []
 
 ## 002x: FRICTION
+# TODO: only when CrossSectionDefinition.friction_values is undefined
+# TODO: add new singular values
 CHECKS += [
     RangeCheck(
         error_code=21,
@@ -305,7 +307,41 @@ CHECKS += [
         level=CheckLevel.INFO,
     )
 ]
-
+CHECKS += [
+    CrossSectionFloatListCheck(
+        error_code=87,
+        column=col,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.TABULATED_YZ,
+        ),
+    )
+    for col in [
+        models.CrossSectionDefinition.friction_values,
+        models.CrossSectionDefinition.vegetation_drag_coefficients,
+        models.CrossSectionDefinition.vegetation_heights,
+        models.CrossSectionDefinition.vegetation_stem_diameters,
+        models.CrossSectionDefinition.vegetation_stem_densities,
+    ]
+]
+CHECKS += [
+    CrossSectionVariableCorrectLengthCheck(
+        column=col,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.TABULATED_YZ,
+        ),
+    )
+    for col in [
+        models.CrossSectionDefinition.friction_values,
+        models.CrossSectionDefinition.vegetation_drag_coefficients,
+        models.CrossSectionDefinition.vegetation_heights,
+        models.CrossSectionDefinition.vegetation_stem_diameters,
+        models.CrossSectionDefinition.vegetation_stem_densities,
+    ]
+]
 
 ## 003x: CALCULATION TYPE
 
@@ -380,7 +416,6 @@ CHECKS += [
     )
     for table in [models.Channel, models.Pipe, models.Culvert]
 ]
-
 
 ## 005x: CROSS SECTIONS
 
@@ -654,7 +689,6 @@ CHECKS += [
     ),
 ]
 
-
 ## 01xx: LEVEL CHECKS
 
 CHECKS += [
@@ -846,7 +880,6 @@ CHECKS += [
     for table in [models.Surface, models.ImperviousSurface]
 ]
 
-
 ## 025x: Connectivity
 
 CHECKS += [
@@ -949,7 +982,6 @@ CHECKS += [
         "channel, culvert, weir, or orifice must have a manhole with a bottom_level.",
     ),
 ]
-
 
 ## 026x: Exchange lines
 CHECKS += [
@@ -2014,7 +2046,6 @@ CHECKS += [
     )
 ]
 
-
 CHECKS += [
     RangeCheck(
         error_code=606,
@@ -2048,7 +2079,6 @@ CHECKS += [
     ),
     Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING),
 ]
-
 
 # 07xx: RASTERS
 RASTER_COLUMNS_FILTERS = [
@@ -2523,7 +2553,6 @@ CHECKS += [
         message="v2_numerical_settings.limiter_slope_friction_2d may not be 0 when using limiter_slope_crossectional_area_2d.",
     ),
 ]
-
 
 ## 115x SIMULATION SETTINGS, aggregation
 

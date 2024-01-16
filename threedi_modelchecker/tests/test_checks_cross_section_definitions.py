@@ -12,6 +12,7 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
+    CrossSectionVariableCorrectLengthCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -683,3 +684,16 @@ def test_check_cross_section_conveyance_friction_info_message(
         expected_result = 0
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
+
+
+@pytest.mark.parametrize("data, result", [["1 2", True], ["1 2 3", False]])
+def test_check_correct_length(session, data, result):
+    definition = factories.CrossSectionDefinitionFactory(
+        width="1 2 3", height="0 2 5", friction_values=data
+    )
+    factories.CrossSectionLocationFactory(definition=definition)
+    check = CrossSectionVariableCorrectLengthCheck(
+        column=models.CrossSectionDefinition.friction_values
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == result
