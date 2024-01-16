@@ -29,6 +29,7 @@ from .checks.cross_section_definitions import (
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionVariableCorrectLengthCheck,
+    CrossSectionVariableRangeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -319,6 +320,61 @@ CHECKS += [
     )
     for col in [
         models.CrossSectionDefinition.friction_values,
+        models.CrossSectionDefinition.vegetation_drag_coefficients,
+        models.CrossSectionDefinition.vegetation_heights,
+        models.CrossSectionDefinition.vegetation_stem_diameters,
+        models.CrossSectionDefinition.vegetation_stem_densities,
+    ]
+]
+CHECKS += [
+    CrossSectionVariableRangeCheck(
+        min_value=0,
+        left_inclusive=True,
+        max_value=1,
+        right_inclusive=False,
+        error_code=22,
+        column=models.CrossSectionDefinition.friction_values,
+        filters=models.CrossSectionLocation.friction_type
+        in [
+            constants.FrictionType.MANNING.value,
+            constants.FrictionType.MANNING_CONVEYANCE.value,
+        ],
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.TABULATED_YZ,
+        ),
+    )
+]
+CHECKS += [
+    CrossSectionVariableRangeCheck(
+        min_value=0,
+        left_inclusive=True,
+        column=models.CrossSectionDefinition.friction_values,
+        filters=models.CrossSectionLocation.friction_type
+        in [
+            constants.FrictionType.CHEZY.value,
+            constants.FrictionType.CHEZY_CONVEYANCE.value,
+        ],
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.TABULATED_YZ,
+        ),
+    )
+]
+CHECKS += [
+    CrossSectionVariableRangeCheck(
+        min_value=0,
+        left_inclusive=True,
+        column=col,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.TABULATED_YZ,
+        ),
+    )
+    for col in [
         models.CrossSectionDefinition.vegetation_drag_coefficients,
         models.CrossSectionDefinition.vegetation_heights,
         models.CrossSectionDefinition.vegetation_stem_diameters,

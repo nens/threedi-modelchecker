@@ -13,6 +13,7 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionVariableCorrectLengthCheck,
+    CrossSectionVariableRangeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -687,13 +688,37 @@ def test_check_cross_section_conveyance_friction_info_message(
 
 
 @pytest.mark.parametrize("data, result", [["1 2", True], ["1 2 3", False]])
-def test_check_correct_length(session, data, result):
+def test_check_var_correct_length(session, data, result):
     definition = factories.CrossSectionDefinitionFactory(
         width="1 2 3", height="0 2 5", friction_values=data
     )
     factories.CrossSectionLocationFactory(definition=definition)
     check = CrossSectionVariableCorrectLengthCheck(
         column=models.CrossSectionDefinition.friction_values
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == result
+
+
+@pytest.mark.parametrize(
+    "min_value, max_value, left_incl, right_incl, result",
+    [
+        [0, 1, True, True, True],
+        [0, 0.5, True, True, False],
+        [0.5, 1, True, True, False],
+        [0, 1, False, True, False],
+        [0, 1, True, False, False],
+    ],
+)
+def test_check_var_range(session, min_value, max_value, left_incl, right_incl, result):
+    definition = factories.CrossSectionDefinitionFactory(friction_values="0 1")
+    factories.CrossSectionLocationFactory(definition=definition)
+    check = CrossSectionVariableRangeCheck(
+        column=models.CrossSectionDefinition.friction_values,
+        min_value=min_value,
+        max_value=max_value,
+        left_inclusive=left_incl,
+        right_inclusive=right_incl,
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == result
