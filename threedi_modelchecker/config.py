@@ -333,6 +333,7 @@ CHECKS += [
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
             constants.CrossSectionShape.TABULATED_YZ,
         ),
+        error_code=99,
     )
     for col in [
         models.CrossSectionDefinition.friction_values,
