@@ -312,11 +312,7 @@ CHECKS += [
     CrossSectionFloatListCheck(
         error_code=87,
         column=col,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     )
     for col in [
         models.CrossSectionDefinition.friction_values,
@@ -368,11 +364,7 @@ CHECKS += [
         min_value=0,
         left_inclusive=True,
         column=col,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     )
     for col in [
         models.CrossSectionDefinition.vegetation_drag_coefficients,
@@ -384,11 +376,7 @@ CHECKS += [
 CHECKS += [
     CrossSectionVariableCorrectLengthCheck(
         column=col,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         error_code=99,
     )
     for col in [
@@ -399,6 +387,26 @@ CHECKS += [
         models.CrossSectionDefinition.vegetation_stem_densities,
     ]
 ]
+CHECKS += [
+    QueryCheck(
+        column=col,
+        invalid=Query(models.CrossSectionDefinition).filter(
+            models.CrossSectionDefinition.shape.is_not(
+                constants.CrossSectionShape.TABULATED_YZ
+            )
+            & col.is_not(None)
+        ),
+        message=(f"{col} can only be used in combination with a tabulated YZ profile"),
+    )
+    for col in [
+        models.CrossSectionDefinition.friction_values,
+        models.CrossSectionDefinition.vegetation_drag_coefficients,
+        models.CrossSectionDefinition.vegetation_heights,
+        models.CrossSectionDefinition.vegetation_stem_diameters,
+        models.CrossSectionDefinition.vegetation_stem_densities,
+    ]
+]
+
 
 ## 003x: CALCULATION TYPE
 
