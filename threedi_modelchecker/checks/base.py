@@ -179,7 +179,7 @@ class UniqueCheck(BaseCheck):
 
     def description(self):
         if len(self.columns) > 1:
-            return f"columns {[c.name for c in self.columns]} in table {self.table.name} should be unique together"
+            return f"columns {sorted([c.name for c in self.columns])} in table {self.table.name} should be unique together"
         else:
             return f"{self.column_name} should to be unique"
 
@@ -336,7 +336,7 @@ class EnumCheck(BaseCheck):
         return invalid_values_q.all()
 
     def description(self):
-        allowed = {x.value for x in self.column.type.enum_class}
+        allowed = sorted([x.value for x in self.column.type.enum_class])
         return f"{self.column_name} is not one of {allowed}"
 
 

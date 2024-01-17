@@ -16,7 +16,7 @@ class CrossSectionBaseCheck(BaseCheck):
     def shape_msg(self):
         if self.shapes is None:
             return "{all}"
-        return {x.value for x in self.shapes}
+        return sorted([x.value for x in self.shapes])
 
     def to_check(self, session):
         qs = super().to_check(session)
