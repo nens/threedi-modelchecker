@@ -2754,6 +2754,24 @@ CHECKS += [
     )
 ]
 
+## 018x cross section parameters (continues 008x)
+CHECKS += [
+    CrossSectionFloatListCheck(
+        error_code=187,
+        column=col,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_YZ,
+        ),
+    )
+    for col in [
+        models.CrossSectionDefinition.friction_values,
+        models.CrossSectionDefinition.vegetation_drag_coefficients,
+        models.CrossSectionDefinition.vegetation_heights,
+        models.CrossSectionDefinition.vegetation_stem_diameters,
+        models.CrossSectionDefinition.vegetation_stem_densities,
+    ]
+]
+
 # These checks are optional, depending on a command line argument
 beta_features_check = []
 beta_features_check += [
