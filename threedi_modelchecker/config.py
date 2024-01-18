@@ -28,6 +28,7 @@ from .checks.cross_section_definitions import (
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
+    CrossSectionVariableCorrectLengthCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -2755,22 +2756,44 @@ CHECKS += [
 ]
 
 ## 018x cross section parameters (continues 008x)
+par_cols = [
+    models.CrossSectionDefinition.friction_values,
+    models.CrossSectionDefinition.vegetation_drag_coefficients,
+    models.CrossSectionDefinition.vegetation_heights,
+    models.CrossSectionDefinition.vegetation_stem_diameters,
+    models.CrossSectionDefinition.vegetation_stem_densities,
+]
+CHECKS += [
+    QueryCheck(
+        error_code=180,
+        column=col,
+        invalid=Query(models.CrossSectionDefinition)
+        .filter(
+            models.CrossSectionDefinition.shape
+            != constants.CrossSectionShape.TABULATED_YZ
+        )
+        .filter(col.is_not(None)),
+        message=(f"{col} can only be used in combination with a TABULATED_YZ"),
+    )
+    for col in par_cols
+]
+CHECKS += [
+    CrossSectionVariableCorrectLengthCheck(
+        error_code=181,
+        column=col,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    )
+    for col in par_cols
+]
 CHECKS += [
     CrossSectionFloatListCheck(
         error_code=187,
         column=col,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     )
-    for col in [
-        models.CrossSectionDefinition.friction_values,
-        models.CrossSectionDefinition.vegetation_drag_coefficients,
-        models.CrossSectionDefinition.vegetation_heights,
-        models.CrossSectionDefinition.vegetation_stem_diameters,
-        models.CrossSectionDefinition.vegetation_stem_densities,
-    ]
+    for col in par_cols
 ]
+
 
 # These checks are optional, depending on a command line argument
 beta_features_check = []
