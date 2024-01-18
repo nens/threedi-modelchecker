@@ -41,6 +41,15 @@ def format_check_results(check: BaseCheck, invalid_row: NamedTuple):
 
 
 # check overview export functions
+def order_checks(checks) -> list:
+    """
+    Alphabetically order checks so that they will consistently be ordered the same.
+
+    This makes Github PR requests a lot clearer.
+    """
+    return sorted(checks, key=lambda k: (k.error_code, k.description()))
+
+
 def generate_rst_table(checks) -> str:
     "Generate an RST table to copy into the Sphinx docs with a list of checks"
     rst_table_string = ""
@@ -53,6 +62,7 @@ def generate_rst_table(checks) -> str:
         + "     - Check message"
     )
     rst_table_string += header
+    checks = order_checks(checks)
     for check in checks:
         # pad error code with leading zeroes so it is always 4 numbers
         formatted_error_code = str(check.error_code).zfill(4)
@@ -76,6 +86,8 @@ def generate_csv_table(checks) -> str:
     )
 
     writer.writeheader()
+
+    checks = order_checks(checks)
 
     for check in checks:
         writer.writerow(

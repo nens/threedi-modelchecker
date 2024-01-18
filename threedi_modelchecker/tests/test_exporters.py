@@ -33,12 +33,12 @@ def test_generate_rst_table(fake_checks):
         + "   * - 0002\n"
         + "     - Warning\n"
         + "     - This sample message has code 2 and level WARNING\n"
-        + "   * - 1234\n"
-        + "     - Error\n"
-        + "     - This sample message has code 1234 and level ERROR\n"
         + "   * - 0012\n"
         + "     - Info\n"
-        + "     - This sample message has code 12 and level INFO"
+        + "     - This sample message has code 12 and level INFO\n"
+        + "   * - 1234\n"
+        + "     - Error\n"
+        + "     - This sample message has code 1234 and level ERROR"
     )
     rst_result = generate_rst_table(fake_checks)
     assert rst_result == correct_rst_result
@@ -48,8 +48,8 @@ def test_generate_csv_table(fake_checks):
     correct_csv_result = (
         '"error_code","level","description"\r\n'
         + '2,"WARNING","This sample message has code 2 and level WARNING"\r\n'
-        + '1234,"ERROR","This sample message has code 1234 and level ERROR"\r\n'
         + '12,"INFO","This sample message has code 12 and level INFO"\r\n'
+        + '1234,"ERROR","This sample message has code 1234 and level ERROR"\r\n'
     )
     csv_result = generate_csv_table(fake_checks)
     assert csv_result == correct_csv_result
