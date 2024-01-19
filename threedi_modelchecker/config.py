@@ -29,6 +29,8 @@ from .checks.cross_section_definitions import (
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionVariableCorrectLengthCheck,
+    CrossSectionVariableFrictionRangeCheck,
+    CrossSectionVariableRangeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -2782,6 +2784,7 @@ CHECKS += [
         error_code=181,
         column=col,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        filters=models.CrossSectionDefinition.height.is_not(None) & col.is_not(None),
     )
     for col in par_cols
 ]
@@ -2792,6 +2795,64 @@ CHECKS += [
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     )
     for col in par_cols
+]
+
+## Friction values - move - give correct number
+## 9999
+CHECKS += [
+    CrossSectionVariableFrictionRangeCheck(
+        min_value=0,
+        max_value=1,
+        right_inclusive=False,
+        error_code=9999,
+        column=models.CrossSectionDefinition.friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        friction_types=[
+            constants.FrictionType.MANNING.value,
+            constants.FrictionType.MANNING_CONVEYANCE.value,
+        ],
+    )
+]
+CHECKS += [
+    CrossSectionVariableFrictionRangeCheck(
+        min_value=0,
+        error_code=9999,
+        column=models.CrossSectionDefinition.friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        friction_types=[
+            constants.FrictionType.CHEZY.value,
+            constants.FrictionType.CHEZY_CONVEYANCE.value,
+        ],
+    )
+]
+
+## 019x vegetation parameter checks
+CHECKS += [
+    RangeCheck(
+        error_code=190,
+        column=col,
+        min_value=0,
+    )
+    for col in [
+        models.CrossSectionLocation.vegetation_drag_coefficient,
+        models.CrossSectionLocation.vegetation_height,
+        models.CrossSectionLocation.vegetation_stem_diameter,
+        models.CrossSectionLocation.vegetation_stem_density,
+    ]
+]
+CHECKS += [
+    CrossSectionVariableRangeCheck(
+        error_code=190,
+        min_value=0,
+        column=col,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    )
+    for col in [
+        models.CrossSectionDefinition.vegetation_drag_coefficients,
+        models.CrossSectionDefinition.vegetation_heights,
+        models.CrossSectionDefinition.vegetation_stem_diameters,
+        models.CrossSectionDefinition.vegetation_stem_densities,
+    ]
 ]
 
 
