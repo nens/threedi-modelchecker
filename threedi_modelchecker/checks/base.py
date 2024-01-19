@@ -336,7 +336,7 @@ class EnumCheck(BaseCheck):
         return invalid_values_q.all()
 
     def description(self):
-        allowed = sorted([x.value for x in self.column.type.enum_class])
+        allowed = sorted(list({x.value for x in self.column.type.enum_class}))
         return f"{self.column_name} is not one of {allowed}"
 
 
