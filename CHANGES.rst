@@ -6,6 +6,7 @@ Changelog of threedi-modelchecker
 ------------------
 
 - Order exported schematisation checks rst table to prevent unnecessarily large git diffs in threedi-docs.
+  To facilitate this, sets of strings in error messages have been converted to lists of strings.
 
 
 2.5.1 (2023-12-19)
