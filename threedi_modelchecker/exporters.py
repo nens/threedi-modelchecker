@@ -44,6 +44,9 @@ def format_check_results(check: BaseCheck, invalid_row: NamedTuple):
 def order_checks(checks) -> list:
     """
     Alphabetically order checks so that they will consistently be ordered the same.
+    This orders first by error code, and then checks with the same error code are
+    sorted alphabetically by description. Checks are not sorted by level, because
+    in general, checks with the same error code have the same level.
 
     This makes Github PR requests a lot clearer.
     """
