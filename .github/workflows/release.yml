@@ -13,6 +13,7 @@ on:
       - "MANIFEST.in"
       - "setup.cfg"
       - "setup.py"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -61,7 +62,7 @@ jobs:
 
   trigger_docs_pr:
     name: Trigger schematisation checks PR workflow on threedi-docs
-    needs: [publish]
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - name: send POST request to Github API
