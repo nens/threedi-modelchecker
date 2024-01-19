@@ -2808,6 +2808,84 @@ CHECKS += [
     )
     for col in veg_par_cols
 ]
+CHECKS += [
+    QueryCheck(
+        error_code=188,
+        level=CheckLevel.WARNING,
+        column=col_csloc,
+        invalid=Query(models.CrossSectionDefinition)
+        .join(
+            models.CrossSectionLocation,
+            models.CrossSectionLocation.definition_id
+            == models.CrossSectionDefinition.id,
+        )
+        .filter(col_csloc.is_not(None) & col_csdef.is_not(None))
+        .filter(
+            models.CrossSectionLocation.friction_type.is_(constants.FrictionType.CHEZY)
+        ),
+        message=(
+            f"Both {col_csloc} and {col_csdef} defined without conveyane; {col_csloc} will be used"
+        ),
+    )
+    for col_csloc, col_csdef in [
+        (
+            models.CrossSectionLocation.vegetation_drag_coefficient,
+            models.CrossSectionDefinition.vegetation_drag_coefficients,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_height,
+            models.CrossSectionDefinition.vegetation_heights,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_stem_diameter,
+            models.CrossSectionDefinition.vegetation_stem_diameters,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_stem_density,
+            models.CrossSectionDefinition.vegetation_stem_densities,
+        ),
+    ]
+]
+CHECKS += [
+    QueryCheck(
+        error_code=188,
+        level=CheckLevel.WARNING,
+        column=col_csloc,
+        invalid=Query(models.CrossSectionDefinition)
+        .join(
+            models.CrossSectionLocation,
+            models.CrossSectionLocation.definition_id
+            == models.CrossSectionDefinition.id,
+        )
+        .filter(col_csloc.is_not(None) & col_csdef.is_not(None))
+        .filter(
+            models.CrossSectionLocation.friction_type.is_(
+                constants.FrictionType.CHEZY_CONVEYANCE
+            )
+        ),
+        message=(
+            f"Both {col_csloc} and {col_csdef} defined with conveyane; {col_csdef} will be used"
+        ),
+    )
+    for col_csloc, col_csdef in [
+        (
+            models.CrossSectionLocation.vegetation_drag_coefficient,
+            models.CrossSectionDefinition.vegetation_drag_coefficients,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_height,
+            models.CrossSectionDefinition.vegetation_heights,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_stem_diameter,
+            models.CrossSectionDefinition.vegetation_stem_diameters,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_stem_density,
+            models.CrossSectionDefinition.vegetation_stem_densities,
+        ),
+    ]
+]
 
 ## Friction values - move - give correct number
 ## 9999
