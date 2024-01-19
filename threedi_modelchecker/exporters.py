@@ -62,8 +62,7 @@ def generate_rst_table(checks) -> str:
         + "     - Check message"
     )
     rst_table_string += header
-    checks = order_checks(checks)
-    for check in checks:
+    for check in order_checks(checks):
         # pad error code with leading zeroes so it is always 4 numbers
         formatted_error_code = str(check.error_code).zfill(4)
         check_row = (
