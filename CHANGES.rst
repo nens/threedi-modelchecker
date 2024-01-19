@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.5.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Order exported schematisation checks rst table to prevent unnecessarily large git diffs in threedi-docs.
 
 
 2.5.1 (2023-12-19)
