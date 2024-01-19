@@ -678,7 +678,6 @@ class CrossSectionVariableFrictionRangeCheck(CrossSectionVariableRangeCheck):
         invalids = []
         def_table = models.CrossSectionDefinition
         loc_table = models.CrossSectionLocation
-        print(self.friction_types)
         records = set(
             self.to_check(session)
             .join(loc_table, loc_table.definition_id == def_table.id)

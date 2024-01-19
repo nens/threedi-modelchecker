@@ -660,9 +660,7 @@ CHECKS += [
     CrossSectionFloatListCheck(
         error_code=87,
         column=col,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     )
     for col in [
         models.CrossSectionDefinition.friction_values,
@@ -2773,8 +2771,7 @@ CHECKS += [
 ]
 
 ## 018x cross section parameters (continues 008x)
-par_cols = [
-    models.CrossSectionDefinition.friction_values,
+veg_par_cols = [
     models.CrossSectionDefinition.vegetation_drag_coefficients,
     models.CrossSectionDefinition.vegetation_heights,
     models.CrossSectionDefinition.vegetation_stem_diameters,
@@ -2792,7 +2789,7 @@ CHECKS += [
         .filter(col.is_not(None)),
         message=(f"{col} can only be used in combination with a TABULATED_YZ"),
     )
-    for col in par_cols
+    for col in veg_par_cols
 ]
 CHECKS += [
     CrossSectionVariableCorrectLengthCheck(
@@ -2801,7 +2798,7 @@ CHECKS += [
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         filters=models.CrossSectionDefinition.height.is_not(None) & col.is_not(None),
     )
-    for col in par_cols
+    for col in veg_par_cols
 ]
 CHECKS += [
     CrossSectionFloatListCheck(
@@ -2809,7 +2806,7 @@ CHECKS += [
         column=col,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     )
-    for col in par_cols
+    for col in veg_par_cols
 ]
 
 ## Friction values - move - give correct number
@@ -2870,6 +2867,59 @@ CHECKS += [
     ]
 ]
 
+CHECKS += [
+    QueryCheck(
+        error_code=191,
+        column=col,
+        invalid=Query(models.CrossSectionLocation)
+        .filter(
+            models.CrossSectionLocation.friction_type.in_(
+                [
+                    constants.FrictionType.MANNING,
+                    constants.FrictionType.MANNING_CONVEYANCE,
+                ]
+            )
+        )
+        .filter(col.is_not(None)),
+        message=(f"{col} cannot be used with Manning type friction"),
+    )
+    for col in [
+        models.CrossSectionLocation.vegetation_drag_coefficient,
+        models.CrossSectionLocation.vegetation_height,
+        models.CrossSectionLocation.vegetation_stem_diameter,
+        models.CrossSectionLocation.vegetation_stem_density,
+    ]
+]
+CHECKS += [
+    QueryCheck(
+        error_code=191,
+        column=col,
+        invalid=(
+            Query(models.CrossSectionDefinition)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(
+                models.CrossSectionLocation.friction_type.in_(
+                    [
+                        constants.FrictionType.MANNING,
+                        constants.FrictionType.MANNING_CONVEYANCE,
+                    ]
+                )
+                & col.is_not(None)
+            )
+        ),
+        message=(f"{col} cannot be used with Manning type friction"),
+    )
+    for col in [
+        models.CrossSectionDefinition.vegetation_drag_coefficients,
+        models.CrossSectionDefinition.vegetation_heights,
+        models.CrossSectionDefinition.vegetation_stem_diameters,
+        models.CrossSectionDefinition.vegetation_stem_densities,
+    ]
+]
 
 # These checks are optional, depending on a command line argument
 beta_features_check = []
