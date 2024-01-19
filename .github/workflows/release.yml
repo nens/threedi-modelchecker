@@ -62,7 +62,7 @@ jobs:
 
   trigger_docs_pr:
     name: Trigger schematisation checks PR workflow on threedi-docs
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: [publish]
     runs-on: ubuntu-latest
     steps:
       - name: send POST request to Github API
