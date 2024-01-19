@@ -179,7 +179,7 @@ class UniqueCheck(BaseCheck):
 
     def description(self):
         if len(self.columns) > 1:
-            return f"columns {sorted([c.name for c in self.columns])} in table {self.table.name} should be unique together"
+            return f"columns {sorted(list({c.name for c in self.columns}))} in table {self.table.name} should be unique together"
         else:
             return f"{self.column_name} should to be unique"
 
