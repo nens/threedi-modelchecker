@@ -168,6 +168,27 @@ kmax = Query(models.GlobalSetting.kmax).filter(first_setting_filter).scalar_subq
 CHECKS: List[BaseCheck] = []
 
 ## 002x: FRICTION
+## Use same error code as other null checks
+CHECKS += [
+    QueryCheck(
+        error_code=3,
+        column=models.CrossSectionLocation.friction_value,
+        invalid=(
+            Query(models.CrossSectionLocation)
+            .join(
+                models.CrossSectionDefinition,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(
+                models.CrossSectionDefinition.shape
+                != constants.CrossSectionShape.TABULATED_YZ
+            )
+            .filter(models.CrossSectionLocation.friction_value == None)
+        ),
+        message=f"{models.CrossSectionLocation.friction_value.name} cannot be null or empty",
+    )
+]
 CHECKS += [
     RangeCheck(
         error_code=21,
@@ -532,7 +553,30 @@ CHECKS += [
 ]
 
 ## 008x: CROSS SECTION DEFINITIONS
-
+CHECKS += [
+    QueryCheck(
+        error_code=80,
+        column=models.CrossSectionLocation.friction_value,
+        invalid=(
+            Query(models.CrossSectionDefinition)
+            .filter(
+                models.CrossSectionDefinition.shape
+                == constants.CrossSectionShape.TABULATED_YZ
+            )
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(models.CrossSectionLocation.friction_value == None)
+            .filter(
+                (models.CrossSectionDefinition.friction_values == None)
+                | (models.CrossSectionDefinition.friction_values == "")
+            )
+        ),
+        message="Either friction value or friction values must be defined for a TABULATED YZ shape",
+    )
+]
 CHECKS += [
     CrossSectionNullCheck(
         error_code=81,
@@ -2770,6 +2814,8 @@ CHECKS += [
     )
 ]
 
+# TODO: reconsider number because 01xx exists!
+# TODO add friction value / friction_values check here
 ## 018x cross section parameters (continues 008x)
 veg_par_cols = [
     models.CrossSectionDefinition.vegetation_drag_coefficients,
@@ -2810,7 +2856,7 @@ CHECKS += [
 ]
 CHECKS += [
     QueryCheck(
-        error_code=188,
+        error_code=182,
         level=CheckLevel.WARNING,
         column=col_csloc,
         invalid=Query(models.CrossSectionDefinition)
@@ -2848,7 +2894,7 @@ CHECKS += [
 ]
 CHECKS += [
     QueryCheck(
-        error_code=188,
+        error_code=182,
         level=CheckLevel.WARNING,
         column=col_csloc,
         invalid=Query(models.CrossSectionDefinition)
