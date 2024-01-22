@@ -2932,6 +2932,66 @@ CHECKS += [
         ),
     ]
 ]
+CHECKS += [
+    QueryCheck(
+        error_code=183,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionDefinition.friction_values,
+        invalid=(
+            Query(models.CrossSectionDefinition)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(
+                (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.CHEZY_CONVEYANCE
+                )
+                | (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.MANNING_CONVEYANCE
+                )
+            )
+            .filter(
+                models.CrossSectionDefinition.friction_values.is_not(None)
+                & models.CrossSectionLocation.friction_value.is_not(None)
+            )
+        ),
+        message="Both {friction_value} and {friction_values} are defined for conveyance friction. "
+        "Only {friction_values} will be used.",
+    ),
+    QueryCheck(
+        error_code=183,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionDefinition.friction_values,
+        invalid=(
+            Query(models.CrossSectionDefinition)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(
+                (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.CHEZY
+                )
+                | (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.MANNING
+                )
+            )
+            .filter(
+                models.CrossSectionDefinition.friction_values.is_not(None)
+                & models.CrossSectionLocation.friction_value.is_not(None)
+            )
+        ),
+        message="Both {friction_value} and {friction_values} are defined for non-conveyance friction. "
+        "Only {friction_value} will be used.",
+    ),
+]
 
 ## Friction values - move - give correct number
 ## 9999
