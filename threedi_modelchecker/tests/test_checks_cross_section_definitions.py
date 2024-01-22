@@ -19,6 +19,7 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
     OpenIncreasingCrossSectionConveyanceFrictionCheck,
+    OpenIncreasingCrossSectionVariableCheck,
 )
 
 from . import factories
@@ -748,7 +749,43 @@ def test_check_friction_values_range(session, friction_types, result):
         friction_types=friction_types,
     )
     invalid_rows = check.get_invalid(session)
-    for row in invalid_rows:
-        print(type(row))
-        print(dir(row))
+    assert (len(invalid_rows) == 0) == result
+
+
+@pytest.mark.parametrize(
+    "width,height,result",
+    [
+        (
+            "0.01 0.11",
+            "0.11 0.21",
+            True,
+        ),  # open tabulated yz, increasing width, pass
+        (
+            "0.11 0.01",
+            "0.11 0.20",
+            False,
+        ),  # open tabulated yz, decreasing width, fail
+        (
+            "0.01 0.11 0.01",
+            "0.11 0.21 0.11",
+            False,
+        ),  # closed tabulated yz,  fail
+    ],
+)
+def test_check_cross_section_increasing_open_with_variables(
+    session, width, height, result
+):
+    definition = factories.CrossSectionDefinitionFactory(
+        shape=constants.CrossSectionShape.TABULATED_YZ,
+        width=width,
+        height=height,
+        friction_values="1",
+    )
+    factories.CrossSectionLocationFactory(definition=definition)
+    check = OpenIncreasingCrossSectionVariableCheck(
+        models.CrossSectionDefinition.friction_values
+    )
+    # this check should pass on cross-section locations which don't use conveyance,
+    # regardless of their other parameters
+    invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == result

@@ -700,3 +700,48 @@ class CrossSectionVariableFrictionRangeCheck(CrossSectionVariableRangeCheck):
             elif not self.max_valid(max(values)):
                 invalids.append(record)
         return invalids
+
+
+class OpenIncreasingCrossSectionVariableCheck(CrossSectionBaseCheck):
+    """
+    Check if cross sections used with friction with conveyance
+    are open and monotonically increasing in width
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            shapes=(constants.CrossSectionShape.TABULATED_YZ,), *args, **kwargs
+        )
+
+    def get_invalid(self, session):
+        invalids = []
+        records = self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        )
+        for record in records:
+            try:
+                # Only used for TABULATED_YZ
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = [float(x) for x in record.height.split(" ")]
+            except ValueError:
+                continue  # other check catches this
+
+            _, _, configuration = cross_section_configuration(
+                shape=record.shape.value, heights=heights, widths=widths
+            )
+
+            # friction with conveyance can only be used for cross-sections
+            # which are open *and* have a monotonically increasing width
+            if configuration == "closed" or (
+                len(widths) > 1
+                and any(
+                    next_width < previous_width
+                    for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+                )
+            ):
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return f"{self.column_name} can only be used in an open channel with monotonically increasing width values"

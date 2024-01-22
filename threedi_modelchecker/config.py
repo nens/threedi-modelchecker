@@ -35,6 +35,7 @@ from .checks.cross_section_definitions import (
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
     OpenIncreasingCrossSectionConveyanceFrictionCheck,
+    OpenIncreasingCrossSectionVariableCheck,
 )
 from .checks.factories import (
     generate_enum_checks,
@@ -2991,6 +2992,13 @@ CHECKS += [
         message="Both {friction_value} and {friction_values} are defined for non-conveyance friction. "
         "Only {friction_value} will be used.",
     ),
+]
+CHECKS += [
+    OpenIncreasingCrossSectionVariableCheck(
+        error_code=184,
+        column=col,
+    )
+    for col in veg_par_cols + [models.CrossSectionDefinition.friction_values]
 ]
 
 ## Friction values - move - give correct number
