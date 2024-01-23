@@ -2817,8 +2817,6 @@ CHECKS += [
     )
 ]
 
-# TODO: reconsider number because 01xx exists!
-# TODO add friction value / friction_values check here
 ## 018x cross section parameters (continues 008x)
 veg_par_cols = [
     models.CrossSectionDefinition.vegetation_drag_coefficients,
@@ -3014,14 +3012,13 @@ CHECKS += [
     for col in veg_par_cols + [models.CrossSectionDefinition.friction_values]
 ]
 
-## Friction values - move - give correct number
-## 9999
+## Friction values range; matches error codes for friction value checks
 CHECKS += [
     CrossSectionVariableFrictionRangeCheck(
         min_value=0,
         max_value=1,
         right_inclusive=False,
-        error_code=9999,
+        error_code=22,
         column=models.CrossSectionDefinition.friction_values,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         friction_types=[
@@ -3033,7 +3030,7 @@ CHECKS += [
 CHECKS += [
     CrossSectionVariableFrictionRangeCheck(
         min_value=0,
-        error_code=9999,
+        error_code=21,
         column=models.CrossSectionDefinition.friction_values,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         friction_types=[
