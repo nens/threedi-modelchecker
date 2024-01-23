@@ -187,7 +187,7 @@ CHECKS += [
             )
             .filter(models.CrossSectionLocation.friction_value == None)
         ),
-        message=f"{models.CrossSectionLocation.friction_value.name} cannot be null or empty",
+        message="CrossSectionLocation.friction_value cannot be null or empty",
     )
 ]
 CHECKS += [
@@ -575,7 +575,9 @@ CHECKS += [
                 | (models.CrossSectionDefinition.friction_values == "")
             )
         ),
-        message="Either friction value or friction values must be defined for a TABULATED YZ shape",
+        message=f"Either {models.CrossSectionLocation.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"or {models.CrossSectionDefinition.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
     )
 ]
 CHECKS += [
@@ -2834,7 +2836,10 @@ CHECKS += [
             != constants.CrossSectionShape.TABULATED_YZ
         )
         .filter(col.is_not(None)),
-        message=(f"{col} can only be used in combination with a TABULATED_YZ"),
+        message=(
+            f"{models.CrossSectionDefinition.name}.{col.name} can only be used in combination with "
+            f"a {constants.CrossSectionShape.TABULATED_YZ.shape} cross section shape"
+        ),
     )
     for col in veg_par_cols
 ]
@@ -2871,7 +2876,8 @@ CHECKS += [
             models.CrossSectionLocation.friction_type.is_(constants.FrictionType.CHEZY)
         ),
         message=(
-            f"Both {col_csloc} and {col_csdef} defined without conveyane; {col_csloc} will be used"
+            f"Both {col_csloc.table.name}.{col_csloc.name} and {col_csdef.table.name}.{col_csdef.name}"
+            f" defined without conveyance; {col_csloc.table.name}.{col_csloc.name} will be used"
         ),
     )
     for col_csloc, col_csdef in [
@@ -2911,7 +2917,8 @@ CHECKS += [
             )
         ),
         message=(
-            f"Both {col_csloc} and {col_csdef} defined with conveyane; {col_csdef} will be used"
+            f"Both {col_csloc.table.name}.{col_csloc.name} and {col_csdef.table.name}.{col_csdef.name}"
+            f" defined without conveyance; {col_csdef.table.name}.{col_csdef.name} will be used"
         ),
     )
     for col_csloc, col_csdef in [
@@ -2960,8 +2967,11 @@ CHECKS += [
                 & models.CrossSectionLocation.friction_value.is_not(None)
             )
         ),
-        message="Both {friction_value} and {friction_values} are defined for conveyance friction. "
-        "Only {friction_values} will be used.",
+        message=f"Both {models.CrossSectionDefinition.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"and {models.CrossSectionLocation.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"are defined for conveyance friction. Only "
+        f"{models.CrossSectionDefinition.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"will be used",
     ),
     QueryCheck(
         error_code=183,
@@ -2989,8 +2999,11 @@ CHECKS += [
                 & models.CrossSectionLocation.friction_value.is_not(None)
             )
         ),
-        message="Both {friction_value} and {friction_values} are defined for non-conveyance friction. "
-        "Only {friction_value} will be used.",
+        message=f"Both {models.CrossSectionDefinition.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"and {models.CrossSectionLocation.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"are defined for non-conveyance friction. Only "
+        f"{models.CrossSectionLocation.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"will be used",
     ),
 ]
 CHECKS += [
@@ -3073,7 +3086,9 @@ CHECKS += [
             )
         )
         .filter(col.is_not(None)),
-        message=(f"{col} cannot be used with Manning type friction"),
+        message=(
+            f"{col.table.name}.{col.name} cannot be used with Manning type friction"
+        ),
     )
     for col in [
         models.CrossSectionLocation.vegetation_drag_coefficient,
@@ -3103,7 +3118,9 @@ CHECKS += [
                 & col.is_not(None)
             )
         ),
-        message=(f"{col} cannot be used with Manning type friction"),
+        message=(
+            f"{col.table.name}.{col.name} cannot be used with MANNING type friction"
+        ),
     )
     for col in [
         models.CrossSectionDefinition.vegetation_drag_coefficients,

@@ -606,7 +606,7 @@ class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
-        return f"{self.column.name} should contain exactly 1 value less as the profile"
+        return f"{self.column_name} should contain exactly 1 value less as the lenght and width"
 
 
 class CrossSectionVariableRangeCheck(CrossSectionBaseCheck):
