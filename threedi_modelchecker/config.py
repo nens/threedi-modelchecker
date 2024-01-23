@@ -575,8 +575,8 @@ CHECKS += [
                 | (models.CrossSectionDefinition.friction_values == "")
             )
         ),
-        message=f"Either {models.CrossSectionLocation.name}.{models.CrossSectionLocation.friction_value.name}"
-        f"or {models.CrossSectionDefinition.name}.{models.CrossSectionDefinition.friction_values.name}"
+        message=f"Either {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"or {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
         f"must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
     )
 ]
@@ -2835,8 +2835,8 @@ CHECKS += [
         )
         .filter(col.is_not(None)),
         message=(
-            f"{models.CrossSectionDefinition.name}.{col.name} can only be used in combination with "
-            f"a {constants.CrossSectionShape.TABULATED_YZ.shape} cross section shape"
+            f"{col.table.name}.{col.name} can only be used in combination with "
+            f"a {constants.CrossSectionShape.TABULATED_YZ.name} cross section shape"
         ),
     )
     for col in veg_par_cols
@@ -2965,10 +2965,10 @@ CHECKS += [
                 & models.CrossSectionLocation.friction_value.is_not(None)
             )
         ),
-        message=f"Both {models.CrossSectionDefinition.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"and {models.CrossSectionLocation.name}.{models.CrossSectionLocation.friction_value.name}"
+        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
         f"are defined for conveyance friction. Only "
-        f"{models.CrossSectionDefinition.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
         f"will be used",
     ),
     QueryCheck(
@@ -2997,10 +2997,10 @@ CHECKS += [
                 & models.CrossSectionLocation.friction_value.is_not(None)
             )
         ),
-        message=f"Both {models.CrossSectionDefinition.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"and {models.CrossSectionLocation.name}.{models.CrossSectionLocation.friction_value.name}"
+        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
         f"are defined for non-conveyance friction. Only "
-        f"{models.CrossSectionLocation.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"{models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
         f"will be used",
     ),
 ]
