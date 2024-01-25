@@ -2839,7 +2839,7 @@ CHECKS += [
             f"a {constants.CrossSectionShape.TABULATED_YZ.name} cross section shape"
         ),
     )
-    for col in veg_par_cols + models.CrossSectionDefinition.friction_values
+    for col in veg_par_cols + [models.CrossSectionDefinition.friction_values]
 ]
 CHECKS += [
     CrossSectionVariableCorrectLengthCheck(
