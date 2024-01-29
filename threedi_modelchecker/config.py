@@ -172,7 +172,7 @@ CHECKS: List[BaseCheck] = []
 ## Use same error code as other null checks
 CHECKS += [
     QueryCheck(
-        error_code=3,
+        error_code=20,
         column=models.CrossSectionLocation.friction_value,
         invalid=(
             Query(models.CrossSectionLocation)
@@ -2853,15 +2853,6 @@ CHECKS += [
     for col in vegetation_parameter_columns
 ]
 CHECKS += [
-    CrossSectionFloatListCheck(
-        error_code=87,
-        column=col,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    )
-    for col in vegetation_parameter_columns
-]
-
-CHECKS += [
     QueryCheck(
         error_code=182,
         level=CheckLevel.WARNING,
@@ -2905,7 +2896,7 @@ CHECKS += [
 ]
 CHECKS += [
     QueryCheck(
-        error_code=182,
+        error_code=183,
         level=CheckLevel.WARNING,
         column=col_cross_section_location,
         invalid=Query(models.CrossSectionDefinition)
@@ -2949,39 +2940,7 @@ CHECKS += [
 ]
 CHECKS += [
     QueryCheck(
-        error_code=183,
-        level=CheckLevel.WARNING,
-        column=models.CrossSectionDefinition.friction_values,
-        invalid=(
-            Query(models.CrossSectionDefinition)
-            .join(
-                models.CrossSectionLocation,
-                models.CrossSectionLocation.definition_id
-                == models.CrossSectionDefinition.id,
-            )
-            .filter(
-                (
-                    models.CrossSectionLocation.friction_type
-                    == constants.FrictionType.CHEZY_CONVEYANCE
-                )
-                | (
-                    models.CrossSectionLocation.friction_type
-                    == constants.FrictionType.MANNING_CONVEYANCE
-                )
-            )
-            .filter(
-                models.CrossSectionDefinition.friction_values.is_not(None)
-                & models.CrossSectionLocation.friction_value.is_not(None)
-            )
-        ),
-        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
-        f"are defined for conveyance friction. Only "
-        f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"will be used",
-    ),
-    QueryCheck(
-        error_code=183,
+        error_code=184,
         level=CheckLevel.WARNING,
         column=models.CrossSectionDefinition.friction_values,
         invalid=(
@@ -3012,23 +2971,55 @@ CHECKS += [
         f"{models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
         f"will be used",
     ),
+    QueryCheck(
+        error_code=185,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionDefinition.friction_values,
+        invalid=(
+            Query(models.CrossSectionDefinition)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(
+                (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.CHEZY_CONVEYANCE
+                )
+                | (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.MANNING_CONVEYANCE
+                )
+            )
+            .filter(
+                models.CrossSectionDefinition.friction_values.is_not(None)
+                & models.CrossSectionLocation.friction_value.is_not(None)
+            )
+        ),
+        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"are defined for conveyance friction. Only "
+        f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"will be used",
+    ),
 ]
 CHECKS += [
     OpenIncreasingCrossSectionVariableCheck(
-        error_code=184,
+        error_code=186,
         column=col,
     )
     for col in vegetation_parameter_columns
     + [models.CrossSectionDefinition.friction_values]
 ]
 
-## Friction values range; matches error codes for friction value checks
+## Friction values range
 CHECKS += [
     CrossSectionVariableFrictionRangeCheck(
         min_value=0,
         max_value=1,
         right_inclusive=False,
-        error_code=22,
+        error_code=188,
         column=models.CrossSectionDefinition.friction_values,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         friction_types=[
@@ -3040,7 +3031,7 @@ CHECKS += [
 CHECKS += [
     CrossSectionVariableFrictionRangeCheck(
         min_value=0,
-        error_code=21,
+        error_code=189,
         column=models.CrossSectionDefinition.friction_values,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         friction_types=[
@@ -3066,7 +3057,7 @@ CHECKS += [
 ]
 CHECKS += [
     CrossSectionVariableRangeCheck(
-        error_code=190,
+        error_code=191,
         min_value=0,
         column=col,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
@@ -3081,7 +3072,7 @@ CHECKS += [
 
 CHECKS += [
     QueryCheck(
-        error_code=191,
+        error_code=192,
         column=col,
         invalid=Query(models.CrossSectionLocation)
         .filter(
@@ -3106,7 +3097,7 @@ CHECKS += [
 ]
 CHECKS += [
     QueryCheck(
-        error_code=191,
+        error_code=193,
         column=col,
         invalid=(
             Query(models.CrossSectionDefinition)
