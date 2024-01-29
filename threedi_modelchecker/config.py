@@ -2818,7 +2818,7 @@ CHECKS += [
 ]
 
 ## 018x cross section parameters (continues 008x)
-veg_par_cols = [
+vegetation_parameter_columns = [
     models.CrossSectionDefinition.vegetation_drag_coefficients,
     models.CrossSectionDefinition.vegetation_heights,
     models.CrossSectionDefinition.vegetation_stem_diameters,
@@ -2839,7 +2839,8 @@ CHECKS += [
             f"a {constants.CrossSectionShape.TABULATED_YZ.name} cross section shape"
         ),
     )
-    for col in veg_par_cols + [models.CrossSectionDefinition.friction_values]
+    for col in vegetation_parameter_columns
+    + [models.CrossSectionDefinition.friction_values]
 ]
 CHECKS += [
     CrossSectionVariableCorrectLengthCheck(
@@ -2848,7 +2849,7 @@ CHECKS += [
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         filters=models.CrossSectionDefinition.height.is_not(None) & col.is_not(None),
     )
-    for col in veg_par_cols
+    for col in vegetation_parameter_columns
 ]
 CHECKS += [
     CrossSectionFloatListCheck(
@@ -2856,7 +2857,7 @@ CHECKS += [
         column=col,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     )
-    for col in veg_par_cols
+    for col in vegetation_parameter_columns
 ]
 CHECKS += [
     QueryCheck(
@@ -2901,25 +2902,28 @@ CHECKS += [
     QueryCheck(
         error_code=182,
         level=CheckLevel.WARNING,
-        column=col_csloc,
+        column=col_cross_section_location,
         invalid=Query(models.CrossSectionDefinition)
         .join(
             models.CrossSectionLocation,
             models.CrossSectionLocation.definition_id
             == models.CrossSectionDefinition.id,
         )
-        .filter(col_csloc.is_not(None) & col_csdef.is_not(None))
+        .filter(
+            col_cross_section_location.is_not(None)
+            & col_cross_section_definition.is_not(None)
+        )
         .filter(
             models.CrossSectionLocation.friction_type.is_(
                 constants.FrictionType.CHEZY_CONVEYANCE
             )
         ),
         message=(
-            f"Both {col_csloc.table.name}.{col_csloc.name} and {col_csdef.table.name}.{col_csdef.name}"
-            f" defined without conveyance; {col_csdef.table.name}.{col_csdef.name} will be used"
+            f"Both {col_cross_section_location.table.name}.{col_cross_section_location.name} and {col_cross_section_definition.table.name}.{col_cross_section_definition.name}"
+            f" defined without conveyance; {col_cross_section_definition.table.name}.{col_cross_section_definition.name} will be used"
         ),
     )
-    for col_csloc, col_csdef in [
+    for col_cross_section_location, col_cross_section_definition in [
         (
             models.CrossSectionLocation.vegetation_drag_coefficient,
             models.CrossSectionDefinition.vegetation_drag_coefficients,
@@ -3009,7 +3013,8 @@ CHECKS += [
         error_code=184,
         column=col,
     )
-    for col in veg_par_cols + [models.CrossSectionDefinition.friction_values]
+    for col in vegetation_parameter_columns
+    + [models.CrossSectionDefinition.friction_values]
 ]
 
 ## Friction values range; matches error codes for friction value checks
