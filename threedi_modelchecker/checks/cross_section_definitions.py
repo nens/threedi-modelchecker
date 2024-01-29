@@ -586,7 +586,7 @@ class CrossSectionConveyanceFrictionAdviceCheck(CrossSectionBaseCheck):
 
 
 class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
-    """Variable friction and vegetation properties should 1 value for each element; len(var_property) = len(width)-1"""
+    """Variable friction and vegetation properties should contain 1 value for each element; len(var_property) = len(width)-1"""
 
     def get_invalid(self, session):
         invalids = []
