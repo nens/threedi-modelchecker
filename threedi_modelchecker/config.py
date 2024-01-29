@@ -2863,23 +2863,26 @@ CHECKS += [
     QueryCheck(
         error_code=182,
         level=CheckLevel.WARNING,
-        column=col_csloc,
+        column=col_cross_section_location,
         invalid=Query(models.CrossSectionDefinition)
         .join(
             models.CrossSectionLocation,
             models.CrossSectionLocation.definition_id
             == models.CrossSectionDefinition.id,
         )
-        .filter(col_csloc.is_not(None) & col_csdef.is_not(None))
+        .filter(
+            col_cross_section_location.is_not(None)
+            & col_cross_section_definition.is_not(None)
+        )
         .filter(
             models.CrossSectionLocation.friction_type.is_(constants.FrictionType.CHEZY)
         ),
         message=(
-            f"Both {col_csloc.table.name}.{col_csloc.name} and {col_csdef.table.name}.{col_csdef.name}"
-            f" defined without conveyance; {col_csloc.table.name}.{col_csloc.name} will be used"
+            f"Both {col_cross_section_location.table.name}.{col_cross_section_location.name} and {col_cross_section_definition.table.name}.{col_cross_section_definition.name}"
+            f" defined without conveyance; {col_cross_section_location.table.name}.{col_cross_section_location.name} will be used"
         ),
     )
-    for col_csloc, col_csdef in [
+    for col_cross_section_location, col_cross_section_definition in [
         (
             models.CrossSectionLocation.vegetation_drag_coefficient,
             models.CrossSectionDefinition.vegetation_drag_coefficients,
