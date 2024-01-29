@@ -706,16 +706,9 @@ CHECKS += [
 CHECKS += [
     CrossSectionFloatListCheck(
         error_code=87,
-        column=col,
+        column=models.CrossSectionDefinition.friction_values,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     )
-    for col in [
-        models.CrossSectionDefinition.friction_values,
-        models.CrossSectionDefinition.vegetation_drag_coefficients,
-        models.CrossSectionDefinition.vegetation_heights,
-        models.CrossSectionDefinition.vegetation_stem_diameters,
-        models.CrossSectionDefinition.vegetation_stem_densities,
-    ]
 ]
 
 ## 01xx: LEVEL CHECKS
@@ -2859,6 +2852,15 @@ CHECKS += [
     )
     for col in vegetation_parameter_columns
 ]
+CHECKS += [
+    CrossSectionFloatListCheck(
+        error_code=87,
+        column=col,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    )
+    for col in vegetation_parameter_columns
+]
+
 CHECKS += [
     QueryCheck(
         error_code=182,
