@@ -22,6 +22,9 @@ Changelog of threedi-modelchecker
 - Add error check (0191) for non-negative variable vegetation parameters
 - Add error check (0192) for disallowing fixed vegetation with Manning friction
 - Add error check (0193) for disallowing variable vegetation with Manning friction
+- Add error check (0194) for requiring that either all or none fixed vegetation parameters are defined
+- Add error check (0195) for requiring that either all or none variable vegetation parameters are defined
+
 
 
 2.5.2 (2024-01-19)

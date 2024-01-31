@@ -47,6 +47,8 @@ from .checks.factories import (
     generate_unique_checks,
 )
 from .checks.other import (
+    AllPresentFixedVegetationParameters,
+    AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
     BoundaryCondition1DObjectNumberCheck,
@@ -3042,18 +3044,26 @@ CHECKS += [
 ]
 
 ## 019x vegetation parameter checks
+vegetation_parameter_columns_singular = [
+    models.CrossSectionLocation.vegetation_drag_coefficient,
+    models.CrossSectionLocation.vegetation_height,
+    models.CrossSectionLocation.vegetation_stem_diameter,
+    models.CrossSectionLocation.vegetation_stem_density,
+]
+vegetation_parameter_columns_plural = [
+    models.CrossSectionDefinition.vegetation_drag_coefficients,
+    models.CrossSectionDefinition.vegetation_heights,
+    models.CrossSectionDefinition.vegetation_stem_diameters,
+    models.CrossSectionDefinition.vegetation_stem_densities,
+]
+
 CHECKS += [
     RangeCheck(
         error_code=190,
         column=col,
         min_value=0,
     )
-    for col in [
-        models.CrossSectionLocation.vegetation_drag_coefficient,
-        models.CrossSectionLocation.vegetation_height,
-        models.CrossSectionLocation.vegetation_stem_diameter,
-        models.CrossSectionLocation.vegetation_stem_density,
-    ]
+    for col in vegetation_parameter_columns_singular
 ]
 CHECKS += [
     CrossSectionVariableRangeCheck(
@@ -3062,12 +3072,7 @@ CHECKS += [
         column=col,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     )
-    for col in [
-        models.CrossSectionDefinition.vegetation_drag_coefficients,
-        models.CrossSectionDefinition.vegetation_heights,
-        models.CrossSectionDefinition.vegetation_stem_diameters,
-        models.CrossSectionDefinition.vegetation_stem_densities,
-    ]
+    for col in vegetation_parameter_columns_plural
 ]
 
 CHECKS += [
@@ -3088,12 +3093,7 @@ CHECKS += [
             f"{col.table.name}.{col.name} cannot be used with Manning type friction"
         ),
     )
-    for col in [
-        models.CrossSectionLocation.vegetation_drag_coefficient,
-        models.CrossSectionLocation.vegetation_height,
-        models.CrossSectionLocation.vegetation_stem_diameter,
-        models.CrossSectionLocation.vegetation_stem_density,
-    ]
+    for col in vegetation_parameter_columns_singular
 ]
 CHECKS += [
     QueryCheck(
@@ -3120,12 +3120,17 @@ CHECKS += [
             f"{col.table.name}.{col.name} cannot be used with MANNING type friction"
         ),
     )
-    for col in [
-        models.CrossSectionDefinition.vegetation_drag_coefficients,
-        models.CrossSectionDefinition.vegetation_heights,
-        models.CrossSectionDefinition.vegetation_stem_diameters,
-        models.CrossSectionDefinition.vegetation_stem_densities,
-    ]
+    for col in vegetation_parameter_columns_plural
+]
+CHECKS += [
+    AllPresentFixedVegetationParameters(
+        error_code=194,
+        column=vegetation_parameter_columns_singular[0],
+    ),
+    AllPresentVariableVegetationParameters(
+        error_code=195,
+        column=vegetation_parameter_columns_plural[0],
+    ),
 ]
 
 # These checks are optional, depending on a command line argument

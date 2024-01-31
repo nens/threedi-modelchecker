@@ -1,9 +1,10 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
-from sqlalchemy import case, cast, distinct, func, REAL, select, text
+from sqlalchemy import and_, case, cast, distinct, func, not_, REAL, select, text
 from sqlalchemy.orm import aliased, Query, Session
-from threedi_schema import constants, models
+from threedi_schema.domain import constants, models
 
 from .base import BaseCheck, CheckLevel
 from .cross_section_definitions import cross_section_configuration
@@ -959,3 +960,103 @@ class BetaValuesCheck(BaseCheck):
 
     def description(self) -> str:
         return f"The value you have used for {self.column_name} is still in beta; please do not use it yet."
+
+
+class AllPresent(BaseCheck, ABC):
+    """Base class to check if all or none values are present for a list of columns"""
+
+    def __init__(self, columns, *args, **kwargs):
+        self.columns = columns
+        super().__init__(*args, **kwargs)
+
+    @abstractmethod
+    def _get_records(self, session):
+        pass
+
+    def get_invalid(self, session):
+        # Create filters that find all rows where all or none of the values are present
+        filter_condition_all = and_(
+            *[(col != None) & (col != "") for col in self.columns]
+        )
+        filter_condition_none = and_(
+            *[(col == None) | (col == "") for col in self.columns]
+        )
+        # Return all rows where neither all or none values are present
+        return (
+            self._get_records(session)
+            .filter(not_(filter_condition_all))
+            .filter(not_(filter_condition_none))
+            .all()
+        )
+
+    def description(self):
+        column_string = ",".join(
+            [f"{column.table.name}.{column.name}" for column in self.columns]
+        )
+        return f"All of these columns must be defined: {column_string}"
+
+
+class AllPresentFixedVegetationParameters(AllPresent):
+    """Check if all or none vegetation values are defined in the CrossSectionLocation table"""
+
+    def __init__(self, *args, **kwargs):
+        columns = [
+            models.CrossSectionLocation.vegetation_drag_coefficient,
+            models.CrossSectionLocation.vegetation_height,
+            models.CrossSectionLocation.vegetation_stem_diameter,
+            models.CrossSectionLocation.vegetation_stem_density,
+        ]
+        super().__init__(columns, *args, **kwargs)
+
+    def _get_records(self, session):
+        # Get records with valid settings for vegetation in CrossSectionLocation
+        return (
+            session.query(models.CrossSectionLocation)
+            .join(
+                models.CrossSectionDefinition,
+                models.CrossSectionDefinition.id
+                == models.CrossSectionLocation.definition_id,
+            )
+            .filter(
+                models.CrossSectionLocation.friction_type.is_(
+                    constants.FrictionType.CHEZY
+                )
+            )
+            .filter(
+                models.CrossSectionDefinition.shape.is_(
+                    constants.CrossSectionShape.TABULATED_YZ
+                )
+            )
+        )
+
+
+class AllPresentVariableVegetationParameters(AllPresent):
+    def __init__(self, *args, **kwargs):
+        columns = [
+            models.CrossSectionDefinition.vegetation_drag_coefficients,
+            models.CrossSectionDefinition.vegetation_heights,
+            models.CrossSectionDefinition.vegetation_stem_diameters,
+            models.CrossSectionDefinition.vegetation_stem_densities,
+        ]
+        super().__init__(columns, *args, **kwargs)
+
+    def _get_records(self, session):
+        # Get records with valid settings for vegetation in CrossSectionDefinition
+        return (
+            session.query(models.CrossSectionDefinition)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionDefinition.id
+                == models.CrossSectionLocation.definition_id,
+            )
+            .filter(
+                models.CrossSectionLocation.friction_type.is_(
+                    constants.FrictionType.CHEZY_CONVEYANCE
+                )
+            )
+            .filter(
+                models.CrossSectionDefinition.shape.is_(
+                    constants.CrossSectionShape.TABULATED_YZ
+                )
+            )
+        )
