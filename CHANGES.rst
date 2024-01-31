@@ -5,7 +5,26 @@ Changelog of threedi-modelchecker
 2.5.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add error check (0020) for CrossSectionLocation.friction_value because that check is no longer included in the factory checks.
+- Add error check (0080) for absent CrossSectionLocation.friction_value and CrossSectionDefinition.friction_values for TABULATED_YZ shape
+- Add error check (0087) for correct formatting of space separated list of values for variable friction
+- Add error check (0180) for variable friction and variable vegetation parameters only be used together with TABULATED_YZ shape
+- Add error check (0181) for correct number of values for variable friction and variable vegetation parameters
+- Add warning check (0182) for fixed and variable vegetation parameters in combination with non-conveyance friction
+- Add warning check (0183) for fixed and variable vegetation parameters in combination with conveyance friction
+- Add warning check (0184) for fixed and variable friction in combination with non-conveyance friction
+- Add warning check (0185) for fixed and variable friction in combination with conveyance friction
+- Add error check (0186) for using variable friction or vegetation with open, monotonically increasing z profile
+- Add error check (0187) for correct formatting of space separated list of variable vegetation parameters
+- Add error check (0188) for all friction values non-negative and smaller than 1 for Manning friction
+- Add error check (0189) for all friction values non-negative for Chezy friction
+- Add error check (0190) for non-negative fixed vegetation parameters
+- Add error check (0191) for non-negative variable vegetation parameters
+- Add error check (0192) for disallowing fixed vegetation with Manning friction
+- Add error check (0193) for disallowing variable vegetation with Manning friction
+- Add error check (0194) for requiring that either all or none fixed vegetation parameters are defined
+- Add error check (0195) for requiring that either all or none variable vegetation parameters are defined
+
 
 
 2.5.2 (2024-01-19)

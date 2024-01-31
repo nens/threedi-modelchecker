@@ -28,10 +28,14 @@ from .checks.cross_section_definitions import (
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
+    CrossSectionVariableCorrectLengthCheck,
+    CrossSectionVariableFrictionRangeCheck,
+    CrossSectionVariableRangeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
     OpenIncreasingCrossSectionConveyanceFrictionCheck,
+    OpenIncreasingCrossSectionVariableCheck,
 )
 from .checks.factories import (
     generate_enum_checks,
@@ -43,6 +47,8 @@ from .checks.factories import (
     generate_unique_checks,
 )
 from .checks.other import (
+    AllPresentFixedVegetationParameters,
+    AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
     BoundaryCondition1DObjectNumberCheck,
@@ -165,6 +171,27 @@ kmax = Query(models.GlobalSetting.kmax).filter(first_setting_filter).scalar_subq
 CHECKS: List[BaseCheck] = []
 
 ## 002x: FRICTION
+## Use same error code as other null checks
+CHECKS += [
+    QueryCheck(
+        error_code=20,
+        column=models.CrossSectionLocation.friction_value,
+        invalid=(
+            Query(models.CrossSectionLocation)
+            .join(
+                models.CrossSectionDefinition,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(
+                models.CrossSectionDefinition.shape
+                != constants.CrossSectionShape.TABULATED_YZ
+            )
+            .filter(models.CrossSectionLocation.friction_value == None)
+        ),
+        message="CrossSectionLocation.friction_value cannot be null or empty",
+    )
+]
 CHECKS += [
     RangeCheck(
         error_code=21,
@@ -529,7 +556,32 @@ CHECKS += [
 ]
 
 ## 008x: CROSS SECTION DEFINITIONS
-
+CHECKS += [
+    QueryCheck(
+        error_code=80,
+        column=models.CrossSectionLocation.friction_value,
+        invalid=(
+            Query(models.CrossSectionDefinition)
+            .filter(
+                models.CrossSectionDefinition.shape
+                == constants.CrossSectionShape.TABULATED_YZ
+            )
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(models.CrossSectionLocation.friction_value == None)
+            .filter(
+                (models.CrossSectionDefinition.friction_values == None)
+                | (models.CrossSectionDefinition.friction_values == "")
+            )
+        ),
+        message=f"Either {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"or {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
+    )
+]
 CHECKS += [
     CrossSectionNullCheck(
         error_code=81,
@@ -653,7 +705,13 @@ CHECKS += [
         level=CheckLevel.WARNING,
     ),
 ]
-
+CHECKS += [
+    CrossSectionFloatListCheck(
+        error_code=87,
+        column=models.CrossSectionDefinition.friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    )
+]
 
 ## 01xx: LEVEL CHECKS
 
@@ -2752,6 +2810,327 @@ CHECKS += [
         ),
         message="v2_control.control_id references an id in v2_control_memory or v2_control_table, but the table it references does not contain an entry with that id.",
     )
+]
+
+## 018x cross section parameters (continues 008x)
+vegetation_parameter_columns = [
+    models.CrossSectionDefinition.vegetation_drag_coefficients,
+    models.CrossSectionDefinition.vegetation_heights,
+    models.CrossSectionDefinition.vegetation_stem_diameters,
+    models.CrossSectionDefinition.vegetation_stem_densities,
+]
+CHECKS += [
+    QueryCheck(
+        error_code=180,
+        column=col,
+        invalid=Query(models.CrossSectionDefinition)
+        .filter(
+            models.CrossSectionDefinition.shape
+            != constants.CrossSectionShape.TABULATED_YZ
+        )
+        .filter(col.is_not(None)),
+        message=(
+            f"{col.table.name}.{col.name} can only be used in combination with "
+            f"a {constants.CrossSectionShape.TABULATED_YZ.name} cross section shape"
+        ),
+    )
+    for col in vegetation_parameter_columns
+    + [models.CrossSectionDefinition.friction_values]
+]
+CHECKS += [
+    CrossSectionVariableCorrectLengthCheck(
+        error_code=181,
+        column=col,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        filters=models.CrossSectionDefinition.height.is_not(None) & col.is_not(None),
+    )
+    for col in vegetation_parameter_columns
+]
+CHECKS += [
+    CrossSectionFloatListCheck(
+        error_code=187,
+        column=col,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    )
+    for col in vegetation_parameter_columns
+]
+CHECKS += [
+    QueryCheck(
+        error_code=182,
+        level=CheckLevel.WARNING,
+        column=col_cross_section_location,
+        invalid=Query(models.CrossSectionDefinition)
+        .join(
+            models.CrossSectionLocation,
+            models.CrossSectionLocation.definition_id
+            == models.CrossSectionDefinition.id,
+        )
+        .filter(
+            col_cross_section_location.is_not(None)
+            & col_cross_section_definition.is_not(None)
+        )
+        .filter(
+            models.CrossSectionLocation.friction_type.is_(constants.FrictionType.CHEZY)
+        ),
+        message=(
+            f"Both {col_cross_section_location.table.name}.{col_cross_section_location.name} and {col_cross_section_definition.table.name}.{col_cross_section_definition.name}"
+            f" defined without conveyance; {col_cross_section_location.table.name}.{col_cross_section_location.name} will be used"
+        ),
+    )
+    for col_cross_section_location, col_cross_section_definition in [
+        (
+            models.CrossSectionLocation.vegetation_drag_coefficient,
+            models.CrossSectionDefinition.vegetation_drag_coefficients,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_height,
+            models.CrossSectionDefinition.vegetation_heights,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_stem_diameter,
+            models.CrossSectionDefinition.vegetation_stem_diameters,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_stem_density,
+            models.CrossSectionDefinition.vegetation_stem_densities,
+        ),
+    ]
+]
+CHECKS += [
+    QueryCheck(
+        error_code=183,
+        level=CheckLevel.WARNING,
+        column=col_cross_section_location,
+        invalid=Query(models.CrossSectionDefinition)
+        .join(
+            models.CrossSectionLocation,
+            models.CrossSectionLocation.definition_id
+            == models.CrossSectionDefinition.id,
+        )
+        .filter(
+            col_cross_section_location.is_not(None)
+            & col_cross_section_definition.is_not(None)
+        )
+        .filter(
+            models.CrossSectionLocation.friction_type.is_(
+                constants.FrictionType.CHEZY_CONVEYANCE
+            )
+        ),
+        message=(
+            f"Both {col_cross_section_location.table.name}.{col_cross_section_location.name} and {col_cross_section_definition.table.name}.{col_cross_section_definition.name}"
+            f" defined without conveyance; {col_cross_section_definition.table.name}.{col_cross_section_definition.name} will be used"
+        ),
+    )
+    for col_cross_section_location, col_cross_section_definition in [
+        (
+            models.CrossSectionLocation.vegetation_drag_coefficient,
+            models.CrossSectionDefinition.vegetation_drag_coefficients,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_height,
+            models.CrossSectionDefinition.vegetation_heights,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_stem_diameter,
+            models.CrossSectionDefinition.vegetation_stem_diameters,
+        ),
+        (
+            models.CrossSectionLocation.vegetation_stem_density,
+            models.CrossSectionDefinition.vegetation_stem_densities,
+        ),
+    ]
+]
+CHECKS += [
+    QueryCheck(
+        error_code=184,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionDefinition.friction_values,
+        invalid=(
+            Query(models.CrossSectionDefinition)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(
+                (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.CHEZY
+                )
+                | (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.MANNING
+                )
+            )
+            .filter(
+                models.CrossSectionDefinition.friction_values.is_not(None)
+                & models.CrossSectionLocation.friction_value.is_not(None)
+            )
+        ),
+        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"are defined for non-conveyance friction. Only "
+        f"{models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"will be used",
+    ),
+    QueryCheck(
+        error_code=185,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionDefinition.friction_values,
+        invalid=(
+            Query(models.CrossSectionDefinition)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(
+                (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.CHEZY_CONVEYANCE
+                )
+                | (
+                    models.CrossSectionLocation.friction_type
+                    == constants.FrictionType.MANNING_CONVEYANCE
+                )
+            )
+            .filter(
+                models.CrossSectionDefinition.friction_values.is_not(None)
+                & models.CrossSectionLocation.friction_value.is_not(None)
+            )
+        ),
+        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"are defined for conveyance friction. Only "
+        f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+        f"will be used",
+    ),
+]
+CHECKS += [
+    OpenIncreasingCrossSectionVariableCheck(
+        error_code=186,
+        column=col,
+    )
+    for col in vegetation_parameter_columns
+    + [models.CrossSectionDefinition.friction_values]
+]
+
+## Friction values range
+CHECKS += [
+    CrossSectionVariableFrictionRangeCheck(
+        min_value=0,
+        max_value=1,
+        right_inclusive=False,
+        error_code=188,
+        column=models.CrossSectionDefinition.friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        friction_types=[
+            constants.FrictionType.MANNING.value,
+            constants.FrictionType.MANNING_CONVEYANCE.value,
+        ],
+    )
+]
+CHECKS += [
+    CrossSectionVariableFrictionRangeCheck(
+        min_value=0,
+        error_code=189,
+        column=models.CrossSectionDefinition.friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        friction_types=[
+            constants.FrictionType.CHEZY.value,
+            constants.FrictionType.CHEZY_CONVEYANCE.value,
+        ],
+    )
+]
+
+## 019x vegetation parameter checks
+vegetation_parameter_columns_singular = [
+    models.CrossSectionLocation.vegetation_drag_coefficient,
+    models.CrossSectionLocation.vegetation_height,
+    models.CrossSectionLocation.vegetation_stem_diameter,
+    models.CrossSectionLocation.vegetation_stem_density,
+]
+vegetation_parameter_columns_plural = [
+    models.CrossSectionDefinition.vegetation_drag_coefficients,
+    models.CrossSectionDefinition.vegetation_heights,
+    models.CrossSectionDefinition.vegetation_stem_diameters,
+    models.CrossSectionDefinition.vegetation_stem_densities,
+]
+
+CHECKS += [
+    RangeCheck(
+        error_code=190,
+        column=col,
+        min_value=0,
+    )
+    for col in vegetation_parameter_columns_singular
+]
+CHECKS += [
+    CrossSectionVariableRangeCheck(
+        error_code=191,
+        min_value=0,
+        column=col,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    )
+    for col in vegetation_parameter_columns_plural
+]
+
+CHECKS += [
+    QueryCheck(
+        error_code=192,
+        column=col,
+        invalid=Query(models.CrossSectionLocation)
+        .filter(
+            models.CrossSectionLocation.friction_type.in_(
+                [
+                    constants.FrictionType.MANNING,
+                    constants.FrictionType.MANNING_CONVEYANCE,
+                ]
+            )
+        )
+        .filter(col.is_not(None)),
+        message=(
+            f"{col.table.name}.{col.name} cannot be used with Manning type friction"
+        ),
+    )
+    for col in vegetation_parameter_columns_singular
+]
+CHECKS += [
+    QueryCheck(
+        error_code=193,
+        column=col,
+        invalid=(
+            Query(models.CrossSectionDefinition)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.definition_id
+                == models.CrossSectionDefinition.id,
+            )
+            .filter(
+                models.CrossSectionLocation.friction_type.in_(
+                    [
+                        constants.FrictionType.MANNING,
+                        constants.FrictionType.MANNING_CONVEYANCE,
+                    ]
+                )
+                & col.is_not(None)
+            )
+        ),
+        message=(
+            f"{col.table.name}.{col.name} cannot be used with MANNING type friction"
+        ),
+    )
+    for col in vegetation_parameter_columns_plural
+]
+CHECKS += [
+    AllPresentFixedVegetationParameters(
+        error_code=194,
+        column=vegetation_parameter_columns_singular[0],
+    ),
+    AllPresentVariableVegetationParameters(
+        error_code=195,
+        column=vegetation_parameter_columns_plural[0],
+    ),
 ]
 
 # These checks are optional, depending on a command line argument

@@ -583,3 +583,165 @@ class CrossSectionConveyanceFrictionAdviceCheck(CrossSectionBaseCheck):
             "of friction is recommended in case there is a significant variation "
             "of the bed level (for instance, in a scenario with overflowing floodplains)."
         )
+
+
+class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
+    """Variable friction and vegetation properties should contain 1 value for each element; len(var_property) = len(width)-1"""
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column.name != None) & (self.column.name != "")
+        ):
+            try:
+                # only take widths because another check already ensures len(widths) = len(heights)
+                widths = [float(x) for x in record.width.split(" ")]
+                values = [
+                    float(x) for x in getattr(record, self.column.name).split(" ")
+                ]
+            except ValueError:
+                continue  # other check catches this
+            if not (len(widths) - 1 == len(values)):
+                invalids.append(record)
+        return invalids
+
+    def description(self):
+        return f"{self.column_name} should contain 1 value for each element; len({self.column_name}) = len(width)-1"
+
+
+class CrossSectionVariableRangeCheck(CrossSectionBaseCheck):
+    def __init__(
+        self,
+        min_value=None,
+        max_value=None,
+        left_inclusive=True,
+        right_inclusive=True,
+        *args,
+        **kwargs,
+    ):
+        if min_value is None and max_value is None:
+            raise ValueError("Please supply at least one of {min_value, max_value}.")
+        str_parts = []
+        if min_value is None:
+            self.min_valid = lambda x: True
+        else:
+            self.min_valid = (
+                (lambda x: x >= min_value)
+                if left_inclusive
+                else (lambda x: x > min_value)
+            )
+            str_parts.append(f"{'< ' if left_inclusive else '<= '}{min_value}")
+        if max_value is None:
+            self.max_valid = lambda x: True
+        else:
+            self.max_valid = (
+                (lambda x: x <= max_value)
+                if right_inclusive
+                else (lambda x: x < max_value)
+            )
+            str_parts.append(f"{'> ' if right_inclusive else '>= '}{max_value}")
+        self.range_str = " and/or ".join(str_parts)
+        super().__init__(*args, **kwargs)
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            try:
+                values = [
+                    float(x) for x in getattr(record, self.column.name).split(" ")
+                ]
+            except ValueError:
+                invalids.append(record)
+            if not self.min_valid(min(values)):
+                invalids.append(record)
+            elif not self.max_valid(max(values)):
+                invalids.append(record)
+        return invalids
+
+    def description(self):
+        return f"some values in {self.column_name} are {self.range_str}"
+
+
+class CrossSectionVariableFrictionRangeCheck(CrossSectionVariableRangeCheck):
+    def __init__(
+        self,
+        friction_types,
+        *args,
+        **kwargs,
+    ):
+        self.friction_types = friction_types
+        super().__init__(*args, **kwargs)
+
+    def get_invalid(self, session):
+        invalids = []
+        def_table = models.CrossSectionDefinition
+        loc_table = models.CrossSectionLocation
+        records = set(
+            self.to_check(session)
+            .join(loc_table, loc_table.definition_id == def_table.id)
+            .filter(
+                loc_table.friction_type.in_(self.friction_types)
+                & def_table.friction_values.is_not(None)
+            )
+            .filter((self.column != None) & (self.column != ""))
+            .all()
+        )
+        for record in records:
+            try:
+                values = [
+                    float(x) for x in getattr(record, self.column.name).split(" ")
+                ]
+            except ValueError:
+                continue
+            if not self.min_valid(min(values)):
+                invalids.append(record)
+            elif not self.max_valid(max(values)):
+                invalids.append(record)
+        return invalids
+
+
+class OpenIncreasingCrossSectionVariableCheck(CrossSectionBaseCheck):
+    """
+    Check if cross sections used with friction with conveyance
+    are open and monotonically increasing in width
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            shapes=(constants.CrossSectionShape.TABULATED_YZ,), *args, **kwargs
+        )
+
+    def get_invalid(self, session):
+        invalids = []
+        records = self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        )
+        for record in records:
+            try:
+                # Only used for TABULATED_YZ
+                widths = [float(x) for x in record.width.split(" ")]
+                heights = [float(x) for x in record.height.split(" ")]
+            except ValueError:
+                continue  # other check catches this
+
+            _, _, configuration = cross_section_configuration(
+                shape=record.shape.value, heights=heights, widths=widths
+            )
+
+            # friction with conveyance can only be used for cross-sections
+            # which are open *and* have a monotonically increasing width
+            if configuration == "closed" or (
+                len(widths) > 1
+                and any(
+                    next_width < previous_width
+                    for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+                )
+            ):
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return f"{self.column_name} can only be used in an open channel with monotonically increasing width values"

@@ -7,6 +7,8 @@ from threedi_schema import constants, models, ThreediDatabase
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
 from threedi_modelchecker.checks.other import (
+    AllPresentFixedVegetationParameters,
+    AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
     ChannelManholeLevelCheck,
@@ -696,3 +698,149 @@ def test_beta_features_in_server(threedi_db, allow_beta_features, no_checks_expe
         assert len(model_beta_checks) == 0
     else:
         assert len(model_beta_checks) > 0
+
+
+@pytest.mark.parametrize(
+    "cols, shape, friction_type, result",
+    [
+        # single column defined: should fail
+        (
+            ["vegetation_height"],
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.CHEZY,
+            False,
+        ),
+        # both columns defined, but one empty: should fail
+        (
+            ["vegetation_height", "vegetation_stem_diameter"],
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.CHEZY,
+            False,
+        ),
+        # no columns defined: should pass
+        (
+            [],
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.CHEZY,
+            True,
+        ),
+        # both columns defined: should pass
+        (
+            [
+                "vegetation_drag_coefficient",
+                "vegetation_height",
+                "vegetation_stem_diameter",
+                "vegetation_stem_density",
+            ],
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.CHEZY,
+            True,
+        ),
+        # shape is not included in check: should pass
+        (
+            ["vegetation_height"],
+            constants.CrossSectionShape.RECTANGLE,
+            constants.FrictionType.CHEZY,
+            True,
+        ),
+        # friction type in not included in check: should pass
+        (
+            ["vegetation_height"],
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.MANNING,
+            True,
+        ),
+    ],
+)
+def test_all_present_fixed_vegetation_parameters(
+    session, cols, shape, friction_type, result
+):
+    definition = factories.CrossSectionDefinitionFactory(
+        shape=shape,
+        friction_values="1",
+    )
+    veg_args = {col: 1 for col in cols}
+    factories.CrossSectionLocationFactory(
+        definition=definition, friction_type=friction_type, **veg_args
+    )
+    check = AllPresentFixedVegetationParameters(
+        column=models.CrossSectionLocation.vegetation_height
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == result
+
+
+# TODO: add check for Variable...
+@pytest.mark.parametrize(
+    "cols, val, shape, friction_type, result",
+    [
+        # single column defined: should fail
+        (
+            ["vegetation_heights"],
+            "1 2",
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.CHEZY_CONVEYANCE,
+            False,
+        ),
+        # both columns defined, but one empty: should fail
+        (
+            ["vegetation_heights", "vegetation_stem_diameters"],
+            "1 2",
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.CHEZY_CONVEYANCE,
+            False,
+        ),
+        # no columns defined: should pass
+        (
+            [],
+            "1 2",
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.CHEZY_CONVEYANCE,
+            True,
+        ),
+        # both columns defined: should pass
+        (
+            [
+                "vegetation_drag_coefficients",
+                "vegetation_heights",
+                "vegetation_stem_diameters",
+                "vegetation_stem_densities",
+            ],
+            "1 2",
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.CHEZY_CONVEYANCE,
+            True,
+        ),
+        # shape is not included in check: should pass
+        (
+            ["vegetation_heights"],
+            "1 2",
+            constants.CrossSectionShape.RECTANGLE,
+            constants.FrictionType.CHEZY_CONVEYANCE,
+            True,
+        ),
+        # friction type in not included in check: should pass
+        (
+            ["vegetation_heights"],
+            "1 2",
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.FrictionType.MANNING,
+            True,
+        ),
+    ],
+)
+def test_all_present_variable_vegetation_parameters(
+    session, cols, val, shape, friction_type, result
+):
+    veg_args = {col: val for col in cols}
+    definition = factories.CrossSectionDefinitionFactory(
+        shape=shape, friction_values="1 2", **veg_args
+    )
+    factories.CrossSectionLocationFactory(
+        definition=definition, friction_type=friction_type
+    )
+    check = AllPresentVariableVegetationParameters(
+        column=models.CrossSectionDefinition.vegetation_heights
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == result

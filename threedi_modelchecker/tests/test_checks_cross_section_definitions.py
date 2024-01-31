@@ -12,10 +12,14 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
+    CrossSectionVariableCorrectLengthCheck,
+    CrossSectionVariableFrictionRangeCheck,
+    CrossSectionVariableRangeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
     OpenIncreasingCrossSectionConveyanceFrictionCheck,
+    OpenIncreasingCrossSectionVariableCheck,
 )
 
 from . import factories
@@ -683,3 +687,105 @@ def test_check_cross_section_conveyance_friction_info_message(
         expected_result = 0
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
+
+
+@pytest.mark.parametrize("data, result", [["1 2", True], ["1 2 3", False]])
+def test_check_correct_length(session, data, result):
+    definition = factories.CrossSectionDefinitionFactory(
+        width="1 2 3", height="0 2 5", friction_values=data
+    )
+    factories.CrossSectionLocationFactory(definition=definition)
+    check = CrossSectionVariableCorrectLengthCheck(
+        column=models.CrossSectionDefinition.friction_values
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == result
+
+
+@pytest.mark.parametrize(
+    "min_value, max_value, left_incl, right_incl, result",
+    [
+        [0, 1, True, True, True],
+        [0, 0.5, True, True, False],
+        [0.5, 1, True, True, False],
+        [0, 1, False, True, False],
+        [0, 1, True, False, False],
+        [0, None, True, True, True],
+        [None, 1, True, True, True],
+    ],
+)
+def test_check_var_range(session, min_value, max_value, left_incl, right_incl, result):
+    definition = factories.CrossSectionDefinitionFactory(friction_values="0 1")
+    factories.CrossSectionLocationFactory(definition=definition)
+    check = CrossSectionVariableRangeCheck(
+        column=models.CrossSectionDefinition.friction_values,
+        min_value=min_value,
+        max_value=max_value,
+        left_inclusive=left_incl,
+        right_inclusive=right_incl,
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == result
+
+
+@pytest.mark.parametrize(
+    "friction_types, result",
+    [
+        [[constants.FrictionType.MANNING], False],
+        [[constants.FrictionType.CHEZY], True],
+    ],
+)
+def test_check_friction_values_range(session, friction_types, result):
+    definition = factories.CrossSectionDefinitionFactory(friction_values="0 2")
+    factories.CrossSectionLocationFactory(
+        definition=definition, friction_type=constants.FrictionType.MANNING
+    )
+    check = CrossSectionVariableFrictionRangeCheck(
+        min_value=0,
+        max_value=1,
+        right_inclusive=False,
+        error_code=9999,
+        column=models.CrossSectionDefinition.friction_values,
+        friction_types=friction_types,
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == result
+
+
+@pytest.mark.parametrize(
+    "width,height,result",
+    [
+        (
+            "0.01 0.11",
+            "0.11 0.21",
+            True,
+        ),  # open tabulated yz, increasing width, pass
+        (
+            "0.11 0.01",
+            "0.11 0.20",
+            False,
+        ),  # open tabulated yz, decreasing width, fail
+        (
+            "0.01 0.11 0.01",
+            "0.11 0.21 0.11",
+            False,
+        ),  # closed tabulated yz,  fail
+    ],
+)
+def test_check_cross_section_increasing_open_with_variables(
+    session, width, height, result
+):
+    definition = factories.CrossSectionDefinitionFactory(
+        shape=constants.CrossSectionShape.TABULATED_YZ,
+        width=width,
+        height=height,
+        friction_values="1",
+    )
+    factories.CrossSectionLocationFactory(definition=definition)
+    check = OpenIncreasingCrossSectionVariableCheck(
+        models.CrossSectionDefinition.friction_values
+    )
+    # this check should pass on cross-section locations which don't use conveyance,
+    # regardless of their other parameters
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == result
