@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.5.3 (unreleased)
+2.6.0 (2024-01-31)
 ------------------
 
 - Add error check (0020) for CrossSectionLocation.friction_value because that check is no longer included in the factory checks.
