@@ -311,7 +311,7 @@ class GeometryTypeCheck(BaseCheck):
 def _get_geometry_type(column, dialect):
     if column.type.geometry_type == "GEOMETRY":
         return  # should skip the check
-    if dialect == "sqlite":
+    if dialect in ["sqlite", "geopackage"]:
         return column.type.geometry_type
     elif dialect == "postgresql":
         geom_type = column.type.geometry_type.capitalize()
