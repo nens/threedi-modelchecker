@@ -221,7 +221,8 @@ class TypeCheck(BaseCheck):
         self.expected_types = _sqlalchemy_to_sqlite_types(self.column.type)
 
     def get_invalid(self, session):
-        if "sqlite" not in session.bind.dialect.dialect_description:
+        if ("sqlite" not in session.bind.dialect.dialect_description) and (
+                "geopackage" not in session.bind.dialect.dialect_description):
             return []
         q_invalid = self.to_check(session)
         invalid_type_query = q_invalid.filter(
