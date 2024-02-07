@@ -52,7 +52,10 @@ def session(threedi_db):
 
 @pytest.fixture
 def empty_sqlite_v4(tmp_path):
-    """An function-scoped empty spatialite v4 in the latest migration state"""
-    tmp_sqlite = tmp_path / "empty_v4.sqlite"
-    shutil.copyfile(data_dir / "empty_v4.sqlite", tmp_sqlite)
+    """An function-scoped empty geopackage v4 in the latest migration state"""
+    tmp_sqlite = tmp_path / "empty.gpkg"
+    shutil.copyfile(data_dir / "empty.gpkg", tmp_sqlite)
     return ThreediDatabase(tmp_sqlite)
+
+
+
