@@ -332,37 +332,6 @@ CHECKS += [
         level=CheckLevel.INFO,
     )
 ]
-# (ab)use error_code 30 which is not used in 003x block
-CHECKS += [
-    RangeCheck(
-        error_code=30,
-        level=CheckLevel.WARNING,
-        column=table.friction_value,
-        filters=table.friction_type == constants.FrictionType.CHEZY.value,
-        min_value=1,
-        message=f"{table.__tablename__}.friction_value is less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
-    )
-    for table in [
-        models.CrossSectionLocation,
-        models.Culvert,
-        models.Pipe,
-    ]
-]
-CHECKS += [
-    RangeCheck(
-        error_code=30,
-        level=CheckLevel.WARNING,
-        column=table.friction_value,
-        filters=(table.friction_type == constants.FrictionType.CHEZY.value)
-        & (table.crest_type == constants.CrestType.BROAD_CRESTED.value),
-        min_value=1,
-        message=f"{table.__tablename__}.friction_value is less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
-    )
-    for table in [
-        models.Orifice,
-        models.Weir,
-    ]
-]
 
 ## 003x: CALCULATION TYPE
 
@@ -3044,20 +3013,6 @@ CHECKS += [
     for col in vegetation_parameter_columns
     + [models.CrossSectionDefinition.friction_values]
 ]
-CHECKS += [
-    CrossSectionVariableFrictionRangeCheck(
-        min_value=1,
-        level=CheckLevel.WARNING,
-        error_code=1801,
-        column=models.CrossSectionDefinition.friction_values,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-        friction_types=[
-            constants.FrictionType.CHEZY.value,
-            constants.FrictionType.CHEZY_CONVEYANCE.value,
-        ],
-        message="Some values in CrossSectionDefinition.friction_values are less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
-    )
-]
 ## Friction values range
 CHECKS += [
     CrossSectionVariableFrictionRangeCheck(
@@ -3174,6 +3129,52 @@ CHECKS += [
         error_code=195,
         column=vegetation_parameter_columns_plural[0],
     ),
+]
+
+# (ab)use error_code 30 which is not used in 003x block
+CHECKS += [
+    RangeCheck(
+        error_code=1500,
+        level=CheckLevel.WARNING,
+        column=table.friction_value,
+        filters=table.friction_type == constants.FrictionType.CHEZY.value,
+        min_value=1,
+        message=f"{table.__tablename__}.friction_value is less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
+    )
+    for table in [
+        models.CrossSectionLocation,
+        models.Culvert,
+        models.Pipe,
+    ]
+]
+CHECKS += [
+    RangeCheck(
+        error_code=1500,
+        level=CheckLevel.WARNING,
+        column=table.friction_value,
+        filters=(table.friction_type == constants.FrictionType.CHEZY.value)
+        & (table.crest_type == constants.CrestType.BROAD_CRESTED.value),
+        min_value=1,
+        message=f"{table.__tablename__}.friction_value is less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
+    )
+    for table in [
+        models.Orifice,
+        models.Weir,
+    ]
+]
+CHECKS += [
+    CrossSectionVariableFrictionRangeCheck(
+        min_value=1,
+        level=CheckLevel.WARNING,
+        error_code=1501,
+        column=models.CrossSectionDefinition.friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        friction_types=[
+            constants.FrictionType.CHEZY.value,
+            constants.FrictionType.CHEZY_CONVEYANCE.value,
+        ],
+        message="Some values in CrossSectionDefinition.friction_values are less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
+    )
 ]
 
 # These checks are optional, depending on a command line argument
