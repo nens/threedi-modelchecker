@@ -3131,7 +3131,7 @@ CHECKS += [
     ),
 ]
 
-# (ab)use error_code 30 which is not used in 003x block
+# Checks for nonsensical Chezy friction values
 CHECKS += [
     RangeCheck(
         error_code=1500,
