@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.6.1 (unreleased)
+2.6.1 (2024-02-20)
 ------------------
 
 - Add warning check (1500) to warn about a friction value <= 1 for Chezy friction
