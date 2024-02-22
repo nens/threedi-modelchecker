@@ -616,6 +616,7 @@ class CrossSectionVariableRangeCheck(CrossSectionBaseCheck):
         max_value=None,
         left_inclusive=True,
         right_inclusive=True,
+        message=None,
         *args,
         **kwargs,
     ):
@@ -641,6 +642,7 @@ class CrossSectionVariableRangeCheck(CrossSectionBaseCheck):
             )
             str_parts.append(f"{'> ' if right_inclusive else '>= '}{max_value}")
         self.range_str = " and/or ".join(str_parts)
+        self.message = message
         super().__init__(*args, **kwargs)
 
     def get_invalid(self, session):
@@ -661,7 +663,10 @@ class CrossSectionVariableRangeCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
-        return f"some values in {self.column_name} are {self.range_str}"
+        if self.message is None:
+            return f"some values in {self.column_name} are {self.range_str}"
+        else:
+            return self.message
 
 
 class CrossSectionVariableFrictionRangeCheck(CrossSectionVariableRangeCheck):
