@@ -56,6 +56,3 @@ def empty_sqlite_v4(tmp_path):
     tmp_sqlite = tmp_path / "empty.gpkg"
     shutil.copyfile(data_dir / "empty.gpkg", tmp_sqlite)
     return ThreediDatabase(tmp_sqlite)
-
-
-
