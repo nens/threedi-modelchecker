@@ -20,6 +20,7 @@ from threedi_modelchecker.checks.other import (
     DefinedAreaCheck,
     FeatureClosedCrossSectionCheck,
     ImperviousNodeInflowAreaCheck,
+    InflowNoFeaturesCheck,
     LinestringLocationCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
@@ -28,7 +29,6 @@ from threedi_modelchecker.checks.other import (
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
-    InflowNoFeaturesCheck,
 )
 from threedi_modelchecker.model_checks import ThreediModelChecker
 
