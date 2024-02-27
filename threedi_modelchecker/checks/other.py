@@ -815,6 +815,28 @@ class PerviousNodeInflowAreaCheck(BaseCheck):
         return f"{self.column_name} has a an associated inflow area larger than 10000 m2; this might be an error."
 
 
+class InflowNoFeaturesCheck(BaseCheck):
+    """Check that the surface table in the global use_0d_inflow setting contains at least 1 feature."""
+
+    def __init__(self, *args, surface_table, filters=True, **kwargs):
+        super().__init__(*args, column=models.GlobalSetting.id, **kwargs)
+        self.surface_table = surface_table
+        self.filters = filters
+
+    def get_invalid(self, session: Session):
+        surface_table_length = session.execute(
+            select(func.count(self.surface_table.id))
+        ).scalar()
+        return (
+            session.query(models.GlobalSetting)
+            .filter(self.filters, surface_table_length == 0)
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"v2_global_settings.use_0d_inflow is set to use {self.surface_table.__tablename__}, but {self.surface_table.__tablename__} does not contain any features."
+
+
 class NodeSurfaceConnectionsCheck(BaseCheck):
     """Check that no more than 50 surfaces are mapped to a connection node"""
 

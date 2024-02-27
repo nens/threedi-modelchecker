@@ -28,6 +28,7 @@ from threedi_modelchecker.checks.other import (
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
+    InflowNoFeaturesCheck,
 )
 from threedi_modelchecker.model_checks import ThreediModelChecker
 
@@ -545,6 +546,46 @@ def test_impervious_connection_node_inflow_area(session, value, expected_result)
         impervious_surface=second_impervious_surface, connection_node=connection_node
     )
     check = ImperviousNodeInflowAreaCheck()
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "surface_number,expected_result",
+    [
+        (0, 1),
+        (1, 0),
+        (10, 0),
+    ],
+)
+def test_inflow_no_features_impervious(session, surface_number, expected_result):
+    # add fields
+    factories.GlobalSettingsFactory()
+    if surface_number > 0:
+        factories.ImperviousSurfaceFactory.create_batch(size=surface_number)
+
+    # test
+    check = InflowNoFeaturesCheck(surface_table=models.ImperviousSurface)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "surface_number,expected_result",
+    [
+        (0, 1),
+        (1, 0),
+        (10, 0),
+    ],
+)
+def test_inflow_no_features_pervious(session, surface_number, expected_result):
+    # add fields
+    factories.GlobalSettingsFactory()
+    if surface_number > 0:
+        factories.SurfaceFactory.create_batch(size=surface_number)
+
+    # test
+    check = InflowNoFeaturesCheck(surface_table=models.Surface)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
