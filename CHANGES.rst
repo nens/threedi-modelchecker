@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.6.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Remove warning check 0029.
 
 
 2.6.1 (2024-02-20)

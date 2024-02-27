@@ -17,7 +17,6 @@ from .checks.base import (
     UniqueCheck,
 )
 from .checks.cross_section_definitions import (
-    CrossSectionConveyanceFrictionAdviceCheck,
     CrossSectionEqualElementsCheck,
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
@@ -324,12 +323,6 @@ CHECKS += [
 CHECKS += [
     OpenIncreasingCrossSectionConveyanceFrictionCheck(
         error_code=28,
-    )
-]
-CHECKS += [
-    CrossSectionConveyanceFrictionAdviceCheck(
-        error_code=29,
-        level=CheckLevel.INFO,
     )
 ]
 
