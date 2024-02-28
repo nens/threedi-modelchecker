@@ -7,6 +7,7 @@ Changelog of threedi-modelchecker
 
 - Add warning check (0616) for surfaces for which no inflow is generated because of the surface table not being referred to in global settings.
 - Add warning check (0617) to warn if the surface table referred to in global settings is empty and no inflow will be generated for it.
+- Remove warning check 0029.
 
 
 2.6.1 (2024-02-20)
