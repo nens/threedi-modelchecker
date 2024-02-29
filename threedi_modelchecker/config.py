@@ -17,7 +17,6 @@ from .checks.base import (
     UniqueCheck,
 )
 from .checks.cross_section_definitions import (
-    CrossSectionConveyanceFrictionAdviceCheck,
     CrossSectionEqualElementsCheck,
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
@@ -61,6 +60,7 @@ from .checks.other import (
     DefinedAreaCheck,
     FeatureClosedCrossSectionCheck,
     ImperviousNodeInflowAreaCheck,
+    InflowNoFeaturesCheck,
     LinestringLocationCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
@@ -324,12 +324,6 @@ CHECKS += [
 CHECKS += [
     OpenIncreasingCrossSectionConveyanceFrictionCheck(
         error_code=28,
-    )
-]
-CHECKS += [
-    CrossSectionConveyanceFrictionAdviceCheck(
-        error_code=29,
-        level=CheckLevel.INFO,
     )
 ]
 
@@ -2060,7 +2054,33 @@ CHECKS += [
         (models.ImperviousSurfaceMap.connection_node_id, models.ConnectionNode),
     )
 ]
+CHECKS += [
+    QueryCheck(
+        error_code=616,
+        level=CheckLevel.WARNING,
+        column=table.id,
+        filters=~CONDITIONS[condition].exists(),
+        invalid=Query(table),
+        message=f"No inflow will be generated for this feature, because v2_global_settings.use_0d_inflow is not set to use {table.__tablename__}.",
+    )
+    for table, condition in (
+        (models.ImperviousSurface, "0d_imp"),
+        (models.Surface, "0d_surf"),
+    )
+]
 
+CHECKS += [
+    InflowNoFeaturesCheck(
+        error_code=617,
+        level=CheckLevel.WARNING,
+        surface_table=table,
+        condition=CONDITIONS[condition].exists(),
+    )
+    for table, condition in (
+        (models.ImperviousSurface, "0d_imp"),
+        (models.Surface, "0d_surf"),
+    )
+]
 
 CHECKS += [
     RangeCheck(
