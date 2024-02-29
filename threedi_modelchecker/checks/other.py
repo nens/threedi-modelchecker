@@ -818,10 +818,10 @@ class PerviousNodeInflowAreaCheck(BaseCheck):
 class InflowNoFeaturesCheck(BaseCheck):
     """Check that the surface table in the global use_0d_inflow setting contains at least 1 feature."""
 
-    def __init__(self, *args, surface_table, filters=True, **kwargs):
+    def __init__(self, *args, surface_table, condition=True, **kwargs):
         super().__init__(*args, column=models.GlobalSetting.id, **kwargs)
         self.surface_table = surface_table
-        self.filters = filters
+        self.condition = condition
 
     def get_invalid(self, session: Session):
         surface_table_length = session.execute(
@@ -829,7 +829,7 @@ class InflowNoFeaturesCheck(BaseCheck):
         ).scalar()
         return (
             session.query(models.GlobalSetting)
-            .filter(self.filters, surface_table_length == 0)
+            .filter(self.condition, surface_table_length == 0)
             .all()
         )
 

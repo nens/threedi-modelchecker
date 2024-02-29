@@ -2084,7 +2084,7 @@ CHECKS += [
         error_code=617,
         level=CheckLevel.WARNING,
         surface_table=table,
-        filters=CONDITIONS[condition].exists(),
+        condition=CONDITIONS[condition].exists(),
     )
     for table, condition in (
         (models.ImperviousSurface, "0d_imp"),
