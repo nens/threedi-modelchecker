@@ -2,7 +2,13 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.6.2 (unreleased)
+2.6.3 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+2.6.2 (2024-02-29)
 ------------------
 
 - Add warning check (0616) for surfaces for which no inflow is generated because of the surface table not being referred to in global settings.
