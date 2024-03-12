@@ -13,9 +13,9 @@ def inject_session(session):
             cls._meta.sqlalchemy_session = session
 
 
-class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class ModelSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.GlobalSetting
+        model = models.ModelSettings
         sqlalchemy_session = None
 
     nr_timesteps = 120

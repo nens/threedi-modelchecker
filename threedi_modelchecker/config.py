@@ -104,59 +104,61 @@ def is_none_or_empty(col):
 
 # Use these to make checks only work on the first global settings entry:
 first_setting = (
-    Query(models.GlobalSetting.id)
-    .order_by(models.GlobalSetting.id)
+    Query(models.ModelSettings.id)
+    .order_by(models.ModelSettings.id)
     .limit(1)
     .scalar_subquery()
 )
-first_setting_filter = models.GlobalSetting.id == first_setting
+first_setting_filter = models.ModelSettings.id == first_setting
+
 interflow_settings_id = (
-    Query(models.GlobalSetting.interflow_settings_id)
+    Query(models.ModelSettings.interflow_settings_id)
     .filter(first_setting_filter)
     .scalar_subquery()
 )
 interflow_filter = models.Interflow.id == interflow_settings_id
+
 infiltration_settings_id = (
-    Query(models.GlobalSetting.simple_infiltration_settings_id)
+    Query(models.ModelSettings.simple_infiltration_settings_id)
     .filter(first_setting_filter)
     .scalar_subquery()
 )
 infiltration_filter = models.SimpleInfiltration.id == infiltration_settings_id
 groundwater_settings_id = (
-    Query(models.GlobalSetting.groundwater_settings_id)
+    Query(models.ModelSettings.groundwater_settings_id)
     .filter(first_setting_filter)
     .scalar_subquery()
 )
 groundwater_filter = models.GroundWater.id == groundwater_settings_id
 vegetation_drag_settings_id = (
-    Query(models.GlobalSetting.vegetation_drag_settings_id)
+    Query(models.ModelSettings.vegetation_drag_settings_id)
     .filter(first_setting_filter)
     .scalar_subquery()
 )
 vegetation_drag_filter = models.VegetationDrag.id == vegetation_drag_settings_id
 
 CONDITIONS = {
-    "has_dem": Query(models.GlobalSetting).filter(
-        first_setting_filter, ~is_none_or_empty(models.GlobalSetting.dem_file)
+    "has_dem": Query(models.ModelSettings).filter(
+        first_setting_filter, ~is_none_or_empty(models.ModelSettings.dem_file)
     ),
-    "has_no_dem": Query(models.GlobalSetting).filter(
-        first_setting_filter, is_none_or_empty(models.GlobalSetting.dem_file)
+    "has_no_dem": Query(models.ModelSettings).filter(
+        first_setting_filter, is_none_or_empty(models.ModelSettings.dem_file)
     ),
-    "0d_surf": Query(models.GlobalSetting).filter(
+    "0d_surf": Query(models.ModelSettings).filter(
         first_setting_filter,
-        models.GlobalSetting.use_0d_inflow == constants.InflowType.SURFACE,
+        models.ModelSettings.use_0d_inflow == constants.InflowType.SURFACE,
     ),
-    "0d_imp": Query(models.GlobalSetting).filter(
+    "0d_imp": Query(models.ModelSettings).filter(
         first_setting_filter,
-        models.GlobalSetting.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE,
+        models.ModelSettings.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE,
     ),
-    "manning": Query(models.GlobalSetting).filter(
+    "manning": Query(models.ModelSettings).filter(
         first_setting_filter,
-        models.GlobalSetting.frict_type == constants.FrictionType.MANNING,
+        models.ModelSettings.frict_type == constants.FrictionType.MANNING,
     ),
-    "chezy": Query(models.GlobalSetting).filter(
+    "chezy": Query(models.ModelSettings).filter(
         first_setting_filter,
-        models.GlobalSetting.frict_type == constants.FrictionType.CHEZY,
+        models.ModelSettings.frict_type == constants.FrictionType.CHEZY,
     ),
     "has_groundwater_flow": Query(models.GroundWater).filter(
         groundwater_filter,
@@ -165,7 +167,7 @@ CONDITIONS = {
     ),
 }
 
-kmax = Query(models.GlobalSetting.kmax).filter(first_setting_filter).scalar_subquery()
+kmax = Query(models.ModelSettings.kmax).filter(first_setting_filter).scalar_subquery()
 
 
 CHECKS: List[BaseCheck] = []
@@ -797,7 +799,7 @@ CHECKS += [
         error_code=107,
         column=models.Manhole.drain_level,
         filters=CONDITIONS["has_no_dem"]
-        .filter(models.GlobalSetting.manhole_storage_area > 0)
+        .filter(models.ModelSettings.manhole_storage_area > 0)
         .exists(),
         invalid=Query(models.Manhole).filter(
             models.Manhole.calculation_type.in_(
@@ -1177,20 +1179,20 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=302,
-        column=models.GlobalSetting.dem_obstacle_detection,
-        invalid=Query(models.GlobalSetting).filter(
+        column=models.ModelSettings.dem_obstacle_detection,
+        invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            models.GlobalSetting.dem_obstacle_detection == True,
+            models.ModelSettings.dem_obstacle_detection == True,
         ),
         message="v2_global_settings.dem_obstacle_detection is True, while this feature is not supported",
     ),
     QueryCheck(
         error_code=303,
         level=CheckLevel.WARNING,
-        column=models.GlobalSetting.use_1d_flow,
-        invalid=Query(models.GlobalSetting).filter(
+        column=models.ModelSettings.use_1d_flow,
+        invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            models.GlobalSetting.use_1d_flow == False,
+            models.ModelSettings.use_1d_flow == False,
             Query(func.count(models.ConnectionNode.id) > 0).label("1d_count"),
         ),
         message="v2_global_settings.use_1d_flow is turned off while there are 1D "
@@ -1198,17 +1200,17 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=304,
-        column=models.GlobalSetting.groundwater_settings_id,
-        invalid=Query(models.GlobalSetting).filter(
+        column=models.ModelSettings.groundwater_settings_id,
+        invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            models.GlobalSetting.groundwater_settings_id != None,
-            models.GlobalSetting.simple_infiltration_settings != None,
+            models.ModelSettings.groundwater_settings_id != None,
+            models.ModelSettings.simple_infiltration_settings != None,
         ),
         message="simple_infiltration in combination with groundwater flow is not allowed.",
     ),
     RangeCheck(
         error_code=305,
-        column=models.GlobalSetting.kmax,
+        column=models.ModelSettings.kmax,
         filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 is not allowed
@@ -1216,7 +1218,7 @@ CHECKS += [
     RangeCheck(
         error_code=306,
         level=CheckLevel.WARNING,
-        column=models.GlobalSetting.dist_calc_points,
+        column=models.ModelSettings.dist_calc_points,
         filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
@@ -1224,136 +1226,136 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=307,
-        column=models.GlobalSetting.grid_space,
+        column=models.ModelSettings.grid_space,
         filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         error_code=308,
-        column=models.GlobalSetting.embedded_cutoff_threshold,
+        column=models.ModelSettings.embedded_cutoff_threshold,
         filters=first_setting_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=309,
-        column=models.GlobalSetting.max_angle_1d_advection,
+        column=models.ModelSettings.max_angle_1d_advection,
         filters=first_setting_filter,
         min_value=0,
         max_value=0.5 * 3.14159,
     ),
     RangeCheck(
         error_code=310,
-        column=models.GlobalSetting.table_step_size,
+        column=models.ModelSettings.table_step_size,
         filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,
     ),
     RangeCheck(
         error_code=311,
-        column=models.GlobalSetting.table_step_size_1d,
+        column=models.ModelSettings.table_step_size_1d,
         filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,
     ),
     RangeCheck(
         error_code=313,
-        column=models.GlobalSetting.frict_coef,
+        column=models.ModelSettings.frict_coef,
         filters=CONDITIONS["manning"].exists(),
         min_value=0,
         max_value=1,
     ),
     RangeCheck(
         error_code=314,
-        column=models.GlobalSetting.frict_coef,
+        column=models.ModelSettings.frict_coef,
         filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
     RangeCheck(
         error_code=315,
-        column=models.GlobalSetting.interception_global,
+        column=models.ModelSettings.interception_global,
         filters=first_setting_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=316,
-        column=models.GlobalSetting.manhole_storage_area,
+        column=models.ModelSettings.manhole_storage_area,
         filters=first_setting_filter,
         min_value=0,
     ),
     QueryCheck(
         error_code=317,
-        column=models.GlobalSetting.epsg_code,
-        invalid=CONDITIONS["has_no_dem"].filter(models.GlobalSetting.epsg_code == None),
+        column=models.ModelSettings.epsg_code,
+        invalid=CONDITIONS["has_no_dem"].filter(models.ModelSettings.epsg_code == None),
         message="v2_global_settings.epsg_code may not be NULL if no dem file is provided",
     ),
     QueryCheck(
         error_code=318,
         level=CheckLevel.WARNING,
-        column=models.GlobalSetting.epsg_code,
-        invalid=CONDITIONS["has_dem"].filter(models.GlobalSetting.epsg_code == None),
+        column=models.ModelSettings.epsg_code,
+        invalid=CONDITIONS["has_dem"].filter(models.ModelSettings.epsg_code == None),
         message="if v2_global_settings.epsg_code is NULL, it will be extracted from the DEM later, however, the modelchecker will use ESPG:28992 for its spatial checks",
     ),
     QueryCheck(
         error_code=319,
-        column=models.GlobalSetting.use_2d_flow,
+        column=models.ModelSettings.use_2d_flow,
         invalid=CONDITIONS["has_no_dem"].filter(
-            models.GlobalSetting.use_2d_flow == True
+            models.ModelSettings.use_2d_flow == True
         ),
         message="v2_global_settings.use_2d_flow may not be TRUE if no dem file is provided",
     ),
     QueryCheck(
         error_code=320,
-        column=models.GlobalSetting.use_2d_flow,
-        invalid=Query(models.GlobalSetting).filter(
+        column=models.ModelSettings.use_2d_flow,
+        invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            models.GlobalSetting.use_1d_flow == False,
-            models.GlobalSetting.use_2d_flow == False,
+            models.ModelSettings.use_1d_flow == False,
+            models.ModelSettings.use_2d_flow == False,
         ),
         message="v2_global_settings.use_1d_flow and v2_global_settings.use_2d_flow cannot both be FALSE",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
         error_code=321,
-        column=models.GlobalSetting.manhole_storage_area,
-        invalid=Query(models.GlobalSetting).filter(
+        column=models.ModelSettings.manhole_storage_area,
+        invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            models.GlobalSetting.manhole_storage_area > 0,
+            models.ModelSettings.manhole_storage_area > 0,
             (
-                (models.GlobalSetting.use_2d_flow == True)
-                | (~is_none_or_empty(models.GlobalSetting.dem_file))
+                (models.ModelSettings.use_2d_flow == True)
+                | (~is_none_or_empty(models.ModelSettings.dem_file))
             ),
         ),
         message="sub-basins (v2_global_settings.manhole_storage_area > 0) should only be used when there is no DEM supplied and there is no 2D flow",
     ),
     QueryCheck(
         error_code=322,
-        column=models.GlobalSetting.water_level_ini_type,
-        invalid=Query(models.GlobalSetting).filter(
+        column=models.ModelSettings.water_level_ini_type,
+        invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            ~is_none_or_empty(models.GlobalSetting.initial_waterlevel_file),
-            models.GlobalSetting.water_level_ini_type == None,
+            ~is_none_or_empty(models.ModelSettings.initial_waterlevel_file),
+            models.ModelSettings.water_level_ini_type == None,
         ),
         message="an initial waterlevel type (v2_global_settings.water_level_ini_type) should be defined when using an initial waterlevel file.",
     ),
     QueryCheck(
         error_code=323,
-        column=models.GlobalSetting.maximum_table_step_size,
-        invalid=Query(models.GlobalSetting).filter(
+        column=models.ModelSettings.maximum_table_step_size,
+        invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            models.GlobalSetting.maximum_table_step_size
-            < models.GlobalSetting.table_step_size,
+            models.ModelSettings.maximum_table_step_size
+            < models.ModelSettings.table_step_size,
         ),
         message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.table_step_size.",
     ),
     QueryCheck(
         error_code=325,
         level=CheckLevel.WARNING,
-        column=models.GlobalSetting.interception_global,
-        invalid=Query(models.GlobalSetting).filter(
+        column=models.ModelSettings.interception_global,
+        invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            ~is_none_or_empty(models.GlobalSetting.interception_file),
-            is_none_or_empty(models.GlobalSetting.interception_global),
+            ~is_none_or_empty(models.ModelSettings.interception_file),
+            is_none_or_empty(models.ModelSettings.interception_global),
         ),
         message="v2_global_settings.interception_global is recommended as fallback value when using an interception_file.",
     ),
@@ -1372,24 +1374,24 @@ CHECKS += [
     for table, setting in (
         (
             models.SimpleInfiltration,
-            models.GlobalSetting.simple_infiltration_settings_id,
+            models.ModelSettings.simple_infiltration_settings_id,
         ),
-        (models.Interflow, models.GlobalSetting.interflow_settings_id),
-        (models.GroundWater, models.GlobalSetting.groundwater_settings_id),
-        (models.NumericalSettings, models.GlobalSetting.numerical_settings_id),
-        (models.ControlGroup, models.GlobalSetting.control_group_id),
-        (models.VegetationDrag, models.GlobalSetting.vegetation_drag_settings_id),
+        (models.Interflow, models.ModelSettings.interflow_settings_id),
+        (models.GroundWater, models.ModelSettings.groundwater_settings_id),
+        (models.NumericalSettings, models.ModelSettings.numerical_settings_id),
+        (models.ControlGroup, models.ModelSettings.control_group_id),
+        (models.VegetationDrag, models.ModelSettings.vegetation_drag_settings_id),
     )
 ]
 
 CHECKS += [
     QueryCheck(
         error_code=327,
-        column=models.GlobalSetting.vegetation_drag_settings_id,
-        invalid=Query(models.GlobalSetting).filter(
+        column=models.ModelSettings.vegetation_drag_settings_id,
+        invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            ~is_none_or_empty(models.GlobalSetting.vegetation_drag_settings_id),
-            models.GlobalSetting.frict_type != constants.FrictionType.CHEZY.value,
+            ~is_none_or_empty(models.ModelSettings.vegetation_drag_settings_id),
+            models.ModelSettings.frict_type != constants.FrictionType.CHEZY.value,
         ),
         message="Vegetation drag can only be used in combination with friction type 1 (Chézy)",
     )
@@ -1399,30 +1401,30 @@ CHECKS += [
     AllEqualCheck(error_code=330 + i, column=column, level=CheckLevel.WARNING)
     for i, column in enumerate(
         [
-            models.GlobalSetting.use_2d_flow,
-            models.GlobalSetting.use_1d_flow,
-            models.GlobalSetting.grid_space,
-            models.GlobalSetting.dist_calc_points,
-            models.GlobalSetting.kmax,
-            models.GlobalSetting.dem_file,
-            models.GlobalSetting.embedded_cutoff_threshold,
-            models.GlobalSetting.epsg_code,
-            models.GlobalSetting.max_angle_1d_advection,
-            models.GlobalSetting.frict_avg,
-            models.GlobalSetting.use_0d_inflow,
-            models.GlobalSetting.manhole_storage_area,
-            models.GlobalSetting.table_step_size,
-            models.GlobalSetting.frict_type,
-            models.GlobalSetting.frict_coef,
-            models.GlobalSetting.frict_coef_file,
-            models.GlobalSetting.interception_global,
-            models.GlobalSetting.interception_file,
-            models.GlobalSetting.table_step_size_1d,
-            models.GlobalSetting.maximum_table_step_size,
-            models.GlobalSetting.interflow_settings_id,
-            models.GlobalSetting.simple_infiltration_settings_id,
-            models.GlobalSetting.groundwater_settings_id,
-            models.GlobalSetting.vegetation_drag_settings_id,
+            models.ModelSettings.use_2d_flow,
+            models.ModelSettings.use_1d_flow,
+            models.ModelSettings.grid_space,
+            models.ModelSettings.dist_calc_points,
+            models.ModelSettings.kmax,
+            models.ModelSettings.dem_file,
+            models.ModelSettings.embedded_cutoff_threshold,
+            models.ModelSettings.epsg_code,
+            models.ModelSettings.max_angle_1d_advection,
+            models.ModelSettings.frict_avg,
+            models.ModelSettings.use_0d_inflow,
+            models.ModelSettings.manhole_storage_area,
+            models.ModelSettings.table_step_size,
+            models.ModelSettings.frict_type,
+            models.ModelSettings.frict_coef,
+            models.ModelSettings.frict_coef_file,
+            models.ModelSettings.interception_global,
+            models.ModelSettings.interception_file,
+            models.ModelSettings.table_step_size_1d,
+            models.ModelSettings.maximum_table_step_size,
+            models.ModelSettings.interflow_settings_id,
+            models.ModelSettings.simple_infiltration_settings_id,
+            models.ModelSettings.groundwater_settings_id,
+            models.ModelSettings.vegetation_drag_settings_id,
         ]
     )
 ]
@@ -1430,7 +1432,7 @@ CHECKS += [
     RangeCheck(
         error_code=360,
         level=CheckLevel.WARNING,
-        column=models.GlobalSetting.dist_calc_points,
+        column=models.ModelSettings.dist_calc_points,
         filters=first_setting_filter,
         min_value=5.0,
         left_inclusive=True,  # 0 itself is not allowed
@@ -2119,9 +2121,9 @@ CHECKS += [
 
 # 07xx: RASTERS
 RASTER_COLUMNS_FILTERS = [
-    (models.GlobalSetting.dem_file, first_setting_filter),
-    (models.GlobalSetting.frict_coef_file, first_setting_filter),
-    (models.GlobalSetting.interception_file, first_setting_filter),
+    (models.ModelSettings.dem_file, first_setting_filter),
+    (models.ModelSettings.frict_coef_file, first_setting_filter),
+    (models.ModelSettings.interception_file, first_setting_filter),
     (models.Interflow.porosity_file, interflow_filter),
     (
         models.Interflow.hydraulic_conductivity_file,
@@ -2160,10 +2162,10 @@ RASTER_COLUMNS_FILTERS = [
         groundwater_filter,
     ),
     (models.GroundWater.leakage_file, groundwater_filter),
-    (models.GlobalSetting.initial_waterlevel_file, first_setting_filter),
+    (models.ModelSettings.initial_waterlevel_file, first_setting_filter),
     (
-        models.GlobalSetting.initial_groundwater_level_file,
-        first_setting_filter & (models.GlobalSetting.groundwater_settings_id != None),
+        models.ModelSettings.initial_groundwater_level_file,
+        first_setting_filter & (models.ModelSettings.groundwater_settings_id != None),
     ),
     (models.VegetationDrag.vegetation_height_file, vegetation_drag_filter),
     (models.VegetationDrag.vegetation_stem_count_file, vegetation_drag_filter),
@@ -2173,7 +2175,7 @@ RASTER_COLUMNS_FILTERS = [
 
 CHECKS += [
     GDALAvailableCheck(
-        error_code=700, level=CheckLevel.WARNING, column=models.GlobalSetting.dem_file
+        error_code=700, level=CheckLevel.WARNING, column=models.ModelSettings.dem_file
     )
 ]
 CHECKS += [
@@ -2212,31 +2214,31 @@ CHECKS += [
 CHECKS += [
     RasterIsProjectedCheck(
         error_code=779,
-        column=models.GlobalSetting.dem_file,
+        column=models.ModelSettings.dem_file,
         filters=first_setting_filter,
     ),
     RasterSquareCellsCheck(
         error_code=780,
-        column=models.GlobalSetting.dem_file,
+        column=models.ModelSettings.dem_file,
         filters=first_setting_filter,
     ),
     RasterRangeCheck(
         error_code=781,
-        column=models.GlobalSetting.dem_file,
+        column=models.ModelSettings.dem_file,
         filters=first_setting_filter,
         min_value=-9998.0,
         max_value=8848.0,
     ),
     RasterRangeCheck(
         error_code=782,
-        column=models.GlobalSetting.frict_coef_file,
+        column=models.ModelSettings.frict_coef_file,
         filters=CONDITIONS["manning"].exists(),
         min_value=0,
         max_value=1,
     ),
     RasterRangeCheck(
         error_code=783,
-        column=models.GlobalSetting.frict_coef_file,
+        column=models.ModelSettings.frict_coef_file,
         filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
@@ -2306,27 +2308,27 @@ CHECKS += [
     ),
     RasterRangeCheck(
         error_code=795,
-        column=models.GlobalSetting.initial_waterlevel_file,
+        column=models.ModelSettings.initial_waterlevel_file,
         min_value=-9998.0,
         max_value=8848.0,
     ),
     RasterRangeCheck(
         error_code=796,
-        column=models.GlobalSetting.initial_groundwater_level_file,
+        column=models.ModelSettings.initial_groundwater_level_file,
         filters=first_setting_filter
-        & (models.GlobalSetting.groundwater_settings_id != None),
+        & (models.ModelSettings.groundwater_settings_id != None),
         min_value=-9998.0,
         max_value=8848.0,
     ),
     RasterHasMatchingEPSGCheck(
         error_code=797,
         level=CheckLevel.WARNING,
-        column=models.GlobalSetting.dem_file,
+        column=models.ModelSettings.dem_file,
         filters=first_setting_filter,
     ),
     RasterGridSizeCheck(
         error_code=798,
-        column=models.GlobalSetting.dem_file,
+        column=models.ModelSettings.dem_file,
         filters=first_setting_filter,
     ),
     ## 100xx: We continue raster checks from 1400
@@ -2356,7 +2358,7 @@ CHECKS += [
     ),
     RasterPixelCountCheck(
         error_code=1405,
-        column=models.GlobalSetting.dem_file,
+        column=models.ModelSettings.dem_file,
         filters=first_setting_filter,
     ),
 ]
@@ -2395,36 +2397,36 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=1101,
-        column=models.GlobalSetting.maximum_sim_time_step,
-        invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.maximum_sim_time_step
-            < models.GlobalSetting.sim_time_step
+        column=models.ModelSettings.maximum_sim_time_step,
+        invalid=Query(models.ModelSettings).filter(
+            models.ModelSettings.maximum_sim_time_step
+            < models.ModelSettings.sim_time_step
         ),
         message="v2_global_settings.maximum_sim_time_step must be greater than or equal to v2_global_settings.sim_time_step",
     ),
     QueryCheck(
         error_code=1102,
-        column=models.GlobalSetting.sim_time_step,
-        invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.minimum_sim_time_step
-            > models.GlobalSetting.sim_time_step
+        column=models.ModelSettings.sim_time_step,
+        invalid=Query(models.ModelSettings).filter(
+            models.ModelSettings.minimum_sim_time_step
+            > models.ModelSettings.sim_time_step
         ),
         message="v2_global_settings.minimum_sim_time_step must be less than or equal to v2_global_settings.sim_time_step",
     ),
     QueryCheck(
         error_code=1103,
-        column=models.GlobalSetting.output_time_step,
-        invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.output_time_step < models.GlobalSetting.sim_time_step
+        column=models.ModelSettings.output_time_step,
+        invalid=Query(models.ModelSettings).filter(
+            models.ModelSettings.output_time_step < models.ModelSettings.sim_time_step
         ),
         message="v2_global_settings.output_time_step must be greater than or equal to v2_global_settings.sim_time_step",
     ),
     QueryCheck(
         error_code=1104,
-        column=models.GlobalSetting.maximum_sim_time_step,
-        invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.timestep_plus == True,
-            models.GlobalSetting.maximum_sim_time_step == None,
+        column=models.ModelSettings.maximum_sim_time_step,
+        invalid=Query(models.ModelSettings).filter(
+            models.ModelSettings.timestep_plus == True,
+            models.ModelSettings.maximum_sim_time_step == None,
         ),
         message="v2_global_settings.maximum_sim_time_step cannot be null when "
         "v2_global_settings.timestep_plus is True",
@@ -2433,7 +2435,7 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=1105,
-        column=getattr(models.GlobalSetting, name),
+        column=getattr(models.ModelSettings, name),
         min_value=0,
         left_inclusive=False,
     )
@@ -2448,10 +2450,10 @@ CHECKS += [
     QueryCheck(
         error_code=1106,
         level=CheckLevel.WARNING,
-        column=models.GlobalSetting.minimum_sim_time_step,
-        invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.minimum_sim_time_step
-            > (0.1 * models.GlobalSetting.sim_time_step)
+        column=models.ModelSettings.minimum_sim_time_step,
+        invalid=Query(models.ModelSettings).filter(
+            models.ModelSettings.minimum_sim_time_step
+            > (0.1 * models.ModelSettings.sim_time_step)
         ),
         message="v2_global_settings.minimum_sim_time_step should be at least 10 times smaller than v2_global_settings.sim_time_step",
     )
@@ -2555,7 +2557,7 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=1124,
-        column=models.GlobalSetting.flooding_threshold,
+        column=models.ModelSettings.flooding_threshold,
         min_value=0,
         max_value=0.05,
     ),
@@ -2628,12 +2630,12 @@ CHECKS += [
         column=models.AggregationSettings.timestep,
         invalid=Query(models.AggregationSettings)
         .join(
-            models.GlobalSetting,
-            models.AggregationSettings.global_settings_id == models.GlobalSetting.id,
+            models.ModelSettings,
+            models.AggregationSettings.global_settings_id == models.ModelSettings.id,
         )
         .filter(first_setting_filter)
         .filter(
-            models.AggregationSettings.timestep < models.GlobalSetting.output_time_step
+            models.AggregationSettings.timestep < models.ModelSettings.output_time_step
         ),
         message="v2_aggregation_settings.timestep is smaller than v2_global_settings.output_time_step",
     ),

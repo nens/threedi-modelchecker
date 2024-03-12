@@ -53,7 +53,7 @@ from . import factories
 def test_aggregation_settings(
     session, aggregation_method, flow_variable, expected_result
 ):
-    factories.GlobalSettingsFactory(id=1)
+    factories.ModelSettingsFactory(id=1)
     factories.AggregationSettingsFactory(
         global_settings_id=1,
         aggregation_method=constants.AggregationMethod.CUMULATIVE,
@@ -67,7 +67,7 @@ def test_aggregation_settings(
 
 
 def test_connection_nodes_length(session):
-    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.ModelSettingsFactory(epsg_code=28992)
     factories.WeirFactory(
         connection_node_start=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222995634060702 -0.13872239147499893)"
@@ -98,7 +98,7 @@ def test_connection_nodes_length(session):
 
 
 def test_connection_nodes_length_missing_start_node(session):
-    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.ModelSettingsFactory(epsg_code=28992)
     factories.WeirFactory(
         connection_node_start_id=9999,
         connection_node_end=factories.ConnectionNodeFactory(
@@ -120,7 +120,7 @@ def test_connection_nodes_length_missing_start_node(session):
 def test_connection_nodes_length_missing_end_node(session):
     if session.bind.name == "postgresql":
         pytest.skip("Postgres only accepts coords in epsg 4326")
-    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.ModelSettingsFactory(epsg_code=28992)
     factories.WeirFactory(
         connection_node_start=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
@@ -522,7 +522,7 @@ def test_pumpstation_storage_timestep(
         lower_stop_level=-4.78,
         capacity=capacity,
     )
-    factories.GlobalSettingsFactory(sim_time_step=time_step)
+    factories.ModelSettingsFactory(sim_time_step=time_step)
     check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
@@ -560,7 +560,7 @@ def test_impervious_connection_node_inflow_area(session, value, expected_result)
 )
 def test_inflow_no_features_impervious(session, surface_number, expected_result):
     # add fields
-    factories.GlobalSettingsFactory()
+    factories.ModelSettingsFactory()
     if surface_number > 0:
         factories.ImperviousSurfaceFactory.create_batch(size=surface_number)
 
@@ -580,7 +580,7 @@ def test_inflow_no_features_impervious(session, surface_number, expected_result)
 )
 def test_inflow_no_features_pervious(session, surface_number, expected_result):
     # add fields
-    factories.GlobalSettingsFactory()
+    factories.ModelSettingsFactory()
     if surface_number > 0:
         factories.SurfaceFactory.create_batch(size=surface_number)
 
@@ -682,7 +682,7 @@ def test_defined_area(session, defined_area, max_difference, expected_result):
     ],
 )
 def test_beta_columns(session, value, expected_result):
-    factories.GlobalSettingsFactory(vegetation_drag_settings_id=value)
+    factories.ModelSettingsFactory(vegetation_drag_settings_id=value)
     check = BetaColumnsCheck(models.GlobalSetting.vegetation_drag_settings_id)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result

@@ -153,7 +153,7 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
     """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite."""
 
     def get_invalid(self, session):
-        epsg_code_query = session.query(models.GlobalSetting.epsg_code).first()
+        epsg_code_query = session.query(models.ModelSettings.epsg_code).first()
         if epsg_code_query is not None:
             self.epsg_code = epsg_code_query[0]
         else:
@@ -196,7 +196,7 @@ class RasterGridSizeCheck(BaseRasterCheck):
     """Check whether the global settings' grid size is an even multiple of a raster's cell size (at least 2x)."""
 
     def get_invalid(self, session):
-        grid_space_query = session.query(models.GlobalSetting.grid_space).first()
+        grid_space_query = session.query(models.ModelSettings.grid_space).first()
         if grid_space_query is not None:
             self.grid_space = grid_space_query[0]
         else:

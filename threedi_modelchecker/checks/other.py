@@ -12,12 +12,12 @@ from .geo_query import distance, length, transform
 
 # Use these to make checks only work on the first global settings entry:
 first_setting = (
-    Query(models.GlobalSetting.id)
-    .order_by(models.GlobalSetting.id)
+    Query(models.ModelSettings.id)
+    .order_by(models.ModelSettings.id)
     .limit(1)
     .scalar_subquery()
 )
-first_setting_filter = models.GlobalSetting.id == first_setting
+first_setting_filter = models.ModelSettings.id == first_setting
 
 
 class CorrectAggregationSettingsExist(BaseCheck):
@@ -30,7 +30,7 @@ class CorrectAggregationSettingsExist(BaseCheck):
         *args,
         **kwargs,
     ):
-        super().__init__(column=models.GlobalSetting.id, *args, **kwargs)
+        super().__init__(column=models.ModelSettings.id, *args, **kwargs)
         self.aggregation_method = aggregation_method.value
         self.flow_variable = flow_variable.value
 
@@ -244,12 +244,12 @@ class Use0DFlowCheck(BaseCheck):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(column=models.GlobalSetting.use_0d_inflow, *args, **kwargs)
+        super().__init__(column=models.ModelSettings.use_0d_inflow, *args, **kwargs)
 
     def to_check(self, session):
         """Return a Query object on which this check is applied"""
-        return session.query(models.GlobalSetting).filter(
-            models.GlobalSetting.use_0d_inflow != 0
+        return session.query(models.ModelSettings).filter(
+            models.ModelSettings.use_0d_inflow != 0
         )
 
     def get_invalid(self, session):
@@ -301,7 +301,7 @@ class ConnectionNodes(BaseCheck):
 class ConnectionNodesLength(BaseCheck):
     """Check that the distance between `start_node` and `end_node` is at least
     `min_distance`. The coords will be transformed into (the first entry) of
-    GlobalSettings.epsg_code.
+    ModelSettings.epsg_code.
     """
 
     def __init__(
@@ -744,7 +744,7 @@ class PumpStorageTimestepCheck(BaseCheck):
                         )
                     )
                     / (models.Pumpstation.capacity / 1000)
-                    < Query(models.GlobalSetting.sim_time_step)
+                    < Query(models.ModelSettings.sim_time_step)
                     .filter(first_setting_filter)
                     .scalar_subquery()
                 )
@@ -819,7 +819,7 @@ class InflowNoFeaturesCheck(BaseCheck):
     """Check that the surface table in the global use_0d_inflow setting contains at least 1 feature."""
 
     def __init__(self, *args, surface_table, condition=True, **kwargs):
-        super().__init__(*args, column=models.GlobalSetting.id, **kwargs)
+        super().__init__(*args, column=models.ModelSettings.id, **kwargs)
         self.surface_table = surface_table
         self.condition = condition
 
@@ -828,7 +828,7 @@ class InflowNoFeaturesCheck(BaseCheck):
             select(func.count(self.surface_table.id))
         ).scalar()
         return (
-            session.query(models.GlobalSetting)
+            session.query(models.ModelSettings)
             .filter(self.condition, surface_table_length == 0)
             .all()
         )
