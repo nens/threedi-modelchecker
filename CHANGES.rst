@@ -2,6 +2,12 @@ Changelog of threedi-modelchecker
 =================================
 
 
+2.7.1 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
 2.7.0 (2024-03-12)
 ------------------
 - Support geopackage
