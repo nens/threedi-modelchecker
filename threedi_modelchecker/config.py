@@ -143,11 +143,11 @@ CONDITIONS = {
     ),
     "manning": Query(models.ModelSettings).filter(
         first_setting_filter,
-        models.ModelSettings.frict_type == constants.FrictionType.MANNING,
+        models.ModelSettings.friction_type == constants.FrictionType.MANNING,
     ),
     "chezy": Query(models.ModelSettings).filter(
         first_setting_filter,
-        models.ModelSettings.frict_type == constants.FrictionType.CHEZY,
+        models.ModelSettings.friction_type == constants.FrictionType.CHEZY,
     ),
     "has_groundwater_flow": Query(models.GroundWater).filter(
         groundwater_filter,
@@ -156,7 +156,7 @@ CONDITIONS = {
     ),
 }
 
-kmax = Query(models.ModelSettings.kmax).filter(first_setting_filter).scalar_subquery()
+kmax = Query(models.ModelSettings.nr_grid_levels).filter(first_setting_filter).scalar_subquery()
 
 
 CHECKS: List[BaseCheck] = []
@@ -788,7 +788,7 @@ CHECKS += [
         error_code=107,
         column=models.Manhole.drain_level,
         filters=CONDITIONS["has_no_dem"]
-        .filter(models.ModelSettings.manhole_storage_area > 0)
+        .filter(models.ModelSettings.manhole_aboveground_storage_area > 0)
         .exists(),
         invalid=Query(models.Manhole).filter(
             models.Manhole.calculation_type.in_(
@@ -1199,7 +1199,7 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=305,
-        column=models.ModelSettings.kmax,
+        column=models.ModelSettings.nr_grid_levels,
         filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 is not allowed
@@ -1207,15 +1207,15 @@ CHECKS += [
     RangeCheck(
         error_code=306,
         level=CheckLevel.WARNING,
-        column=models.ModelSettings.dist_calc_points,
+        column=models.ModelSettings.calculation_point_distance_1d,
         filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
-        message="v2_global_settings.dist_calc_points is not greater than 0, in the future this will lead to an error",
+        message="model_settings.calculation_point_distance_1d is not greater than 0, in the future this will lead to an error",
     ),
     RangeCheck(
         error_code=307,
-        column=models.ModelSettings.grid_space,
+        column=models.ModelSettings.minimum_cell_size,
         filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
@@ -1235,7 +1235,7 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=310,
-        column=models.ModelSettings.table_step_size,
+        column=models.ModelSettings.minimum_table_step_size,
         filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,
@@ -1249,14 +1249,14 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=313,
-        column=models.ModelSettings.frict_coef,
+        column=models.ModelSettings.friction_coefficient,
         filters=CONDITIONS["manning"].exists(),
         min_value=0,
         max_value=1,
     ),
     RangeCheck(
         error_code=314,
-        column=models.ModelSettings.frict_coef,
+        column=models.ModelSettings.friction_coefficient,
         filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
@@ -1268,7 +1268,7 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=316,
-        column=models.ModelSettings.manhole_storage_area,
+        column=models.ModelSettings.manhole_aboveground_storage_area,
         filters=first_setting_filter,
         min_value=0,
     ),
@@ -1306,16 +1306,16 @@ CHECKS += [
     QueryCheck(
         level=CheckLevel.WARNING,
         error_code=321,
-        column=models.ModelSettings.manhole_storage_area,
+        column=models.ModelSettings.manhole_aboveground_storage_area,
         invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
-            models.ModelSettings.manhole_storage_area > 0,
+            models.ModelSettings.manhole_aboveground_storage_area > 0,
             (
                 (models.ModelSettings.use_2d_flow == True)
                 | (~is_none_or_empty(models.ModelSettings.dem_file))
             ),
         ),
-        message="sub-basins (v2_global_settings.manhole_storage_area > 0) should only be used when there is no DEM supplied and there is no 2D flow",
+        message="sub-basins (model__settings.manhole_aboveground_storage_area > 0) should only be used when there is no DEM supplied and there is no 2D flow",
     ),
     QueryCheck(
         error_code=322,
@@ -1333,9 +1333,9 @@ CHECKS += [
         invalid=Query(models.ModelSettings).filter(
             first_setting_filter,
             models.ModelSettings.maximum_table_step_size
-            < models.ModelSettings.table_step_size,
+            < models.ModelSettings.minimum_table_step_size,
         ),
-        message="v2_global_settings.maximum_table_step_size should be greater than v2_global_settings.table_step_size.",
+        message="model_settings.maximum_table_step_size should be greater than model_settings.minimum_table_step_size.",
     ),
     QueryCheck(
         error_code=325,
@@ -1350,41 +1350,44 @@ CHECKS += [
     ),
 ]
 
-CHECKS += [
-    QueryCheck(
-        error_code=326,
-        level=CheckLevel.INFO,
-        column=table.id,
-        invalid=Query(table).filter(
-            table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
-        ),
-        message=f"{table.__tablename__} is defined, but not referred to in v2_global_settings.{setting.name}",
-    )
-    for table, setting in (
-        (
-            models.SimpleInfiltration,
-            models.ModelSettings.simple_infiltration_settings_id,
-        ),
-        (models.Interflow, models.ModelSettings.interflow_settings_id),
-        (models.GroundWater, models.ModelSettings.groundwater_settings_id),
-        (models.NumericalSettings, models.ModelSettings.numerical_settings_id),
-        (models.ControlGroup, models.ModelSettings.control_group_id),
-        (models.VegetationDrag, models.ModelSettings.vegetation_drag_settings_id),
-    )
-]
 
-CHECKS += [
-    QueryCheck(
-        error_code=327,
-        column=models.ModelSettings.vegetation_drag_settings_id,
-        invalid=Query(models.ModelSettings).filter(
-            first_setting_filter,
-            ~is_none_or_empty(models.ModelSettings.vegetation_drag_settings_id),
-            models.ModelSettings.frict_type != constants.FrictionType.CHEZY.value,
-        ),
-        message="Vegetation drag can only be used in combination with friction type 1 (Chézy)",
-    )
-]
+# TODO: fix, settings_id no longer exist
+# CHECKS += [
+#     QueryCheck(
+#         error_code=326,
+#         level=CheckLevel.INFO,
+#         column=table.id,
+#         invalid=Query(table).filter(
+#             table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
+#         ),
+#         message=f"{table.__tablename__} is defined, but not referred to in v2_global_settings.{setting.name}",
+#     )
+#     for table, setting in (
+#         (
+#             models.SimpleInfiltration,
+#             models.ModelSettings.simple_infiltration_settings_id,
+#         ),
+#         (models.Interflow, models.ModelSettings.interflow_settings_id),
+#         (models.GroundWater, models.ModelSettings.groundwater_settings_id),
+#         (models.NumericalSettings, models.ModelSettings.numerical_settings_id),
+#         (models.ControlGroup, models.ModelSettings.control_group_id),
+#         (models.VegetationDrag, models.ModelSettings.vegetation_drag_settings_id),
+#     )
+# ]
+
+# TODO: fix, vegetation_drag_settings_id no longer exist
+# CHECKS += [
+#     QueryCheck(
+#         error_code=327,
+#         column=models.ModelSettings.vegetation_drag_settings_id,
+#         invalid=Query(models.ModelSettings).filter(
+#             first_setting_filter,
+#             ~is_none_or_empty(models.ModelSettings.vegetation_drag_settings_id),
+#             models.ModelSettings.friction_type != constants.FrictionType.CHEZY.value,
+#         ),
+#         message="Vegetation drag can only be used in combination with friction type 1 (Chézy)",
+#     )
+# ]
 
 CHECKS += [
     AllEqualCheck(error_code=330 + i, column=column, level=CheckLevel.WARNING)
@@ -1392,28 +1395,24 @@ CHECKS += [
         [
             models.ModelSettings.use_2d_flow,
             models.ModelSettings.use_1d_flow,
-            models.ModelSettings.grid_space,
-            models.ModelSettings.dist_calc_points,
-            models.ModelSettings.kmax,
+            models.ModelSettings.minimum_cell_size,
+            models.ModelSettings.calculation_point_distance_1d,
+            models.ModelSettings.nr_grid_levels,
             models.ModelSettings.dem_file,
             models.ModelSettings.embedded_cutoff_threshold,
             models.ModelSettings.epsg_code,
             models.ModelSettings.max_angle_1d_advection,
-            models.ModelSettings.frict_avg,
+            models.ModelSettings.friction_averaging,
             models.ModelSettings.use_0d_inflow,
-            models.ModelSettings.manhole_storage_area,
-            models.ModelSettings.table_step_size,
-            models.ModelSettings.frict_type,
-            models.ModelSettings.frict_coef,
-            models.ModelSettings.frict_coef_file,
+            models.ModelSettings.manhole_aboveground_storage_area,
+            models.ModelSettings.minimum_table_step_size,
+            models.ModelSettings.friction_type,
+            models.ModelSettings.friction_coefficient,
+            models.ModelSettings.friction_coefficient_file,
             models.ModelSettings.interception_global,
             models.ModelSettings.interception_file,
             models.ModelSettings.table_step_size_1d,
             models.ModelSettings.maximum_table_step_size,
-            models.ModelSettings.interflow_settings_id,
-            models.ModelSettings.simple_infiltration_settings_id,
-            models.ModelSettings.groundwater_settings_id,
-            models.ModelSettings.vegetation_drag_settings_id,
         ]
     )
 ]
@@ -1421,11 +1420,11 @@ CHECKS += [
     RangeCheck(
         error_code=360,
         level=CheckLevel.WARNING,
-        column=models.ModelSettings.dist_calc_points,
+        column=models.ModelSettings.calculation_point_distance_1d,
         filters=first_setting_filter,
         min_value=5.0,
         left_inclusive=True,  # 0 itself is not allowed
-        message="v2_global_settings.dist_calc_points should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
+        message="model_settings.calculation_point_distance_1d should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
     )
 ]
 
@@ -2111,7 +2110,7 @@ CHECKS += [
 # 07xx: RASTERS
 RASTER_COLUMNS_FILTERS = [
     (models.ModelSettings.dem_file, first_setting_filter),
-    (models.ModelSettings.frict_coef_file, first_setting_filter),
+    (models.ModelSettings.friction_coefficient_file, first_setting_filter),
     (models.ModelSettings.interception_file, first_setting_filter),
     (models.Interflow.porosity_file, interflow_filter),
     (
@@ -2154,7 +2153,9 @@ RASTER_COLUMNS_FILTERS = [
     (models.ModelSettings.initial_waterlevel_file, first_setting_filter),
     (
         models.ModelSettings.initial_groundwater_level_file,
-        first_setting_filter & (models.ModelSettings.groundwater_settings_id != None),
+        first_setting_filter,
+        # TODO: fix this, groundwater_settings_id no longer exists
+        #& (models.ModelSettings.groundwater_settings_id != None),
     ),
     (models.VegetationDrag.vegetation_height_file, vegetation_drag_filter),
     (models.VegetationDrag.vegetation_stem_count_file, vegetation_drag_filter),
@@ -2220,14 +2221,14 @@ CHECKS += [
     ),
     RasterRangeCheck(
         error_code=782,
-        column=models.ModelSettings.frict_coef_file,
+        column=models.ModelSettings.friction_coefficient_file,
         filters=CONDITIONS["manning"].exists(),
         min_value=0,
         max_value=1,
     ),
     RasterRangeCheck(
         error_code=783,
-        column=models.ModelSettings.frict_coef_file,
+        column=models.ModelSettings.friction_coefficient_file,
         filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
@@ -2304,8 +2305,8 @@ CHECKS += [
     RasterRangeCheck(
         error_code=796,
         column=models.ModelSettings.initial_groundwater_level_file,
-        filters=first_setting_filter
-        & (models.ModelSettings.groundwater_settings_id != None),
+        filters=first_setting_filter,
+        #& (models.ModelSettings.groundwater_settings_id != None),
         min_value=-9998.0,
         max_value=8848.0,
     ),
@@ -2358,7 +2359,7 @@ CHECKS += [
         error_code=800,
         column=model.refinement_level,
         invalid=Query(model).filter(model.refinement_level > kmax),
-        message=f"{model.__table__.name}.refinement_level must not be greater than v2_global_settings.kmax",
+        message=f"{model.__table__.name}.refinement_level must not be greater than model_settings.nr_grid_levels",
     )
     for model in (models.GridRefinement, models.GridRefinementArea)
 ]
@@ -2376,7 +2377,7 @@ CHECKS += [
         level=CheckLevel.INFO,
         column=model.refinement_level,
         invalid=Query(model).filter(model.refinement_level == kmax),
-        message=f"{model.__table__.name}.refinement_level is equal to v2_global_settings.kmax and will "
+        message=f"{model.__table__.name}.refinement_level is equal to model_settings.nr_grid_levels and will "
         "therefore not have any effect. Lower the refinement_level to make the cells smaller.",
     )
     for model in (models.GridRefinement, models.GridRefinementArea)
