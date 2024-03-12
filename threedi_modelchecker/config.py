@@ -111,31 +111,20 @@ first_setting = (
 )
 first_setting_filter = models.ModelSettings.id == first_setting
 
-interflow_settings_id = (
-    Query(models.ModelSettings.interflow_settings_id)
-    .filter(first_setting_filter)
-    .scalar_subquery()
-)
-interflow_filter = models.Interflow.id == interflow_settings_id
+def get_settings_id(settings_model):
+    return Query(settings_model.id).limit(1).scalar_subquery()
 
-infiltration_settings_id = (
-    Query(models.ModelSettings.simple_infiltration_settings_id)
-    .filter(first_setting_filter)
-    .scalar_subquery()
-)
-infiltration_filter = models.SimpleInfiltration.id == infiltration_settings_id
-groundwater_settings_id = (
-    Query(models.ModelSettings.groundwater_settings_id)
-    .filter(first_setting_filter)
-    .scalar_subquery()
-)
-groundwater_filter = models.GroundWater.id == groundwater_settings_id
-vegetation_drag_settings_id = (
-    Query(models.ModelSettings.vegetation_drag_settings_id)
-    .filter(first_setting_filter)
-    .scalar_subquery()
-)
-vegetation_drag_filter = models.VegetationDrag.id == vegetation_drag_settings_id
+interflow_settings_id = get_settings_id(models.Interflow)
+interflow_filter = models.ModelSettings.use_interflow
+
+infiltration_settings_id = get_settings_id(models.SimpleInfiltration)
+infiltration_filter = models.ModelSettings.use_simple_infiltration
+
+groundwater_settings_id = get_settings_id(models.GroundWater)
+groundwater_filter = models.ModelSettings.use_groundwater_flow
+
+vegetation_drag_settings_id = get_settings_id(models.VegetationDrag)
+vegetation_filter = models.ModelSettings.use_vegetation_drag_2d
 
 CONDITIONS = {
     "has_dem": Query(models.ModelSettings).filter(
