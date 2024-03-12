@@ -36,7 +36,7 @@ def test_gen_not_null_checks():
 def test_gen_geometry_check():
     geometry_checks = generate_geometry_checks(models.ConnectionNode.__table__)
 
-    assert len(geometry_checks) == 2
+    assert len(geometry_checks) == 1
     geometry_check_columns = [check.column for check in geometry_checks]
     assert models.ConnectionNode.the_geom in geometry_check_columns
 

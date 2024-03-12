@@ -878,16 +878,6 @@ CHECKS += [
     for table in [models.Channel, models.Culvert]
 ]
 CHECKS += [
-    QueryCheck(
-        error_code=206,
-        column=models.ConnectionNode.the_geom_linestring,
-        invalid=Query(models.ConnectionNode).filter(
-            models.ConnectionNode.the_geom_linestring != None
-        ),
-        message=f"{models.ConnectionNode.the_geom_linestring} must be NULL",
-    )
-]
-CHECKS += [
     SpatialIndexCheck(
         error_code=207, column=models.ConnectionNode.the_geom, level=CheckLevel.WARNING
     )

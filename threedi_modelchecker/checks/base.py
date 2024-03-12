@@ -221,7 +221,9 @@ class TypeCheck(BaseCheck):
         self.expected_types = _sqlalchemy_to_sqlite_types(self.column.type)
 
     def get_invalid(self, session):
-        if "sqlite" not in session.bind.dialect.dialect_description:
+        if ("sqlite" not in session.bind.dialect.dialect_description) and (
+            "geopackage" not in session.bind.dialect.dialect_description
+        ):
             return []
         q_invalid = self.to_check(session)
         invalid_type_query = q_invalid.filter(
@@ -311,7 +313,7 @@ class GeometryTypeCheck(BaseCheck):
 def _get_geometry_type(column, dialect):
     if column.type.geometry_type == "GEOMETRY":
         return  # should skip the check
-    if dialect == "sqlite":
+    if dialect in ["sqlite", "geopackage"]:
         return column.type.geometry_type
     elif dialect == "postgresql":
         geom_type = column.type.geometry_type.capitalize()
