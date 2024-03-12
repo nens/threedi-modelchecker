@@ -151,8 +151,8 @@ CONDITIONS = {
     ),
     "has_groundwater_flow": Query(models.GroundWater).filter(
         groundwater_filter,
-        models.GroundWater.groundwater_hydro_connectivity.isnot(None)
-        | ~is_none_or_empty(models.GroundWater.groundwater_hydro_connectivity_file),
+        models.GroundWater.groundwater_hydraulic_conductivity.isnot(None)
+        | ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
     ),
 }
 
@@ -1524,23 +1524,23 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=408,
-        column=models.GroundWater.infiltration_decay_period_type,
+        column=models.GroundWater.infiltration_decay_period_aggregation,
         invalid=Query(models.GroundWater).filter(
             groundwater_filter,
-            models.GroundWater.infiltration_decay_period_type == None,
+            models.GroundWater.infiltration_decay_period_aggregation == None,
             ~is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
         ),
-        message="an infiltration decay period type (v2_groundwater.infiltration_decay_period_type) should be defined when using an infiltration decay period file.",
+        message="an infiltration decay period type (groundwater.infiltration_decay_period_aggregation) should be defined when using an infiltration decay period file.",
     ),
     QueryCheck(
         error_code=409,
-        column=models.GroundWater.groundwater_hydro_connectivity_type,
+        column=models.GroundWater.groundwater_hydraulic_conductivity_aggregation,
         invalid=Query(models.GroundWater).filter(
             groundwater_filter,
-            models.GroundWater.groundwater_hydro_connectivity_type == None,
-            ~is_none_or_empty(models.GroundWater.groundwater_hydro_connectivity_file),
+            models.GroundWater.groundwater_hydraulic_conductivity_aggregation == None,
+            ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
         ),
-        message="v2_groundwater.groundwater_hydro_connectivity_type should be defined when using a groundwater_hydro_connectivity_file.",
+        message="groundwater.groundwater_hydraulic_conductivity_aggregation should be defined when using a groundwater_hydraulic_conductivity_file.",
     ),
     QueryCheck(
         error_code=410,
@@ -1569,15 +1569,15 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=411,
-        column=models.GroundWater.groundwater_impervious_layer_level_type,
+        column=models.GroundWater.groundwater_impervious_layer_level_aggregation,
         invalid=Query(models.GroundWater).filter(
             groundwater_filter,
-            models.GroundWater.groundwater_impervious_layer_level_type == None,
+            models.GroundWater.groundwater_impervious_layer_level_aggregation == None,
             ~is_none_or_empty(
                 models.GroundWater.groundwater_impervious_layer_level_file
             ),
         ),
-        message="v2_groundwater.groundwater_impervious_layer_level_type should be defined when using a groundwater_impervious_layer_level_file",
+        message="v2_groundwater.groundwater_impervious_layer_level_aggregation should be defined when using a groundwater_impervious_layer_level_file",
     ),
     QueryCheck(
         error_code=412,
@@ -1602,13 +1602,13 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=413,
-        column=models.GroundWater.initial_infiltration_rate_type,
+        column=models.GroundWater.initial_infiltration_rate_aggregation,
         invalid=Query(models.GroundWater).filter(
             groundwater_filter,
-            models.GroundWater.initial_infiltration_rate_type == None,
+            models.GroundWater.initial_infiltration_rate_aggregation == None,
             ~is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
         ),
-        message="v2_groundwater.initial_infiltration_rate_type should be defined when using an initial infiltration rate file.",
+        message="v2_groundwater.initial_infiltration_rate_aggregation should be defined when using an initial infiltration rate file.",
     ),
     QueryCheck(
         error_code=414,
@@ -1633,13 +1633,13 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=415,
-        column=models.GroundWater.phreatic_storage_capacity_type,
+        column=models.GroundWater.phreatic_storage_capacity_aggregation,
         invalid=Query(models.GroundWater).filter(
             groundwater_filter,
-            models.GroundWater.phreatic_storage_capacity_type == None,
+            models.GroundWater.phreatic_storage_capacity_aggregation == None,
             ~is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
         ),
-        message="a phreatic storage capacity type (v2_groundwater.phreatic_storage_capacity_type) should be defined when using a phreatic storage capacity file.",
+        message="a phreatic storage capacity type (v2_groundwater.phreatic_storage_capacity_aggregation) should be defined when using a phreatic storage capacity file.",
     ),
     QueryCheck(
         error_code=416,
@@ -1724,26 +1724,26 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=421,
-        column=models.GroundWater.groundwater_hydro_connectivity,
+        column=models.GroundWater.groundwater_hydraulic_conductivity,
         filters=groundwater_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=422,
-        column=models.SimpleInfiltration.max_infiltration_capacity,
+        column=models.SimpleInfiltration.max_infiltration_volume,
         filters=infiltration_filter,
         min_value=0,
     ),
     QueryCheck(
         error_code=423,
         level=CheckLevel.WARNING,
-        column=models.SimpleInfiltration.max_infiltration_capacity,
+        column=models.SimpleInfiltration.max_infiltration_volume,
         invalid=Query(models.SimpleInfiltration).filter(
             infiltration_filter,
-            models.SimpleInfiltration.max_infiltration_capacity == None,
-            ~is_none_or_empty(models.SimpleInfiltration.max_infiltration_capacity_file),
+            models.SimpleInfiltration.max_infiltration_volume == None,
+            ~is_none_or_empty(models.SimpleInfiltration.max_infiltration_volume),
         ),
-        message="v2_simple_infiltration.max_infiltration_capacity is recommended as fallback value when using an max_infiltration_capacity_file.",
+        message="simple_infiltration.max_infiltration_volume is recommended as fallback value when using an max_infiltration_volume_file.",
     ),
     RangeCheck(
         error_code=424,
@@ -1774,13 +1774,13 @@ CHECKS += [
     QueryCheck(
         error_code=428,
         level=CheckLevel.WARNING,
-        column=models.GroundWater.groundwater_hydro_connectivity,
+        column=models.GroundWater.groundwater_hydraulic_conductivity,
         invalid=Query(models.GroundWater).filter(
             groundwater_filter,
-            (models.GroundWater.groundwater_hydro_connectivity == None),
-            ~is_none_or_empty(models.GroundWater.groundwater_hydro_connectivity_file),
+            (models.GroundWater.groundwater_hydraulic_conductivity == None),
+            ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
         ),
-        message="v2_groundwater.groundwater_hydro_connectivity is recommended as fallback value when using a groundwater_hydro_connectivity_file.",
+        message="v2_groundwater.groundwater_hydraulic_conductivity is recommended as fallback value when using a groundwater_hydraulic_conductivity_file.",
     ),
     RangeCheck(
         error_code=429,
@@ -2081,7 +2081,7 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=607,
-        column=models.SurfaceParameter.max_infiltration_capacity,
+        column=models.SurfaceParameter.max_infiltration_volume,
         min_value=0,
         filters=filters,
     ),
@@ -2122,7 +2122,7 @@ RASTER_COLUMNS_FILTERS = [
         infiltration_filter,
     ),
     (
-        models.SimpleInfiltration.max_infiltration_capacity_file,
+        models.SimpleInfiltration.max_infiltration_volume_file,
         infiltration_filter,
     ),
     (
@@ -2146,7 +2146,7 @@ RASTER_COLUMNS_FILTERS = [
         groundwater_filter,
     ),
     (
-        models.GroundWater.groundwater_hydro_connectivity_file,
+        models.GroundWater.groundwater_hydraulic_conductivity_file,
         groundwater_filter,
     ),
     (models.GroundWater.leakage_file, groundwater_filter),
@@ -2253,7 +2253,7 @@ CHECKS += [
     ),
     RasterRangeCheck(
         error_code=787,
-        column=models.SimpleInfiltration.max_infiltration_capacity_file,
+        column=models.SimpleInfiltration.max_infiltration_volume_file,
         filters=infiltration_filter,
         min_value=0,
     ),
@@ -2292,7 +2292,7 @@ CHECKS += [
     ),
     RasterRangeCheck(
         error_code=793,
-        column=models.GroundWater.groundwater_hydro_connectivity_file,
+        column=models.GroundWater.groundwater_hydraulic_conductivity_file,
         filters=groundwater_filter,
         min_value=0,
     ),
@@ -2496,26 +2496,26 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=1116,
-        column=models.NumericalSettings.max_nonlin_iterations,
+        column=models.NumericalSettings.max_non_linear_newton_iterations,
         filters=models.NumericalSettings.global_settings != None,
         min_value=1,
     ),
     RangeCheck(
         error_code=1117,
-        column=models.NumericalSettings.max_degree,
+        column=models.NumericalSettings.max_degree_gauss_seidel,
         filters=models.NumericalSettings.global_settings != None,
         min_value=1,
     ),
     RangeCheck(
         error_code=1118,
-        column=models.NumericalSettings.minimum_friction_velocity,
+        column=models.NumericalSettings.min_friction_velocity,
         filters=models.NumericalSettings.global_settings != None,
         min_value=0,
         max_value=1,
     ),
     RangeCheck(
         error_code=1119,
-        column=models.NumericalSettings.minimum_surface_area,
+        column=models.NumericalSettings.min_surface_area,
         filters=models.NumericalSettings.global_settings != None,
         min_value=1e-13,
         max_value=1e-7,
@@ -2535,7 +2535,7 @@ CHECKS += [
     ),
     RangeCheck(
         error_code=1122,
-        column=models.NumericalSettings.thin_water_layer_definition,
+        column=models.NumericalSettings.limiter_slope_thin_water_layer,
         filters=models.NumericalSettings.global_settings != None,
         min_value=0,
     ),
@@ -2553,27 +2553,27 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=1125,
-        column=models.NumericalSettings.thin_water_layer_definition,
+        column=models.NumericalSettings.limiter_slope_thin_water_layer,
         invalid=Query(models.NumericalSettings).filter(
             (models.NumericalSettings.global_settings != None)
-            & (models.NumericalSettings.frict_shallow_water_correction == 3)
-            & (models.NumericalSettings.thin_water_layer_definition <= 0)
+            & (models.NumericalSettings.friction_shallow_water_depth_correction == 3)
+            & (models.NumericalSettings.limiter_slope_thin_water_layer <= 0)
         ),
-        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using frict_shallow_water_correction option 3.",
+        message="numerical_settings.limiter_slope_thin_water_layer must be greater than 0 when using friction_shallow_water_depth_correction option 3.",
     ),
     QueryCheck(
         error_code=1126,
-        column=models.NumericalSettings.thin_water_layer_definition,
+        column=models.NumericalSettings.limiter_slope_thin_water_layer,
         invalid=Query(models.NumericalSettings).filter(
             (models.NumericalSettings.global_settings != None)
             & (models.NumericalSettings.limiter_slope_crossectional_area_2d == 3)
-            & (models.NumericalSettings.thin_water_layer_definition <= 0)
+            & (models.NumericalSettings.limiter_slope_thin_water_layer <= 0)
         ),
-        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using limiter_slope_crossectional_area_2d option 3.",
+        message="numerical_settings.limiter_slope_thin_water_layer must be greater than 0 when using limiter_slope_crossectional_area_2d option 3.",
     ),
     QueryCheck(
         error_code=1127,
-        column=models.NumericalSettings.thin_water_layer_definition,
+        column=models.NumericalSettings.limiter_slope_thin_water_layer,
         invalid=Query(models.NumericalSettings).filter(
             (models.NumericalSettings.global_settings != None)
             & (models.NumericalSettings.limiter_slope_friction_2d == 0)
@@ -2612,12 +2612,12 @@ CHECKS += [
     AllEqualCheck(
         error_code=1152,
         level=CheckLevel.WARNING,
-        column=models.AggregationSettings.timestep,
+        column=models.AggregationSettings.interval,
     ),
     QueryCheck(
         error_code=1153,
         level=CheckLevel.WARNING,
-        column=models.AggregationSettings.timestep,
+        column=models.AggregationSettings.interval,
         invalid=Query(models.AggregationSettings)
         .join(
             models.ModelSettings,
@@ -2625,9 +2625,9 @@ CHECKS += [
         )
         .filter(first_setting_filter)
         .filter(
-            models.AggregationSettings.timestep < models.ModelSettings.output_time_step
+            models.AggregationSettings.interval < models.TimeStepSettings.output_time_step
         ),
-        message="v2_aggregation_settings.timestep is smaller than v2_global_settings.output_time_step",
+        message="aggregation_settings.interval is smaller than time_step_settings.output_time_step",
     ),
 ]
 CHECKS += [
