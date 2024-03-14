@@ -58,7 +58,7 @@ def test_gen_enum_checks_varcharenum():
 
 
 @pytest.mark.parametrize(
-    "name", ["*.aggregation_method", "v2_aggregation_settings.aggregation_method"]
+    "name", ["*.aggregation_method", "aggregation_settings.aggregation_method"]
 )
 def test_gen_enum_checks_custom_mapping(name):
     enum_checks = generate_enum_checks(

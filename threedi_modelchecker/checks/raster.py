@@ -169,7 +169,7 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
             return raster.epsg_code == self.epsg_code
 
     def description(self):
-        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match v2_global_settings.epsg_code"
+        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match model_settings.epsg_code"
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):
@@ -196,9 +196,9 @@ class RasterGridSizeCheck(BaseRasterCheck):
     """Check whether the global settings' grid size is an even multiple of a raster's cell size (at least 2x)."""
 
     def get_invalid(self, session):
-        grid_space_query = session.query(models.ModelSettings.grid_space).first()
-        if grid_space_query is not None:
-            self.grid_space = grid_space_query[0]
+        minimum_cell_size_query = session.query(models.ModelSettings.minimum_cell_size).first()
+        if minimum_cell_size_query is not None:
+            self.minimum_cell_size = minimum_cell_size_query[0]
         else:
             return []
         return super().get_invalid(session)
@@ -211,17 +211,17 @@ class RasterGridSizeCheck(BaseRasterCheck):
             try:
                 return (
                     isclose(
-                        a=((self.grid_space / raster.pixel_size[0]) % 2),
+                        a=((self.minimum_cell_size / raster.pixel_size[0]) % 2),
                         b=0,
                         rel_tol=1e-09,
                     )
-                ) and (self.grid_space >= (2 * raster.pixel_size[0]))
+                ) and (self.minimum_cell_size >= (2 * raster.pixel_size[0]))
             # if one of the fields is a NoneType it will be caught elsewhere
             except TypeError:
                 return True
 
     def description(self):
-        return "v2_global_settings.grid_space is not a positive even multiple of the raster cell size."
+        return "model_settings.minimum_cell_size is not a positive even multiple of the raster cell size."
 
 
 class RasterPixelCountCheck(BaseRasterCheck):

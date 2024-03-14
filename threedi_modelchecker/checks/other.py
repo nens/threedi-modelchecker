@@ -43,10 +43,6 @@ class CorrectAggregationSettingsExist(BaseCheck):
                 == self.aggregation_method,
                 models.AggregationSettings.flow_variable == self.flow_variable,
             )
-            .filter(
-                models.AggregationSettings.global_settings_id
-                == global_settings.subquery().c.id
-            )
         ).all()
 
         return global_settings.all() if len(correctly_defined) == 0 else []
@@ -469,7 +465,7 @@ class ChannelManholeLevelCheck(BaseCheck):
 
 class OpenChannelsWithNestedNewton(BaseCheck):
     """Checks whether the model has any closed cross-section in use when the
-    NumericalSettings.use_of_nested_newton is turned off.
+    NumericalSettings.use_nested_newton is turned off.
 
     See https://github.com/nens/threeditoolbox/issues/522
     """
@@ -479,7 +475,7 @@ class OpenChannelsWithNestedNewton(BaseCheck):
             column=models.CrossSectionDefinition.id,
             level=level,
             filters=Query(models.NumericalSettings)
-            .filter(models.NumericalSettings.use_of_nested_newton == 0)
+            .filter(models.NumericalSettings.use_nested_newton == 0)
             .exists(),
             *args,
             **kwargs,
@@ -532,8 +528,8 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     def description(self) -> str:
         return (
             f"{self.column_name} has a closed cross section definition while "
-            f"NumericalSettings.use_of_nested_newton is switched off. "
-            f"This gives convergence issues. We recommend setting use_of_nested_newton = 1."
+            f"NumericalSettings.use_nested_newton is switched off. "
+            f"This gives convergence issues. We recommend setting use_nested_newton1 = 1."
         )
 
 
@@ -834,7 +830,7 @@ class InflowNoFeaturesCheck(BaseCheck):
         )
 
     def description(self) -> str:
-        return f"v2_global_settings.use_0d_inflow is set to use {self.surface_table.__tablename__}, but {self.surface_table.__tablename__} does not contain any features."
+        return f"model_settings.use_0d_inflow is set to use {self.surface_table.__tablename__}, but {self.surface_table.__tablename__} does not contain any features."
 
 
 class NodeSurfaceConnectionsCheck(BaseCheck):

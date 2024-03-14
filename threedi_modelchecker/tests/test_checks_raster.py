@@ -333,7 +333,7 @@ def test_square_cells_rounding(tmp_path, interface_cls):
     "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
 )
 @pytest.mark.parametrize(
-    "raster_pixel_size, sqlite_grid_space, validity",
+    "raster_pixel_size, sqlite_minimum_cell_size, validity",
     [
         (2, 7, False),
         (2, 4, True),
@@ -344,13 +344,13 @@ def test_square_cells_rounding(tmp_path, interface_cls):
     ],
 )
 def test_raster_grid_size(
-    tmp_path, interface_cls, raster_pixel_size, sqlite_grid_space, validity
+    tmp_path, interface_cls, raster_pixel_size, sqlite_minimum_cell_size, validity
 ):
     path = create_geotiff(
         tmp_path / "raster.tiff", dx=raster_pixel_size, dy=raster_pixel_size
     )
     check = RasterGridSizeCheck(column=models.ModelSettings.dem_file)
-    check.grid_space = sqlite_grid_space
+    check.minimum_cell_size = sqlite_minimum_cell_size
     assert check.is_valid(path, interface_cls) == validity
 
 
@@ -404,7 +404,7 @@ def test_raster_range_ok(valid_geotiff, interface_cls):
 def test_raster_range_err(valid_geotiff, kwargs, msg, interface_cls):
     check = RasterRangeCheck(column=models.ModelSettings.dem_file, **kwargs)
     assert not check.is_valid(valid_geotiff, interface_cls)
-    assert check.description() == msg.format("v2_global_settings.dem_file")
+    assert check.description() == msg.format("model_settings.dem_file")
 
 
 @pytest.mark.parametrize(
