@@ -2335,7 +2335,7 @@ CHECKS += [
         column=models.GlobalSetting.frict_coef_file,
         filters=CONDITIONS["chezy"].exists(),
         min_value=1,
-        message=f"Some pixels in {models.GlobalSetting.name}.{models.GlobalSetting.frict_coef_file.name} are less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
+        message=f"Some pixels in {models.GlobalSetting.__tablename__}.{models.GlobalSetting.frict_coef_file.name} are less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
     ),
     ## 100xx: We continue raster checks from 1400
     RasterRangeCheck(
