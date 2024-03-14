@@ -300,7 +300,7 @@ class RasterRangeCheck(BaseRasterCheck):
         return f"{self.column_name} has values {' and/or '.join(parts)} or is empty"
 
 
-class CompressionUsedCheck(BaseRasterCheck):
+class RasterCompressionUsedCheck(BaseRasterCheck):
     """Checks whether compression was used for the raster"""
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
