@@ -300,6 +300,18 @@ class RasterRangeCheck(BaseRasterCheck):
         return f"{self.column_name} has values {' and/or '.join(parts)} or is empty"
 
 
+class CompressionUsedCheck(BaseRasterCheck):
+    """Checks whether compression was used for the raster"""
+
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
+            if raster.compression != "NONE":
+                return True
+
+    def description(self):
+        return "Raster is not compressed. It is recommended to use DEFLATE compression. This speeds up uploading and downloading and reduces storage space."
+
+
 @dataclass
 class GDALUnavailable:
     id: int
