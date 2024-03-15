@@ -32,9 +32,9 @@ class TimeStepSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     output_time_step = 300
     use_time_step_stretch = False
 
-class ModelSettingsSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class ModelSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.ModelSettingsSetting
+        model = models.ModelSettings
         sqlalchemy_session = None
 
     nr_timesteps = 120
