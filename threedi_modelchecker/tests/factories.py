@@ -177,10 +177,9 @@ class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.AggregationSettings
         sqlalchemy_session = None
 
-    var_name = Faker("name")
     flow_variable = "waterlevel"
     aggregation_method = "avg"
-    timestep = 10
+    interval = 10
 
 
 class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
