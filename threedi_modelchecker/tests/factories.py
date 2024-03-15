@@ -189,7 +189,7 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     max_degree_gauss_seidel = 1
     use_of_cg = 20
-    use_of_nested_newton = 0
+    use_nested_newton = 0
     flooding_threshold = 0.01
 
 

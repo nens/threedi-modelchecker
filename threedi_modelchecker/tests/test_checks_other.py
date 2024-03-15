@@ -55,7 +55,6 @@ def test_aggregation_settings(
 ):
     factories.ModelSettingsFactory(id=1)
     factories.AggregationSettingsFactory(
-        global_settings_id=1,
         aggregation_method=constants.AggregationMethod.CUMULATIVE,
         flow_variable=constants.FlowVariable.PUMP_DISCHARGE,
     )
@@ -140,7 +139,7 @@ def test_connection_nodes_length_missing_end_node(session):
 
 
 def test_open_channels_with_nested_newton(session):
-    factories.NumericalSettingsFactory(use_of_nested_newton=0)
+    factories.NumericalSettingsFactory(use_nested_newton=0)
     channel = factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-71.064544 42.28787)"
