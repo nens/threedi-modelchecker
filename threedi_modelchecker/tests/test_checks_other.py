@@ -683,8 +683,10 @@ def test_defined_area(session, defined_area, max_difference, expected_result):
     ],
 )
 def test_beta_columns(session, value, expected_result):
-    factories.ModelSettingsFactory(vegetation_drag_settings_id=value)
-    check = BetaColumnsCheck(models.ModelSettings.vegetation_drag_settings_id)
+    # Note that the BetaColumnsCheck is just a check for value=None.
+    # So it can be mocked with any nullable column
+    factories.ModelSettingsFactory(friction_averaging=value)
+    check = BetaColumnsCheck(models.ModelSettings.friction_averaging)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
