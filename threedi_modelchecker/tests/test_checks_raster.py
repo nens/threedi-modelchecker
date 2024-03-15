@@ -99,25 +99,25 @@ def invalid_geotiff(tmp_path):
 
 
 def test_base_to_check(session):
-    factories.ModelSettingssFactory(dem_file="somefile")
+    factories.ModelSettingsFactory(dem_file="somefile")
     check = BaseRasterCheck(column=models.ModelSettings.dem_file)
     assert check.to_check(session).count() == 1
 
 
 def test_base_to_check_ignores_empty(session):
-    factories.ModelSettingssFactory(dem_file="")
+    factories.ModelSettingsFactory(dem_file="")
     check = BaseRasterCheck(column=models.ModelSettings.dem_file)
     assert check.to_check(session).count() == 0
 
 
 def test_base_to_check_ignores_none(session):
-    factories.ModelSettingssFactory(dem_file=None)
+    factories.ModelSettingsFactory(dem_file=None)
     check = BaseRasterCheck(column=models.ModelSettings.dem_file)
     assert check.to_check(session).count() == 0
 
 
 def test_base_get_invalid_local(mocked_check, session_local, invalid_geotiff):
-    factories.ModelSettingssFactory(dem_file="raster.tiff")
+    factories.ModelSettingsFactory(dem_file="raster.tiff")
     assert mocked_check.get_invalid(session_local) == []
     mocked_check.is_valid.assert_called_once_with(
         invalid_geotiff, session_local.model_checker_context.raster_interface
@@ -125,13 +125,13 @@ def test_base_get_invalid_local(mocked_check, session_local, invalid_geotiff):
 
 
 def test_base_get_invalid_local_no_file(mocked_check, session_local):
-    factories.ModelSettingssFactory(dem_file="somefile")
+    factories.ModelSettingsFactory(dem_file="somefile")
     assert mocked_check.get_invalid(session_local) == []
     assert not mocked_check.is_valid.called
 
 
 def test_base_get_invalid_server(mocked_check, context_server, session_server):
-    factories.ModelSettingssFactory(dem_file="somefile")
+    factories.ModelSettingsFactory(dem_file="somefile")
     context_server.available_rasters = {"dem_file": "http://tempurl"}
     assert mocked_check.get_invalid(session_server) == []
     mocked_check.is_valid.assert_called_once_with(
@@ -140,7 +140,7 @@ def test_base_get_invalid_server(mocked_check, context_server, session_server):
 
 
 def test_base_get_invalid_server_no_file(mocked_check, context_server, session_server):
-    factories.ModelSettingssFactory(dem_file="somefile")
+    factories.ModelSettingsFactory(dem_file="somefile")
     context_server.available_rasters = {"other": "http://tempurl"}
     assert mocked_check.get_invalid(session_server) == []
     assert not mocked_check.is_valid.called
@@ -149,7 +149,7 @@ def test_base_get_invalid_server_no_file(mocked_check, context_server, session_s
 def test_base_get_invalid_server_available_set(
     mocked_check, context_server, session_server
 ):
-    factories.ModelSettingssFactory(dem_file="somefile")
+    factories.ModelSettingsFactory(dem_file="somefile")
     context_server.available_rasters = {"dem_file"}
     assert mocked_check.get_invalid(session_server) == []
     assert not mocked_check.is_valid.called
@@ -166,13 +166,13 @@ def test_base_no_gdal(mocked_check, session_local):
 
 
 def test_exists_local_ok(session_local, invalid_geotiff):
-    factories.ModelSettingssFactory(dem_file="raster.tiff")
+    factories.ModelSettingsFactory(dem_file="raster.tiff")
     check = RasterExistsCheck(column=models.ModelSettings.dem_file)
     assert check.get_invalid(session_local) == []
 
 
 def test_exists_local_err(session_local):
-    factories.ModelSettingssFactory(dem_file="raster.tiff")
+    factories.ModelSettingsFactory(dem_file="raster.tiff")
     check = RasterExistsCheck(column=models.ModelSettings.dem_file)
     assert len(check.get_invalid(session_local)) == 1
 
@@ -181,7 +181,7 @@ def test_exists_local_err(session_local):
     "available_rasters", [{"dem_file": "http://tempurl"}, {"dem_file"}]
 )
 def test_exists_server_ok(session_server, context_server, available_rasters):
-    factories.ModelSettingssFactory(dem_file="raster.tiff")
+    factories.ModelSettingsFactory(dem_file="raster.tiff")
     check = RasterExistsCheck(column=models.ModelSettings.dem_file)
     context_server.available_rasters = available_rasters
     assert check.get_invalid(session_server) == []
@@ -189,7 +189,7 @@ def test_exists_server_ok(session_server, context_server, available_rasters):
 
 @pytest.mark.parametrize("available_rasters", [{"other": "http://tempurl"}, {"other"}])
 def test_exists_server_err(session_server, context_server, available_rasters):
-    factories.ModelSettingssFactory(dem_file="raster.tiff")
+    factories.ModelSettingsFactory(dem_file="raster.tiff")
     check = RasterExistsCheck(column=models.ModelSettings.dem_file)
     context_server.available_rasters = available_rasters
     assert len(check.get_invalid(session_server)) == 1
