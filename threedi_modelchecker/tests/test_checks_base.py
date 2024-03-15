@@ -174,7 +174,7 @@ def test_unique_check_multiple_description():
     )
     assert unique_check.description() == (
         "columns ['aggregation_method', 'flow_variable'] in table "
-        "v2_aggregation_settings should be unique together"
+        "aggregation_settings should be unique together"
     )
 
 
