@@ -13,35 +13,45 @@ def inject_session(session):
             cls._meta.sqlalchemy_session = session
 
 
-class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class PhysicalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.GlobalSetting
+        model = models.PhysicalSettings
+        sqlalchemy_session = None
+
+    advection_2d = 1
+    advection_1d = 1
+
+
+class TimeStepSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.TimeStepSettings
+        sqlalchemy_session = None
+
+    time_step = 30
+    minimum_time_step = 1
+    output_time_step = 300
+    use_time_step_stretch = False
+
+class ModelSettingsSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ModelSettingsSetting
         sqlalchemy_session = None
 
     nr_timesteps = 120
-    initial_waterlevel = -9999
-    numerical_settings_id = 1
-    dem_obstacle_detection = False
-    frict_avg = 0
-    grid_space = 20
-    advection_2d = 1
-    dist_calc_points = 15
+    initial_water_level = -9999
+    friction_averaging = 0
+    minimum_cell_size = 20
+    calculation_point_distance_1d = 15
     start_date = datetime.datetime.now()
-    table_step_size = 0.05
+    minimum_table_step_size = 0.05
     use_1d_flow = False
     use_2d_rain = 1
-    kmax = 4
-    sim_time_step = 30
-    minimum_sim_time_step = 1
-    output_time_step = 300
-    frict_coef = 0.03
-    timestep_plus = False
-    flooding_threshold = 0.01
+    nr_grid_levels = 4
+    friction_coefficient = 0.03
     use_2d_flow = True
-    advection_1d = 1
     use_0d_inflow = 0
     control_group_id = 1
-    frict_type = constants.FrictionType.CHEZY
+    friction_type = constants.FrictionType.CHEZY
 
 
 class SimpleInfiltrationFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -181,9 +191,10 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.NumericalSettings
         sqlalchemy_session = None
 
-    max_degree = 1
+    max_degree_gauss_seidel = 1
     use_of_cg = 20
     use_of_nested_newton = 0
+    flooding_threshold = 0.01
 
 
 class Lateral1dFactory(factory.alchemy.SQLAlchemyModelFactory):
