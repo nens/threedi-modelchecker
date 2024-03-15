@@ -403,6 +403,8 @@ def test_sqlalchemy_to_sqlite_type_with_custom_type():
     assert _sqlalchemy_to_sqlite_types(customIntegerEnum) == ["integer"]
 
 
+#TODO: fix or remove now dem_obstacle stuff is removed
+@pytest.mark.skip(reason="dem obstacle parameters are remove")
 def test_conditional_checks(session):
     global_settings1 = factories.ModelSettingsFactory(
         dem_obstacle_detection=True, dem_obstacle_height=-5
@@ -612,6 +614,8 @@ def test_global_settings_use_1d_flow_and_no_1d_elements(session):
     assert len(errors) == 0
 
 
+#TODO: remove because start_time is deleted
+@pytest.mark.skip(reason="start_time no longer exists")
 def test_global_settings_start_time(session):
     if session.bind.name == "postgresql":
         pytest.skip("Can't insert wrong datatype in postgres")
@@ -634,6 +638,8 @@ def test_global_settings_start_time(session):
     assert errors[0].id == wrong_start_time.id
 
 
+#TODO: remove because start_date is deleted
+@pytest.mark.skip(reason="start_date no longer exists")
 def test_global_settings_start_date(session):
     if session.bind.name == "postgresql":
         pytest.skip("Can't insert wrong datatype in postgres")
