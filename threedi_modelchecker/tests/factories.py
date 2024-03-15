@@ -37,20 +37,17 @@ class ModelSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.ModelSettings
         sqlalchemy_session = None
 
-    nr_timesteps = 120
-    initial_water_level = -9999
     friction_averaging = 0
     minimum_cell_size = 20
     calculation_point_distance_1d = 15
-    start_date = datetime.datetime.now()
     minimum_table_step_size = 0.05
     use_1d_flow = False
     use_2d_rain = 1
     nr_grid_levels = 4
     friction_coefficient = 0.03
     use_2d_flow = True
-    use_0d_inflow = 0
-    control_group_id = 1
+    # TODO: check if a SimulationTemplateSettings factory is needed
+    # use_0d_inflow = 0
     friction_type = constants.FrictionType.CHEZY
 
 
