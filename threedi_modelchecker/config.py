@@ -73,6 +73,7 @@ from .checks.other import (
 )
 from .checks.raster import (
     GDALAvailableCheck,
+    RasterCompressionUsedCheck,
     RasterExistsCheck,
     RasterGridSizeCheck,
     RasterHasMatchingEPSGCheck,
@@ -2367,6 +2368,37 @@ CHECKS += [
         column=models.GlobalSetting.dem_file,
         filters=first_setting_filter,
     ),
+]
+
+CHECKS += [
+    RasterCompressionUsedCheck(
+        error_code=1406,
+        level=CheckLevel.INFO,
+        column=column,
+    )
+    for column in (
+        models.Interflow.porosity_file,
+        models.Interflow.hydraulic_conductivity_file,
+        models.SimpleInfiltration.infiltration_rate_file,
+        models.SimpleInfiltration.max_infiltration_capacity_file,
+        models.GroundWater.groundwater_impervious_layer_level_file,
+        models.GroundWater.phreatic_storage_capacity_file,
+        models.GroundWater.equilibrium_infiltration_rate_file,
+        models.GroundWater.initial_infiltration_rate_file,
+        models.GroundWater.infiltration_decay_period_file,
+        models.GroundWater.groundwater_hydro_connectivity_file,
+        models.GroundWater.leakage_file,
+        models.VegetationDrag.vegetation_height_file,
+        models.VegetationDrag.vegetation_stem_count_file,
+        models.VegetationDrag.vegetation_stem_diameter_file,
+        models.VegetationDrag.vegetation_drag_coefficient_file,
+        models.GlobalSetting.dem_file,
+        models.GlobalSetting.frict_coef_file,
+        models.GlobalSetting.initial_waterlevel_file,
+        models.GlobalSetting.interception_file,
+        models.GlobalSetting.wind_shielding_file,
+        models.GlobalSetting.initial_groundwater_level_file,
+    )
 ]
 
 ## 080x: refinement levels

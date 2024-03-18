@@ -9,6 +9,12 @@ from threedi_modelchecker.interfaces import GDALRasterInterface, RasterInterface
 
 from .base import BaseCheck
 
+# interface_cls.is_valid_geotiff returns False if the dataset is empty
+# (such as when the column doesn't reference a file) or the dataset is not a valid geotiff.
+# It's used on every raster check which reads the raster file in any way,
+# to prevent any other code in the check from executing on a bad file.
+# On such datasets, RasterExistsCheck and/or RasterIsValidCheck will be raised.
+
 
 class Context:
     pass
@@ -298,6 +304,19 @@ class RasterRangeCheck(BaseRasterCheck):
         if self.max_value is not None:
             parts.append(f"{'>' if self.right_inclusive else '>='}{self.max_value}")
         return f"{self.column_name} has values {' and/or '.join(parts)} or is empty"
+
+
+class RasterCompressionUsedCheck(BaseRasterCheck):
+    """Checks whether compression was used for the raster"""
+
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        with interface_cls(path) as raster:
+            if not raster.is_valid_geotiff:
+                return True
+            return raster.compression != "NONE"
+
+    def description(self):
+        return f"Raster {self.column_name} is not compressed. It is recommended to use DEFLATE compression. This speeds up uploading and downloading and reduces storage space."
 
 
 @dataclass

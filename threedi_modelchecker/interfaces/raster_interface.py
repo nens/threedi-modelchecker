@@ -66,3 +66,7 @@ class RasterInterface(ABC):
     @abstractproperty
     def shape(self) -> Tuple[int, int]:
         pass
+
+    @abstractproperty
+    def compression(self) -> str:
+        pass
