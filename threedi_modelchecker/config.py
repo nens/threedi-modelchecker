@@ -1452,33 +1452,30 @@ CHECKS += [
         column=models.Interflow.impervious_layer_elevation,
         min_value=0,
     ),
-    # RangeCheck(
-    #     error_code=403,
-    #     column=models.SimpleInfiltration.infiltration_rate,
-    #     filters=infiltration_filter,
-    #     min_value=0,
-    # ),
-    # QueryCheck(
-    #     error_code=404,
-    #     column=models.SimpleInfiltration.infiltration_rate,
-    #     invalid=Query(models.SimpleInfiltration).filter(
-    #         infiltration_filter,
-    #         models.SimpleInfiltration.infiltration_rate == None,
-    #         is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
-    #     ),
-    #     message="v2_simple_infiltration.infiltration_rate must be defined.",
-    # ),
-    # QueryCheck(
-    #     error_code=404,
-    #     level=CheckLevel.WARNING,
-    #     column=models.SimpleInfiltration.infiltration_rate,
-    #     invalid=Query(models.SimpleInfiltration).filter(
-    #         infiltration_filter,
-    #         models.SimpleInfiltration.infiltration_rate == None,
-    #         ~is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
-    #     ),
-    #     message="v2_simple_infiltration.infiltration_rate is recommended as fallback value when using an infiltration_rate_file.",
-    # ),
+    RangeCheck(
+        error_code=403,
+        column=models.SimpleInfiltration.infiltration_rate,
+        min_value=0,
+    ),
+    QueryCheck(
+        error_code=404,
+        column=models.SimpleInfiltration.infiltration_rate,
+        invalid=Query(models.SimpleInfiltration).filter(
+            models.SimpleInfiltration.infiltration_rate == None,
+            is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
+        ),
+        message="v2_simple_infiltration.infiltration_rate must be defined.",
+    ),
+    QueryCheck(
+        error_code=404,
+        level=CheckLevel.WARNING,
+        column=models.SimpleInfiltration.infiltration_rate,
+        invalid=Query(models.SimpleInfiltration).filter(
+            models.SimpleInfiltration.infiltration_rate == None,
+            ~is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
+        ),
+        message="v2_simple_infiltration.infiltration_rate is recommended as fallback value when using an infiltration_rate_file.",
+    ),
     QueryCheck(
         error_code=405,
         level=CheckLevel.WARNING,
@@ -1705,23 +1702,21 @@ CHECKS += [
         column=models.GroundWater.groundwater_hydraulic_conductivity,
         min_value=0,
     ),
-    # RangeCheck(
-    #     error_code=422,
-    #     column=models.SimpleInfiltration.max_infiltration_volume,
-    #     filters=infiltration_filter,
-    #     min_value=0,
-    # ),
-    # QueryCheck(
-    #     error_code=423,
-    #     level=CheckLevel.WARNING,
-    #     column=models.SimpleInfiltration.max_infiltration_volume,
-    #     invalid=Query(models.SimpleInfiltration).filter(
-    #         infiltration_filter,
-    #         models.SimpleInfiltration.max_infiltration_volume == None,
-    #         ~is_none_or_empty(models.SimpleInfiltration.max_infiltration_volume_file),
-    #     ),
-    #     message="v2_simple_infiltration.max_infiltration_volume is recommended as fallback value when using an max_infiltration_volume_file.",
-    # ),
+    RangeCheck(
+        error_code=422,
+        column=models.SimpleInfiltration.max_infiltration_volume,
+        min_value=0,
+    ),
+    QueryCheck(
+        error_code=423,
+        level=CheckLevel.WARNING,
+        column=models.SimpleInfiltration.max_infiltration_volume,
+        invalid=Query(models.SimpleInfiltration).filter(
+            models.SimpleInfiltration.max_infiltration_volume == None,
+            ~is_none_or_empty(models.SimpleInfiltration.max_infiltration_volume_file),
+        ),
+        message="v2_simple_infiltration.max_infiltration_volume is recommended as fallback value when using an max_infiltration_volume_file.",
+    ),
     RangeCheck(
         error_code=424,
         column=models.Interflow.hydraulic_conductivity,
@@ -2219,18 +2214,16 @@ CHECKS += [
         column=models.Interflow.hydraulic_conductivity_file,
         min_value=0,
     ),
-    # RasterRangeCheck(
-    #     error_code=786,
-    #     column=models.SimpleInfiltration.infiltration_rate_file,
-    #     filters=infiltration_filter,
-    #     min_value=0,
-    # ),
-    # RasterRangeCheck(
-    #     error_code=787,
-    #     column=models.SimpleInfiltration.max_infiltration_volume_file,
-    #     filters=infiltration_filter,
-    #     min_value=0,
-    # ),
+    RasterRangeCheck(
+        error_code=786,
+        column=models.SimpleInfiltration.infiltration_rate_file,
+        min_value=0,
+    ),
+    RasterRangeCheck(
+        error_code=787,
+        column=models.SimpleInfiltration.max_infiltration_volume_file,
+        min_value=0,
+    ),
     RasterRangeCheck(
         error_code=788,
         column=models.GroundWater.groundwater_impervious_layer_level_file,
