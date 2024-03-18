@@ -305,6 +305,8 @@ class RasterCompressionUsedCheck(BaseRasterCheck):
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
         with interface_cls(path) as raster:
+            if not raster.is_valid_geotiff:
+                return True
             if raster.compression != "NONE":
                 return True
 
