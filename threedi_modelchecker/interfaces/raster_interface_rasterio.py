@@ -79,5 +79,5 @@ class RasterIORasterInterface(RasterInterface):
         return (self._dataset.height, self._dataset.width)
 
     @property
-    def compression(self) -> Optional[str]:
+    def compression(self) -> str:
         return self._dataset.compression.value
