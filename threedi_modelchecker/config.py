@@ -69,7 +69,7 @@ from .checks.other import (  # Use0DFlowCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
-    Use0DFlowCheck
+    Use0DFlowCheck,
 )
 from .checks.raster import (
     GDALAvailableCheck,
