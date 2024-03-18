@@ -69,6 +69,7 @@ from .checks.other import (  # Use0DFlowCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
+    Use0DFlowCheck
 )
 from .checks.raster import (
     GDALAvailableCheck,
@@ -1336,7 +1337,6 @@ CHECKS += [
 #     )
 # ]
 
-# TODO: fix test that uses removed columns
 CHECKS += [
     QueryCheck(
         error_code=327,
@@ -1394,7 +1394,6 @@ CHECKS += [
 ]
 
 ## 04xx: Groundwater, Interflow & Infiltration
-# TODO: fix checks
 CHECKS += [
     RangeCheck(
         error_code=401,
@@ -1579,7 +1578,6 @@ CHECKS += [
         ),
         message="a phreatic storage capacity type (groundwater.phreatic_storage_capacity_aggregation) should be defined when using a phreatic storage capacity file.",
     ),
-    # TODO: fix
     QueryCheck(
         error_code=416,
         column=models.Interflow.porosity,
@@ -1761,7 +1759,6 @@ CHECKS += [
 ]
 
 ## 05xx: VEGETATION DRAG
-# TODO fix tests
 CHECKS += [
     RangeCheck(
         error_code=501,
@@ -1866,7 +1863,6 @@ CHECKS += [
 ]
 
 ## 06xx: INFLOW
-# TODO: fix checks
 for (surface, surface_map, filters) in [
     (models.Surface, models.SurfaceMap, CONDITIONS["0d_surf"].exists()),
     (
@@ -1876,50 +1872,50 @@ for (surface, surface_map, filters) in [
     ),
 ]:
     CHECKS += [
-        # RangeCheck(
-        #     error_code=601,
-        #     column=surface.area,
-        #     min_value=0,
-        #     filters=filters,
-        # ),
-        # RangeCheck(
-        #     level=CheckLevel.WARNING,
-        #     error_code=602,
-        #     column=surface.dry_weather_flow,
-        #     min_value=0,
-        #     filters=filters,
-        # ),
-        # RangeCheck(
-        #     error_code=603,
-        #     column=surface_map.percentage,
-        #     min_value=0,
-        #     filters=filters,
-        # ),
-        # RangeCheck(
-        #     error_code=604,
-        #     level=CheckLevel.WARNING,
-        #     column=surface_map.percentage,
-        #     max_value=100,
-        #     filters=filters,
-        # ),
-        # RangeCheck(
-        #     error_code=605,
-        #     column=surface.nr_of_inhabitants,
-        #     min_value=0,
-        #     filters=filters,
-        # ),
-        # QueryCheck(
-        #     level=CheckLevel.WARNING,
-        #     error_code=612,
-        #     column=surface_map.connection_node_id,
-        #     filters=filters,
-        #     invalid=Query(surface_map).filter(
-        #         surface_map.connection_node_id.in_(
-        #             Query(models.BoundaryCondition1D.connection_node_id)
-        #         ),
-        #     ),
-        #     message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
-        # ),
+        RangeCheck(
+            error_code=601,
+            column=surface.area,
+            min_value=0,
+            filters=filters,
+        ),
+        RangeCheck(
+            level=CheckLevel.WARNING,
+            error_code=602,
+            column=surface.dry_weather_flow,
+            min_value=0,
+            filters=filters,
+        ),
+        RangeCheck(
+            error_code=603,
+            column=surface_map.percentage,
+            min_value=0,
+            filters=filters,
+        ),
+        RangeCheck(
+            error_code=604,
+            level=CheckLevel.WARNING,
+            column=surface_map.percentage,
+            max_value=100,
+            filters=filters,
+        ),
+        RangeCheck(
+            error_code=605,
+            column=surface.nr_of_inhabitants,
+            min_value=0,
+            filters=filters,
+        ),
+        QueryCheck(
+            level=CheckLevel.WARNING,
+            error_code=612,
+            column=surface_map.connection_node_id,
+            filters=filters,
+            invalid=Query(surface_map).filter(
+                surface_map.connection_node_id.in_(
+                    Query(models.BoundaryCondition1D.connection_node_id)
+                ),
+            ),
+            message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
+        ),
     ]
 CHECKS += [
     ImperviousNodeInflowAreaCheck(
@@ -1962,21 +1958,20 @@ CHECKS += [
         (models.ImperviousSurfaceMap.connection_node_id, models.ConnectionNode),
     )
 ]
-# TODO: fix checks
-# CHECKS += [
-#     QueryCheck(
-#         error_code=616,
-#         level=CheckLevel.WARNING,
-#         column=table.id,
-#         filters=~CONDITIONS[condition].exists(),
-#         invalid=Query(table),
-#         message=f"No inflow will be generated for this feature, because model_settings.use_0d_inflow is not set to use {table.__tablename__}.",
-#     )
-#     for table, condition in (
-#         (models.ImperviousSurface, "0d_imp"),
-#         (models.Surface, "0d_surf"),
-#     )
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=616,
+        level=CheckLevel.WARNING,
+        column=table.id,
+        filters=~CONDITIONS[condition].exists(),
+        invalid=Query(table),
+        message=f"No inflow will be generated for this feature, because model_settings.use_0d_inflow is not set to use {table.__tablename__}.",
+    )
+    for table, condition in (
+        (models.ImperviousSurface, "0d_imp"),
+        (models.Surface, "0d_surf"),
+    )
+]
 
 CHECKS += [
     InflowNoFeaturesCheck(
@@ -1991,44 +1986,42 @@ CHECKS += [
     )
 ]
 
-# TODO: fix check
-# CHECKS += [
-#     RangeCheck(
-#         error_code=606,
-#         column=models.SurfaceParameter.outflow_delay,
-#         min_value=0,
-#         filters=filters,
-#     ),
-#     RangeCheck(
-#         error_code=607,
-#         column=models.SurfaceParameter.max_infiltration_capacity,
-#         min_value=0,
-#         filters=filters,
-#     ),
-#     RangeCheck(
-#         error_code=608,
-#         column=models.SurfaceParameter.min_infiltration_capacity,
-#         min_value=0,
-#         filters=filters,
-#     ),
-#     RangeCheck(
-#         error_code=609,
-#         column=models.SurfaceParameter.infiltration_decay_constant,
-#         min_value=0,
-#         filters=filters,
-#     ),
-#     RangeCheck(
-#         error_code=610,
-#         column=models.SurfaceParameter.infiltration_recovery_constant,
-#         min_value=0,
-#         filters=filters,
-#     ),
-#     Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING),
-# ]
+CHECKS += [
+    RangeCheck(
+        error_code=606,
+        column=models.SurfaceParameter.outflow_delay,
+        min_value=0,
+        filters=filters,
+    ),
+    RangeCheck(
+        error_code=607,
+        column=models.SurfaceParameter.max_infiltration_capacity,
+        min_value=0,
+        filters=filters,
+    ),
+    RangeCheck(
+        error_code=608,
+        column=models.SurfaceParameter.min_infiltration_capacity,
+        min_value=0,
+        filters=filters,
+    ),
+    RangeCheck(
+        error_code=609,
+        column=models.SurfaceParameter.infiltration_decay_constant,
+        min_value=0,
+        filters=filters,
+    ),
+    RangeCheck(
+        error_code=610,
+        column=models.SurfaceParameter.infiltration_recovery_constant,
+        min_value=0,
+        filters=filters,
+    ),
+    Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING),
+]
 
 
 # 07xx: RASTERS
-# TODO: fix checks - remove first settings filters because only first setting can exist
 RASTER_COLUMNS = [
     models.ModelSettings.dem_file,
     models.ModelSettings.friction_coefficient_file,
@@ -2118,7 +2111,6 @@ CHECKS += [
         filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
-    # TODO: fix check
     RasterRangeCheck(
         error_code=784,
         column=models.Interflow.porosity_file,
@@ -2324,14 +2316,12 @@ CHECKS += [
     RangeCheck(
         error_code=1110,
         column=models.NumericalSettings.cfl_strictness_factor_1d,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=0,
         left_inclusive=False,
     ),
     RangeCheck(
         error_code=1111,
         column=models.NumericalSettings.cfl_strictness_factor_2d,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=0,
         left_inclusive=False,
     ),
@@ -2456,21 +2446,19 @@ CHECKS += [
 ## 115x SIMULATION SETTINGS, aggregation
 
 CHECKS += [
-    # TODO: fix test that uses removed columns
-    # QueryCheck(
-    #     error_code=1150,
-    #     column=models.AggregationSettings.aggregation_method,
-    #     invalid=Query(models.AggregationSettings).filter(
-    #         (models.AggregationSettings.global_settings_id != None)
-    #         & (models.AggregationSettings.aggregation_method == "current")
-    #         & (
-    #             models.AggregationSettings.flow_variable.notin_(
-    #                 ("volume", "interception")
-    #             )
-    #         )
-    #     ),
-    #     message="v2_aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables.",
-    # ),
+    QueryCheck(
+        error_code=1150,
+        column=models.AggregationSettings.aggregation_method,
+        invalid=Query(models.AggregationSettings).filter(
+            (models.AggregationSettings.aggregation_method == "current")
+            & (
+                models.AggregationSettings.flow_variable.notin_(
+                    ("volume", "interception")
+                )
+            )
+        ),
+        message="aggregation_settings.aggregation_method can only be 'current' for 'volume' or 'interception' flow_variables.",
+    ),
     UniqueCheck(
         error_code=1151,
         level=CheckLevel.WARNING,
@@ -2485,6 +2473,7 @@ CHECKS += [
         column=models.AggregationSettings.interval,
     ),
     # TODO: fix test that uses removed columns
+    # models.AggregationSettings.interval < models.TimeStepSettings.output_time_step
     # QueryCheck(
     #     error_code=1153,
     #     level=CheckLevel.WARNING,
