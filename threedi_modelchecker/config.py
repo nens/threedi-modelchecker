@@ -2330,6 +2330,14 @@ CHECKS += [
         column=models.GlobalSetting.dem_file,
         filters=first_setting_filter,
     ),
+    RasterRangeCheck(
+        error_code=799,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.frict_coef_file,
+        filters=CONDITIONS["chezy"].exists(),
+        min_value=1,
+        message=f"Some pixels in {models.GlobalSetting.__tablename__}.{models.GlobalSetting.frict_coef_file.name} are less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
+    ),
     ## 100xx: We continue raster checks from 1400
     RasterRangeCheck(
         error_code=1401,
@@ -3181,7 +3189,7 @@ CHECKS += [
         column=table.friction_value,
         filters=table.friction_type == constants.FrictionType.CHEZY.value,
         min_value=1,
-        message=f"{table.__tablename__}.friction_value is less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
+        message=f"{table.__tablename__}.friction_value is less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
     )
     for table in [
         models.CrossSectionLocation,
@@ -3197,7 +3205,7 @@ CHECKS += [
         filters=(table.friction_type == constants.FrictionType.CHEZY.value)
         & (table.crest_type == constants.CrestType.BROAD_CRESTED.value),
         min_value=1,
-        message=f"{table.__tablename__}.friction_value is less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
+        message=f"{table.__tablename__}.friction_value is less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
     )
     for table in [
         models.Orifice,
