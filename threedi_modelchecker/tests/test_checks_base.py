@@ -73,7 +73,7 @@ def test_fk_check_null_fk(session):
     assert len(invalid_rows) == 0
 
 
-#TODO fix test
+# TODO fix test
 @pytest.mark.skip(reason="Cannot pass because control_group_id does not exist")
 def test_fk_check_both_null(session):
     factories.ModelSettingsFactory(control_group_id=None)
@@ -403,15 +403,13 @@ def test_sqlalchemy_to_sqlite_type_with_custom_type():
     assert _sqlalchemy_to_sqlite_types(customIntegerEnum) == ["integer"]
 
 
-#TODO: fix or remove now dem_obstacle stuff is removed
+# TODO: fix or remove now dem_obstacle stuff is removed
 @pytest.mark.skip(reason="dem obstacle parameters are remove")
 def test_conditional_checks(session):
     global_settings1 = factories.ModelSettingsFactory(
         dem_obstacle_detection=True, dem_obstacle_height=-5
     )
-    factories.ModelSettingsFactory(
-        dem_obstacle_detection=False, dem_obstacle_height=-5
-    )
+    factories.ModelSettingsFactory(dem_obstacle_detection=False, dem_obstacle_height=-5)
 
     query = Query(models.ModelSettings).filter(
         models.ModelSettings.dem_obstacle_height <= 0,
@@ -614,7 +612,7 @@ def test_global_settings_use_1d_flow_and_no_1d_elements(session):
     assert len(errors) == 0
 
 
-#TODO: remove because start_time is deleted
+# TODO: remove because start_time is deleted
 @pytest.mark.skip(reason="start_time no longer exists")
 def test_global_settings_start_time(session):
     if session.bind.name == "postgresql":
@@ -638,7 +636,7 @@ def test_global_settings_start_time(session):
     assert errors[0].id == wrong_start_time.id
 
 
-#TODO: remove because start_date is deleted
+# TODO: remove because start_date is deleted
 @pytest.mark.skip(reason="start_date no longer exists")
 def test_global_settings_start_date(session):
     if session.bind.name == "postgresql":
@@ -766,7 +764,7 @@ def test_range_check_invalid(
     assert check.description() == msg.format("v2_connection_nodes.storage_area")
 
 
-#TODO: fix test
+# TODO: fix test
 @pytest.mark.skip(reason="Uses removed column dem_obstacle_detection")
 def test_check_only_first(session):
     factories.ModelSettingsFactory(dem_obstacle_detection=False)

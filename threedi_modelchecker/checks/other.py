@@ -38,8 +38,7 @@ class CorrectAggregationSettingsExist(BaseCheck):
         # TODO: fix test that uses removed columns
         global_settings = self.to_check(session).filter(first_setting_filter)
         correctly_defined = session.execute(
-            select(models.AggregationSettings)
-            .filter(
+            select(models.AggregationSettings).filter(
                 models.AggregationSettings.aggregation_method
                 == self.aggregation_method,
                 models.AggregationSettings.flow_variable == self.flow_variable,
@@ -234,14 +233,16 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
         return f"{self.column_name} has both open and closed cross-sections along its length. All cross-sections on a {self.column_name} object must be either open or closed."
 
 
-#TODO: check if fixed correctly after moving use_0d_inflow
+# TODO: check if fixed correctly after moving use_0d_inflow
 class Use0DFlowCheck(BaseCheck):
     """Check that when use_0d_flow in global settings is configured to 1 or to
     2, there is at least one impervious surface or surfaces respectively.
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(column=models.SimulationTemplateSettings.use_0d_inflow, *args, **kwargs)
+        super().__init__(
+            column=models.SimulationTemplateSettings.use_0d_inflow, *args, **kwargs
+        )
 
     def to_check(self, session):
         """Return a Query object on which this check is applied"""

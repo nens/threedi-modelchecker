@@ -45,7 +45,7 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (
+from .checks.other import (  # Use0DFlowCheck,
     AllPresentFixedVegetationParameters,
     AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
@@ -69,7 +69,6 @@ from .checks.other import (
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
-    Use0DFlowCheck,
 )
 from .checks.raster import (
     GDALAvailableCheck,
@@ -110,25 +109,16 @@ first_setting = (
     .scalar_subquery()
 )
 first_setting_filter = models.ModelSettings.id == first_setting
-interflow_settings_id = (
-    Query(models.Interflow.id)
-    .scalar_subquery()
-)
+interflow_settings_id = Query(models.Interflow.id).scalar_subquery()
 interflow_filter = models.ModelSettings.use_interflow
-infiltration_settings_id = (
-    Query(models.SimpleInfiltration.id)
-    .scalar_subquery()
-)
+infiltration_settings_id = Query(models.SimpleInfiltration.id).scalar_subquery()
 infiltration_filter = models.ModelSettings.use_simple_infiltration
-groundwater_settings_id = (
-    Query(models.GroundWater.id)
-    .scalar_subquery()
+groundwater_settings_id = Query(models.GroundWater.id).scalar_subquery()
+groundwater_filter = (
+    models.ModelSettings.use_groundwater_flow
+    or models.ModelSettings.use_groundwater_storage
 )
-groundwater_filter = models.ModelSettings.use_groundwater_flow or models.ModelSettings.use_groundwater_storage
-vegetation_drag_settings_id = (
-    Query(models.VegetationDrag.id)
-    .scalar_subquery()
-)
+vegetation_drag_settings_id = Query(models.VegetationDrag.id).scalar_subquery()
 vegetation_drag_filter = models.ModelSettings.use_vegetation_drag_2d
 
 CONDITIONS = {
@@ -144,7 +134,8 @@ CONDITIONS = {
     ),
     "0d_imp": Query(models.SimulationTemplateSettings).filter(
         first_setting_filter,
-        models.SimulationTemplateSettings.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE,
+        models.SimulationTemplateSettings.use_0d_inflow
+        == constants.InflowType.IMPERVIOUS_SURFACE,
     ),
     "manning": Query(models.ModelSettings).filter(
         first_setting_filter,
@@ -161,7 +152,11 @@ CONDITIONS = {
     ),
 }
 
-nr_grid_levels = Query(models.ModelSettings.nr_grid_levels).filter(first_setting_filter).scalar_subquery()
+nr_grid_levels = (
+    Query(models.ModelSettings.nr_grid_levels)
+    .filter(first_setting_filter)
+    .scalar_subquery()
+)
 
 
 CHECKS: List[BaseCheck] = []
@@ -1172,7 +1167,7 @@ CHECKS += [
 ## 030x: SETTINGS
 
 CHECKS += [
-    #TODO: remove
+    # TODO: remove
     # QueryCheck(
     #     error_code=302,
     #     column=models.ModelSettings.dem_obstacle_detection,
@@ -2413,8 +2408,7 @@ CHECKS += [
         error_code=1101,
         column=models.TimeStepSettings.max_time_step,
         invalid=Query(models.TimeStepSettings).filter(
-            models.TimeStepSettings.max_time_step
-            < models.TimeStepSettings.time_step
+            models.TimeStepSettings.max_time_step < models.TimeStepSettings.time_step
         ),
         message="time_step_settings.max_time_step must be greater than or equal to time_step_settings.time_step",
     ),
@@ -2422,8 +2416,7 @@ CHECKS += [
         error_code=1102,
         column=models.TimeStepSettings.time_step,
         invalid=Query(models.TimeStepSettings).filter(
-            models.TimeStepSettings.min_time_step
-            > models.TimeStepSettings.time_step
+            models.TimeStepSettings.min_time_step > models.TimeStepSettings.time_step
         ),
         message="time_step_settings.mintime_step must be less than or equal to time_step_settings.time_step",
     ),

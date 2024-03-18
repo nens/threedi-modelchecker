@@ -1,4 +1,3 @@
-import datetime
 from inspect import isclass
 
 import factory
@@ -31,6 +30,7 @@ class TimeStepSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     minimum_time_step = 1
     output_time_step = 300
     use_time_step_stretch = False
+
 
 class ModelSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:

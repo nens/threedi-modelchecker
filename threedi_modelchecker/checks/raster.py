@@ -196,7 +196,9 @@ class RasterGridSizeCheck(BaseRasterCheck):
     """Check whether the global settings' grid size is an even multiple of a raster's cell size (at least 2x)."""
 
     def get_invalid(self, session):
-        minimum_cell_size_query = session.query(models.ModelSettings.minimum_cell_size).first()
+        minimum_cell_size_query = session.query(
+            models.ModelSettings.minimum_cell_size
+        ).first()
         if minimum_cell_size_query is not None:
             self.minimum_cell_size = minimum_cell_size_query[0]
         else:

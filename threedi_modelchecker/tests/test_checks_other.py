@@ -502,7 +502,7 @@ def test_potential_breach_interdistance_other_channel(session):
     assert len(invalid) == 0
 
 
-#TODO: fix this
+# TODO: fix this
 @pytest.mark.skip(reason="Skip this because ModelSettiongs no longer takes time steps")
 @pytest.mark.parametrize(
     "storage_area,time_step,expected_result,capacity",
