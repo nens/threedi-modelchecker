@@ -73,6 +73,7 @@ from .checks.other import (  # Use0DFlowCheck,
 )
 from .checks.raster import (
     GDALAvailableCheck,
+    RasterCompressionUsedCheck,
     RasterExistsCheck,
     RasterGridSizeCheck,
     RasterHasMatchingEPSGCheck,
@@ -2188,6 +2189,14 @@ CHECKS += [
         error_code=798,
         column=models.ModelSettings.dem_file,
     ),
+    RasterRangeCheck(
+        error_code=799,
+        level=CheckLevel.WARNING,
+        column=models.GlobalSetting.frict_coef_file,
+        filters=CONDITIONS["chezy"].exists(),
+        min_value=1,
+        message=f"Some pixels in {models.GlobalSetting.__tablename__}.{models.GlobalSetting.frict_coef_file.name} are less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
+    ),
     ## 100xx: We continue raster checks from 1400
     RasterRangeCheck(
         error_code=1401,
@@ -2213,6 +2222,37 @@ CHECKS += [
         error_code=1405,
         column=models.ModelSettings.dem_file,
     ),
+]
+
+CHECKS += [
+    RasterCompressionUsedCheck(
+        error_code=1406,
+        level=CheckLevel.INFO,
+        column=column,
+    )
+    for column in (
+        models.Interflow.porosity_file,
+        models.Interflow.hydraulic_conductivity_file,
+        models.SimpleInfiltration.infiltration_rate_file,
+        models.SimpleInfiltration.max_infiltration_capacity_file,
+        models.GroundWater.groundwater_impervious_layer_level_file,
+        models.GroundWater.phreatic_storage_capacity_file,
+        models.GroundWater.equilibrium_infiltration_rate_file,
+        models.GroundWater.initial_infiltration_rate_file,
+        models.GroundWater.infiltration_decay_period_file,
+        models.GroundWater.groundwater_hydro_connectivity_file,
+        models.GroundWater.leakage_file,
+        models.VegetationDrag.vegetation_height_file,
+        models.VegetationDrag.vegetation_stem_count_file,
+        models.VegetationDrag.vegetation_stem_diameter_file,
+        models.VegetationDrag.vegetation_drag_coefficient_file,
+        models.GlobalSetting.dem_file,
+        models.GlobalSetting.frict_coef_file,
+        models.GlobalSetting.initial_waterlevel_file,
+        models.GlobalSetting.interception_file,
+        models.GlobalSetting.wind_shielding_file,
+        models.GlobalSetting.initial_groundwater_level_file,
+    )
 ]
 
 ## 080x: refinement levels
@@ -3001,7 +3041,7 @@ CHECKS += [
         column=table.friction_value,
         filters=table.friction_type == constants.FrictionType.CHEZY.value,
         min_value=1,
-        message=f"{table.__tablename__}.friction_value is less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
+        message=f"{table.__tablename__}.friction_value is less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
     )
     for table in [
         models.CrossSectionLocation,
@@ -3017,7 +3057,7 @@ CHECKS += [
         filters=(table.friction_type == constants.FrictionType.CHEZY.value)
         & (table.crest_type == constants.CrestType.BROAD_CRESTED.value),
         min_value=1,
-        message=f"{table.__tablename__}.friction_value is less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
+        message=f"{table.__tablename__}.friction_value is less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
     )
     for table in [
         models.Orifice,

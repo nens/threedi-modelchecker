@@ -85,3 +85,10 @@ class GDALRasterInterface(RasterInterface):
     @property
     def shape(self):
         return (self._dataset.RasterYSize, self._dataset.RasterXSize)
+
+    @property
+    def compression(self) -> str:
+        metadata = self._dataset.GetMetadata("IMAGE_STRUCTURE")
+        # sometimes the COMPRESSION key is not included in the metadata
+        # in that case return NONE to match with the COMPRESSION value when no compression is applied
+        return metadata.get("COMPRESSION", "NONE")

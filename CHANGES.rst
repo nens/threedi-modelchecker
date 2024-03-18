@@ -4,8 +4,9 @@ Changelog of threedi-modelchecker
 
 2.7.1 (unreleased)
 ------------------
-
-- Nothing changed yet.
+- Add info check 1406 to inform the user if a raster is not compressed.
+- Add check 799 to warn if raster friction pixels are < 1 while Chezy friction is selected
+- Change error message for check 1500
 
 
 2.7.0 (2024-03-12)
