@@ -307,8 +307,7 @@ class RasterCompressionUsedCheck(BaseRasterCheck):
         with interface_cls(path) as raster:
             if not raster.is_valid_geotiff:
                 return True
-            if raster.compression != "NONE":
-                return True
+            return raster.compression != "NONE"
 
     def description(self):
         return f"Raster {self.column_name} is not compressed. It is recommended to use DEFLATE compression. This speeds up uploading and downloading and reduces storage space."
