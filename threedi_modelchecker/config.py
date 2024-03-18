@@ -110,16 +110,9 @@ first_setting = (
 )
 first_setting_filter = models.ModelSettings.id == first_setting
 interflow_settings_id = Query(models.Interflow.id).scalar_subquery()
-interflow_filter = models.ModelSettings.use_interflow
 infiltration_settings_id = Query(models.SimpleInfiltration.id).scalar_subquery()
-infiltration_filter = models.ModelSettings.use_simple_infiltration
 groundwater_settings_id = Query(models.GroundWater.id).scalar_subquery()
-groundwater_filter = (
-    models.ModelSettings.use_groundwater_flow
-    or models.ModelSettings.use_groundwater_storage
-)
 vegetation_drag_settings_id = Query(models.VegetationDrag.id).scalar_subquery()
-vegetation_drag_filter = models.ModelSettings.use_vegetation_drag_2d
 
 CONDITIONS = {
     "has_dem": Query(models.ModelSettings).filter(
@@ -2046,57 +2039,28 @@ CHECKS += [
 
 # 07xx: RASTERS
 # TODO: fix checks - remove first settings filters because only first setting can exist
-RASTER_COLUMNS_FILTERS = [
-    (models.ModelSettings.dem_file, first_setting_filter),
-    (models.ModelSettings.friction_coefficient_file, first_setting_filter),
-    # (models.Interception.interception_file, first_setting_filter),
-    # (models.Interflow.porosity_file, interflow_filter),
-    # (
-    #     models.Interflow.hydraulic_conductivity_file,
-    #     interflow_filter,
-    # ),
-    # (
-    #     models.SimpleInfiltration.infiltration_rate_file,
-    #     infiltration_filter,
-    # ),
-    # (
-    #     models.SimpleInfiltration.max_infiltration_volume_file,
-    #     infiltration_filter,
-    # ),
-    # (
-    #     models.GroundWater.groundwater_impervious_layer_level_file,
-    #     groundwater_filter,
-    # ),
-    # (
-    #     models.GroundWater.phreatic_storage_capacity_file,
-    #     groundwater_filter,
-    # ),
-    # (
-    #     models.GroundWater.equilibrium_infiltration_rate_file,
-    #     groundwater_filter,
-    # ),
-    # (
-    #     models.GroundWater.initial_infiltration_rate_file,
-    #     groundwater_filter,
-    # ),
-    # (
-    #     models.GroundWater.infiltration_decay_period_file,
-    #     groundwater_filter,
-    # ),
-    # (
-    #     models.GroundWater.groundwater_hydraulic_conductivity_file,
-    #     groundwater_filter,
-    # ),
-    # (models.GroundWater.leakage_file, groundwater_filter),
-    # (models.InitialConditions.initial_water_level_file, first_setting_filter),
-    # (
-    #     models.InitialConditions.initial_groundwater_level_file,
-    #     first_setting_filter & (models.ModelSettings.use_groundwater_flow or models.ModelSettings.use_groundwater_storage),
-    # ),
-    # (models.VegetationDrag.vegetation_height_file, vegetation_drag_filter),
-    # (models.VegetationDrag.vegetation_stem_count_file, vegetation_drag_filter),
-    # (models.VegetationDrag.vegetation_stem_diameter_file, vegetation_drag_filter),
-    # (models.VegetationDrag.vegetation_drag_coefficient_file, vegetation_drag_filter),
+RASTER_COLUMNS = [
+    models.ModelSettings.dem_file,
+    models.ModelSettings.friction_coefficient_file,
+    models.Interception.interception_file,
+    models.Interflow.porosity_file,
+    models.Interflow.hydraulic_conductivity_file,
+    models.SimpleInfiltration.infiltration_rate_file,
+    models.SimpleInfiltration.max_infiltration_volume_file,
+    models.GroundWater.groundwater_impervious_layer_level_file,
+    models.GroundWater.phreatic_storage_capacity_file,
+    models.GroundWater.equilibrium_infiltration_rate_file,
+    models.GroundWater.initial_infiltration_rate_file,
+    models.GroundWater.infiltration_decay_period_file,
+    models.GroundWater.groundwater_hydraulic_conductivity_file,
+    models.GroundWater.leakage_file,
+    models.InitialConditions.initial_water_level_file,
+    models.InitialConditions.initial_groundwater_level_file,
+    (models.ModelSettings.use_groundwater_flow or models.ModelSettings.use_groundwater_storage),
+    models.VegetationDrag.vegetation_height_file,
+    models.VegetationDrag.vegetation_stem_count_file,
+    models.VegetationDrag.vegetation_stem_diameter_file,
+    models.VegetationDrag.vegetation_drag_coefficient_file,
 ]
 
 CHECKS += [
@@ -2108,34 +2072,30 @@ CHECKS += [
     RasterExistsCheck(
         error_code=701 + i,
         column=column,
-        filters=filters,
     )
-    for i, (column, filters) in enumerate(RASTER_COLUMNS_FILTERS)
+    for i, column in enumerate(RASTER_COLUMNS)
 ]
 CHECKS += [
     RasterIsValidCheck(
         error_code=721 + i,
         column=column,
-        filters=filters,
     )
-    for i, (column, filters) in enumerate(RASTER_COLUMNS_FILTERS)
+    for i, column in enumerate(RASTER_COLUMNS)
 ]
 CHECKS += [
     RasterHasOneBandCheck(
         error_code=741 + i,
         level=CheckLevel.WARNING,
         column=column,
-        filters=filters,
     )
-    for i, (column, filters) in enumerate(RASTER_COLUMNS_FILTERS)
+    for i, column in enumerate(RASTER_COLUMNS)
 ]
 CHECKS += [
     RasterHasProjectionCheck(
         error_code=761 + i,
         column=column,
-        filters=filters,
     )
-    for i, (column, filters) in enumerate(RASTER_COLUMNS_FILTERS)
+    for i, column in enumerate(RASTER_COLUMNS)
 ]
 CHECKS += [
     RasterIsProjectedCheck(
