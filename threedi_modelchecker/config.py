@@ -1441,19 +1441,17 @@ CHECKS += [
 ## 04xx: Groundwater, Interflow & Infiltration
 # TODO: fix checks
 CHECKS += [
-    # RangeCheck(
-    #     error_code=401,
-    #     column=models.Interflow.porosity,
-    #     filters=interflow_filter,
-    #     min_value=0,
-    #     max_value=1,
-    # ),
-    # RangeCheck(
-    #     error_code=402,
-    #     column=models.Interflow.impervious_layer_elevation,
-    #     filters=interflow_filter,
-    #     min_value=0,
-    # ),
+    RangeCheck(
+        error_code=401,
+        column=models.Interflow.porosity,
+        min_value=0,
+        max_value=1,
+    ),
+    RangeCheck(
+        error_code=402,
+        column=models.Interflow.impervious_layer_elevation,
+        min_value=0,
+    ),
     # RangeCheck(
     #     error_code=403,
     #     column=models.SimpleInfiltration.infiltration_rate,
@@ -1628,80 +1626,74 @@ CHECKS += [
         message="a phreatic storage capacity type (groundwater.phreatic_storage_capacity_aggregation) should be defined when using a phreatic storage capacity file.",
     ),
     # TODO: fix
-    # QueryCheck(
-    #     error_code=416,
-    #     column=models.Interflow.porosity,
-    #     invalid=Query(models.Interflow).filter(
-    #         interflow_filter,
-    #         models.Interflow.porosity == None,
-    #         is_none_or_empty(models.Interflow.porosity_file),
-    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-    #     ),
-    #     message="v2_interflow.porosity must be defined when not using a porosity_file.",
-    # ),
-    # QueryCheck(
-    #     error_code=416,
-    #     level=CheckLevel.WARNING,
-    #     column=models.Interflow.porosity,
-    #     invalid=Query(models.Interflow).filter(
-    #         interflow_filter,
-    #         models.Interflow.porosity == None,
-    #         ~is_none_or_empty(models.Interflow.porosity_file),
-    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-    #     ),
-    #     message="v2_interflow.porosity is recommended as fallback value when using a porosity_file.",
-    # ),
-    # QueryCheck(
-    #     error_code=417,
-    #     column=models.Interflow.porosity_layer_thickness,
-    #     invalid=Query(models.Interflow).filter(
-    #         interflow_filter,
-    #         (models.Interflow.porosity_layer_thickness == None)
-    #         | (models.Interflow.porosity_layer_thickness <= 0),
-    #         models.Interflow.interflow_type
-    #         in [
-    #             constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
-    #             constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY,
-    #         ],
-    #     ),
-    #     message=f"a porosity layer thickness (v2_interflow.porosity_layer_thickness) should be defined and >0 when "
-    #     f"interflow_type is "
-    #     f"{constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY} or "
-    #     f"{constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY}",
-    # ),
-    # QueryCheck(
-    #     error_code=418,
-    #     column=models.Interflow.impervious_layer_elevation,
-    #     invalid=Query(models.Interflow).filter(
-    #         interflow_filter,
-    #         models.Interflow.impervious_layer_elevation == None,
-    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-    #     ),
-    #     message="v2_interflow.impervious_layer_elevation cannot be null",
-    # ),
-    # QueryCheck(
-    #     error_code=419,
-    #     column=models.Interflow.hydraulic_conductivity,
-    #     invalid=Query(models.Interflow).filter(
-    #         interflow_filter,
-    #         models.Interflow.hydraulic_conductivity == None,
-    #         is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
-    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-    #     ),
-    #     message="v2_interflow.hydraulic_conductivity must be defined when not using a hydraulic_conductivity_file.",
-    # ),
-    # QueryCheck(
-    #     error_code=419,
-    #     level=CheckLevel.WARNING,
-    #     column=models.Interflow.hydraulic_conductivity,
-    #     invalid=Query(models.Interflow).filter(
-    #         interflow_filter,
-    #         models.Interflow.hydraulic_conductivity == None,
-    #         ~is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
-    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-    #     ),
-    #     message="v2_interflow.hydraulic_conductivity is recommended as fallback value when using a hydraulic_conductivity_file.",
-    # ),
+    QueryCheck(
+        error_code=416,
+        column=models.Interflow.porosity,
+        invalid=Query(models.Interflow).filter(
+            models.Interflow.porosity == None,
+            is_none_or_empty(models.Interflow.porosity_file),
+            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        ),
+        message="v2_interflow.porosity must be defined when not using a porosity_file.",
+    ),
+    QueryCheck(
+        error_code=416,
+        level=CheckLevel.WARNING,
+        column=models.Interflow.porosity,
+        invalid=Query(models.Interflow).filter(
+            models.Interflow.porosity == None,
+            ~is_none_or_empty(models.Interflow.porosity_file),
+            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        ),
+        message="v2_interflow.porosity is recommended as fallback value when using a porosity_file.",
+    ),
+    QueryCheck(
+        error_code=417,
+        column=models.Interflow.porosity_layer_thickness,
+        invalid=Query(models.Interflow).filter(
+            (models.Interflow.porosity_layer_thickness == None)
+            | (models.Interflow.porosity_layer_thickness <= 0),
+            models.Interflow.interflow_type
+            in [
+                constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
+                constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY,
+            ],
+        ),
+        message=f"a porosity layer thickness (v2_interflow.porosity_layer_thickness) should be defined and >0 when "
+        f"interflow_type is "
+        f"{constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY} or "
+        f"{constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY}",
+    ),
+    QueryCheck(
+        error_code=418,
+        column=models.Interflow.impervious_layer_elevation,
+        invalid=Query(models.Interflow).filter(
+            models.Interflow.impervious_layer_elevation == None,
+            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        ),
+        message="v2_interflow.impervious_layer_elevation cannot be null",
+    ),
+    QueryCheck(
+        error_code=419,
+        column=models.Interflow.hydraulic_conductivity,
+        invalid=Query(models.Interflow).filter(
+            models.Interflow.hydraulic_conductivity == None,
+            is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
+            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        ),
+        message="v2_interflow.hydraulic_conductivity must be defined when not using a hydraulic_conductivity_file.",
+    ),
+    QueryCheck(
+        error_code=419,
+        level=CheckLevel.WARNING,
+        column=models.Interflow.hydraulic_conductivity,
+        invalid=Query(models.Interflow).filter(
+            models.Interflow.hydraulic_conductivity == None,
+            ~is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
+            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+        ),
+        message="v2_interflow.hydraulic_conductivity is recommended as fallback value when using a hydraulic_conductivity_file.",
+    ),
     RangeCheck(
         error_code=420,
         column=models.GroundWater.phreatic_storage_capacity,
@@ -1730,13 +1722,12 @@ CHECKS += [
     #     ),
     #     message="v2_simple_infiltration.max_infiltration_volume is recommended as fallback value when using an max_infiltration_volume_file.",
     # ),
-    # RangeCheck(
-    #     error_code=424,
-    #     column=models.Interflow.hydraulic_conductivity,
-    #     filters=(interflow_filter)
-    #     & (models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW),
-    #     min_value=0,
-    # ),
+    RangeCheck(
+        error_code=424,
+        column=models.Interflow.hydraulic_conductivity,
+        filters=(models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW),
+        min_value=0,
+    ),
     RangeCheck(
         error_code=425,
         column=models.GroundWater.initial_infiltration_rate,
@@ -2217,19 +2208,17 @@ CHECKS += [
         min_value=0,
     ),
     # TODO: fix check
-    # RasterRangeCheck(
-    #     error_code=784,
-    #     column=models.Interflow.porosity_file,
-    #     filters=interflow_filter,
-    #     min_value=0,
-    #     max_value=1,
-    # ),
-    # RasterRangeCheck(
-    #     error_code=785,
-    #     column=models.Interflow.hydraulic_conductivity_file,
-    #     filters=interflow_filter,
-    #     min_value=0,
-    # ),
+    RasterRangeCheck(
+        error_code=784,
+        column=models.Interflow.porosity_file,
+        min_value=0,
+        max_value=1,
+    ),
+    RasterRangeCheck(
+        error_code=785,
+        column=models.Interflow.hydraulic_conductivity_file,
+        min_value=0,
+    ),
     # RasterRangeCheck(
     #     error_code=786,
     #     column=models.SimpleInfiltration.infiltration_rate_file,
