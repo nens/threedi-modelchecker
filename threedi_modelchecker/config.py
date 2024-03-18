@@ -1801,120 +1801,108 @@ CHECKS += [
 
 ## 05xx: VEGETATION DRAG
 # TODO fix tests
-# CHECKS += [
-#     RangeCheck(
-#         error_code=501,
-#         column=models.VegetationDrag.vegetation_height,
-#         filters=vegetation_drag_filter,
-#         min_value=0,
-#         left_inclusive=False,
-#     ),
-#     QueryCheck(
-#         error_code=502,
-#         column=models.VegetationDrag.vegetation_height,
-#         invalid=Query(models.VegetationDrag).filter(
-#             vegetation_drag_filter,
-#             models.VegetationDrag.vegetation_height == None,
-#             is_none_or_empty(models.VegetationDrag.vegetation_height_file),
-#         ),
-#         message="v2_vegetation_drag.height must be defined.",
-#     ),
-#     QueryCheck(
-#         error_code=503,
-#         level=CheckLevel.WARNING,
-#         column=models.VegetationDrag.vegetation_height,
-#         invalid=Query(models.VegetationDrag).filter(
-#             vegetation_drag_filter,
-#             models.VegetationDrag.vegetation_height == None,
-#             ~is_none_or_empty(models.VegetationDrag.vegetation_height_file),
-#         ),
-#         message="v2_vegetation_drag.height is recommended as fallback value when using a vegetation_height_file.",
-#     ),
-#     RangeCheck(
-#         error_code=504,
-#         column=models.VegetationDrag.vegetation_stem_count,
-#         filters=vegetation_drag_filter,
-#         min_value=0,
-#         left_inclusive=False,
-#     ),
-#     QueryCheck(
-#         error_code=505,
-#         column=models.VegetationDrag.vegetation_stem_count,
-#         invalid=Query(models.VegetationDrag).filter(
-#             vegetation_drag_filter,
-#             models.VegetationDrag.vegetation_stem_count == None,
-#             is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
-#         ),
-#         message="v2_vegetation_drag.vegetation_stem_count must be defined.",
-#     ),
-#     QueryCheck(
-#         error_code=506,
-#         level=CheckLevel.WARNING,
-#         column=models.VegetationDrag.vegetation_stem_count,
-#         invalid=Query(models.VegetationDrag).filter(
-#             vegetation_drag_filter,
-#             models.VegetationDrag.vegetation_stem_count == None,
-#             ~is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
-#         ),
-#         message="v2_vegetation_drag.vegetation_stem_count is recommended as fallback value when using a vegetation_stem_count_file.",
-#     ),
-#     RangeCheck(
-#         error_code=507,
-#         column=models.VegetationDrag.vegetation_stem_diameter,
-#         filters=vegetation_drag_filter,
-#         min_value=0,
-#         left_inclusive=False,
-#     ),
-#     QueryCheck(
-#         error_code=508,
-#         column=models.VegetationDrag.vegetation_stem_diameter,
-#         invalid=Query(models.VegetationDrag).filter(
-#             vegetation_drag_filter,
-#             models.VegetationDrag.vegetation_stem_diameter == None,
-#             is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
-#         ),
-#         message="v2_vegetation_drag.vegetation_stem_diameter must be defined.",
-#     ),
-#     QueryCheck(
-#         error_code=509,
-#         level=CheckLevel.WARNING,
-#         column=models.VegetationDrag.vegetation_stem_diameter,
-#         invalid=Query(models.VegetationDrag).filter(
-#             vegetation_drag_filter,
-#             models.VegetationDrag.vegetation_stem_diameter == None,
-#             ~is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
-#         ),
-#         message="v2_vegetation_drag.vegetation_stem_diameter is recommended as fallback value when using a vegetation_stem_diameter_file.",
-#     ),
-#     RangeCheck(
-#         error_code=510,
-#         column=models.VegetationDrag.vegetation_drag_coefficient,
-#         filters=vegetation_drag_filter,
-#         min_value=0,
-#         left_inclusive=False,
-#     ),
-#     QueryCheck(
-#         error_code=511,
-#         column=models.VegetationDrag.vegetation_drag_coefficient,
-#         invalid=Query(models.VegetationDrag).filter(
-#             vegetation_drag_filter,
-#             models.VegetationDrag.vegetation_drag_coefficient == None,
-#             is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
-#         ),
-#         message="v2_vegetation_drag.vegetation_drag_coefficient must be defined.",
-#     ),
-#     QueryCheck(
-#         error_code=512,
-#         level=CheckLevel.WARNING,
-#         column=models.VegetationDrag.vegetation_drag_coefficient,
-#         invalid=Query(models.VegetationDrag).filter(
-#             vegetation_drag_filter,
-#             models.VegetationDrag.vegetation_drag_coefficient == None,
-#             ~is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
-#         ),
-#         message="v2_vegetation_drag.vegetation_drag_coefficient is recommended as fallback value when using a vegetation_drag_coefficient_file.",
-#     ),
-# ]
+CHECKS += [
+    RangeCheck(
+        error_code=501,
+        column=models.VegetationDrag.vegetation_height,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    QueryCheck(
+        error_code=502,
+        column=models.VegetationDrag.vegetation_height,
+        invalid=Query(models.VegetationDrag).filter(
+            models.VegetationDrag.vegetation_height == None,
+            is_none_or_empty(models.VegetationDrag.vegetation_height_file),
+        ),
+        message="v2_vegetation_drag.height must be defined.",
+    ),
+    QueryCheck(
+        error_code=503,
+        level=CheckLevel.WARNING,
+        column=models.VegetationDrag.vegetation_height,
+        invalid=Query(models.VegetationDrag).filter(
+            models.VegetationDrag.vegetation_height == None,
+            ~is_none_or_empty(models.VegetationDrag.vegetation_height_file),
+        ),
+        message="v2_vegetation_drag.height is recommended as fallback value when using a vegetation_height_file.",
+    ),
+    RangeCheck(
+        error_code=504,
+        column=models.VegetationDrag.vegetation_stem_count,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    QueryCheck(
+        error_code=505,
+        column=models.VegetationDrag.vegetation_stem_count,
+        invalid=Query(models.VegetationDrag).filter(
+            models.VegetationDrag.vegetation_stem_count == None,
+            is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
+        ),
+        message="v2_vegetation_drag.vegetation_stem_count must be defined.",
+    ),
+    QueryCheck(
+        error_code=506,
+        level=CheckLevel.WARNING,
+        column=models.VegetationDrag.vegetation_stem_count,
+        invalid=Query(models.VegetationDrag).filter(
+            models.VegetationDrag.vegetation_stem_count == None,
+            ~is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
+        ),
+        message="v2_vegetation_drag.vegetation_stem_count is recommended as fallback value when using a vegetation_stem_count_file.",
+    ),
+    RangeCheck(
+        error_code=507,
+        column=models.VegetationDrag.vegetation_stem_diameter,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    QueryCheck(
+        error_code=508,
+        column=models.VegetationDrag.vegetation_stem_diameter,
+        invalid=Query(models.VegetationDrag).filter(
+            models.VegetationDrag.vegetation_stem_diameter == None,
+            is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
+        ),
+        message="v2_vegetation_drag.vegetation_stem_diameter must be defined.",
+    ),
+    QueryCheck(
+        error_code=509,
+        level=CheckLevel.WARNING,
+        column=models.VegetationDrag.vegetation_stem_diameter,
+        invalid=Query(models.VegetationDrag).filter(
+            models.VegetationDrag.vegetation_stem_diameter == None,
+            ~is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
+        ),
+        message="v2_vegetation_drag.vegetation_stem_diameter is recommended as fallback value when using a vegetation_stem_diameter_file.",
+    ),
+    RangeCheck(
+        error_code=510,
+        column=models.VegetationDrag.vegetation_drag_coefficient,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    QueryCheck(
+        error_code=511,
+        column=models.VegetationDrag.vegetation_drag_coefficient,
+        invalid=Query(models.VegetationDrag).filter(
+            models.VegetationDrag.vegetation_drag_coefficient == None,
+            is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
+        ),
+        message="v2_vegetation_drag.vegetation_drag_coefficient must be defined.",
+    ),
+    QueryCheck(
+        error_code=512,
+        level=CheckLevel.WARNING,
+        column=models.VegetationDrag.vegetation_drag_coefficient,
+        invalid=Query(models.VegetationDrag).filter(
+            models.VegetationDrag.vegetation_drag_coefficient == None,
+            ~is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
+        ),
+        message="v2_vegetation_drag.vegetation_drag_coefficient is recommended as fallback value when using a vegetation_drag_coefficient_file.",
+    ),
+]
 
 ## 06xx: INFLOW
 # TODO: fix checks
@@ -2284,31 +2272,26 @@ CHECKS += [
         filters=first_setting_filter,
     ),
     ## 100xx: We continue raster checks from 1400
-    # TODO fix checks
-    # RasterRangeCheck(
-    #     error_code=1401,
-    #     column=models.VegetationDrag.vegetation_height_file,
-    #     filters=vegetation_drag_filter,
-    #     min_value=0,
-    # ),
-    # RasterRangeCheck(
-    #     error_code=1402,
-    #     column=models.VegetationDrag.vegetation_stem_count_file,
-    #     filters=vegetation_drag_filter,
-    #     min_value=0,
-    # ),
-    # RasterRangeCheck(
-    #     error_code=1403,
-    #     column=models.VegetationDrag.vegetation_stem_diameter_file,
-    #     filters=vegetation_drag_filter,
-    #     min_value=0,
-    # ),
-    # RasterRangeCheck(
-    #     error_code=1404,
-    #     column=models.VegetationDrag.vegetation_drag_coefficient_file,
-    #     filters=vegetation_drag_filter,
-    #     min_value=0,
-    # ),
+    RasterRangeCheck(
+        error_code=1401,
+        column=models.VegetationDrag.vegetation_height_file,
+        min_value=0,
+    ),
+    RasterRangeCheck(
+        error_code=1402,
+        column=models.VegetationDrag.vegetation_stem_count_file,
+        min_value=0,
+    ),
+    RasterRangeCheck(
+        error_code=1403,
+        column=models.VegetationDrag.vegetation_stem_diameter_file,
+        min_value=0,
+    ),
+    RasterRangeCheck(
+        error_code=1404,
+        column=models.VegetationDrag.vegetation_drag_coefficient_file,
+        min_value=0,
+    ),
     RasterPixelCountCheck(
         error_code=1405,
         column=models.ModelSettings.dem_file,
