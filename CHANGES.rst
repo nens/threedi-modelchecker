@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.7.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add info check 1406 to inform the user if a raster is not compressed.
 
 
 2.7.0 (2024-03-12)
