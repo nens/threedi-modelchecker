@@ -311,7 +311,7 @@ class RasterCompressionUsedCheck(BaseRasterCheck):
                 return True
 
     def description(self):
-        return "Raster is not compressed. It is recommended to use DEFLATE compression. This speeds up uploading and downloading and reduces storage space."
+        return f"Raster {self.column_name} is not compressed. It is recommended to use DEFLATE compression. This speeds up uploading and downloading and reduces storage space."
 
 
 @dataclass
