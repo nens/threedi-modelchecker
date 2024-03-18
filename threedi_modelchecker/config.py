@@ -123,26 +123,22 @@ vegetation_drag_filter = models.ModelSettings.use_vegetation_drag_2d
 
 CONDITIONS = {
     "has_dem": Query(models.ModelSettings).filter(
-        first_setting_filter, ~is_none_or_empty(models.ModelSettings.dem_file)
+        ~is_none_or_empty(models.ModelSettings.dem_file)
     ),
     "has_no_dem": Query(models.ModelSettings).filter(
-        first_setting_filter, is_none_or_empty(models.ModelSettings.dem_file)
+        is_none_or_empty(models.ModelSettings.dem_file)
     ),
     "0d_surf": Query(models.SimulationTemplateSettings).filter(
-        first_setting_filter,
         models.SimulationTemplateSettings.use_0d_inflow == constants.InflowType.SURFACE,
     ),
     "0d_imp": Query(models.SimulationTemplateSettings).filter(
-        first_setting_filter,
         models.SimulationTemplateSettings.use_0d_inflow
         == constants.InflowType.IMPERVIOUS_SURFACE,
     ),
     "manning": Query(models.ModelSettings).filter(
-        first_setting_filter,
         models.ModelSettings.friction_type == constants.FrictionType.MANNING,
     ),
     "chezy": Query(models.ModelSettings).filter(
-        first_setting_filter,
         models.ModelSettings.friction_type == constants.FrictionType.CHEZY,
     ),
     "has_groundwater_flow": Query(models.GroundWater).filter(
@@ -153,7 +149,6 @@ CONDITIONS = {
 
 nr_grid_levels = (
     Query(models.ModelSettings.nr_grid_levels)
-    .filter(first_setting_filter)
     .scalar_subquery()
 )
 
@@ -1181,7 +1176,6 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.ModelSettings.use_1d_flow,
         invalid=Query(models.ModelSettings).filter(
-            first_setting_filter,
             models.ModelSettings.use_1d_flow == False,
             Query(func.count(models.ConnectionNode.id) > 0).label("1d_count"),
         ),
@@ -1193,7 +1187,6 @@ CHECKS += [
     #     error_code=304,
     #     column=models.ModelSettings.groundwater_settings_id,
     #     invalid=Query(models.ModelSettings).filter(
-    #         first_setting_filter,
     #         models.ModelSettings.groundwater_settings_id != None,
     #         models.ModelSettings.simple_infiltration_settings != None,
     #     ),
@@ -1202,7 +1195,6 @@ CHECKS += [
     RangeCheck(
         error_code=305,
         column=models.ModelSettings.nr_grid_levels,
-        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 is not allowed
     ),
@@ -1210,7 +1202,6 @@ CHECKS += [
         error_code=306,
         level=CheckLevel.WARNING,
         column=models.ModelSettings.calculation_point_distance_1d,
-        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
         message="model_settings.calculation_point_distance_1d is not greater than 0, in the future this will lead to an error",
@@ -1218,34 +1209,29 @@ CHECKS += [
     RangeCheck(
         error_code=307,
         column=models.ModelSettings.minimum_cell_size,
-        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
     ),
     RangeCheck(
         error_code=308,
         column=models.ModelSettings.embedded_cutoff_threshold,
-        filters=first_setting_filter,
         min_value=0,
     ),
     RangeCheck(
         error_code=309,
         column=models.ModelSettings.max_angle_1d_advection,
-        filters=first_setting_filter,
         min_value=0,
         max_value=0.5 * 3.14159,
     ),
     RangeCheck(
         error_code=310,
         column=models.ModelSettings.minimum_table_step_size,
-        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,
     ),
     RangeCheck(
         error_code=311,
         column=models.ModelSettings.table_step_size_1d,
-        filters=first_setting_filter,
         min_value=0,
         left_inclusive=False,
     ),
@@ -1266,13 +1252,11 @@ CHECKS += [
     # RangeCheck(
     #     error_code=315,
     #     column=models.Interception.interception,
-    #     filters=first_setting_filter,
     #     min_value=0,
     # ),
     RangeCheck(
         error_code=316,
         column=models.ModelSettings.manhole_aboveground_storage_area,
-        filters=first_setting_filter,
         min_value=0,
     ),
     QueryCheck(
@@ -1300,7 +1284,6 @@ CHECKS += [
         error_code=320,
         column=models.ModelSettings.use_2d_flow,
         invalid=Query(models.ModelSettings).filter(
-            first_setting_filter,
             models.ModelSettings.use_1d_flow == False,
             models.ModelSettings.use_2d_flow == False,
         ),
@@ -1311,7 +1294,6 @@ CHECKS += [
         error_code=321,
         column=models.ModelSettings.manhole_aboveground_storage_area,
         invalid=Query(models.ModelSettings).filter(
-            first_setting_filter,
             models.ModelSettings.manhole_aboveground_storage_area > 0,
             (
                 (models.ModelSettings.use_2d_flow == True)
@@ -1325,7 +1307,6 @@ CHECKS += [
     #     error_code=322,
     #     column=models.InitialConditions.initial_water_level_aggregation,
     #     invalid=Query(models.InitialConditions).filter(
-    #         first_setting_filter,
     #         ~is_none_or_empty(models.InitialConditions.initial_water_level_file),
     #         models.InitialConditions.initial_water_level_aggregation == None,
     #     ),
@@ -1335,7 +1316,6 @@ CHECKS += [
         error_code=323,
         column=models.ModelSettings.maximum_table_step_size,
         invalid=Query(models.ModelSettings).filter(
-            first_setting_filter,
             models.ModelSettings.maximum_table_step_size
             < models.ModelSettings.minimum_table_step_size,
         ),
@@ -1347,7 +1327,6 @@ CHECKS += [
     #     level=CheckLevel.WARNING,
     #     column=models.Interception.interception,
     #     invalid=Query(models.Interception).filter(
-    #         first_setting_filter,
     #         ~is_none_or_empty(models.Interception.interception_file),
     #         is_none_or_empty(models.Interception.interception),
     #     ),
@@ -1431,7 +1410,6 @@ CHECKS += [
         error_code=360,
         level=CheckLevel.WARNING,
         column=models.ModelSettings.calculation_point_distance_1d,
-        filters=first_setting_filter,
         min_value=5.0,
         left_inclusive=True,  # 0 itself is not allowed
         message="model_settings.calculation_point_distance_1d should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
@@ -2163,17 +2141,14 @@ CHECKS += [
     RasterIsProjectedCheck(
         error_code=779,
         column=models.ModelSettings.dem_file,
-        filters=first_setting_filter,
     ),
     RasterSquareCellsCheck(
         error_code=780,
         column=models.ModelSettings.dem_file,
-        filters=first_setting_filter,
     ),
     RasterRangeCheck(
         error_code=781,
         column=models.ModelSettings.dem_file,
-        filters=first_setting_filter,
         min_value=-9998.0,
         max_value=8848.0,
     ),
@@ -2255,7 +2230,6 @@ CHECKS += [
     # RasterRangeCheck(
     #     error_code=796,
     #     column=models.InitialConditions.initial_groundwater_level_file,
-    #     filters=first_setting_filter
     #     & (models.InitialConditions.id != None),
     #     min_value=-9998.0,
     #     max_value=8848.0,
@@ -2264,12 +2238,10 @@ CHECKS += [
         error_code=797,
         level=CheckLevel.WARNING,
         column=models.ModelSettings.dem_file,
-        filters=first_setting_filter,
     ),
     RasterGridSizeCheck(
         error_code=798,
         column=models.ModelSettings.dem_file,
-        filters=first_setting_filter,
     ),
     ## 100xx: We continue raster checks from 1400
     RasterRangeCheck(
@@ -2295,7 +2267,6 @@ CHECKS += [
     RasterPixelCountCheck(
         error_code=1405,
         column=models.ModelSettings.dem_file,
-        filters=first_setting_filter,
     ),
 ]
 
