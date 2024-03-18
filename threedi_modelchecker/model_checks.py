@@ -57,10 +57,25 @@ class ThreediModelChecker:
         """
         session = self.db.get_session()
         session.model_checker_context = self.context
+        import warnings
+        from sqlalchemy import exc
+
         for check in self.checks(level=level, ignore_checks=ignore_checks):
-            model_errors = check.get_invalid(session)
-            for error_row in model_errors:
-                yield check, error_row
+            # print(check.__class__.__name__, check.column)
+            # model_errors = check.get_invalid(session)
+            # for error_row in model_errors:
+            #     yield check, error_row
+            with warnings.catch_warnings():
+                # Filter warnings to catch only SAWarning
+                warnings.filterwarnings("error", category=exc.SAWarning)
+                try:
+                    model_errors = check.get_invalid(session)
+                    for error_row in model_errors:
+                        yield check, error_row
+                except exc.SAWarning as e:
+                    print(check.__class__.__name__, check.column, check.error_code)
+                    # print("SAWarning occurred:", e)
+
 
     def checks(self, level=CheckLevel.ERROR, ignore_checks=None) -> Iterator[BaseCheck]:
         """Iterates over all configured checks

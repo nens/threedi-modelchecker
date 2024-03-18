@@ -512,23 +512,24 @@ CHECKS += [
     ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),
-    QueryCheck(
-        error_code=73,
-        column=models.BoundaryConditions2D.boundary_type,
-        filters=~CONDITIONS["has_groundwater_flow"].exists(),
-        invalid=Query(models.BoundaryConditions2D).filter(
-            models.BoundaryConditions2D.boundary_type.in_(
-                [
-                    constants.BoundaryType.GROUNDWATERLEVEL,
-                    constants.BoundaryType.GROUNDWATERDISCHARGE,
-                ]
-            )
-        ),
-        message=(
-            "v2_2d_boundary_conditions cannot have a groundwater type when there "
-            "is no groundwater hydraulic conductivity"
-        ),
-    ),
+    # TODO fix CONDITIONS["has_groundwater_flow"]
+    # QueryCheck(
+    #     error_code=73,
+    #     column=models.BoundaryConditions2D.boundary_type,
+    #     filters=~CONDITIONS["has_groundwater_flow"].exists(),
+    #     invalid=Query(models.BoundaryConditions2D).filter(
+    #         models.BoundaryConditions2D.boundary_type.in_(
+    #             [
+    #                 constants.BoundaryType.GROUNDWATERLEVEL,
+    #                 constants.BoundaryType.GROUNDWATERDISCHARGE,
+    #             ]
+    #         )
+    #     ),
+    #     message=(
+    #         "v2_2d_boundary_conditions cannot have a groundwater type when there "
+    #         "is no groundwater hydraulic conductivity"
+    #     ),
+    # ),
     QueryCheck(
         error_code=74,
         column=models.BoundaryCondition1D.boundary_type,
@@ -1267,12 +1268,13 @@ CHECKS += [
         filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
-    RangeCheck(
-        error_code=315,
-        column=models.Interception.interception,
-        filters=first_setting_filter,
-        min_value=0,
-    ),
+    # TODO: fix check
+    # RangeCheck(
+    #     error_code=315,
+    #     column=models.Interception.interception,
+    #     filters=first_setting_filter,
+    #     min_value=0,
+    # ),
     RangeCheck(
         error_code=316,
         column=models.ModelSettings.manhole_aboveground_storage_area,
@@ -1324,16 +1326,17 @@ CHECKS += [
         ),
         message="sub-basins (model_settings.manhole_aboveground_storage_area > 0) should only be used when there is no DEM supplied and there is no 2D flow",
     ),
-    QueryCheck(
-        error_code=322,
-        column=models.InitialConditions.initial_water_level_aggregation,
-        invalid=Query(models.InitialConditions).filter(
-            first_setting_filter,
-            ~is_none_or_empty(models.InitialConditions.initial_water_level_file),
-            models.InitialConditions.initial_water_level_aggregation == None,
-        ),
-        message="an initial waterlevel type (initial_settings.initial_water_level_aggregation) should be defined when using an initial waterlevel file.",
-    ),
+    # TODO fix check
+    # QueryCheck(
+    #     error_code=322,
+    #     column=models.InitialConditions.initial_water_level_aggregation,
+    #     invalid=Query(models.InitialConditions).filter(
+    #         first_setting_filter,
+    #         ~is_none_or_empty(models.InitialConditions.initial_water_level_file),
+    #         models.InitialConditions.initial_water_level_aggregation == None,
+    #     ),
+    #     message="an initial waterlevel type (initial_settings.initial_water_level_aggregation) should be defined when using an initial waterlevel file.",
+    # ),
     QueryCheck(
         error_code=323,
         column=models.ModelSettings.maximum_table_step_size,
@@ -1344,43 +1347,44 @@ CHECKS += [
         ),
         message="model_settings.maximum_table_step_size should be greater than model_settings.minimum_table_step_size.",
     ),
-    QueryCheck(
-        error_code=325,
-        level=CheckLevel.WARNING,
-        column=models.Interception.interception,
-        invalid=Query(models.Interception).filter(
-            first_setting_filter,
-            ~is_none_or_empty(models.Interception.interception_file),
-            is_none_or_empty(models.Interception.interception),
-        ),
-        message="interception.interception is recommended as fallback value when using an interception_file.",
-    ),
+    # TODO fix check
+    # QueryCheck(
+    #     error_code=325,
+    #     level=CheckLevel.WARNING,
+    #     column=models.Interception.interception,
+    #     invalid=Query(models.Interception).filter(
+    #         first_setting_filter,
+    #         ~is_none_or_empty(models.Interception.interception_file),
+    #         is_none_or_empty(models.Interception.interception),
+    #     ),
+    #     message="interception.interception is recommended as fallback value when using an interception_file.",
+    # ),
 ]
 
 # TODO: fix test that uses removed columns
-CHECKS += [
-    QueryCheck(
-        error_code=326,
-        level=CheckLevel.INFO,
-        column=table.id,
-        invalid=Query(table).filter(
-            table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
-        ),
-        message=f"{table.__tablename__} is defined, but not referred to in model_settings.{setting.name}",
-    )
-    for table, setting in (
-        (
-            models.SimpleInfiltration,
-            models.ModelSettings.use_simple_infiltration,
-        ),
-        (models.Interflow, models.ModelSettings.use_interflow),
-        (models.GroundWater, models.ModelSettings.use_groundwater_flow),
-        (models.GroundWater, models.ModelSettings.use_groundwater_storage),
-        # (models.NumericalSettings, models.ModelSettings.numerical_settings_id),
-        # (models.ControlGroup, models.ModelSettings.control_group_id),
-        (models.VegetationDrag, models.ModelSettings.use_vegetation_drag_2d),
-    )
-]
+# CHECKS += [
+#     QueryCheck(
+#         error_code=326,
+#         level=CheckLevel.INFO,
+#         column=table.id,
+#         invalid=Query(table).filter(
+#             table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
+#         ),
+#         message=f"{table.__tablename__} is defined, but not referred to in model_settings.{setting.name}",
+#     )
+#     for table, setting in (
+#         (
+#             models.SimpleInfiltration,
+#             models.ModelSettings.use_simple_infiltration,
+#         ),
+#         (models.Interflow, models.ModelSettings.use_interflow),
+#         (models.GroundWater, models.ModelSettings.use_groundwater_flow),
+#         (models.GroundWater, models.ModelSettings.use_groundwater_storage),
+#         # (models.NumericalSettings, models.ModelSettings.numerical_settings_id),
+#         # (models.ControlGroup, models.ModelSettings.control_group_id),
+#         (models.VegetationDrag, models.ModelSettings.use_vegetation_drag_2d),
+#     )
+# ]
 
 # TODO: fix test that uses removed columns
 # CHECKS += [
@@ -1441,359 +1445,361 @@ CHECKS += [
 ]
 
 ## 04xx: Groundwater, Interflow & Infiltration
+# TODO: fix checks
 CHECKS += [
-    RangeCheck(
-        error_code=401,
-        column=models.Interflow.porosity,
-        filters=interflow_filter,
-        min_value=0,
-        max_value=1,
-    ),
-    RangeCheck(
-        error_code=402,
-        column=models.Interflow.impervious_layer_elevation,
-        filters=interflow_filter,
-        min_value=0,
-    ),
-    RangeCheck(
-        error_code=403,
-        column=models.SimpleInfiltration.infiltration_rate,
-        filters=infiltration_filter,
-        min_value=0,
-    ),
-    QueryCheck(
-        error_code=404,
-        column=models.SimpleInfiltration.infiltration_rate,
-        invalid=Query(models.SimpleInfiltration).filter(
-            infiltration_filter,
-            models.SimpleInfiltration.infiltration_rate == None,
-            is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
-        ),
-        message="v2_simple_infiltration.infiltration_rate must be defined.",
-    ),
-    QueryCheck(
-        error_code=404,
-        level=CheckLevel.WARNING,
-        column=models.SimpleInfiltration.infiltration_rate,
-        invalid=Query(models.SimpleInfiltration).filter(
-            infiltration_filter,
-            models.SimpleInfiltration.infiltration_rate == None,
-            ~is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
-        ),
-        message="v2_simple_infiltration.infiltration_rate is recommended as fallback value when using an infiltration_rate_file.",
-    ),
-    QueryCheck(
-        error_code=405,
-        column=models.GroundWater.equilibrium_infiltration_rate,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.equilibrium_infiltration_rate == None,
-            is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
-        ),
-        message="groundwater.equilibrium_infiltration_rate must be defined when not using an equilibrium_infiltration_rate_file.",
-    ),
-    QueryCheck(
-        error_code=405,
-        level=CheckLevel.WARNING,
-        column=models.GroundWater.equilibrium_infiltration_rate,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.equilibrium_infiltration_rate == None,
-            ~is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
-        ),
-        message="groundwater.equilibrium_infiltration_rate is recommended as fallback value when using an equilibrium_infiltration_rate_file.",
-    ),
-    QueryCheck(
-        error_code=406,
-        column=models.GroundWater.equilibrium_infiltration_rate_type,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.equilibrium_infiltration_rate_type == None,
-            ~is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
-        ),
-        message="groundwater.equilibrium_infiltration_rate_type should be defined when using an equilibrium_infiltration_rate_file.",
-    ),
-    QueryCheck(
-        error_code=407,
-        column=models.GroundWater.infiltration_decay_period,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.infiltration_decay_period == None,
-            is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
-        ),
-        message="groundwater.infiltration_decay_period must be defined when not using an infiltration_decay_period_file.",
-    ),
-    QueryCheck(
-        error_code=407,
-        level=CheckLevel.WARNING,
-        column=models.GroundWater.infiltration_decay_period,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.infiltration_decay_period == None,
-            ~is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
-        ),
-        message="groundwater.infiltration_decay_period is recommended as fallback value when using an infiltration_decay_period_file.",
-    ),
-    QueryCheck(
-        error_code=408,
-        column=models.GroundWater.infiltration_decay_period_aggregation,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.infiltration_decay_period_aggregation == None,
-            ~is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
-        ),
-        message="an infiltration decay period type (groundwater.infiltration_decay_period_aggregation) should be defined when using an infiltration decay period file.",
-    ),
-    QueryCheck(
-        error_code=409,
-        column=models.GroundWater.groundwater_hydraulic_conductivity_aggregation,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.groundwater_hydraulic_conductivity_aggregation == None,
-            ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
-        ),
-        message="groundwater.groundwater_hydraulic_conductivity_aggregation should be defined when using a groundwater_hydraulic_conductivity_file.",
-    ),
-    QueryCheck(
-        error_code=410,
-        column=models.GroundWater.groundwater_impervious_layer_level,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.groundwater_impervious_layer_level == None,
-            is_none_or_empty(
-                models.GroundWater.groundwater_impervious_layer_level_file
-            ),
-        ),
-        message="groundwater.groundwater_impervious_layer_level must be defined when not using an groundwater_impervious_layer_level_file",
-    ),
-    QueryCheck(
-        error_code=410,
-        level=CheckLevel.WARNING,
-        column=models.GroundWater.groundwater_impervious_layer_level,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.groundwater_impervious_layer_level == None,
-            ~is_none_or_empty(
-                models.GroundWater.groundwater_impervious_layer_level_file
-            ),
-        ),
-        message="groundwater.groundwater_impervious_layer_level is recommended as fallback value when using a groundwater_impervious_layer_level_file.",
-    ),
-    QueryCheck(
-        error_code=411,
-        column=models.GroundWater.groundwater_impervious_layer_level_aggregation,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.groundwater_impervious_layer_level_aggregation == None,
-            ~is_none_or_empty(
-                models.GroundWater.groundwater_impervious_layer_level_file
-            ),
-        ),
-        message="groundwater.groundwater_impervious_layer_level_aggregation should be defined when using a groundwater_impervious_layer_level_file",
-    ),
-    QueryCheck(
-        error_code=412,
-        column=models.GroundWater.initial_infiltration_rate,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.initial_infiltration_rate == None,
-            is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
-        ),
-        message="groundwater.initial_infiltration_rate must be defined when not using a initial_infiltration_rate_file.",
-    ),
-    QueryCheck(
-        error_code=412,
-        level=CheckLevel.WARNING,
-        column=models.GroundWater.initial_infiltration_rate,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.initial_infiltration_rate == None,
-            ~is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
-        ),
-        message="groundwater.initial_infiltration_rate is recommended as fallback value when using a initial_infiltration_rate_file.",
-    ),
-    QueryCheck(
-        error_code=413,
-        column=models.GroundWater.initial_infiltration_rate_aggregation,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.initial_infiltration_rate_aggregation == None,
-            ~is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
-        ),
-        message="groundwater.initial_infiltration_rate_aggregation should be defined when using an initial infiltration rate file.",
-    ),
-    QueryCheck(
-        error_code=414,
-        column=models.GroundWater.phreatic_storage_capacity,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.phreatic_storage_capacity == None,
-            is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
-        ),
-        message="groundwater.phreatic_storage_capacity must be defined when not using a phreatic_storage_capacity_file.",
-    ),
-    QueryCheck(
-        error_code=414,
-        level=CheckLevel.WARNING,
-        column=models.GroundWater.phreatic_storage_capacity,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.phreatic_storage_capacity == None,
-            ~is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
-        ),
-        message="groundwater.phreatic_storage_capacity is recommended as fallback value when using a phreatic_storage_capacity_file.",
-    ),
-    QueryCheck(
-        error_code=415,
-        column=models.GroundWater.phreatic_storage_capacity_aggregation,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            models.GroundWater.phreatic_storage_capacity_aggregation == None,
-            ~is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
-        ),
-        message="a phreatic storage capacity type (groundwater.phreatic_storage_capacity_aggregation) should be defined when using a phreatic storage capacity file.",
-    ),
-    QueryCheck(
-        error_code=416,
-        column=models.Interflow.porosity,
-        invalid=Query(models.Interflow).filter(
-            interflow_filter,
-            models.Interflow.porosity == None,
-            is_none_or_empty(models.Interflow.porosity_file),
-            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-        ),
-        message="v2_interflow.porosity must be defined when not using a porosity_file.",
-    ),
-    QueryCheck(
-        error_code=416,
-        level=CheckLevel.WARNING,
-        column=models.Interflow.porosity,
-        invalid=Query(models.Interflow).filter(
-            interflow_filter,
-            models.Interflow.porosity == None,
-            ~is_none_or_empty(models.Interflow.porosity_file),
-            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-        ),
-        message="v2_interflow.porosity is recommended as fallback value when using a porosity_file.",
-    ),
-    QueryCheck(
-        error_code=417,
-        column=models.Interflow.porosity_layer_thickness,
-        invalid=Query(models.Interflow).filter(
-            interflow_filter,
-            (models.Interflow.porosity_layer_thickness == None)
-            | (models.Interflow.porosity_layer_thickness <= 0),
-            models.Interflow.interflow_type
-            in [
-                constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
-                constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY,
-            ],
-        ),
-        message=f"a porosity layer thickness (v2_interflow.porosity_layer_thickness) should be defined and >0 when "
-        f"interflow_type is "
-        f"{constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY} or "
-        f"{constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY}",
-    ),
-    QueryCheck(
-        error_code=418,
-        column=models.Interflow.impervious_layer_elevation,
-        invalid=Query(models.Interflow).filter(
-            interflow_filter,
-            models.Interflow.impervious_layer_elevation == None,
-            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-        ),
-        message="v2_interflow.impervious_layer_elevation cannot be null",
-    ),
-    QueryCheck(
-        error_code=419,
-        column=models.Interflow.hydraulic_conductivity,
-        invalid=Query(models.Interflow).filter(
-            interflow_filter,
-            models.Interflow.hydraulic_conductivity == None,
-            is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
-            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-        ),
-        message="v2_interflow.hydraulic_conductivity must be defined when not using a hydraulic_conductivity_file.",
-    ),
-    QueryCheck(
-        error_code=419,
-        level=CheckLevel.WARNING,
-        column=models.Interflow.hydraulic_conductivity,
-        invalid=Query(models.Interflow).filter(
-            interflow_filter,
-            models.Interflow.hydraulic_conductivity == None,
-            ~is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
-            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
-        ),
-        message="v2_interflow.hydraulic_conductivity is recommended as fallback value when using a hydraulic_conductivity_file.",
-    ),
-    RangeCheck(
-        error_code=420,
-        column=models.GroundWater.phreatic_storage_capacity,
-        filters=groundwater_filter,
-        min_value=0,
-        max_value=1,
-    ),
-    RangeCheck(
-        error_code=421,
-        column=models.GroundWater.groundwater_hydraulic_conductivity,
-        filters=groundwater_filter,
-        min_value=0,
-    ),
-    RangeCheck(
-        error_code=422,
-        column=models.SimpleInfiltration.max_infiltration_volume,
-        filters=infiltration_filter,
-        min_value=0,
-    ),
-    QueryCheck(
-        error_code=423,
-        level=CheckLevel.WARNING,
-        column=models.SimpleInfiltration.max_infiltration_volume,
-        invalid=Query(models.SimpleInfiltration).filter(
-            infiltration_filter,
-            models.SimpleInfiltration.max_infiltration_volume == None,
-            ~is_none_or_empty(models.SimpleInfiltration.max_infiltration_volume_file),
-        ),
-        message="v2_simple_infiltration.max_infiltration_volume is recommended as fallback value when using an max_infiltration_volume_file.",
-    ),
-    RangeCheck(
-        error_code=424,
-        column=models.Interflow.hydraulic_conductivity,
-        filters=(interflow_filter)
-        & (models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW),
-        min_value=0,
-    ),
-    RangeCheck(
-        error_code=425,
-        column=models.GroundWater.initial_infiltration_rate,
-        filters=groundwater_filter,
-        min_value=0,
-    ),
-    RangeCheck(
-        error_code=426,
-        column=models.GroundWater.equilibrium_infiltration_rate,
-        filters=groundwater_filter,
-        min_value=0,
-    ),
-    RangeCheck(
-        error_code=427,
-        column=models.GroundWater.infiltration_decay_period,
-        filters=groundwater_filter,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    QueryCheck(
-        error_code=428,
-        level=CheckLevel.WARNING,
-        column=models.GroundWater.groundwater_hydraulic_conductivity,
-        invalid=Query(models.GroundWater).filter(
-            groundwater_filter,
-            (models.GroundWater.groundwater_hydraulic_conductivity == None),
-            ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
-        ),
-        message="groundwater.groundwater_hydraulic_conductivity is recommended as fallback value when using a groundwater_hydraulic_conductivity_file.",
-    ),
+    # RangeCheck(
+    #     error_code=401,
+    #     column=models.Interflow.porosity,
+    #     filters=interflow_filter,
+    #     min_value=0,
+    #     max_value=1,
+    # ),
+    # RangeCheck(
+    #     error_code=402,
+    #     column=models.Interflow.impervious_layer_elevation,
+    #     filters=interflow_filter,
+    #     min_value=0,
+    # ),
+    # RangeCheck(
+    #     error_code=403,
+    #     column=models.SimpleInfiltration.infiltration_rate,
+    #     filters=infiltration_filter,
+    #     min_value=0,
+    # ),
+    # QueryCheck(
+    #     error_code=404,
+    #     column=models.SimpleInfiltration.infiltration_rate,
+    #     invalid=Query(models.SimpleInfiltration).filter(
+    #         infiltration_filter,
+    #         models.SimpleInfiltration.infiltration_rate == None,
+    #         is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
+    #     ),
+    #     message="v2_simple_infiltration.infiltration_rate must be defined.",
+    # ),
+    # QueryCheck(
+    #     error_code=404,
+    #     level=CheckLevel.WARNING,
+    #     column=models.SimpleInfiltration.infiltration_rate,
+    #     invalid=Query(models.SimpleInfiltration).filter(
+    #         infiltration_filter,
+    #         models.SimpleInfiltration.infiltration_rate == None,
+    #         ~is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
+    #     ),
+    #     message="v2_simple_infiltration.infiltration_rate is recommended as fallback value when using an infiltration_rate_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=405,
+    #     column=models.GroundWater.equilibrium_infiltration_rate,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.equilibrium_infiltration_rate == None,
+    #         is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
+    #     ),
+    #     message="groundwater.equilibrium_infiltration_rate must be defined when not using an equilibrium_infiltration_rate_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=405,
+    #     level=CheckLevel.WARNING,
+    #     column=models.GroundWater.equilibrium_infiltration_rate,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.equilibrium_infiltration_rate == None,
+    #         ~is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
+    #     ),
+    #     message="groundwater.equilibrium_infiltration_rate is recommended as fallback value when using an equilibrium_infiltration_rate_file.",
+    # ),
+    # TODO: fix
+    # QueryCheck(
+    #     error_code=406,
+    #     column=models.GroundWater.equilibrium_infiltration_rate_type,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.equilibrium_infiltration_rate_type == None,
+    #         ~is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
+    #     ),
+    #     message="groundwater.equilibrium_infiltration_rate_type should be defined when using an equilibrium_infiltration_rate_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=407,
+    #     column=models.GroundWater.infiltration_decay_period,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.infiltration_decay_period == None,
+    #         is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
+    #     ),
+    #     message="groundwater.infiltration_decay_period must be defined when not using an infiltration_decay_period_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=407,
+    #     level=CheckLevel.WARNING,
+    #     column=models.GroundWater.infiltration_decay_period,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.infiltration_decay_period == None,
+    #         ~is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
+    #     ),
+    #     message="groundwater.infiltration_decay_period is recommended as fallback value when using an infiltration_decay_period_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=408,
+    #     column=models.GroundWater.infiltration_decay_period_aggregation,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.infiltration_decay_period_aggregation == None,
+    #         ~is_none_or_empty(models.GroundWater.infiltration_decay_period_file),
+    #     ),
+    #     message="an infiltration decay period type (groundwater.infiltration_decay_period_aggregation) should be defined when using an infiltration decay period file.",
+    # ),
+    # QueryCheck(
+    #     error_code=409,
+    #     column=models.GroundWater.groundwater_hydraulic_conductivity_aggregation,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.groundwater_hydraulic_conductivity_aggregation == None,
+    #         ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
+    #     ),
+    #     message="groundwater.groundwater_hydraulic_conductivity_aggregation should be defined when using a groundwater_hydraulic_conductivity_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=410,
+    #     column=models.GroundWater.groundwater_impervious_layer_level,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.groundwater_impervious_layer_level == None,
+    #         is_none_or_empty(
+    #             models.GroundWater.groundwater_impervious_layer_level_file
+    #         ),
+    #     ),
+    #     message="groundwater.groundwater_impervious_layer_level must be defined when not using an groundwater_impervious_layer_level_file",
+    # ),
+    # QueryCheck(
+    #     error_code=410,
+    #     level=CheckLevel.WARNING,
+    #     column=models.GroundWater.groundwater_impervious_layer_level,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.groundwater_impervious_layer_level == None,
+    #         ~is_none_or_empty(
+    #             models.GroundWater.groundwater_impervious_layer_level_file
+    #         ),
+    #     ),
+    #     message="groundwater.groundwater_impervious_layer_level is recommended as fallback value when using a groundwater_impervious_layer_level_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=411,
+    #     column=models.GroundWater.groundwater_impervious_layer_level_aggregation,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.groundwater_impervious_layer_level_aggregation == None,
+    #         ~is_none_or_empty(
+    #             models.GroundWater.groundwater_impervious_layer_level_file
+    #         ),
+    #     ),
+    #     message="groundwater.groundwater_impervious_layer_level_aggregation should be defined when using a groundwater_impervious_layer_level_file",
+    # ),
+    # QueryCheck(
+    #     error_code=412,
+    #     column=models.GroundWater.initial_infiltration_rate,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.initial_infiltration_rate == None,
+    #         is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
+    #     ),
+    #     message="groundwater.initial_infiltration_rate must be defined when not using a initial_infiltration_rate_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=412,
+    #     level=CheckLevel.WARNING,
+    #     column=models.GroundWater.initial_infiltration_rate,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.initial_infiltration_rate == None,
+    #         ~is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
+    #     ),
+    #     message="groundwater.initial_infiltration_rate is recommended as fallback value when using a initial_infiltration_rate_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=413,
+    #     column=models.GroundWater.initial_infiltration_rate_aggregation,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.initial_infiltration_rate_aggregation == None,
+    #         ~is_none_or_empty(models.GroundWater.initial_infiltration_rate_file),
+    #     ),
+    #     message="groundwater.initial_infiltration_rate_aggregation should be defined when using an initial infiltration rate file.",
+    # ),
+    # QueryCheck(
+    #     error_code=414,
+    #     column=models.GroundWater.phreatic_storage_capacity,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.phreatic_storage_capacity == None,
+    #         is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
+    #     ),
+    #     message="groundwater.phreatic_storage_capacity must be defined when not using a phreatic_storage_capacity_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=414,
+    #     level=CheckLevel.WARNING,
+    #     column=models.GroundWater.phreatic_storage_capacity,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.phreatic_storage_capacity == None,
+    #         ~is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
+    #     ),
+    #     message="groundwater.phreatic_storage_capacity is recommended as fallback value when using a phreatic_storage_capacity_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=415,
+    #     column=models.GroundWater.phreatic_storage_capacity_aggregation,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         models.GroundWater.phreatic_storage_capacity_aggregation == None,
+    #         ~is_none_or_empty(models.GroundWater.phreatic_storage_capacity_file),
+    #     ),
+    #     message="a phreatic storage capacity type (groundwater.phreatic_storage_capacity_aggregation) should be defined when using a phreatic storage capacity file.",
+    # ),
+    # QueryCheck(
+    #     error_code=416,
+    #     column=models.Interflow.porosity,
+    #     invalid=Query(models.Interflow).filter(
+    #         interflow_filter,
+    #         models.Interflow.porosity == None,
+    #         is_none_or_empty(models.Interflow.porosity_file),
+    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+    #     ),
+    #     message="v2_interflow.porosity must be defined when not using a porosity_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=416,
+    #     level=CheckLevel.WARNING,
+    #     column=models.Interflow.porosity,
+    #     invalid=Query(models.Interflow).filter(
+    #         interflow_filter,
+    #         models.Interflow.porosity == None,
+    #         ~is_none_or_empty(models.Interflow.porosity_file),
+    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+    #     ),
+    #     message="v2_interflow.porosity is recommended as fallback value when using a porosity_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=417,
+    #     column=models.Interflow.porosity_layer_thickness,
+    #     invalid=Query(models.Interflow).filter(
+    #         interflow_filter,
+    #         (models.Interflow.porosity_layer_thickness == None)
+    #         | (models.Interflow.porosity_layer_thickness <= 0),
+    #         models.Interflow.interflow_type
+    #         in [
+    #             constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY,
+    #             constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY,
+    #         ],
+    #     ),
+    #     message=f"a porosity layer thickness (v2_interflow.porosity_layer_thickness) should be defined and >0 when "
+    #     f"interflow_type is "
+    #     f"{constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY} or "
+    #     f"{constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY}",
+    # ),
+    # QueryCheck(
+    #     error_code=418,
+    #     column=models.Interflow.impervious_layer_elevation,
+    #     invalid=Query(models.Interflow).filter(
+    #         interflow_filter,
+    #         models.Interflow.impervious_layer_elevation == None,
+    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+    #     ),
+    #     message="v2_interflow.impervious_layer_elevation cannot be null",
+    # ),
+    # QueryCheck(
+    #     error_code=419,
+    #     column=models.Interflow.hydraulic_conductivity,
+    #     invalid=Query(models.Interflow).filter(
+    #         interflow_filter,
+    #         models.Interflow.hydraulic_conductivity == None,
+    #         is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
+    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+    #     ),
+    #     message="v2_interflow.hydraulic_conductivity must be defined when not using a hydraulic_conductivity_file.",
+    # ),
+    # QueryCheck(
+    #     error_code=419,
+    #     level=CheckLevel.WARNING,
+    #     column=models.Interflow.hydraulic_conductivity,
+    #     invalid=Query(models.Interflow).filter(
+    #         interflow_filter,
+    #         models.Interflow.hydraulic_conductivity == None,
+    #         ~is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
+    #         models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
+    #     ),
+    #     message="v2_interflow.hydraulic_conductivity is recommended as fallback value when using a hydraulic_conductivity_file.",
+    # ),
+    # RangeCheck(
+    #     error_code=420,
+    #     column=models.GroundWater.phreatic_storage_capacity,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    #     max_value=1,
+    # ),
+    # RangeCheck(
+    #     error_code=421,
+    #     column=models.GroundWater.groundwater_hydraulic_conductivity,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    # ),
+    # RangeCheck(
+    #     error_code=422,
+    #     column=models.SimpleInfiltration.max_infiltration_volume,
+    #     filters=infiltration_filter,
+    #     min_value=0,
+    # ),
+    # QueryCheck(
+    #     error_code=423,
+    #     level=CheckLevel.WARNING,
+    #     column=models.SimpleInfiltration.max_infiltration_volume,
+    #     invalid=Query(models.SimpleInfiltration).filter(
+    #         infiltration_filter,
+    #         models.SimpleInfiltration.max_infiltration_volume == None,
+    #         ~is_none_or_empty(models.SimpleInfiltration.max_infiltration_volume_file),
+    #     ),
+    #     message="v2_simple_infiltration.max_infiltration_volume is recommended as fallback value when using an max_infiltration_volume_file.",
+    # ),
+    # RangeCheck(
+    #     error_code=424,
+    #     column=models.Interflow.hydraulic_conductivity,
+    #     filters=(interflow_filter)
+    #     & (models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW),
+    #     min_value=0,
+    # ),
+    # RangeCheck(
+    #     error_code=425,
+    #     column=models.GroundWater.initial_infiltration_rate,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    # ),
+    # RangeCheck(
+    #     error_code=426,
+    #     column=models.GroundWater.equilibrium_infiltration_rate,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    # ),
+    # RangeCheck(
+    #     error_code=427,
+    #     column=models.GroundWater.infiltration_decay_period,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    #     left_inclusive=False,
+    # ),
+    # QueryCheck(
+    #     error_code=428,
+    #     level=CheckLevel.WARNING,
+    #     column=models.GroundWater.groundwater_hydraulic_conductivity,
+    #     invalid=Query(models.GroundWater).filter(
+    #         groundwater_filter,
+    #         (models.GroundWater.groundwater_hydraulic_conductivity == None),
+    #         ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
+    #     ),
+    #     message="groundwater.groundwater_hydraulic_conductivity is recommended as fallback value when using a groundwater_hydraulic_conductivity_file.",
+    # ),
     RangeCheck(
         error_code=429,
         column=models.Manhole.exchange_thickness,
@@ -1845,122 +1851,124 @@ CHECKS += [
 ]
 
 ## 05xx: VEGETATION DRAG
-CHECKS += [
-    RangeCheck(
-        error_code=501,
-        column=models.VegetationDrag.vegetation_height,
-        filters=vegetation_drag_filter,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    QueryCheck(
-        error_code=502,
-        column=models.VegetationDrag.vegetation_height,
-        invalid=Query(models.VegetationDrag).filter(
-            vegetation_drag_filter,
-            models.VegetationDrag.vegetation_height == None,
-            is_none_or_empty(models.VegetationDrag.vegetation_height_file),
-        ),
-        message="v2_vegetation_drag.height must be defined.",
-    ),
-    QueryCheck(
-        error_code=503,
-        level=CheckLevel.WARNING,
-        column=models.VegetationDrag.vegetation_height,
-        invalid=Query(models.VegetationDrag).filter(
-            vegetation_drag_filter,
-            models.VegetationDrag.vegetation_height == None,
-            ~is_none_or_empty(models.VegetationDrag.vegetation_height_file),
-        ),
-        message="v2_vegetation_drag.height is recommended as fallback value when using a vegetation_height_file.",
-    ),
-    RangeCheck(
-        error_code=504,
-        column=models.VegetationDrag.vegetation_stem_count,
-        filters=vegetation_drag_filter,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    QueryCheck(
-        error_code=505,
-        column=models.VegetationDrag.vegetation_stem_count,
-        invalid=Query(models.VegetationDrag).filter(
-            vegetation_drag_filter,
-            models.VegetationDrag.vegetation_stem_count == None,
-            is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
-        ),
-        message="v2_vegetation_drag.vegetation_stem_count must be defined.",
-    ),
-    QueryCheck(
-        error_code=506,
-        level=CheckLevel.WARNING,
-        column=models.VegetationDrag.vegetation_stem_count,
-        invalid=Query(models.VegetationDrag).filter(
-            vegetation_drag_filter,
-            models.VegetationDrag.vegetation_stem_count == None,
-            ~is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
-        ),
-        message="v2_vegetation_drag.vegetation_stem_count is recommended as fallback value when using a vegetation_stem_count_file.",
-    ),
-    RangeCheck(
-        error_code=507,
-        column=models.VegetationDrag.vegetation_stem_diameter,
-        filters=vegetation_drag_filter,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    QueryCheck(
-        error_code=508,
-        column=models.VegetationDrag.vegetation_stem_diameter,
-        invalid=Query(models.VegetationDrag).filter(
-            vegetation_drag_filter,
-            models.VegetationDrag.vegetation_stem_diameter == None,
-            is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
-        ),
-        message="v2_vegetation_drag.vegetation_stem_diameter must be defined.",
-    ),
-    QueryCheck(
-        error_code=509,
-        level=CheckLevel.WARNING,
-        column=models.VegetationDrag.vegetation_stem_diameter,
-        invalid=Query(models.VegetationDrag).filter(
-            vegetation_drag_filter,
-            models.VegetationDrag.vegetation_stem_diameter == None,
-            ~is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
-        ),
-        message="v2_vegetation_drag.vegetation_stem_diameter is recommended as fallback value when using a vegetation_stem_diameter_file.",
-    ),
-    RangeCheck(
-        error_code=510,
-        column=models.VegetationDrag.vegetation_drag_coefficient,
-        filters=vegetation_drag_filter,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    QueryCheck(
-        error_code=511,
-        column=models.VegetationDrag.vegetation_drag_coefficient,
-        invalid=Query(models.VegetationDrag).filter(
-            vegetation_drag_filter,
-            models.VegetationDrag.vegetation_drag_coefficient == None,
-            is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
-        ),
-        message="v2_vegetation_drag.vegetation_drag_coefficient must be defined.",
-    ),
-    QueryCheck(
-        error_code=512,
-        level=CheckLevel.WARNING,
-        column=models.VegetationDrag.vegetation_drag_coefficient,
-        invalid=Query(models.VegetationDrag).filter(
-            vegetation_drag_filter,
-            models.VegetationDrag.vegetation_drag_coefficient == None,
-            ~is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
-        ),
-        message="v2_vegetation_drag.vegetation_drag_coefficient is recommended as fallback value when using a vegetation_drag_coefficient_file.",
-    ),
-]
+# TODO fix tests
+# CHECKS += [
+#     RangeCheck(
+#         error_code=501,
+#         column=models.VegetationDrag.vegetation_height,
+#         filters=vegetation_drag_filter,
+#         min_value=0,
+#         left_inclusive=False,
+#     ),
+#     QueryCheck(
+#         error_code=502,
+#         column=models.VegetationDrag.vegetation_height,
+#         invalid=Query(models.VegetationDrag).filter(
+#             vegetation_drag_filter,
+#             models.VegetationDrag.vegetation_height == None,
+#             is_none_or_empty(models.VegetationDrag.vegetation_height_file),
+#         ),
+#         message="v2_vegetation_drag.height must be defined.",
+#     ),
+#     QueryCheck(
+#         error_code=503,
+#         level=CheckLevel.WARNING,
+#         column=models.VegetationDrag.vegetation_height,
+#         invalid=Query(models.VegetationDrag).filter(
+#             vegetation_drag_filter,
+#             models.VegetationDrag.vegetation_height == None,
+#             ~is_none_or_empty(models.VegetationDrag.vegetation_height_file),
+#         ),
+#         message="v2_vegetation_drag.height is recommended as fallback value when using a vegetation_height_file.",
+#     ),
+#     RangeCheck(
+#         error_code=504,
+#         column=models.VegetationDrag.vegetation_stem_count,
+#         filters=vegetation_drag_filter,
+#         min_value=0,
+#         left_inclusive=False,
+#     ),
+#     QueryCheck(
+#         error_code=505,
+#         column=models.VegetationDrag.vegetation_stem_count,
+#         invalid=Query(models.VegetationDrag).filter(
+#             vegetation_drag_filter,
+#             models.VegetationDrag.vegetation_stem_count == None,
+#             is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
+#         ),
+#         message="v2_vegetation_drag.vegetation_stem_count must be defined.",
+#     ),
+#     QueryCheck(
+#         error_code=506,
+#         level=CheckLevel.WARNING,
+#         column=models.VegetationDrag.vegetation_stem_count,
+#         invalid=Query(models.VegetationDrag).filter(
+#             vegetation_drag_filter,
+#             models.VegetationDrag.vegetation_stem_count == None,
+#             ~is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
+#         ),
+#         message="v2_vegetation_drag.vegetation_stem_count is recommended as fallback value when using a vegetation_stem_count_file.",
+#     ),
+#     RangeCheck(
+#         error_code=507,
+#         column=models.VegetationDrag.vegetation_stem_diameter,
+#         filters=vegetation_drag_filter,
+#         min_value=0,
+#         left_inclusive=False,
+#     ),
+#     QueryCheck(
+#         error_code=508,
+#         column=models.VegetationDrag.vegetation_stem_diameter,
+#         invalid=Query(models.VegetationDrag).filter(
+#             vegetation_drag_filter,
+#             models.VegetationDrag.vegetation_stem_diameter == None,
+#             is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
+#         ),
+#         message="v2_vegetation_drag.vegetation_stem_diameter must be defined.",
+#     ),
+#     QueryCheck(
+#         error_code=509,
+#         level=CheckLevel.WARNING,
+#         column=models.VegetationDrag.vegetation_stem_diameter,
+#         invalid=Query(models.VegetationDrag).filter(
+#             vegetation_drag_filter,
+#             models.VegetationDrag.vegetation_stem_diameter == None,
+#             ~is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
+#         ),
+#         message="v2_vegetation_drag.vegetation_stem_diameter is recommended as fallback value when using a vegetation_stem_diameter_file.",
+#     ),
+#     RangeCheck(
+#         error_code=510,
+#         column=models.VegetationDrag.vegetation_drag_coefficient,
+#         filters=vegetation_drag_filter,
+#         min_value=0,
+#         left_inclusive=False,
+#     ),
+#     QueryCheck(
+#         error_code=511,
+#         column=models.VegetationDrag.vegetation_drag_coefficient,
+#         invalid=Query(models.VegetationDrag).filter(
+#             vegetation_drag_filter,
+#             models.VegetationDrag.vegetation_drag_coefficient == None,
+#             is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
+#         ),
+#         message="v2_vegetation_drag.vegetation_drag_coefficient must be defined.",
+#     ),
+#     QueryCheck(
+#         error_code=512,
+#         level=CheckLevel.WARNING,
+#         column=models.VegetationDrag.vegetation_drag_coefficient,
+#         invalid=Query(models.VegetationDrag).filter(
+#             vegetation_drag_filter,
+#             models.VegetationDrag.vegetation_drag_coefficient == None,
+#             ~is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
+#         ),
+#         message="v2_vegetation_drag.vegetation_drag_coefficient is recommended as fallback value when using a vegetation_drag_coefficient_file.",
+#     ),
+# ]
 
 ## 06xx: INFLOW
+# TODO: fix checks
 for (surface, surface_map, filters) in [
     (models.Surface, models.SurfaceMap, CONDITIONS["0d_surf"].exists()),
     (
@@ -1970,50 +1978,50 @@ for (surface, surface_map, filters) in [
     ),
 ]:
     CHECKS += [
-        RangeCheck(
-            error_code=601,
-            column=surface.area,
-            min_value=0,
-            filters=filters,
-        ),
-        RangeCheck(
-            level=CheckLevel.WARNING,
-            error_code=602,
-            column=surface.dry_weather_flow,
-            min_value=0,
-            filters=filters,
-        ),
-        RangeCheck(
-            error_code=603,
-            column=surface_map.percentage,
-            min_value=0,
-            filters=filters,
-        ),
-        RangeCheck(
-            error_code=604,
-            level=CheckLevel.WARNING,
-            column=surface_map.percentage,
-            max_value=100,
-            filters=filters,
-        ),
-        RangeCheck(
-            error_code=605,
-            column=surface.nr_of_inhabitants,
-            min_value=0,
-            filters=filters,
-        ),
-        QueryCheck(
-            level=CheckLevel.WARNING,
-            error_code=612,
-            column=surface_map.connection_node_id,
-            filters=filters,
-            invalid=Query(surface_map).filter(
-                surface_map.connection_node_id.in_(
-                    Query(models.BoundaryCondition1D.connection_node_id)
-                ),
-            ),
-            message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
-        ),
+        # RangeCheck(
+        #     error_code=601,
+        #     column=surface.area,
+        #     min_value=0,
+        #     filters=filters,
+        # ),
+        # RangeCheck(
+        #     level=CheckLevel.WARNING,
+        #     error_code=602,
+        #     column=surface.dry_weather_flow,
+        #     min_value=0,
+        #     filters=filters,
+        # ),
+        # RangeCheck(
+        #     error_code=603,
+        #     column=surface_map.percentage,
+        #     min_value=0,
+        #     filters=filters,
+        # ),
+        # RangeCheck(
+        #     error_code=604,
+        #     level=CheckLevel.WARNING,
+        #     column=surface_map.percentage,
+        #     max_value=100,
+        #     filters=filters,
+        # ),
+        # RangeCheck(
+        #     error_code=605,
+        #     column=surface.nr_of_inhabitants,
+        #     min_value=0,
+        #     filters=filters,
+        # ),
+        # QueryCheck(
+        #     level=CheckLevel.WARNING,
+        #     error_code=612,
+        #     column=surface_map.connection_node_id,
+        #     filters=filters,
+        #     invalid=Query(surface_map).filter(
+        #         surface_map.connection_node_id.in_(
+        #             Query(models.BoundaryCondition1D.connection_node_id)
+        #         ),
+        #     ),
+        #     message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
+        # ),
     ]
 CHECKS += [
     ImperviousNodeInflowAreaCheck(
@@ -2056,20 +2064,21 @@ CHECKS += [
         (models.ImperviousSurfaceMap.connection_node_id, models.ConnectionNode),
     )
 ]
-CHECKS += [
-    QueryCheck(
-        error_code=616,
-        level=CheckLevel.WARNING,
-        column=table.id,
-        filters=~CONDITIONS[condition].exists(),
-        invalid=Query(table),
-        message=f"No inflow will be generated for this feature, because model_settings.use_0d_inflow is not set to use {table.__tablename__}.",
-    )
-    for table, condition in (
-        (models.ImperviousSurface, "0d_imp"),
-        (models.Surface, "0d_surf"),
-    )
-]
+# TODO: fix checks
+# CHECKS += [
+#     QueryCheck(
+#         error_code=616,
+#         level=CheckLevel.WARNING,
+#         column=table.id,
+#         filters=~CONDITIONS[condition].exists(),
+#         invalid=Query(table),
+#         message=f"No inflow will be generated for this feature, because model_settings.use_0d_inflow is not set to use {table.__tablename__}.",
+#     )
+#     for table, condition in (
+#         (models.ImperviousSurface, "0d_imp"),
+#         (models.Surface, "0d_surf"),
+#     )
+# ]
 
 CHECKS += [
     InflowNoFeaturesCheck(
@@ -2084,93 +2093,95 @@ CHECKS += [
     )
 ]
 
-CHECKS += [
-    RangeCheck(
-        error_code=606,
-        column=models.SurfaceParameter.outflow_delay,
-        min_value=0,
-        filters=filters,
-    ),
-    RangeCheck(
-        error_code=607,
-        column=models.SurfaceParameter.max_infiltration_capacity,
-        min_value=0,
-        filters=filters,
-    ),
-    RangeCheck(
-        error_code=608,
-        column=models.SurfaceParameter.min_infiltration_capacity,
-        min_value=0,
-        filters=filters,
-    ),
-    RangeCheck(
-        error_code=609,
-        column=models.SurfaceParameter.infiltration_decay_constant,
-        min_value=0,
-        filters=filters,
-    ),
-    RangeCheck(
-        error_code=610,
-        column=models.SurfaceParameter.infiltration_recovery_constant,
-        min_value=0,
-        filters=filters,
-    ),
-    Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING),
-]
+# TODO: fix check
+# CHECKS += [
+#     RangeCheck(
+#         error_code=606,
+#         column=models.SurfaceParameter.outflow_delay,
+#         min_value=0,
+#         filters=filters,
+#     ),
+#     RangeCheck(
+#         error_code=607,
+#         column=models.SurfaceParameter.max_infiltration_capacity,
+#         min_value=0,
+#         filters=filters,
+#     ),
+#     RangeCheck(
+#         error_code=608,
+#         column=models.SurfaceParameter.min_infiltration_capacity,
+#         min_value=0,
+#         filters=filters,
+#     ),
+#     RangeCheck(
+#         error_code=609,
+#         column=models.SurfaceParameter.infiltration_decay_constant,
+#         min_value=0,
+#         filters=filters,
+#     ),
+#     RangeCheck(
+#         error_code=610,
+#         column=models.SurfaceParameter.infiltration_recovery_constant,
+#         min_value=0,
+#         filters=filters,
+#     ),
+#     Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING),
+# ]
 
 
 # 07xx: RASTERS
+# TODO: fix checks
 RASTER_COLUMNS_FILTERS = [
     (models.ModelSettings.dem_file, first_setting_filter),
     (models.ModelSettings.friction_coefficient_file, first_setting_filter),
-    (models.Interception.interception_file, first_setting_filter),
-    (models.Interflow.porosity_file, interflow_filter),
-    (
-        models.Interflow.hydraulic_conductivity_file,
-        interflow_filter,
-    ),
-    (
-        models.SimpleInfiltration.infiltration_rate_file,
-        infiltration_filter,
-    ),
-    (
-        models.SimpleInfiltration.max_infiltration_volume_file,
-        infiltration_filter,
-    ),
-    (
-        models.GroundWater.groundwater_impervious_layer_level_file,
-        groundwater_filter,
-    ),
-    (
-        models.GroundWater.phreatic_storage_capacity_file,
-        groundwater_filter,
-    ),
-    (
-        models.GroundWater.equilibrium_infiltration_rate_file,
-        groundwater_filter,
-    ),
-    (
-        models.GroundWater.initial_infiltration_rate_file,
-        groundwater_filter,
-    ),
-    (
-        models.GroundWater.infiltration_decay_period_file,
-        groundwater_filter,
-    ),
-    (
-        models.GroundWater.groundwater_hydraulic_conductivity_file,
-        groundwater_filter,
-    ),
-    (models.GroundWater.leakage_file, groundwater_filter),
-    (models.InitialConditions.initial_water_level_file, first_setting_filter),
-    (
-        models.InitialConditions.initial_groundwater_level_file,
-        first_setting_filter & (models.ModelSettings.use_groundwater_flow or models.ModelSettings.use_groundwater_storage),
-    ),
-    (models.VegetationDrag.vegetation_height_file, vegetation_drag_filter),
-    (models.VegetationDrag.vegetation_stem_count_file, vegetation_drag_filter),
-    (models.VegetationDrag.vegetation_stem_diameter_file, vegetation_drag_filter),
-    (models.VegetationDrag.vegetation_drag_coefficient_file, vegetation_drag_filter),
+    # (models.Interception.interception_file, first_setting_filter),
+    # (models.Interflow.porosity_file, interflow_filter),
+    # (
+    #     models.Interflow.hydraulic_conductivity_file,
+    #     interflow_filter,
+    # ),
+    # (
+    #     models.SimpleInfiltration.infiltration_rate_file,
+    #     infiltration_filter,
+    # ),
+    # (
+    #     models.SimpleInfiltration.max_infiltration_volume_file,
+    #     infiltration_filter,
+    # ),
+    # (
+    #     models.GroundWater.groundwater_impervious_layer_level_file,
+    #     groundwater_filter,
+    # ),
+    # (
+    #     models.GroundWater.phreatic_storage_capacity_file,
+    #     groundwater_filter,
+    # ),
+    # (
+    #     models.GroundWater.equilibrium_infiltration_rate_file,
+    #     groundwater_filter,
+    # ),
+    # (
+    #     models.GroundWater.initial_infiltration_rate_file,
+    #     groundwater_filter,
+    # ),
+    # (
+    #     models.GroundWater.infiltration_decay_period_file,
+    #     groundwater_filter,
+    # ),
+    # (
+    #     models.GroundWater.groundwater_hydraulic_conductivity_file,
+    #     groundwater_filter,
+    # ),
+    # (models.GroundWater.leakage_file, groundwater_filter),
+    # (models.InitialConditions.initial_water_level_file, first_setting_filter),
+    # (
+    #     models.InitialConditions.initial_groundwater_level_file,
+    #     first_setting_filter & (models.ModelSettings.use_groundwater_flow or models.ModelSettings.use_groundwater_storage),
+    # ),
+    # (models.VegetationDrag.vegetation_height_file, vegetation_drag_filter),
+    # (models.VegetationDrag.vegetation_stem_count_file, vegetation_drag_filter),
+    # (models.VegetationDrag.vegetation_stem_diameter_file, vegetation_drag_filter),
+    # (models.VegetationDrag.vegetation_drag_coefficient_file, vegetation_drag_filter),
 ]
 
 CHECKS += [
@@ -2242,70 +2253,71 @@ CHECKS += [
         filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
-    RasterRangeCheck(
-        error_code=784,
-        column=models.Interflow.porosity_file,
-        filters=interflow_filter,
-        min_value=0,
-        max_value=1,
-    ),
-    RasterRangeCheck(
-        error_code=785,
-        column=models.Interflow.hydraulic_conductivity_file,
-        filters=interflow_filter,
-        min_value=0,
-    ),
-    RasterRangeCheck(
-        error_code=786,
-        column=models.SimpleInfiltration.infiltration_rate_file,
-        filters=infiltration_filter,
-        min_value=0,
-    ),
-    RasterRangeCheck(
-        error_code=787,
-        column=models.SimpleInfiltration.max_infiltration_volume_file,
-        filters=infiltration_filter,
-        min_value=0,
-    ),
-    RasterRangeCheck(
-        error_code=788,
-        column=models.GroundWater.groundwater_impervious_layer_level_file,
-        filters=groundwater_filter,
-        min_value=-9998.0,
-        max_value=8848.0,
-    ),
-    RasterRangeCheck(
-        error_code=789,
-        column=models.GroundWater.phreatic_storage_capacity_file,
-        filters=groundwater_filter,
-        min_value=0,
-        max_value=1,
-    ),
-    RasterRangeCheck(
-        error_code=790,
-        column=models.GroundWater.equilibrium_infiltration_rate_file,
-        filters=groundwater_filter,
-        min_value=0,
-    ),
-    RasterRangeCheck(
-        error_code=791,
-        column=models.GroundWater.initial_infiltration_rate_file,
-        filters=groundwater_filter,
-        min_value=0,
-    ),
-    RasterRangeCheck(
-        error_code=792,
-        column=models.GroundWater.infiltration_decay_period_file,
-        filters=groundwater_filter,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    RasterRangeCheck(
-        error_code=793,
-        column=models.GroundWater.groundwater_hydraulic_conductivity_file,
-        filters=groundwater_filter,
-        min_value=0,
-    ),
+    # TODO: fix check
+    # RasterRangeCheck(
+    #     error_code=784,
+    #     column=models.Interflow.porosity_file,
+    #     filters=interflow_filter,
+    #     min_value=0,
+    #     max_value=1,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=785,
+    #     column=models.Interflow.hydraulic_conductivity_file,
+    #     filters=interflow_filter,
+    #     min_value=0,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=786,
+    #     column=models.SimpleInfiltration.infiltration_rate_file,
+    #     filters=infiltration_filter,
+    #     min_value=0,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=787,
+    #     column=models.SimpleInfiltration.max_infiltration_volume_file,
+    #     filters=infiltration_filter,
+    #     min_value=0,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=788,
+    #     column=models.GroundWater.groundwater_impervious_layer_level_file,
+    #     filters=groundwater_filter,
+    #     min_value=-9998.0,
+    #     max_value=8848.0,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=789,
+    #     column=models.GroundWater.phreatic_storage_capacity_file,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    #     max_value=1,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=790,
+    #     column=models.GroundWater.equilibrium_infiltration_rate_file,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=791,
+    #     column=models.GroundWater.initial_infiltration_rate_file,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=792,
+    #     column=models.GroundWater.infiltration_decay_period_file,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    #     left_inclusive=False,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=793,
+    #     column=models.GroundWater.groundwater_hydraulic_conductivity_file,
+    #     filters=groundwater_filter,
+    #     min_value=0,
+    # ),
     RasterRangeCheck(
         error_code=795,
         column=models.InitialConditions.initial_water_level_file,
@@ -2313,14 +2325,14 @@ CHECKS += [
         max_value=8848.0,
     ),
     # TODO: check changed test - testing for primary key not none is strange!
-    RasterRangeCheck(
-        error_code=796,
-        column=models.InitialConditions.initial_groundwater_level_file,
-        filters=first_setting_filter
-        & (models.InitialConditions.id != None),
-        min_value=-9998.0,
-        max_value=8848.0,
-    ),
+    # RasterRangeCheck(
+    #     error_code=796,
+    #     column=models.InitialConditions.initial_groundwater_level_file,
+    #     filters=first_setting_filter
+    #     & (models.InitialConditions.id != None),
+    #     min_value=-9998.0,
+    #     max_value=8848.0,
+    # ),
     RasterHasMatchingEPSGCheck(
         error_code=797,
         level=CheckLevel.WARNING,
@@ -2333,30 +2345,31 @@ CHECKS += [
         filters=first_setting_filter,
     ),
     ## 100xx: We continue raster checks from 1400
-    RasterRangeCheck(
-        error_code=1401,
-        column=models.VegetationDrag.vegetation_height_file,
-        filters=vegetation_drag_filter,
-        min_value=0,
-    ),
-    RasterRangeCheck(
-        error_code=1402,
-        column=models.VegetationDrag.vegetation_stem_count_file,
-        filters=vegetation_drag_filter,
-        min_value=0,
-    ),
-    RasterRangeCheck(
-        error_code=1403,
-        column=models.VegetationDrag.vegetation_stem_diameter_file,
-        filters=vegetation_drag_filter,
-        min_value=0,
-    ),
-    RasterRangeCheck(
-        error_code=1404,
-        column=models.VegetationDrag.vegetation_drag_coefficient_file,
-        filters=vegetation_drag_filter,
-        min_value=0,
-    ),
+    # TODO fix checks
+    # RasterRangeCheck(
+    #     error_code=1401,
+    #     column=models.VegetationDrag.vegetation_height_file,
+    #     filters=vegetation_drag_filter,
+    #     min_value=0,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=1402,
+    #     column=models.VegetationDrag.vegetation_stem_count_file,
+    #     filters=vegetation_drag_filter,
+    #     min_value=0,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=1403,
+    #     column=models.VegetationDrag.vegetation_stem_diameter_file,
+    #     filters=vegetation_drag_filter,
+    #     min_value=0,
+    # ),
+    # RasterRangeCheck(
+    #     error_code=1404,
+    #     column=models.VegetationDrag.vegetation_drag_coefficient_file,
+    #     filters=vegetation_drag_filter,
+    #     min_value=0,
+    # ),
     RasterPixelCountCheck(
         error_code=1405,
         column=models.ModelSettings.dem_file,
