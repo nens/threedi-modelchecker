@@ -140,10 +140,7 @@ CONDITIONS = {
     ),
 }
 
-nr_grid_levels = (
-    Query(models.ModelSettings.nr_grid_levels)
-    .scalar_subquery()
-)
+nr_grid_levels = Query(models.ModelSettings.nr_grid_levels).scalar_subquery()
 
 
 CHECKS: List[BaseCheck] = []
@@ -494,7 +491,6 @@ CHECKS += [
     ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),
-    # TODO fix CONDITIONS["has_groundwater_flow"]
     QueryCheck(
         error_code=73,
         column=models.BoundaryConditions2D.boundary_type,
@@ -1154,16 +1150,6 @@ CHECKS += [
 ## 030x: SETTINGS
 
 CHECKS += [
-    # TODO: remove
-    # QueryCheck(
-    #     error_code=302,
-    #     column=models.ModelSettings.dem_obstacle_detection,
-    #     invalid=Query(models.ModelSettings).filter(
-    #         first_setting_filter,
-    #         models.ModelSettings.dem_obstacle_detection == True,
-    #     ),
-    #     message="model_settings.dem_obstacle_detection is True, while this feature is not supported",
-    # ),
     QueryCheck(
         error_code=303,
         level=CheckLevel.WARNING,
@@ -1241,12 +1227,11 @@ CHECKS += [
         filters=CONDITIONS["chezy"].exists(),
         min_value=0,
     ),
-    # TODO: fix check
-    # RangeCheck(
-    #     error_code=315,
-    #     column=models.Interception.interception,
-    #     min_value=0,
-    # ),
+    RangeCheck(
+        error_code=315,
+        column=models.Interception.interception,
+        min_value=0,
+    ),
     RangeCheck(
         error_code=316,
         column=models.ModelSettings.manhole_aboveground_storage_area,
@@ -1295,16 +1280,15 @@ CHECKS += [
         ),
         message="sub-basins (model_settings.manhole_aboveground_storage_area > 0) should only be used when there is no DEM supplied and there is no 2D flow",
     ),
-    # TODO fix check
-    # QueryCheck(
-    #     error_code=322,
-    #     column=models.InitialConditions.initial_water_level_aggregation,
-    #     invalid=Query(models.InitialConditions).filter(
-    #         ~is_none_or_empty(models.InitialConditions.initial_water_level_file),
-    #         models.InitialConditions.initial_water_level_aggregation == None,
-    #     ),
-    #     message="an initial waterlevel type (initial_settings.initial_water_level_aggregation) should be defined when using an initial waterlevel file.",
-    # ),
+    QueryCheck(
+        error_code=322,
+        column=models.InitialConditions.initial_water_level_aggregation,
+        invalid=Query(models.InitialConditions).filter(
+            ~is_none_or_empty(models.InitialConditions.initial_water_level_file),
+            models.InitialConditions.initial_water_level_aggregation == None,
+        ),
+        message="an initial waterlevel type (initial_settings.initial_water_level_aggregation) should be defined when using an initial waterlevel file.",
+    ),
     QueryCheck(
         error_code=323,
         column=models.ModelSettings.maximum_table_step_size,
@@ -1314,20 +1298,20 @@ CHECKS += [
         ),
         message="model_settings.maximum_table_step_size should be greater than model_settings.minimum_table_step_size.",
     ),
-    # TODO fix check
-    # QueryCheck(
-    #     error_code=325,
-    #     level=CheckLevel.WARNING,
-    #     column=models.Interception.interception,
-    #     invalid=Query(models.Interception).filter(
-    #         ~is_none_or_empty(models.Interception.interception_file),
-    #         is_none_or_empty(models.Interception.interception),
-    #     ),
-    #     message="interception.interception is recommended as fallback value when using an interception_file.",
-    # ),
+    QueryCheck(
+        error_code=325,
+        level=CheckLevel.WARNING,
+        column=models.Interception.interception,
+        invalid=Query(models.Interception).filter(
+            ~is_none_or_empty(models.Interception.interception_file),
+            is_none_or_empty(models.Interception.interception),
+        ),
+        message="interception.interception is recommended as fallback value when using an interception_file.",
+    ),
 ]
 
 # TODO: fix test that uses removed columns
+# TODO: check that table is not empty when use_foo is defined
 # CHECKS += [
 #     QueryCheck(
 #         error_code=326,
@@ -1353,18 +1337,18 @@ CHECKS += [
 # ]
 
 # TODO: fix test that uses removed columns
-# CHECKS += [
-#     QueryCheck(
-#         error_code=327,
-#         column=models.ModelSettings.vegetation_drag_settings_id,
-#         invalid=Query(models.ModelSettings).filter(
-#             first_setting_filter,
-#             ~is_none_or_empty(models.ModelSettings.vegetation_drag_settings_id),
-#             models.ModelSettings.friction_type != constants.FrictionType.CHEZY.value,
-#         ),
-#         message="Vegetation drag can only be used in combination with friction type 1 (Chézy)",
-#     )
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=327,
+        column=models.ModelSettings.use_vegetation_drag_2d,
+        invalid=Query(models.ModelSettings).filter(
+            first_setting_filter,
+            models.ModelSettings.use_vegetation_drag_2d,
+            models.ModelSettings.friction_type != constants.FrictionType.CHEZY.value,
+        ),
+        message="Vegetation drag can only be used in combination with friction type 1 (Chézy)",
+    )
+]
 
 CHECKS += [
     AllEqualCheck(error_code=330 + i, column=column, level=CheckLevel.WARNING)
@@ -1499,7 +1483,9 @@ CHECKS += [
         column=models.GroundWater.groundwater_hydraulic_conductivity_aggregation,
         invalid=Query(models.GroundWater).filter(
             models.GroundWater.groundwater_hydraulic_conductivity_aggregation == None,
-            ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
+            ~is_none_or_empty(
+                models.GroundWater.groundwater_hydraulic_conductivity_file
+            ),
         ),
         message="groundwater.groundwater_hydraulic_conductivity_aggregation should be defined when using a groundwater_hydraulic_conductivity_file.",
     ),
@@ -1691,7 +1677,9 @@ CHECKS += [
     RangeCheck(
         error_code=424,
         column=models.Interflow.hydraulic_conductivity,
-        filters=(models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW),
+        filters=(
+            models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW
+        ),
         min_value=0,
     ),
     RangeCheck(
@@ -1716,7 +1704,9 @@ CHECKS += [
         column=models.GroundWater.groundwater_hydraulic_conductivity,
         invalid=Query(models.GroundWater).filter(
             (models.GroundWater.groundwater_hydraulic_conductivity == None),
-            ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
+            ~is_none_or_empty(
+                models.GroundWater.groundwater_hydraulic_conductivity_file
+            ),
         ),
         message="groundwater.groundwater_hydraulic_conductivity is recommended as fallback value when using a groundwater_hydraulic_conductivity_file.",
     ),
@@ -2056,7 +2046,10 @@ RASTER_COLUMNS = [
     models.GroundWater.leakage_file,
     models.InitialConditions.initial_water_level_file,
     models.InitialConditions.initial_groundwater_level_file,
-    (models.ModelSettings.use_groundwater_flow or models.ModelSettings.use_groundwater_storage),
+    (
+        models.ModelSettings.use_groundwater_flow
+        or models.ModelSettings.use_groundwater_storage
+    ),
     models.VegetationDrag.vegetation_height_file,
     models.VegetationDrag.vegetation_stem_count_file,
     models.VegetationDrag.vegetation_stem_diameter_file,
