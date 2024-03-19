@@ -1163,16 +1163,15 @@ CHECKS += [
         message="model_settings.use_1d_flow is turned off while there are 1D "
         "elements in the model",
     ),
-    # TODO: fix test that uses removed columns
-    # QueryCheck(
-    #     error_code=304,
-    #     column=models.ModelSettings.groundwater_settings_id,
-    #     invalid=Query(models.ModelSettings).filter(
-    #         models.ModelSettings.groundwater_settings_id != None,
-    #         models.ModelSettings.simple_infiltration_settings != None,
-    #     ),
-    #     message="simple_infiltration in combination with groundwater flow is not allowed.",
-    # ),
+    QueryCheck(
+        error_code=304,
+        column=models.ModelSettings.use_groundwater_flow,
+        invalid=Query(models.ModelSettings).filter(
+            models.ModelSettings.use_groundwater_flow != None,
+            models.ModelSettings.use_simple_infiltration != None,
+        ),
+        message="simple_infiltration in combination with groundwater flow is not allowed.",
+    ),
     RangeCheck(
         error_code=305,
         column=models.ModelSettings.nr_grid_levels,
