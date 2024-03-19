@@ -10,6 +10,7 @@ from .base import BaseCheck, CheckLevel
 from .cross_section_definitions import cross_section_configuration
 from .geo_query import distance, length, transform
 
+# TODO: remove (?)
 # Use these to make checks only work on the first global settings entry:
 first_setting = (
     Query(models.ModelSettings.id)
@@ -1081,3 +1082,29 @@ class AllPresentVariableVegetationParameters(AllPresent):
                 )
             )
         )
+
+
+# TODO: add test
+class UsedSettingsPresentCheck(BaseCheck):
+    def __init__(
+        self,
+        column,
+        settings_table,
+        filters=None,
+        level=CheckLevel.ERROR,
+        error_code=0,
+    ):
+        super().__init__(column, filters, level, error_code)
+        self.settings_table = settings_table
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        # more than 1 row should be caught by another check
+        all_results = self.to_check(session).filter(self.column == True).all()
+        use_cols = len(all_results) > 0
+        if use_cols:
+            return []
+        if session.query(self.settings_table).count() == 0:
+            return all_results
+
+    def description(self) -> str:
+        return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.name} is empty"

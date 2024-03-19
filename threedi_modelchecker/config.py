@@ -70,6 +70,7 @@ from .checks.other import (  # Use0DFlowCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
+    UsedSettingsPresentCheck,
 )
 from .checks.raster import (
     GDALAvailableCheck,
@@ -1313,6 +1314,22 @@ CHECKS += [
 
 # TODO: fix test that uses removed columns
 # TODO: check that table is not empty when use_foo is defined
+CHECKS += [
+    UsedSettingsPresentCheck(
+        error_code=326, level=CheckLevel.INFO, column=use_col, settings_table=table
+    )
+    for table, use_col in (
+        (
+            models.SimpleInfiltration,
+            models.ModelSettings.use_simple_infiltration,
+        ),
+        (models.Interflow, models.ModelSettings.use_interflow),
+        (models.GroundWater, models.ModelSettings.use_groundwater_flow),
+        (models.GroundWater, models.ModelSettings.use_groundwater_storage),
+        (models.VegetationDrag, models.ModelSettings.use_vegetation_drag_2d),
+    )
+]
+
 # CHECKS += [
 #     QueryCheck(
 #         error_code=326,
@@ -1324,17 +1341,8 @@ CHECKS += [
 #         message=f"{table.__tablename__} is defined, but not referred to in model_settings.{setting.name}",
 #     )
 #     for table, setting in (
-#         (
-#             models.SimpleInfiltration,
-#             models.ModelSettings.use_simple_infiltration,
-#         ),
-#         (models.Interflow, models.ModelSettings.use_interflow),
-#         (models.GroundWater, models.ModelSettings.use_groundwater_flow),
-#         (models.GroundWater, models.ModelSettings.use_groundwater_storage),
 #         # (models.NumericalSettings, models.ModelSettings.numerical_settings_id),
 #         # (models.ControlGroup, models.ModelSettings.control_group_id),
-#         (models.VegetationDrag, models.ModelSettings.use_vegetation_drag_2d),
-#     )
 # ]
 
 CHECKS += [
