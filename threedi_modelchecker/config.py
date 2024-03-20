@@ -106,19 +106,6 @@ def is_none_or_empty(col):
     return (col == None) | (col == "")
 
 
-# Use these to make checks only work on the first global settings entry:
-first_setting = (
-    Query(models.ModelSettings.id)
-    .order_by(models.ModelSettings.id)
-    .limit(1)
-    .scalar_subquery()
-)
-first_setting_filter = models.ModelSettings.id == first_setting
-interflow_settings_id = Query(models.Interflow.id).scalar_subquery()
-infiltration_settings_id = Query(models.SimpleInfiltration.id).scalar_subquery()
-groundwater_settings_id = Query(models.GroundWater.id).scalar_subquery()
-vegetation_drag_settings_id = Query(models.VegetationDrag.id).scalar_subquery()
-
 CONDITIONS = {
     "has_dem": Query(models.ModelSettings).filter(
         ~is_none_or_empty(models.ModelSettings.dem_file)
@@ -1362,7 +1349,6 @@ CHECKS += [
         error_code=327,
         column=models.ModelSettings.use_vegetation_drag_2d,
         invalid=Query(models.ModelSettings).filter(
-            first_setting_filter,
             models.ModelSettings.use_vegetation_drag_2d,
             models.ModelSettings.friction_type != constants.FrictionType.CHEZY.value,
         ),
