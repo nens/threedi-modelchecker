@@ -388,7 +388,6 @@ def test_sqlalchemy_to_sqlite_type_with_custom_type():
     assert _sqlalchemy_to_sqlite_types(customIntegerEnum) == ["integer"]
 
 
-# @pytest.mark.skip(reason="dem obstacle parameters are remove")
 def test_conditional_checks(session):
     global_settings1 = factories.ModelSettingsFactory(minimum_cell_size=10)
     factories.ModelSettingsFactory(minimum_cell_size=20)
