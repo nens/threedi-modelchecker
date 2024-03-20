@@ -718,7 +718,8 @@ class PumpStorageTimestepCheck(BaseCheck):
             .filter(
                 (models.ConnectionNode.storage_area != None)
                 & (
-                    (  # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
+                    (
+                        # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
                         (
                             # Arithmetic operations on None return None, so without this
                             # conditional type cast, no invalid results would be returned
@@ -1127,8 +1128,7 @@ class SettingsLengthCheck(BaseCheck):
         )
 
 
-# TODO add test
-class AggegationSettingsInvervalCheck(BaseCheck):
+class AggregationSettingsInvervalCheck(BaseCheck):
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         return (
             session.query(models.AggregationSettings, models.TimeStepSettings)

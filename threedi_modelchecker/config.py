@@ -46,7 +46,7 @@ from .checks.factories import (
     generate_unique_checks,
 )
 from .checks.other import (  # Use0DFlowCheck,
-    AggegationSettingsInvervalCheck,
+    AggregationSettingsInvervalCheck,
     AllPresentFixedVegetationParameters,
     AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
@@ -2526,7 +2526,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.AggregationSettings.interval,
     ),
-    AggegationSettingsInvervalCheck(
+    AggregationSettingsInvervalCheck(
         column=models.AggregationSettings.interval,
         error_code=1153,
         level=CheckLevel.WARNING,
