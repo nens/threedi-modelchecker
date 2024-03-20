@@ -46,6 +46,7 @@ from .checks.factories import (
     generate_unique_checks,
 )
 from .checks.other import (  # Use0DFlowCheck,
+    AggegationSettingsInvervalCheck,
     AllPresentFixedVegetationParameters,
     AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
@@ -68,6 +69,7 @@ from .checks.other import (  # Use0DFlowCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
+    SettingsLengthCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
@@ -1312,11 +1314,9 @@ CHECKS += [
     ),
 ]
 
-# TODO: fix test that uses removed columns
-# TODO: check that table is not empty when use_foo is defined
 CHECKS += [
     UsedSettingsPresentCheck(
-        error_code=326, level=CheckLevel.INFO, column=use_col, settings_table=table
+        error_code=326, level=CheckLevel.ERROR, column=use_col, settings_table=table
     )
     for table, use_col in (
         (
@@ -1327,23 +1327,34 @@ CHECKS += [
         (models.GroundWater, models.ModelSettings.use_groundwater_flow),
         (models.GroundWater, models.ModelSettings.use_groundwater_storage),
         (models.VegetationDrag, models.ModelSettings.use_vegetation_drag_2d),
+        (models.Interception, models.ModelSettings.use_interception),
     )
 ]
 
-# CHECKS += [
-#     QueryCheck(
-#         error_code=326,
-#         level=CheckLevel.INFO,
-#         column=table.id,
-#         invalid=Query(table).filter(
-#             table.id != Query(setting).filter(first_setting_filter).scalar_subquery()
-#         ),
-#         message=f"{table.__tablename__} is defined, but not referred to in model_settings.{setting.name}",
-#     )
-#     for table, setting in (
-#         # (models.NumericalSettings, models.ModelSettings.numerical_settings_id),
-#         # (models.ControlGroup, models.ModelSettings.control_group_id),
-# ]
+CHECKS += [
+    SettingsLengthCheck(
+        error_code=326,
+        level=CheckLevel.INFO,
+        column=table.id,
+        min_length=min_length,
+        max_length=max_length,
+    )
+    for table, min_length, max_length in [
+        (models.ModelSettings, 1, 1),
+        (models.SimulationTemplateSettings, 1, 1),
+        (models.TimeStepSettings, 1, 1),
+        (models.NumericalSettings, 1, 1),
+        (models.PhysicalSettings, 1, 1),
+        (models.InitialConditions, 1, 1),
+        (models.SimpleInfiltration, 0, 1),
+        (models.Interflow, 0, 1),
+        (models.GroundWater, 0, 1),
+        (models.GroundWater, 0, 1),
+        (models.VegetationDrag, 0, 1),
+        (models.Interception, 0, 1),
+    ]
+]
+
 
 CHECKS += [
     QueryCheck(
@@ -2179,14 +2190,13 @@ CHECKS += [
         min_value=-9998.0,
         max_value=8848.0,
     ),
-    # TODO: check changed test - testing for primary key not none is strange!
-    # RasterRangeCheck(
-    #     error_code=796,
-    #     column=models.InitialConditions.initial_groundwater_level_file,
-    #     & (models.InitialConditions.id != None),
-    #     min_value=-9998.0,
-    #     max_value=8848.0,
-    # ),
+    RasterRangeCheck(
+        error_code=796,
+        column=models.InitialConditions.initial_groundwater_level_file,
+        filters=models.InitialConditions.id != None,
+        min_value=-9998.0,
+        max_value=8848.0,
+    ),
     RasterHasMatchingEPSGCheck(
         error_code=797,
         level=CheckLevel.WARNING,
@@ -2356,8 +2366,6 @@ CHECKS += [
 ]
 
 ## 111x - 114x: SIMULATION SETTINGS, numerical
-
-# TODO: check if removing global settings filter doesn't break anything
 CHECKS += [
     RangeCheck(
         error_code=1110,
@@ -2374,7 +2382,6 @@ CHECKS += [
     RangeCheck(
         error_code=1112,
         column=models.NumericalSettings.convergence_eps,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=1e-7,
         max_value=1e-4,
     ),
@@ -2518,23 +2525,11 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.AggregationSettings.interval,
     ),
-    # TODO: fix test that uses removed columns
-    # models.AggregationSettings.interval < models.TimeStepSettings.output_time_step
-    # QueryCheck(
-    #     error_code=1153,
-    #     level=CheckLevel.WARNING,
-    #     column=models.AggregationSettings.timestep,
-    #     invalid=Query(models.AggregationSettings)
-    #     .join(
-    #         models.ModelSettings,
-    #         models.AggregationSettings.global_settings_id == models.ModelSettings.id,
-    #     )
-    #     .filter(first_setting_filter)
-    #     .filter(
-    #         models.AggregationSettings.timestep < models.ModelSettings.output_time_step
-    #     ),
-    #     message="v2_aggregation_settings.timestep is smaller than model_settings.output_time_step",
-    # ),
+    AggegationSettingsInvervalCheck(
+        column=models.AggregationSettings.interval,
+        error_code=1153,
+        level=CheckLevel.WARNING,
+    ),
 ]
 CHECKS += [
     CorrectAggregationSettingsExist(

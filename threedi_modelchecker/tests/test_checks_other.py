@@ -502,8 +502,6 @@ def test_potential_breach_interdistance_other_channel(session):
     assert len(invalid) == 0
 
 
-# TODO: fix this
-@pytest.mark.skip(reason="Skip this because ModelSettiongs no longer takes time steps")
 @pytest.mark.parametrize(
     "storage_area,time_step,expected_result,capacity",
     [
@@ -523,7 +521,7 @@ def test_pumpstation_storage_timestep(
         lower_stop_level=-4.78,
         capacity=capacity,
     )
-    factories.ModelSettingsFactory(time_step=time_step)
+    factories.TimeStepSettingsFactory(time_step=time_step)
     check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
@@ -813,7 +811,6 @@ def test_all_present_fixed_vegetation_parameters(
     assert (len(invalid_rows) == 0) == result
 
 
-# TODO: add check for Variable...
 @pytest.mark.parametrize(
     "cols, val, shape, friction_type, result",
     [

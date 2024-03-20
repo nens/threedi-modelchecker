@@ -717,6 +717,7 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
         return f"{self.column_name} must be more than {self.min_distance} m apart (or exactly on the same position)"
 
 
+# TODO: fix check
 class PumpStorageTimestepCheck(BaseCheck):
     """Check that a pumpstation will not empty its storage area within one timestep"""
 
@@ -1108,3 +1109,53 @@ class UsedSettingsPresentCheck(BaseCheck):
 
     def description(self) -> str:
         return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.name} is empty"
+
+
+# TODO: add test
+class SettingsLengthCheck(BaseCheck):
+    def __init__(
+        self,
+        column,
+        filters=None,
+        level=CheckLevel.ERROR,
+        error_code=0,
+        min_length=0,
+        max_length=1,
+    ):
+        super().__init__(column, filters, level, error_code)
+        self.min_length = min_length
+        self.max_length = max_length
+        self.observed_length = 0
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        all_results = self.to_check(session).all()
+        self.observed_length = len(all_results)
+        if (self.observed_length > self.max_length) or (
+            self.observed_length < self.min_length
+        ):
+            return all_results
+        else:
+            return []
+
+    def description(self) -> str:
+        return (
+            f"{self.table.name} has {self.observed_length} rows, "
+            f"but should have at least {self.min_length} rows and "
+            f"at most {self.max_length} rows."
+        )
+
+
+# TODO add test
+class AggegationSettingsInvervalCheck(BaseCheck):
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        return (
+            session.query(models.AggregationSettings, models.TimeStepSettings)
+            .filter(
+                models.AggregationSettings.interval
+                < models.TimeStepSettings.output_time_step
+            )
+            .all()
+        )
+
+    def description(self) -> str:
+        return "aggregation_settings.interval should be smaller than time_step_settings.output_time_step"

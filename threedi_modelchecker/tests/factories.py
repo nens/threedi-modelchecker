@@ -12,22 +12,14 @@ def inject_session(session):
             cls._meta.sqlalchemy_session = session
 
 
-class PhysicalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.PhysicalSettings
-        sqlalchemy_session = None
-
-    advection_2d = 1
-    advection_1d = 1
-
-
 class TimeStepSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.TimeStepSettings
         sqlalchemy_session = None
 
     time_step = 30
-    minimum_time_step = 1
+    min_time_step = 1
+    max_time_step = 100
     output_time_step = 300
     use_time_step_stretch = False
 
@@ -46,17 +38,7 @@ class ModelSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     nr_grid_levels = 4
     friction_coefficient = 0.03
     use_2d_flow = True
-    # TODO: check if a SimulationTemplateSettings factory is needed
-    # use_0d_inflow = 0
     friction_type = constants.FrictionType.CHEZY
-
-
-class SimpleInfiltrationFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.SimpleInfiltration
-        sqlalchemy_session = None
-
-    infiltration_rate = 0.0
 
 
 class ControlGroupFactory(factory.alchemy.SQLAlchemyModelFactory):

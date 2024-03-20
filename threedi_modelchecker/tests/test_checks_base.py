@@ -73,21 +73,6 @@ def test_fk_check_null_fk(session):
     assert len(invalid_rows) == 0
 
 
-# TODO fix test
-@pytest.mark.skip(reason="Cannot pass because control_group_id does not exist")
-def test_fk_check_both_null(session):
-    factories.ModelSettingsFactory(control_group_id=None)
-
-    assert session.query(models.ModelSettings).first().id is not None
-    assert session.query(models.ModelSettings.control_group_id).scalar() is None
-    assert session.query(models.ControlGroup.id).scalar() is None
-    fk_check = ForeignKeyCheck(
-        models.ControlGroup.id, models.ModelSettings.control_group_id
-    )
-    invalid_rows = fk_check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
 def test_fk_check_missing_fk(session):
     conn_node = factories.ConnectionNodeFactory()
     factories.ManholeFactory.create_batch(5, manhole_indicator=conn_node.id)
@@ -403,23 +388,18 @@ def test_sqlalchemy_to_sqlite_type_with_custom_type():
     assert _sqlalchemy_to_sqlite_types(customIntegerEnum) == ["integer"]
 
 
-# TODO: fix or remove now dem_obstacle stuff is removed
-@pytest.mark.skip(reason="dem obstacle parameters are remove")
+# @pytest.mark.skip(reason="dem obstacle parameters are remove")
 def test_conditional_checks(session):
-    global_settings1 = factories.ModelSettingsFactory(
-        dem_obstacle_detection=True, dem_obstacle_height=-5
-    )
-    factories.ModelSettingsFactory(dem_obstacle_detection=False, dem_obstacle_height=-5)
+    global_settings1 = factories.ModelSettingsFactory(minimum_cell_size=10)
+    factories.ModelSettingsFactory(minimum_cell_size=20)
 
     query = Query(models.ModelSettings).filter(
-        models.ModelSettings.dem_obstacle_height <= 0,
-        models.ModelSettings.dem_obstacle_detection == True,
+        models.ModelSettings.minimum_cell_size < 20,
     )
     conditional_range_check_to_query_check = QueryCheck(
-        column=models.ModelSettings.dem_obstacle_height,
+        column=models.ModelSettings.minimum_cell_size,
         invalid=query,
-        message="ModelSettings.dem_obstacle_height should be larger than 0 "
-        "when ModelSettings.dem_obstacle_height is True.",
+        message="ModelSettings.minimum_cell_size should be smaller than 20 ",
     )
     invalids_querycheck = conditional_range_check_to_query_check.get_invalid(session)
     assert len(invalids_querycheck) == 1
@@ -612,53 +592,6 @@ def test_global_settings_use_1d_flow_and_no_1d_elements(session):
     assert len(errors) == 0
 
 
-# TODO: remove because start_time is deleted
-@pytest.mark.skip(reason="start_time no longer exists")
-def test_global_settings_start_time(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Can't insert wrong datatype in postgres")
-    factories.ModelSettingsFactory(start_time="18:00:00")
-    factories.ModelSettingsFactory(start_time=None)
-    wrong_start_time = factories.ModelSettingsFactory(start_time="asdf18:00:00")
-
-    check_start_time = QueryCheck(
-        column=models.ModelSettings.start_time,
-        invalid=Query(models.ModelSettings).filter(
-            func.date(models.ModelSettings.start_time) == None,
-            models.ModelSettings.start_time != None,
-        ),
-        message="ModelSettingss.start_time is an invalid, make sure it has the "
-        "following format: 'HH:MM:SS'",
-    )
-
-    errors = check_start_time.get_invalid(session)
-    assert len(errors) == 1
-    assert errors[0].id == wrong_start_time.id
-
-
-# TODO: remove because start_date is deleted
-@pytest.mark.skip(reason="start_date no longer exists")
-def test_global_settings_start_date(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Can't insert wrong datatype in postgres")
-    factories.ModelSettingsFactory(start_date="1991-08-27")
-    wrong_start_date = factories.ModelSettingsFactory(start_date="asdf18:00:00")
-
-    check_start_date = QueryCheck(
-        column=models.ModelSettings.start_date,
-        invalid=Query(models.ModelSettings).filter(
-            func.date(models.ModelSettings.start_date) == None,
-            models.ModelSettings.start_date != None,
-        ),
-        message="ModelSettingss.start_date is an invalid, make sure it has the "
-        "following format: 'YYYY-MM-DD'",
-    )
-
-    errors = check_start_date.get_invalid(session)
-    assert len(errors) == 1
-    assert errors[0].id == wrong_start_date.id
-
-
 def test_length_geom_linestring_in_4326(session):
     factories.ModelSettingsFactory(epsg_code=28992)
     channel_too_short = factories.ChannelFactory(
@@ -762,24 +695,3 @@ def test_range_check_invalid(
     assert len(invalid_rows) == 1
 
     assert check.description() == msg.format("v2_connection_nodes.storage_area")
-
-
-# TODO: fix test
-@pytest.mark.skip(reason="Uses removed column dem_obstacle_detection")
-def test_check_only_first(session):
-    factories.ModelSettingsFactory(dem_obstacle_detection=False)
-    factories.ModelSettingsFactory(dem_obstacle_detection=True)
-
-    active_settings = Query(models.ModelSettings.id).limit(1).scalar_subquery()
-
-    check = QueryCheck(
-        error_code=302,
-        column=models.ModelSettings.dem_obstacle_detection,
-        invalid=Query(models.ModelSettings).filter(
-            models.ModelSettings.id == active_settings,
-            models.ModelSettings.dem_obstacle_detection == True,
-        ),
-        message="model_settings.dem_obstacle_detection is True, while this feature is not supported",
-    )
-
-    assert check.get_invalid(session) == []
