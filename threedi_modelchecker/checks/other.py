@@ -10,16 +10,6 @@ from .base import BaseCheck, CheckLevel
 from .cross_section_definitions import cross_section_configuration
 from .geo_query import distance, length, transform
 
-# TODO: remove (?)
-# Use these to make checks only work on the first global settings entry:
-first_setting = (
-    Query(models.ModelSettings.id)
-    .order_by(models.ModelSettings.id)
-    .limit(1)
-    .scalar_subquery()
-)
-first_setting_filter = models.ModelSettings.id == first_setting
-
 
 class CorrectAggregationSettingsExist(BaseCheck):
     """Check if aggregation settings are correctly filled with aggregation_method and flow_variable as required"""
@@ -36,8 +26,7 @@ class CorrectAggregationSettingsExist(BaseCheck):
         self.flow_variable = flow_variable.value
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        # TODO: fix test that uses removed columns
-        global_settings = self.to_check(session).filter(first_setting_filter)
+        global_settings = self.to_check(session)
         correctly_defined = session.execute(
             select(models.AggregationSettings).filter(
                 models.AggregationSettings.aggregation_method
@@ -234,7 +223,6 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
         return f"{self.column_name} has both open and closed cross-sections along its length. All cross-sections on a {self.column_name} object must be either open or closed."
 
 
-# TODO: check if fixed correctly after moving use_0d_inflow
 class Use0DFlowCheck(BaseCheck):
     """Check that when use_0d_flow in global settings is configured to 1 or to
     2, there is at least one impervious surface or surfaces respectively.
@@ -717,12 +705,10 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
         return f"{self.column_name} must be more than {self.min_distance} m apart (or exactly on the same position)"
 
 
-# TODO: fix check
 class PumpStorageTimestepCheck(BaseCheck):
     """Check that a pumpstation will not empty its storage area within one timestep"""
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        # TODO: check query changes related to time step
         return (
             session.query(models.Pumpstation)
             .join(
@@ -745,9 +731,7 @@ class PumpStorageTimestepCheck(BaseCheck):
                         )
                     )
                     / (models.Pumpstation.capacity / 1000)
-                    < Query(models.TimeStepSettings.time_step)
-                    # .filter(first_setting_filter)
-                    .scalar_subquery()
+                    < Query(models.TimeStepSettings.time_step).scalar_subquery()
                 )
             )
             .all()

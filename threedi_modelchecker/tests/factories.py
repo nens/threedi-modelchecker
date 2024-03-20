@@ -346,3 +346,12 @@ class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     vegetation_drag_coefficient = 0.4
     vegetation_drag_coefficient_file = "vegetation_drag_coefficient_file.txt"
+
+
+class SimulationTemplateSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SimulationTemplateSettings
+        sqlalchemy_session = None
+
+    name = "Foo"
+    use_0d_inflow = constants.InflowType.NO_INFLOW

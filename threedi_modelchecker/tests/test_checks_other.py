@@ -29,6 +29,7 @@ from threedi_modelchecker.checks.other import (
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
+    Use0DFlowCheck,
 )
 from threedi_modelchecker.model_checks import ThreediModelChecker
 
@@ -884,3 +885,31 @@ def test_all_present_variable_vegetation_parameters(
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == result
+
+
+@pytest.mark.parametrize(
+    "use_0d_inflow",
+    [
+        constants.InflowType.NO_INFLOW,
+        constants.InflowType.SURFACE,
+        constants.InflowType.IMPERVIOUS_SURFACE,
+    ],
+)
+@pytest.mark.parametrize("add_surface", [True, False])
+@pytest.mark.parametrize("add_impervious_surface", [True, False])
+def test_use_0d_flow_check(
+    session, use_0d_inflow: int, add_surface: bool, add_impervious_surface: bool
+):
+    factories.SimulationTemplateSettingsFactory(use_0d_inflow=use_0d_inflow)
+    if add_surface:
+        factories.SurfaceFactory()
+    if add_impervious_surface:
+        factories.ImperviousSurfaceFactory()
+    if use_0d_inflow == constants.InflowType.NO_INFLOW:
+        nof_invalid_expected = 0
+    elif use_0d_inflow == constants.InflowType.SURFACE:
+        nof_invalid_expected = 0 if add_surface else 1
+    elif use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE:
+        nof_invalid_expected = 0 if add_impervious_surface else 1
+    check = Use0DFlowCheck()
+    assert (len(check.get_invalid(session))) == nof_invalid_expected
