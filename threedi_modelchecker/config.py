@@ -2045,10 +2045,6 @@ RASTER_COLUMNS = [
     models.GroundWater.leakage_file,
     models.InitialConditions.initial_water_level_file,
     models.InitialConditions.initial_groundwater_level_file,
-    (
-        models.ModelSettings.use_groundwater_flow
-        or models.ModelSettings.use_groundwater_storage
-    ),
     models.VegetationDrag.vegetation_height_file,
     models.VegetationDrag.vegetation_stem_count_file,
     models.VegetationDrag.vegetation_stem_diameter_file,
