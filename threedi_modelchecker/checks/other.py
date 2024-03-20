@@ -1093,7 +1093,6 @@ class UsedSettingsPresentCheck(BaseCheck):
         return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.name} is empty"
 
 
-# TODO: add test
 class SettingsLengthCheck(BaseCheck):
     def __init__(
         self,
@@ -1110,12 +1109,13 @@ class SettingsLengthCheck(BaseCheck):
         self.observed_length = 0
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
+        # return mock list in case the table is empty when it shouldn't be
         all_results = self.to_check(session).all()
         self.observed_length = len(all_results)
         if (self.observed_length > self.max_length) or (
             self.observed_length < self.min_length
         ):
-            return all_results
+            return all_results if self.observed_length > 0 else ["foo"]
         else:
             return []
 

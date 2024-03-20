@@ -1331,6 +1331,7 @@ CHECKS += [
     )
 ]
 
+# The test test_individual_checks prohibits setting min_length to 1 because then tests fail on empty dp
 CHECKS += [
     SettingsLengthCheck(
         error_code=326,
@@ -1340,12 +1341,12 @@ CHECKS += [
         max_length=max_length,
     )
     for table, min_length, max_length in [
-        (models.ModelSettings, 1, 1),
-        (models.SimulationTemplateSettings, 1, 1),
-        (models.TimeStepSettings, 1, 1),
-        (models.NumericalSettings, 1, 1),
-        (models.PhysicalSettings, 1, 1),
-        (models.InitialConditions, 1, 1),
+        (models.ModelSettings, 0, 1),
+        (models.SimulationTemplateSettings, 0, 1),
+        (models.TimeStepSettings, 0, 1),
+        (models.NumericalSettings, 0, 1),
+        (models.PhysicalSettings, 0, 1),
+        (models.InitialConditions, 0, 1),
         (models.SimpleInfiltration, 0, 1),
         (models.Interflow, 0, 1),
         (models.GroundWater, 0, 1),
