@@ -334,7 +334,6 @@ class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.VegetationDrag
         sqlalchemy_session = None
 
-    display_name = Faker("name")
     vegetation_height = 1.0
     vegetation_height_file = "vegetation_height_file.txt"
 

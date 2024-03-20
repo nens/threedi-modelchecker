@@ -30,6 +30,7 @@ from threedi_modelchecker.checks.other import (
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
+    UsedSettingsPresentCheck,
 )
 from threedi_modelchecker.model_checks import ThreediModelChecker
 
@@ -913,3 +914,17 @@ def test_use_0d_flow_check(
         nof_invalid_expected = 0 if add_impervious_surface else 1
     check = Use0DFlowCheck()
     assert (len(check.get_invalid(session))) == nof_invalid_expected
+
+
+@pytest.mark.parametrize("use_setting", [True, False])
+@pytest.mark.parametrize("add_setting", [True, False])
+def test_used_settings_present_check(session, use_setting, add_setting):
+    nof_invalid_expected = 1 if use_setting and not add_setting else 0
+    factories.ModelSettingsFactory(use_vegetation_drag_2d=use_setting)
+    if add_setting:
+        factories.VegetationDragFactory()
+    check = UsedSettingsPresentCheck(
+        column=models.ModelSettings.use_vegetation_drag_2d,
+        settings_table=models.VegetationDrag,
+    )
+    assert len(check.get_invalid(session)) == nof_invalid_expected

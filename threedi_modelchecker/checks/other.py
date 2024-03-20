@@ -1069,7 +1069,6 @@ class AllPresentVariableVegetationParameters(AllPresent):
         )
 
 
-# TODO: add test
 class UsedSettingsPresentCheck(BaseCheck):
     def __init__(
         self,
@@ -1086,10 +1085,9 @@ class UsedSettingsPresentCheck(BaseCheck):
         # more than 1 row should be caught by another check
         all_results = self.to_check(session).filter(self.column == True).all()
         use_cols = len(all_results) > 0
-        if use_cols:
-            return []
-        if session.query(self.settings_table).count() == 0:
+        if use_cols and session.query(self.settings_table).count() == 0:
             return all_results
+        return []
 
     def description(self) -> str:
         return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.name} is empty"
