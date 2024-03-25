@@ -1157,8 +1157,8 @@ CHECKS += [
         error_code=304,
         column=models.ModelSettings.use_groundwater_flow,
         invalid=Query(models.ModelSettings).filter(
-            models.ModelSettings.use_groundwater_flow != None,
-            models.ModelSettings.use_simple_infiltration != None,
+            models.ModelSettings.use_groundwater_flow == True,
+            models.ModelSettings.use_simple_infiltration == True,
         ),
         message="simple_infiltration in combination with groundwater flow is not allowed.",
     ),
