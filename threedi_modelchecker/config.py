@@ -1424,7 +1424,7 @@ CHECKS += [
             models.SimpleInfiltration.infiltration_rate == None,
             is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
         ),
-        message="v2_simple_infiltration.infiltration_rate must be defined.",
+        message="simple_infiltration.infiltration_rate must be defined.",
     ),
     QueryCheck(
         error_code=404,
@@ -1434,7 +1434,7 @@ CHECKS += [
             models.SimpleInfiltration.infiltration_rate == None,
             ~is_none_or_empty(models.SimpleInfiltration.infiltration_rate_file),
         ),
-        message="v2_simple_infiltration.infiltration_rate is recommended as fallback value when using an infiltration_rate_file.",
+        message="simple_infiltration.infiltration_rate is recommended as fallback value when using an infiltration_rate_file.",
     ),
     QueryCheck(
         error_code=405,
@@ -1592,7 +1592,7 @@ CHECKS += [
             is_none_or_empty(models.Interflow.porosity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message="v2_interflow.porosity must be defined when not using a porosity_file.",
+        message="interflow.porosity must be defined when not using a porosity_file.",
     ),
     QueryCheck(
         error_code=416,
@@ -1603,7 +1603,7 @@ CHECKS += [
             ~is_none_or_empty(models.Interflow.porosity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message="v2_interflow.porosity is recommended as fallback value when using a porosity_file.",
+        message="interflow.porosity is recommended as fallback value when using a porosity_file.",
     ),
     QueryCheck(
         error_code=417,
@@ -1617,7 +1617,7 @@ CHECKS += [
                 constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY,
             ],
         ),
-        message=f"a porosity layer thickness (v2_interflow.porosity_layer_thickness) should be defined and >0 when "
+        message=f"a porosity layer thickness (interflow.porosity_layer_thickness) should be defined and >0 when "
         f"interflow_type is "
         f"{constants.InterflowType.LOCAL_DEEPEST_POINT_SCALED_POROSITY} or "
         f"{constants.InterflowType.GLOBAL_DEEPEST_POINT_SCALED_POROSITY}",
@@ -1629,7 +1629,7 @@ CHECKS += [
             models.Interflow.impervious_layer_elevation == None,
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message="v2_interflow.impervious_layer_elevation cannot be null",
+        message="interflow.impervious_layer_elevation cannot be null",
     ),
     QueryCheck(
         error_code=419,
@@ -1639,7 +1639,7 @@ CHECKS += [
             is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message="v2_interflow.hydraulic_conductivity must be defined when not using a hydraulic_conductivity_file.",
+        message="interflow.hydraulic_conductivity must be defined when not using a hydraulic_conductivity_file.",
     ),
     QueryCheck(
         error_code=419,
@@ -1650,7 +1650,7 @@ CHECKS += [
             ~is_none_or_empty(models.Interflow.hydraulic_conductivity_file),
             models.Interflow.interflow_type != constants.InterflowType.NO_INTERLFOW,
         ),
-        message="v2_interflow.hydraulic_conductivity is recommended as fallback value when using a hydraulic_conductivity_file.",
+        message="interflow.hydraulic_conductivity is recommended as fallback value when using a hydraulic_conductivity_file.",
     ),
     RangeCheck(
         error_code=420,
@@ -1676,7 +1676,7 @@ CHECKS += [
             models.SimpleInfiltration.max_infiltration_volume == None,
             ~is_none_or_empty(models.SimpleInfiltration.max_infiltration_volume_file),
         ),
-        message="v2_simple_infiltration.max_infiltration_volume is recommended as fallback value when using an max_infiltration_volume_file.",
+        message="simple_infiltration.max_infiltration_volume is recommended as fallback value when using an max_infiltration_volume_file.",
     ),
     RangeCheck(
         error_code=424,
@@ -1779,7 +1779,7 @@ CHECKS += [
             models.VegetationDrag.vegetation_height == None,
             is_none_or_empty(models.VegetationDrag.vegetation_height_file),
         ),
-        message="v2_vegetation_drag.height must be defined.",
+        message="vegetation_drag.height must be defined.",
     ),
     QueryCheck(
         error_code=503,
@@ -1789,7 +1789,7 @@ CHECKS += [
             models.VegetationDrag.vegetation_height == None,
             ~is_none_or_empty(models.VegetationDrag.vegetation_height_file),
         ),
-        message="v2_vegetation_drag.height is recommended as fallback value when using a vegetation_height_file.",
+        message="vegetation_drag.height is recommended as fallback value when using a vegetation_height_file.",
     ),
     RangeCheck(
         error_code=504,
@@ -1804,7 +1804,7 @@ CHECKS += [
             models.VegetationDrag.vegetation_stem_count == None,
             is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
         ),
-        message="v2_vegetation_drag.vegetation_stem_count must be defined.",
+        message="vegetation_drag.vegetation_stem_count must be defined.",
     ),
     QueryCheck(
         error_code=506,
@@ -1814,7 +1814,7 @@ CHECKS += [
             models.VegetationDrag.vegetation_stem_count == None,
             ~is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
         ),
-        message="v2_vegetation_drag.vegetation_stem_count is recommended as fallback value when using a vegetation_stem_count_file.",
+        message="vegetation_drag.vegetation_stem_count is recommended as fallback value when using a vegetation_stem_count_file.",
     ),
     RangeCheck(
         error_code=507,
@@ -1829,7 +1829,7 @@ CHECKS += [
             models.VegetationDrag.vegetation_stem_diameter == None,
             is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
         ),
-        message="v2_vegetation_drag.vegetation_stem_diameter must be defined.",
+        message="vegetation_drag.vegetation_stem_diameter must be defined.",
     ),
     QueryCheck(
         error_code=509,
@@ -1839,7 +1839,7 @@ CHECKS += [
             models.VegetationDrag.vegetation_stem_diameter == None,
             ~is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
         ),
-        message="v2_vegetation_drag.vegetation_stem_diameter is recommended as fallback value when using a vegetation_stem_diameter_file.",
+        message="vegetation_drag.vegetation_stem_diameter is recommended as fallback value when using a vegetation_stem_diameter_file.",
     ),
     RangeCheck(
         error_code=510,
@@ -1854,7 +1854,7 @@ CHECKS += [
             models.VegetationDrag.vegetation_drag_coefficient == None,
             is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
         ),
-        message="v2_vegetation_drag.vegetation_drag_coefficient must be defined.",
+        message="vegetation_drag.vegetation_drag_coefficient must be defined.",
     ),
     QueryCheck(
         error_code=512,
@@ -1864,7 +1864,7 @@ CHECKS += [
             models.VegetationDrag.vegetation_drag_coefficient == None,
             ~is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
         ),
-        message="v2_vegetation_drag.vegetation_drag_coefficient is recommended as fallback value when using a vegetation_drag_coefficient_file.",
+        message="vegetation_drag.vegetation_drag_coefficient is recommended as fallback value when using a vegetation_drag_coefficient_file.",
     ),
 ]
 
@@ -2454,7 +2454,7 @@ CHECKS += [
             (models.NumericalSettings.friction_shallow_water_depth_correction == 3)
             & (models.NumericalSettings.limiter_slope_thin_water_layer <= 0)
         ),
-        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using frict_shallow_water_correction option 3.",
+        message="numerical_settings.limiter_slope_thin_water_layer must be greater than 0 when using friction_shallow_water_depth_correction option 3.",
     ),
     QueryCheck(
         error_code=1126,
@@ -2464,7 +2464,7 @@ CHECKS += [
             (models.NumericalSettings.limiter_slope_crossectional_area_2d == 3)
             & (models.NumericalSettings.limiter_slope_thin_water_layer <= 0)
         ),
-        message="v2_numerical_settings.thin_water_layer_definition must be greater than 0 when using limiter_slope_crossectional_area_2d option 3.",
+        message="numerical_settings.limiter_slope_thin_water_layer must be greater than 0 when using limiter_slope_crossectional_area_2d option 3.",
     ),
     QueryCheck(
         error_code=1127,
@@ -2474,7 +2474,7 @@ CHECKS += [
             (models.NumericalSettings.limiter_slope_friction_2d == 0)
             & (models.NumericalSettings.limiter_slope_crossectional_area_2d != 0)
         ),
-        message="v2_numerical_settings.limiter_slope_friction_2d may not be 0 when using limiter_slope_crossectional_area_2d.",
+        message="numerical_settings.limiter_slope_friction_2d may not be 0 when using limiter_slope_crossectional_area_2d.",
     ),
 ]
 

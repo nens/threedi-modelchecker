@@ -38,7 +38,7 @@ class CorrectAggregationSettingsExist(BaseCheck):
 
     def description(self) -> str:
         return (
-            "To use the water balance tool, v2_aggregation_settings should have a row where "
+            "To use the water balance tool, aggregation_settings should have a row where "
             f"aggregation_method is {self.aggregation_method} and flow_variable is {self.flow_variable}."
         )
 
