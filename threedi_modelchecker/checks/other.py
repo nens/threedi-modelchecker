@@ -1091,7 +1091,7 @@ class UsedSettingsPresentCheck(BaseCheck):
         return []
 
     def description(self) -> str:
-        return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.name} is empty"
+        return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.__tablename__} is empty"
 
 
 class SettingsLengthCheck(BaseCheck):
@@ -1131,10 +1131,11 @@ class SettingsLengthCheck(BaseCheck):
 class AggregationSettingsInvervalCheck(BaseCheck):
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         return (
-            session.query(models.AggregationSettings, models.TimeStepSettings)
-            .filter(
+            session.query(models.AggregationSettings)
+            .join(
+                models.TimeStepSettings,
                 models.AggregationSettings.interval
-                < models.TimeStepSettings.output_time_step
+                < models.TimeStepSettings.output_time_step,
             )
             .all()
         )
