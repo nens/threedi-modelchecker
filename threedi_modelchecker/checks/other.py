@@ -1091,7 +1091,7 @@ class UsedSettingsPresentCheck(BaseCheck):
         return []
 
     def description(self) -> str:
-        return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.name} is empty"
+        return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.__tablename__} is empty"
 
 
 class SettingsLengthCheck(BaseCheck):
