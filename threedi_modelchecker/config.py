@@ -1668,6 +1668,7 @@ CHECKS += [
         column=models.SimpleInfiltration.max_infiltration_volume,
         min_value=0,
     ),
+    # TODO: fix this check
     QueryCheck(
         error_code=423,
         level=CheckLevel.WARNING,
@@ -2056,6 +2057,7 @@ CHECKS += [
         error_code=700, level=CheckLevel.WARNING, column=models.ModelSettings.dem_file
     )
 ]
+# TODO: check this check
 CHECKS += [
     RasterExistsCheck(
         error_code=701 + i,
