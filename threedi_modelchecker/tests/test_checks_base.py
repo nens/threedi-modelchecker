@@ -73,19 +73,6 @@ def test_fk_check_null_fk(session):
     assert len(invalid_rows) == 0
 
 
-def test_fk_check_both_null(session):
-    factories.GlobalSettingsFactory(control_group_id=None)
-
-    assert session.query(models.GlobalSetting).first().id is not None
-    assert session.query(models.GlobalSetting.control_group_id).scalar() is None
-    assert session.query(models.ControlGroup.id).scalar() is None
-    fk_check = ForeignKeyCheck(
-        models.ControlGroup.id, models.GlobalSetting.control_group_id
-    )
-    invalid_rows = fk_check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
 def test_fk_check_missing_fk(session):
     conn_node = factories.ConnectionNodeFactory()
     factories.ManholeFactory.create_batch(5, manhole_indicator=conn_node.id)
@@ -172,52 +159,52 @@ def test_unique_check_multiple_description():
     )
     assert unique_check.description() == (
         "columns ['aggregation_method', 'flow_variable'] in table "
-        "v2_aggregation_settings should be unique together"
+        "aggregation_settings should be unique together"
     )
 
 
 def test_all_equal_check(session):
-    factories.GlobalSettingsFactory(table_step_size=0.5)
-    factories.GlobalSettingsFactory(table_step_size=0.5)
+    factories.ModelSettingsFactory(minimum_table_step_size=0.5)
+    factories.ModelSettingsFactory(minimum_table_step_size=0.5)
 
-    check = AllEqualCheck(models.GlobalSetting.table_step_size)
+    check = AllEqualCheck(models.ModelSettings.minimum_table_step_size)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
 def test_all_equal_check_different_value(session):
-    factories.GlobalSettingsFactory(table_step_size=0.5)
-    factories.GlobalSettingsFactory(table_step_size=0.6)
-    factories.GlobalSettingsFactory(table_step_size=0.5)
-    factories.GlobalSettingsFactory(table_step_size=0.7)
+    factories.ModelSettingsFactory(minimum_table_step_size=0.5)
+    factories.ModelSettingsFactory(minimum_table_step_size=0.6)
+    factories.ModelSettingsFactory(minimum_table_step_size=0.5)
+    factories.ModelSettingsFactory(minimum_table_step_size=0.7)
 
-    check = AllEqualCheck(models.GlobalSetting.table_step_size)
+    check = AllEqualCheck(models.ModelSettings.minimum_table_step_size)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 2
-    assert invalid_rows[0].table_step_size == 0.6
-    assert invalid_rows[1].table_step_size == 0.7
+    assert invalid_rows[0].minimum_table_step_size == 0.6
+    assert invalid_rows[1].minimum_table_step_size == 0.7
 
 
 def test_all_equal_check_null_value(session):
-    factories.GlobalSettingsFactory(maximum_table_step_size=None)
-    factories.GlobalSettingsFactory(maximum_table_step_size=None)
+    factories.ModelSettingsFactory(maximum_table_step_size=None)
+    factories.ModelSettingsFactory(maximum_table_step_size=None)
 
-    check = AllEqualCheck(models.GlobalSetting.maximum_table_step_size)
+    check = AllEqualCheck(models.ModelSettings.maximum_table_step_size)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
 def test_all_equal_check_null_value_different(session):
-    factories.GlobalSettingsFactory(maximum_table_step_size=1.0)
-    factories.GlobalSettingsFactory(maximum_table_step_size=None)
+    factories.ModelSettingsFactory(maximum_table_step_size=1.0)
+    factories.ModelSettingsFactory(maximum_table_step_size=None)
 
-    check = AllEqualCheck(models.GlobalSetting.maximum_table_step_size)
+    check = AllEqualCheck(models.ModelSettings.maximum_table_step_size)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
 
 def test_all_equal_check_no_records(session):
-    check = AllEqualCheck(models.GlobalSetting.table_step_size)
+    check = AllEqualCheck(models.ModelSettings.minimum_table_step_size)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -319,13 +306,13 @@ def test_type_check_varchar(session):
 def test_type_check_boolean(session):
     if session.bind.name == "postgresql":
         pytest.skip("type checks not working on postgres")
-    factories.GlobalSettingsFactory(use_1d_flow=True)
-    factories.GlobalSettingsFactory(use_1d_flow=1)
-    # factories.GlobalSettingsFactory(use_1d_flow='true')
-    # factories.GlobalSettingsFactory(use_1d_flow='1')
-    # factories.GlobalSettingsFactory(use_1d_flow=1.0)
+    factories.ModelSettingsFactory(use_1d_flow=True)
+    factories.ModelSettingsFactory(use_1d_flow=1)
+    # factories.ModelSettingsFactory(use_1d_flow='true')
+    # factories.ModelSettingsFactory(use_1d_flow='1')
+    # factories.ModelSettingsFactory(use_1d_flow=1.0)
 
-    type_check = TypeCheck(models.GlobalSetting.use_1d_flow)
+    type_check = TypeCheck(models.ModelSettings.use_1d_flow)
     invalid_rows = type_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -402,22 +389,16 @@ def test_sqlalchemy_to_sqlite_type_with_custom_type():
 
 
 def test_conditional_checks(session):
-    global_settings1 = factories.GlobalSettingsFactory(
-        dem_obstacle_detection=True, dem_obstacle_height=-5
-    )
-    factories.GlobalSettingsFactory(
-        dem_obstacle_detection=False, dem_obstacle_height=-5
-    )
+    global_settings1 = factories.ModelSettingsFactory(minimum_cell_size=10)
+    factories.ModelSettingsFactory(minimum_cell_size=20)
 
-    query = Query(models.GlobalSetting).filter(
-        models.GlobalSetting.dem_obstacle_height <= 0,
-        models.GlobalSetting.dem_obstacle_detection == True,
+    query = Query(models.ModelSettings).filter(
+        models.ModelSettings.minimum_cell_size < 20,
     )
     conditional_range_check_to_query_check = QueryCheck(
-        column=models.GlobalSetting.dem_obstacle_height,
+        column=models.ModelSettings.minimum_cell_size,
         invalid=query,
-        message="GlobalSetting.dem_obstacle_height should be larger than 0 "
-        "when GlobalSetting.dem_obstacle_height is True.",
+        message="ModelSettings.minimum_cell_size should be smaller than 20 ",
     )
     invalids_querycheck = conditional_range_check_to_query_check.get_invalid(session)
     assert len(invalids_querycheck) == 1
@@ -573,18 +554,18 @@ def test_query_check_manhole_drain_level_calc_type_2(session):
 
 
 def test_global_settings_no_use_1d_flow_and_1d_elements(session):
-    factories.GlobalSettingsFactory(use_1d_flow=1)
-    g2 = factories.GlobalSettingsFactory(use_1d_flow=0)
+    factories.ModelSettingsFactory(use_1d_flow=1)
+    g2 = factories.ModelSettingsFactory(use_1d_flow=0)
     factories.ConnectionNodeFactory.create_batch(3)
 
-    query_1d_nodes_and_no_use_1d_flow = Query(models.GlobalSetting).filter(
-        models.GlobalSetting.use_1d_flow == False,
+    query_1d_nodes_and_no_use_1d_flow = Query(models.ModelSettings).filter(
+        models.ModelSettings.use_1d_flow == False,
         Query(func.count(models.ConnectionNode.id) > 0).label("1d_count"),
     )
     check_use_1d_flow_has_1d = QueryCheck(
-        column=models.GlobalSetting.use_1d_flow,
+        column=models.ModelSettings.use_1d_flow,
         invalid=query_1d_nodes_and_no_use_1d_flow,
-        message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
+        message="ModelSettingss.use_1d_flow must be set to True when there are 1d "
         "elements",
     )
     errors = check_use_1d_flow_has_1d.get_invalid(session)
@@ -593,68 +574,25 @@ def test_global_settings_no_use_1d_flow_and_1d_elements(session):
 
 
 def test_global_settings_use_1d_flow_and_no_1d_elements(session):
-    factories.GlobalSettingsFactory(use_1d_flow=1)
-    factories.GlobalSettingsFactory(use_1d_flow=0)
+    factories.ModelSettingsFactory(use_1d_flow=1)
+    factories.ModelSettingsFactory(use_1d_flow=0)
 
-    query_1d_nodes_and_no_use_1d_flow = Query(models.GlobalSetting).filter(
-        models.GlobalSetting.use_1d_flow == False,
+    query_1d_nodes_and_no_use_1d_flow = Query(models.ModelSettings).filter(
+        models.ModelSettings.use_1d_flow == False,
         Query(func.count(models.ConnectionNode.id) > 0).label("1d_count"),
     )
     check_use_1d_flow_has_1d = QueryCheck(
-        column=models.GlobalSetting.use_1d_flow,
+        column=models.ModelSettings.use_1d_flow,
         invalid=query_1d_nodes_and_no_use_1d_flow,
-        message="GlobalSettings.use_1d_flow must be set to True when there are 1d "
+        message="ModelSettingss.use_1d_flow must be set to True when there are 1d "
         "elements",
     )
     errors = check_use_1d_flow_has_1d.get_invalid(session)
     assert len(errors) == 0
 
 
-def test_global_settings_start_time(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Can't insert wrong datatype in postgres")
-    factories.GlobalSettingsFactory(start_time="18:00:00")
-    factories.GlobalSettingsFactory(start_time=None)
-    wrong_start_time = factories.GlobalSettingsFactory(start_time="asdf18:00:00")
-
-    check_start_time = QueryCheck(
-        column=models.GlobalSetting.start_time,
-        invalid=Query(models.GlobalSetting).filter(
-            func.date(models.GlobalSetting.start_time) == None,
-            models.GlobalSetting.start_time != None,
-        ),
-        message="GlobalSettings.start_time is an invalid, make sure it has the "
-        "following format: 'HH:MM:SS'",
-    )
-
-    errors = check_start_time.get_invalid(session)
-    assert len(errors) == 1
-    assert errors[0].id == wrong_start_time.id
-
-
-def test_global_settings_start_date(session):
-    if session.bind.name == "postgresql":
-        pytest.skip("Can't insert wrong datatype in postgres")
-    factories.GlobalSettingsFactory(start_date="1991-08-27")
-    wrong_start_date = factories.GlobalSettingsFactory(start_date="asdf18:00:00")
-
-    check_start_date = QueryCheck(
-        column=models.GlobalSetting.start_date,
-        invalid=Query(models.GlobalSetting).filter(
-            func.date(models.GlobalSetting.start_date) == None,
-            models.GlobalSetting.start_date != None,
-        ),
-        message="GlobalSettings.start_date is an invalid, make sure it has the "
-        "following format: 'YYYY-MM-DD'",
-    )
-
-    errors = check_start_date.get_invalid(session)
-    assert len(errors) == 1
-    assert errors[0].id == wrong_start_date.id
-
-
 def test_length_geom_linestring_in_4326(session):
-    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.ModelSettingsFactory(epsg_code=28992)
     channel_too_short = factories.ChannelFactory(
         the_geom="SRID=4326;LINESTRING("
         "-0.38222938832999598 -0.13872236685816669, "
@@ -756,22 +694,3 @@ def test_range_check_invalid(
     assert len(invalid_rows) == 1
 
     assert check.description() == msg.format("v2_connection_nodes.storage_area")
-
-
-def test_check_only_first(session):
-    factories.GlobalSettingsFactory(dem_obstacle_detection=False)
-    factories.GlobalSettingsFactory(dem_obstacle_detection=True)
-
-    active_settings = Query(models.GlobalSetting.id).limit(1).scalar_subquery()
-
-    check = QueryCheck(
-        error_code=302,
-        column=models.GlobalSetting.dem_obstacle_detection,
-        invalid=Query(models.GlobalSetting).filter(
-            models.GlobalSetting.id == active_settings,
-            models.GlobalSetting.dem_obstacle_detection == True,
-        ),
-        message="v2_global_settings.dem_obstacle_detection is True, while this feature is not supported",
-    )
-
-    assert check.get_invalid(session) == []

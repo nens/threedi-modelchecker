@@ -57,6 +57,7 @@ class ThreediModelChecker:
         """
         session = self.db.get_session()
         session.model_checker_context = self.context
+
         for check in self.checks(level=level, ignore_checks=ignore_checks):
             model_errors = check.get_invalid(session)
             for error_row in model_errors:
