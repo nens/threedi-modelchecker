@@ -2366,73 +2366,62 @@ CHECKS += [
     RangeCheck(
         error_code=1113,
         column=models.NumericalSettings.convergence_cg,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=1e-12,
         max_value=1e-7,
     ),
     RangeCheck(
         error_code=1114,
         column=models.NumericalSettings.flow_direction_threshold,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=1e-13,
         max_value=1e-2,
     ),
     RangeCheck(
         error_code=1115,
         column=models.NumericalSettings.general_numerical_threshold,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=1e-13,
         max_value=1e-7,
     ),
     RangeCheck(
         error_code=1116,
         column=models.NumericalSettings.max_non_linear_newton_iterations,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=1,
     ),
     RangeCheck(
         error_code=1117,
         column=models.NumericalSettings.max_degree_gauss_seidel,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=1,
     ),
     RangeCheck(
         error_code=1118,
         column=models.NumericalSettings.min_friction_velocity,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=0,
         max_value=1,
     ),
     RangeCheck(
         error_code=1119,
         column=models.NumericalSettings.min_surface_area,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=1e-13,
         max_value=1e-7,
     ),
     RangeCheck(
         error_code=1120,
         column=models.NumericalSettings.preissmann_slot,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=0,
     ),
     RangeCheck(
         error_code=1121,
         column=models.NumericalSettings.pump_implicit_ratio,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=0,
         max_value=1,
     ),
     RangeCheck(
         error_code=1122,
         column=models.NumericalSettings.limiter_slope_thin_water_layer,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=0,
     ),
     RangeCheck(
         error_code=1123,
         column=models.NumericalSettings.use_of_cg,
-        # filters=models.NumericalSettings.global_settings != None,
         min_value=1,
     ),
     RangeCheck(
@@ -2445,7 +2434,6 @@ CHECKS += [
         error_code=1125,
         column=models.NumericalSettings.limiter_slope_thin_water_layer,
         invalid=Query(models.NumericalSettings).filter(
-            # (models.NumericalSettings.global_settings != None)
             (models.NumericalSettings.friction_shallow_water_depth_correction == 3)
             & (models.NumericalSettings.limiter_slope_thin_water_layer <= 0)
         ),
@@ -2455,7 +2443,6 @@ CHECKS += [
         error_code=1126,
         column=models.NumericalSettings.limiter_slope_thin_water_layer,
         invalid=Query(models.NumericalSettings).filter(
-            # (models.NumericalSettings.global_settings != None)
             (models.NumericalSettings.limiter_slope_crossectional_area_2d == 3)
             & (models.NumericalSettings.limiter_slope_thin_water_layer <= 0)
         ),
@@ -2465,7 +2452,6 @@ CHECKS += [
         error_code=1127,
         column=models.NumericalSettings.limiter_slope_thin_water_layer,
         invalid=Query(models.NumericalSettings).filter(
-            # (models.NumericalSettings.global_settings != None)
             (models.NumericalSettings.limiter_slope_friction_2d == 0)
             & (models.NumericalSettings.limiter_slope_crossectional_area_2d != 0)
         ),
