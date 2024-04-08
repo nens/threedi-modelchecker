@@ -1350,38 +1350,6 @@ CHECKS += [
 ]
 
 CHECKS += [
-    AllEqualCheck(error_code=330 + i, column=column, level=CheckLevel.WARNING)
-    for i, column in enumerate(
-        [
-            models.ModelSettings.use_2d_flow,
-            models.ModelSettings.use_1d_flow,
-            models.ModelSettings.minimum_cell_size,
-            models.ModelSettings.calculation_point_distance_1d,
-            models.ModelSettings.nr_grid_levels,
-            models.ModelSettings.dem_file,
-            models.ModelSettings.embedded_cutoff_threshold,
-            models.ModelSettings.epsg_code,
-            models.ModelSettings.max_angle_1d_advection,
-            models.ModelSettings.friction_averaging,
-            models.SimulationTemplateSettings.use_0d_inflow,
-            models.ModelSettings.manhole_aboveground_storage_area,
-            models.ModelSettings.minimum_table_step_size,
-            models.ModelSettings.friction_type,
-            models.ModelSettings.friction_coefficient,
-            models.ModelSettings.friction_coefficient_file,
-            models.Interception.interception,
-            models.Interception.interception_file,
-            models.ModelSettings.table_step_size_1d,
-            models.ModelSettings.maximum_table_step_size,
-            models.ModelSettings.use_interflow,
-            models.ModelSettings.use_simple_infiltration,
-            models.ModelSettings.use_groundwater_storage,
-            models.ModelSettings.use_groundwater_flow,
-            models.ModelSettings.use_vegetation_drag_2d,
-        ]
-    )
-]
-CHECKS += [
     RangeCheck(
         error_code=360,
         level=CheckLevel.WARNING,
