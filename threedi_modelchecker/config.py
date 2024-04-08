@@ -1277,7 +1277,7 @@ CHECKS += [
             ~is_none_or_empty(models.InitialConditions.initial_water_level_file),
             models.InitialConditions.initial_water_level_aggregation == None,
         ),
-        message="an initial waterlevel type (initial_settings.initial_water_level_aggregation) should be defined when using an initial waterlevel file.",
+        message="an initial waterlevel type (initial_conditions.initial_water_level_aggregation) should be defined when using an initial waterlevel file.",
     ),
     QueryCheck(
         error_code=323,
