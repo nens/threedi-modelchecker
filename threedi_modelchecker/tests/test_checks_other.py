@@ -7,7 +7,6 @@ from threedi_schema import constants, models, ThreediDatabase
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
 from threedi_modelchecker.checks.other import (
-    AggregationSettingsInvervalCheck,
     AllPresentFixedVegetationParameters,
     AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
@@ -948,17 +947,3 @@ def test_max_one_record_check(session, nof_rows_to_add: int, fail: bool):
     check = MaxOneRecordCheck(column=models.ModelSettings.id)
     nof_invalid = len(check.get_invalid(session))
     assert (nof_invalid > 0) == fail
-
-
-@pytest.mark.parametrize(
-    "output_time_step, interval, fail", [(10, 5, True), (5, 10, False)]
-)
-def test_aggregatation_settings_inderval_check(
-    session, output_time_step: int, interval: int, fail: bool
-):
-    factories.TimeStepSettingsFactory(output_time_step=output_time_step)
-    factories.AggregationSettingsFactory(interval=interval)
-    check = AggregationSettingsInvervalCheck(
-        column=models.AggregationSettings.interval,
-    )
-    assert (len(check.get_invalid(session)) > 0) == fail

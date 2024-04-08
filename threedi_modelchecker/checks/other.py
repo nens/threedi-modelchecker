@@ -1113,19 +1113,3 @@ class MaxOneRecordCheck(BaseCheck):
             f"{self.table.name} has {self.observed_length} rows, "
             f"but should have at most 1 row."
         )
-
-
-class AggregationSettingsInvervalCheck(BaseCheck):
-    def get_invalid(self, session: Session) -> List[NamedTuple]:
-        return (
-            session.query(models.AggregationSettings)
-            .join(
-                models.TimeStepSettings,
-                models.AggregationSettings.interval
-                < models.TimeStepSettings.output_time_step,
-            )
-            .all()
-        )
-
-    def description(self) -> str:
-        return "aggregation_settings.interval should be smaller than time_step_settings.output_time_step"

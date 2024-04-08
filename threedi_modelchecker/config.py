@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import func
+from sqlalchemy import func, true
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
@@ -46,7 +46,6 @@ from .checks.factories import (
     generate_unique_checks,
 )
 from .checks.other import (  # Use0DFlowCheck,
-    AggregationSettingsInvervalCheck,
     AllPresentFixedVegetationParameters,
     AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
@@ -2457,10 +2456,17 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.AggregationSettings.interval,
     ),
-    AggregationSettingsInvervalCheck(
-        column=models.AggregationSettings.interval,
+    QueryCheck(
         error_code=1153,
         level=CheckLevel.WARNING,
+        column=models.AggregationSettings.interval,
+        invalid=Query(models.AggregationSettings)
+        .join(models.TimeStepSettings, true())
+        .filter(
+            models.AggregationSettings.interval
+            < models.TimeStepSettings.output_time_step
+        ),
+        message="v2_aggregation_settings.timestep is smaller than v2_global_settings.output_time_step",
     ),
 ]
 CHECKS += [
