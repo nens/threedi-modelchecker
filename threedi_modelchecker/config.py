@@ -1317,9 +1317,20 @@ CHECKS += [
     )
 ]
 
-# The test test_individual_checks prohibits setting min_length to 1 because then tests fail on empty dp
 CHECKS += [
-    MaxOneRecordCheck(column=table.id, level=CheckLevel.INFO, error_code=326)
+    QueryCheck(
+        error_code=327,
+        column=models.ModelSettings.use_vegetation_drag_2d,
+        invalid=Query(models.ModelSettings).filter(
+            models.ModelSettings.use_vegetation_drag_2d,
+            models.ModelSettings.friction_type != constants.FrictionType.CHEZY.value,
+        ),
+        message="Vegetation drag can only be used in combination with friction type 1 (Chézy)",
+    )
+]
+
+CHECKS += [
+    MaxOneRecordCheck(column=table.id, level=CheckLevel.INFO, error_code=328)
     for table in [
         models.ModelSettings,
         models.SimulationTemplateSettings,
@@ -1333,19 +1344,6 @@ CHECKS += [
         models.VegetationDrag,
         models.Interception,
     ]
-]
-
-
-CHECKS += [
-    QueryCheck(
-        error_code=327,
-        column=models.ModelSettings.use_vegetation_drag_2d,
-        invalid=Query(models.ModelSettings).filter(
-            models.ModelSettings.use_vegetation_drag_2d,
-            models.ModelSettings.friction_type != constants.FrictionType.CHEZY.value,
-        ),
-        message="Vegetation drag can only be used in combination with friction type 1 (Chézy)",
-    )
 ]
 
 CHECKS += [
