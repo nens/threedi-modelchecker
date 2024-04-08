@@ -1094,28 +1094,16 @@ class UsedSettingsPresentCheck(BaseCheck):
         return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.__tablename__} is empty"
 
 
-class SettingsLengthCheck(BaseCheck):
-    def __init__(
-        self,
-        column,
-        filters=None,
-        level=CheckLevel.ERROR,
-        error_code=0,
-        min_length=0,
-        max_length=1,
-    ):
+class MaxOneRecordCheck(BaseCheck):
+    def __init__(self, column, filters=None, level=CheckLevel.ERROR, error_code=0):
         super().__init__(column, filters, level, error_code)
-        self.min_length = min_length
-        self.max_length = max_length
         self.observed_length = 0
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         # return mock list in case the table is empty when it shouldn't be
         all_results = self.to_check(session).all()
         self.observed_length = len(all_results)
-        if (self.observed_length > self.max_length) or (
-            self.observed_length < self.min_length
-        ):
+        if self.observed_length > 1:
             return all_results if self.observed_length > 0 else ["foo"]
         else:
             return []
@@ -1123,8 +1111,7 @@ class SettingsLengthCheck(BaseCheck):
     def description(self) -> str:
         return (
             f"{self.table.name} has {self.observed_length} rows, "
-            f"but should have at least {self.min_length} rows and "
-            f"at most {self.max_length} rows."
+            f"but should have at most 1 row."
         )
 
 

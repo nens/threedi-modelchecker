@@ -23,13 +23,13 @@ from threedi_modelchecker.checks.other import (
     ImperviousNodeInflowAreaCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
+    MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
-    SettingsLengthCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
@@ -933,28 +933,19 @@ def test_used_settings_present_check(session, use_setting, add_setting):
 
 
 @pytest.mark.parametrize(
-    "nof_rows_to_add, min_length, max_length, fail",
+    "nof_rows_to_add, fail",
     [
-        (1, 0, 1, False),
-        # add to few rows
-        (1, 2, 10, True),
+        (1, False),
         # add to many rows
-        (2, 0, 1, True),
+        (2, True),
         # empty table
-        (0, 0, 1, False),
-        (0, 1, 1, True),
+        (0, False),
     ],
 )
-def test_settings_length_check(
-    session, nof_rows_to_add: int, min_length: int, max_length: int, fail: bool
-):
+def test_max_one_record_check(session, nof_rows_to_add: int, fail: bool):
     for _ in range(nof_rows_to_add):
         factories.ModelSettingsFactory()
-    check = SettingsLengthCheck(
-        column=models.ModelSettings.id,
-        min_length=min_length,
-        max_length=max_length,
-    )
+    check = MaxOneRecordCheck(column=models.ModelSettings.id)
     nof_invalid = len(check.get_invalid(session))
     assert (nof_invalid > 0) == fail
 

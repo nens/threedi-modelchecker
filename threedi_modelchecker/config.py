@@ -63,13 +63,13 @@ from .checks.other import (  # Use0DFlowCheck,
     ImperviousNodeInflowAreaCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
+    MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
-    SettingsLengthCheck,
     SpatialIndexCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
@@ -1320,26 +1320,19 @@ CHECKS += [
 
 # The test test_individual_checks prohibits setting min_length to 1 because then tests fail on empty dp
 CHECKS += [
-    SettingsLengthCheck(
-        error_code=326,
-        level=CheckLevel.INFO,
-        column=table.id,
-        min_length=min_length,
-        max_length=max_length,
-    )
-    for table, min_length, max_length in [
-        (models.ModelSettings, 0, 1),
-        (models.SimulationTemplateSettings, 0, 1),
-        (models.TimeStepSettings, 0, 1),
-        (models.NumericalSettings, 0, 1),
-        (models.PhysicalSettings, 0, 1),
-        (models.InitialConditions, 0, 1),
-        (models.SimpleInfiltration, 0, 1),
-        (models.Interflow, 0, 1),
-        (models.GroundWater, 0, 1),
-        (models.GroundWater, 0, 1),
-        (models.VegetationDrag, 0, 1),
-        (models.Interception, 0, 1),
+    MaxOneRecordCheck(column=table.id, level=CheckLevel.INFO, error_code=326)
+    for table in [
+        models.ModelSettings,
+        models.SimulationTemplateSettings,
+        models.TimeStepSettings,
+        models.NumericalSettings,
+        models.PhysicalSettings,
+        models.InitialConditions,
+        models.SimpleInfiltration,
+        models.Interflow,
+        models.GroundWater,
+        models.VegetationDrag,
+        models.Interception,
     ]
 ]
 
