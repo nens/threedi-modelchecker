@@ -65,6 +65,7 @@ def session_server(session, context_server):
 def create_geotiff(
     path, epsg=28992, width=3, height=2, bands=1, dx=0.5, dy=0.5, value=None
 ):
+    path.parent.mkdir(exist_ok=True)
     ds = gdal.GetDriverByName("GTiff").Create(
         str(path), width, height, bands, gdal.GDT_Byte
     )
@@ -88,12 +89,13 @@ def create_geotiff(
 
 @pytest.fixture
 def valid_geotiff(tmp_path):
-    return create_geotiff(tmp_path / "raster.tiff")
+    return create_geotiff(tmp_path.joinpath("rasters", "raster.tiff"))
 
 
 @pytest.fixture
 def invalid_geotiff(tmp_path):
-    path = tmp_path / "raster.tiff"
+    path = tmp_path.joinpath("rasters", "raster.tiff")
+    path.parent.mkdir(exist_ok=True)
     path.touch()
     return str(path)
 

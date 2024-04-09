@@ -68,7 +68,9 @@ class BaseRasterCheck(BaseCheck):
         ]
 
     def get_path_local(self, record, context: LocalContext) -> Optional[str]:
-        abs_path = context.base_path / getattr(record, self.column.name)
+        abs_path = context.base_path.joinpath(
+            "rasters", getattr(record, self.column.name)
+        )
         if abs_path.exists():
             return str(abs_path)
 
