@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from math import isclose
 from pathlib import Path
-from typing import Optional, Set, Type
+from typing import Dict, Optional, Type
 
 from threedi_schema import models
 
@@ -22,7 +22,7 @@ class Context:
 
 @dataclass
 class ServerContext(Context):
-    available_rasters: Set[str]
+    available_rasters: Dict[str, str]
     raster_interface: Type[RasterInterface] = GDALRasterInterface
 
 
