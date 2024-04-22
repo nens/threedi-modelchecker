@@ -2,6 +2,12 @@ Changelog of threedi-modelchecker
 =================================
 
 
+2.6.3 (unreleased)
+------------------
+
+- Fix bug with check 183
+
+
 2.6.2 (2024-02-29)
 ------------------
 
