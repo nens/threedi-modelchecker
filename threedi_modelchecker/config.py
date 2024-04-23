@@ -2950,9 +2950,9 @@ CHECKS += [
         error_code=183,
         level=CheckLevel.WARNING,
         column=col_cross_section_location,
-        invalid=Query(models.CrossSectionDefinition)
+        invalid=Query(models.CrossSectionLocation)
         .join(
-            models.CrossSectionLocation,
+            models.CrossSectionDefinition,
             models.CrossSectionLocation.definition_id
             == models.CrossSectionDefinition.id,
         )
