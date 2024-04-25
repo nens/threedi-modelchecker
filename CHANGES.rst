@@ -13,6 +13,7 @@ Changelog of threedi-modelchecker
 - Add info check 1406 to inform the user if a raster is not compressed.
 - Add check 799 to warn if raster friction pixels are < 1 while Chezy friction is selected
 - Change error message for check 1500
+- Fix check 183 which failed in the QGIS plugin
 
 
 2.7.0 (2024-03-12)
