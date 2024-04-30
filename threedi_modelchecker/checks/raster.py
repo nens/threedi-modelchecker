@@ -94,7 +94,17 @@ class RasterExistsCheck(BaseRasterCheck):
     def get_invalid(self, session):
         context = session.model_checker_context
         if isinstance(context, ServerContext):
-            if self.column.name in context.available_rasters:
+            # map names of raster files fields in the schema to those in the RasterOptions class
+            raster_name_mapping = {
+                "friction_coefficient_file": "frict_coef_file",
+                "initial_water_level_file": "initial_waterlevel_file",
+                "groundwater_hydraulic_conductivity_file": "groundwater_hydro_connectivity_file",
+                "max_infiltration_volume_file": "max_infiltration_capacity_file",
+            }
+            raster_col = self.column.name
+            if self.column.name in raster_name_mapping:
+                raster_col = raster_name_mapping[self.column.name]
+            if raster_col in context.available_rasters:
                 return []
             else:
                 return self.to_check(session).all()
