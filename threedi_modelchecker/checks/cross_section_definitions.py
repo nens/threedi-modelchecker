@@ -626,6 +626,9 @@ class CrossSectionVariableFrictionRangeCheck(CrossSectionVariableRangeCheck):
                 invalids.append(record)
         return invalids
 
+    def description(self):
+        return f"some values in {self.column_name} are {self.range_str}, which is not allowed for friction type(s) {self.friction_types}"
+
 
 class OpenIncreasingCrossSectionVariableCheck(CrossSectionBaseCheck):
     """

@@ -5,6 +5,7 @@ Changelog of threedi-modelchecker
 2.7.2 (unreleased)
 ------------------
 
+- Expand description of check 188.
 - Add missing spaces in error message for check 185.
 
 
