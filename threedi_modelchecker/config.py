@@ -3048,11 +3048,11 @@ CHECKS += [
                 & models.CrossSectionLocation.friction_value.is_not(None)
             )
         ),
-        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name} "
+        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name} "
         f"are defined for conveyance friction. Only "
-        f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"will be used",
+        f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name} "
+        f"will be used.",
     ),
 ]
 CHECKS += [
