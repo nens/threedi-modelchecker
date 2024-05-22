@@ -2739,9 +2739,9 @@ CHECKS += [
         error_code=183,
         level=CheckLevel.WARNING,
         column=col_cross_section_location,
-        invalid=Query(models.CrossSectionDefinition)
+        invalid=Query(models.CrossSectionLocation)
         .join(
-            models.CrossSectionLocation,
+            models.CrossSectionDefinition,
             models.CrossSectionLocation.definition_id
             == models.CrossSectionDefinition.id,
         )
@@ -2837,11 +2837,11 @@ CHECKS += [
                 & models.CrossSectionLocation.friction_value.is_not(None)
             )
         ),
-        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name} "
+        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name} "
         f"are defined for conveyance friction. Only "
-        f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"will be used",
+        f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name} "
+        f"will be used.",
     ),
 ]
 CHECKS += [
