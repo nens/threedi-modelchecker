@@ -2,10 +2,10 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.7.4 (unreleased)
+2.8.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Adapt modelchecker to work with schema upgrades for model settings (0.222)
 
 
 2.7.3 (2024-05-22)
