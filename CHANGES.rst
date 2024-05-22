@@ -2,15 +2,28 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.7.2 (unreleased)
+2.7.4 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+2.7.3 (2024-05-22)
 ------------------
 
 - Expand description of check 188.
 - Add missing spaces in error message for check 185.
 
 
+2.7.2 (2024-04-23)
+------------------
+
+- Fix bug with check 183
+
+
 2.7.1 (2024-04-22)
 ------------------
+
 - Add info check 1406 to inform the user if a raster is not compressed.
 - Add check 799 to warn if raster friction pixels are < 1 while Chezy friction is selected
 - Change error message for check 1500
@@ -19,6 +32,7 @@ Changelog of threedi-modelchecker
 
 2.7.0 (2024-03-12)
 ------------------
+
 - Support geopackage
 - Support changes in threedi-schema (0.220) needed for geopackage support
 
