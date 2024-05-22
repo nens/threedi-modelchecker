@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.7.3 (unreleased)
+2.7.3 (2024-05-22)
 ------------------
 
 - Expand description of check 188.
