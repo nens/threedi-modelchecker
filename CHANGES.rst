@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.7.2 (unreleased)
+2.7.3 (unreleased)
 ------------------
 
 - Expand description of check 188.
