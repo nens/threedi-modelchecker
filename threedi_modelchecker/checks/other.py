@@ -10,15 +10,6 @@ from .base import BaseCheck, CheckLevel
 from .cross_section_definitions import cross_section_configuration
 from .geo_query import distance, length, transform
 
-# Use these to make checks only work on the first global settings entry:
-first_setting = (
-    Query(models.GlobalSetting.id)
-    .order_by(models.GlobalSetting.id)
-    .limit(1)
-    .scalar_subquery()
-)
-first_setting_filter = models.GlobalSetting.id == first_setting
-
 
 class CorrectAggregationSettingsExist(BaseCheck):
     """Check if aggregation settings are correctly filled with aggregation_method and flow_variable as required"""
@@ -30,30 +21,24 @@ class CorrectAggregationSettingsExist(BaseCheck):
         *args,
         **kwargs,
     ):
-        super().__init__(column=models.GlobalSetting.id, *args, **kwargs)
+        super().__init__(column=models.ModelSettings.id, *args, **kwargs)
         self.aggregation_method = aggregation_method.value
         self.flow_variable = flow_variable.value
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        global_settings = self.to_check(session).filter(first_setting_filter)
+        global_settings = self.to_check(session)
         correctly_defined = session.execute(
-            select(models.AggregationSettings)
-            .filter(
+            select(models.AggregationSettings).filter(
                 models.AggregationSettings.aggregation_method
                 == self.aggregation_method,
                 models.AggregationSettings.flow_variable == self.flow_variable,
             )
-            .filter(
-                models.AggregationSettings.global_settings_id
-                == global_settings.subquery().c.id
-            )
         ).all()
-
         return global_settings.all() if len(correctly_defined) == 0 else []
 
     def description(self) -> str:
         return (
-            "To use the water balance tool, v2_aggregation_settings should have a row where "
+            "To use the water balance tool, aggregation_settings should have a row where "
             f"aggregation_method is {self.aggregation_method} and flow_variable is {self.flow_variable}."
         )
 
@@ -244,12 +229,14 @@ class Use0DFlowCheck(BaseCheck):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(column=models.GlobalSetting.use_0d_inflow, *args, **kwargs)
+        super().__init__(
+            column=models.SimulationTemplateSettings.use_0d_inflow, *args, **kwargs
+        )
 
     def to_check(self, session):
         """Return a Query object on which this check is applied"""
-        return session.query(models.GlobalSetting).filter(
-            models.GlobalSetting.use_0d_inflow != 0
+        return session.query(models.SimulationTemplateSettings).filter(
+            models.SimulationTemplateSettings.use_0d_inflow != 0
         )
 
     def get_invalid(self, session):
@@ -301,7 +288,7 @@ class ConnectionNodes(BaseCheck):
 class ConnectionNodesLength(BaseCheck):
     """Check that the distance between `start_node` and `end_node` is at least
     `min_distance`. The coords will be transformed into (the first entry) of
-    GlobalSettings.epsg_code.
+    ModelSettings.epsg_code.
     """
 
     def __init__(
@@ -469,7 +456,7 @@ class ChannelManholeLevelCheck(BaseCheck):
 
 class OpenChannelsWithNestedNewton(BaseCheck):
     """Checks whether the model has any closed cross-section in use when the
-    NumericalSettings.use_of_nested_newton is turned off.
+    NumericalSettings.use_nested_newton is turned off.
 
     See https://github.com/nens/threeditoolbox/issues/522
     """
@@ -479,7 +466,7 @@ class OpenChannelsWithNestedNewton(BaseCheck):
             column=models.CrossSectionDefinition.id,
             level=level,
             filters=Query(models.NumericalSettings)
-            .filter(models.NumericalSettings.use_of_nested_newton == 0)
+            .filter(models.NumericalSettings.use_nested_newton == 0)
             .exists(),
             *args,
             **kwargs,
@@ -532,8 +519,8 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     def description(self) -> str:
         return (
             f"{self.column_name} has a closed cross section definition while "
-            f"NumericalSettings.use_of_nested_newton is switched off. "
-            f"This gives convergence issues. We recommend setting use_of_nested_newton = 1."
+            f"NumericalSettings.use_nested_newton is switched off. "
+            f"This gives convergence issues. We recommend setting use_nested_newton = 1."
         )
 
 
@@ -731,7 +718,8 @@ class PumpStorageTimestepCheck(BaseCheck):
             .filter(
                 (models.ConnectionNode.storage_area != None)
                 & (
-                    (  # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
+                    (
+                        # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
                         (
                             # Arithmetic operations on None return None, so without this
                             # conditional type cast, no invalid results would be returned
@@ -744,9 +732,7 @@ class PumpStorageTimestepCheck(BaseCheck):
                         )
                     )
                     / (models.Pumpstation.capacity / 1000)
-                    < Query(models.GlobalSetting.sim_time_step)
-                    .filter(first_setting_filter)
-                    .scalar_subquery()
+                    < Query(models.TimeStepSettings.time_step).scalar_subquery()
                 )
             )
             .all()
@@ -819,7 +805,7 @@ class InflowNoFeaturesCheck(BaseCheck):
     """Check that the surface table in the global use_0d_inflow setting contains at least 1 feature."""
 
     def __init__(self, *args, surface_table, condition=True, **kwargs):
-        super().__init__(*args, column=models.GlobalSetting.id, **kwargs)
+        super().__init__(*args, column=models.ModelSettings.id, **kwargs)
         self.surface_table = surface_table
         self.condition = condition
 
@@ -828,13 +814,13 @@ class InflowNoFeaturesCheck(BaseCheck):
             select(func.count(self.surface_table.id))
         ).scalar()
         return (
-            session.query(models.GlobalSetting)
+            session.query(models.ModelSettings)
             .filter(self.condition, surface_table_length == 0)
             .all()
         )
 
     def description(self) -> str:
-        return f"v2_global_settings.use_0d_inflow is set to use {self.surface_table.__tablename__}, but {self.surface_table.__tablename__} does not contain any features."
+        return f"model_settings.use_0d_inflow is set to use {self.surface_table.__tablename__}, but {self.surface_table.__tablename__} does not contain any features."
 
 
 class NodeSurfaceConnectionsCheck(BaseCheck):
@@ -1081,4 +1067,49 @@ class AllPresentVariableVegetationParameters(AllPresent):
                     constants.CrossSectionShape.TABULATED_YZ
                 )
             )
+        )
+
+
+class UsedSettingsPresentCheck(BaseCheck):
+    def __init__(
+        self,
+        column,
+        settings_table,
+        filters=None,
+        level=CheckLevel.ERROR,
+        error_code=0,
+    ):
+        super().__init__(column, filters, level, error_code)
+        self.settings_table = settings_table
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        # more than 1 row should be caught by another check
+        all_results = self.to_check(session).filter(self.column == True).all()
+        use_cols = len(all_results) > 0
+        if use_cols and session.query(self.settings_table).count() == 0:
+            return all_results
+        return []
+
+    def description(self) -> str:
+        return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.__tablename__} is empty"
+
+
+class MaxOneRecordCheck(BaseCheck):
+    def __init__(self, column, filters=None, level=CheckLevel.ERROR, error_code=0):
+        super().__init__(column, filters, level, error_code)
+        self.observed_length = 0
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        # return mock list in case the table is empty when it shouldn't be
+        all_results = self.to_check(session).all()
+        self.observed_length = len(all_results)
+        if self.observed_length > 1:
+            return all_results if self.observed_length > 0 else ["foo"]
+        else:
+            return []
+
+    def description(self) -> str:
+        return (
+            f"{self.table.name} has {self.observed_length} rows, "
+            f"but should have at most 1 row."
         )

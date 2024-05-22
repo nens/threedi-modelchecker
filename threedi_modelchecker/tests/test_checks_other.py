@@ -22,6 +22,7 @@ from threedi_modelchecker.checks.other import (
     ImperviousNodeInflowAreaCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
+    MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PerviousNodeInflowAreaCheck,
@@ -29,6 +30,8 @@ from threedi_modelchecker.checks.other import (
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
+    Use0DFlowCheck,
+    UsedSettingsPresentCheck,
 )
 from threedi_modelchecker.model_checks import ThreediModelChecker
 
@@ -53,9 +56,8 @@ from . import factories
 def test_aggregation_settings(
     session, aggregation_method, flow_variable, expected_result
 ):
-    factories.GlobalSettingsFactory(id=1)
+    factories.ModelSettingsFactory(id=1)
     factories.AggregationSettingsFactory(
-        global_settings_id=1,
         aggregation_method=constants.AggregationMethod.CUMULATIVE,
         flow_variable=constants.FlowVariable.PUMP_DISCHARGE,
     )
@@ -67,7 +69,7 @@ def test_aggregation_settings(
 
 
 def test_connection_nodes_length(session):
-    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.ModelSettingsFactory(epsg_code=28992)
     factories.WeirFactory(
         connection_node_start=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222995634060702 -0.13872239147499893)"
@@ -98,7 +100,7 @@ def test_connection_nodes_length(session):
 
 
 def test_connection_nodes_length_missing_start_node(session):
-    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.ModelSettingsFactory(epsg_code=28992)
     factories.WeirFactory(
         connection_node_start_id=9999,
         connection_node_end=factories.ConnectionNodeFactory(
@@ -120,7 +122,7 @@ def test_connection_nodes_length_missing_start_node(session):
 def test_connection_nodes_length_missing_end_node(session):
     if session.bind.name == "postgresql":
         pytest.skip("Postgres only accepts coords in epsg 4326")
-    factories.GlobalSettingsFactory(epsg_code=28992)
+    factories.ModelSettingsFactory(epsg_code=28992)
     factories.WeirFactory(
         connection_node_start=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
@@ -140,7 +142,7 @@ def test_connection_nodes_length_missing_end_node(session):
 
 
 def test_open_channels_with_nested_newton(session):
-    factories.NumericalSettingsFactory(use_of_nested_newton=0)
+    factories.NumericalSettingsFactory(use_nested_newton=0)
     channel = factories.ChannelFactory(
         connection_node_start=factories.ConnectionNodeFactory(
             the_geom="SRID=4326;POINT(-71.064544 42.28787)"
@@ -522,7 +524,7 @@ def test_pumpstation_storage_timestep(
         lower_stop_level=-4.78,
         capacity=capacity,
     )
-    factories.GlobalSettingsFactory(sim_time_step=time_step)
+    factories.TimeStepSettingsFactory(time_step=time_step)
     check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
@@ -560,7 +562,7 @@ def test_impervious_connection_node_inflow_area(session, value, expected_result)
 )
 def test_inflow_no_features_impervious(session, surface_number, expected_result):
     # add fields
-    factories.GlobalSettingsFactory()
+    factories.ModelSettingsFactory()
     if surface_number > 0:
         factories.ImperviousSurfaceFactory.create_batch(size=surface_number)
 
@@ -580,7 +582,7 @@ def test_inflow_no_features_impervious(session, surface_number, expected_result)
 )
 def test_inflow_no_features_pervious(session, surface_number, expected_result):
     # add fields
-    factories.GlobalSettingsFactory()
+    factories.ModelSettingsFactory()
     if surface_number > 0:
         factories.SurfaceFactory.create_batch(size=surface_number)
 
@@ -666,8 +668,7 @@ def test_feature_closed_cross_section(session, configuration, expected_result):
     ],
 )
 def test_defined_area(session, defined_area, max_difference, expected_result):
-    # this geometry has an area of approximately 0.3778
-    the_geom = "SRID=4326;MULTIPOLYGON(((4.7 52.5, 4.7 52.50001, 4.70001 52.50001, 4.70001 52.50001)))"
+    the_geom = "SRID=4326;POLYGON((4.7 52.5, 4.7 52.50001, 4.70001 52.50001, 4.70001 52.50001))"
     factories.SurfaceFactory(area=defined_area, the_geom=the_geom)
     check = DefinedAreaCheck(models.Surface.area, max_difference=max_difference)
     invalid = check.get_invalid(session)
@@ -682,8 +683,10 @@ def test_defined_area(session, defined_area, max_difference, expected_result):
     ],
 )
 def test_beta_columns(session, value, expected_result):
-    factories.GlobalSettingsFactory(vegetation_drag_settings_id=value)
-    check = BetaColumnsCheck(models.GlobalSetting.vegetation_drag_settings_id)
+    # Note that the BetaColumnsCheck is just a check for value=None.
+    # So it can be mocked with any nullable column
+    factories.ModelSettingsFactory(friction_averaging=value)
+    check = BetaColumnsCheck(models.ModelSettings.friction_averaging)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
@@ -811,7 +814,6 @@ def test_all_present_fixed_vegetation_parameters(
     assert (len(invalid_rows) == 0) == result
 
 
-# TODO: add check for Variable...
 @pytest.mark.parametrize(
     "cols, val, shape, friction_type, result",
     [
@@ -885,3 +887,63 @@ def test_all_present_variable_vegetation_parameters(
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == result
+
+
+@pytest.mark.parametrize(
+    "use_0d_inflow",
+    [
+        constants.InflowType.NO_INFLOW,
+        constants.InflowType.SURFACE,
+        constants.InflowType.IMPERVIOUS_SURFACE,
+    ],
+)
+@pytest.mark.parametrize("add_surface", [True, False])
+@pytest.mark.parametrize("add_impervious_surface", [True, False])
+def test_use_0d_flow_check(
+    session, use_0d_inflow: int, add_surface: bool, add_impervious_surface: bool
+):
+    factories.SimulationTemplateSettingsFactory(use_0d_inflow=use_0d_inflow)
+    if add_surface:
+        factories.SurfaceFactory()
+    if add_impervious_surface:
+        factories.ImperviousSurfaceFactory()
+    if use_0d_inflow == constants.InflowType.NO_INFLOW:
+        nof_invalid_expected = 0
+    elif use_0d_inflow == constants.InflowType.SURFACE:
+        nof_invalid_expected = 0 if add_surface else 1
+    elif use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE:
+        nof_invalid_expected = 0 if add_impervious_surface else 1
+    check = Use0DFlowCheck()
+    assert (len(check.get_invalid(session))) == nof_invalid_expected
+
+
+@pytest.mark.parametrize("use_setting", [True, False])
+@pytest.mark.parametrize("add_setting", [True, False])
+def test_used_settings_present_check(session, use_setting, add_setting):
+    nof_invalid_expected = 1 if use_setting and not add_setting else 0
+    factories.ModelSettingsFactory(use_vegetation_drag_2d=use_setting)
+    if add_setting:
+        factories.VegetationDragFactory()
+    check = UsedSettingsPresentCheck(
+        column=models.ModelSettings.use_vegetation_drag_2d,
+        settings_table=models.VegetationDrag,
+    )
+    assert len(check.get_invalid(session)) == nof_invalid_expected
+
+
+@pytest.mark.parametrize(
+    "nof_rows_to_add, fail",
+    [
+        (1, False),
+        # add to many rows
+        (2, True),
+        # empty table
+        (0, False),
+    ],
+)
+def test_max_one_record_check(session, nof_rows_to_add: int, fail: bool):
+    for _ in range(nof_rows_to_add):
+        factories.ModelSettingsFactory()
+    check = MaxOneRecordCheck(column=models.ModelSettings.id)
+    nof_invalid = len(check.get_invalid(session))
+    assert (nof_invalid > 0) == fail

@@ -1,4 +1,3 @@
-import datetime
 from inspect import isclass
 
 import factory
@@ -13,43 +12,33 @@ def inject_session(session):
             cls._meta.sqlalchemy_session = session
 
 
-class GlobalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class TimeStepSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.GlobalSetting
+        model = models.TimeStepSettings
         sqlalchemy_session = None
 
-    nr_timesteps = 120
-    initial_waterlevel = -9999
-    numerical_settings_id = 1
-    dem_obstacle_detection = False
-    frict_avg = 0
-    grid_space = 20
-    advection_2d = 1
-    dist_calc_points = 15
-    start_date = datetime.datetime.now()
-    table_step_size = 0.05
+    time_step = 30
+    min_time_step = 1
+    max_time_step = 100
+    output_time_step = 300
+    use_time_step_stretch = False
+
+
+class ModelSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ModelSettings
+        sqlalchemy_session = None
+
+    friction_averaging = 0
+    minimum_cell_size = 20
+    calculation_point_distance_1d = 15
+    minimum_table_step_size = 0.05
     use_1d_flow = False
     use_2d_rain = 1
-    kmax = 4
-    sim_time_step = 30
-    minimum_sim_time_step = 1
-    output_time_step = 300
-    frict_coef = 0.03
-    timestep_plus = False
-    flooding_threshold = 0.01
+    nr_grid_levels = 4
+    friction_coefficient = 0.03
     use_2d_flow = True
-    advection_1d = 1
-    use_0d_inflow = 0
-    control_group_id = 1
-    frict_type = constants.FrictionType.CHEZY
-
-
-class SimpleInfiltrationFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.SimpleInfiltration
-        sqlalchemy_session = None
-
-    infiltration_rate = 0.0
+    friction_type = constants.FrictionType.CHEZY
 
 
 class ControlGroupFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -170,10 +159,9 @@ class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.AggregationSettings
         sqlalchemy_session = None
 
-    var_name = Faker("name")
     flow_variable = "waterlevel"
     aggregation_method = "avg"
-    timestep = 10
+    interval = 10
 
 
 class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -181,9 +169,10 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.NumericalSettings
         sqlalchemy_session = None
 
-    max_degree = 1
+    max_degree_gauss_seidel = 1
     use_of_cg = 20
-    use_of_nested_newton = 0
+    use_nested_newton = 0
+    flooding_threshold = 0.01
 
 
 class Lateral1dFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -345,7 +334,6 @@ class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.VegetationDrag
         sqlalchemy_session = None
 
-    display_name = Faker("name")
     vegetation_height = 1.0
     vegetation_height_file = "vegetation_height_file.txt"
 
@@ -357,3 +345,12 @@ class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     vegetation_drag_coefficient = 0.4
     vegetation_drag_coefficient_file = "vegetation_drag_coefficient_file.txt"
+
+
+class SimulationTemplateSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SimulationTemplateSettings
+        sqlalchemy_session = None
+
+    name = "Foo"
+    use_0d_inflow = constants.InflowType.NO_INFLOW

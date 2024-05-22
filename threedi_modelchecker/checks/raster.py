@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from math import isclose
 from pathlib import Path
-from typing import Optional, Set, Type
+from typing import Dict, Optional, Type
 
 from threedi_schema import models
 
@@ -22,7 +22,7 @@ class Context:
 
 @dataclass
 class ServerContext(Context):
-    available_rasters: Set[str]
+    available_rasters: Dict[str, str]
     raster_interface: Type[RasterInterface] = GDALRasterInterface
 
 
@@ -68,7 +68,9 @@ class BaseRasterCheck(BaseCheck):
         ]
 
     def get_path_local(self, record, context: LocalContext) -> Optional[str]:
-        abs_path = context.base_path / getattr(record, self.column.name)
+        abs_path = context.base_path.joinpath(
+            "rasters", getattr(record, self.column.name)
+        )
         if abs_path.exists():
             return str(abs_path)
 
@@ -92,7 +94,17 @@ class RasterExistsCheck(BaseRasterCheck):
     def get_invalid(self, session):
         context = session.model_checker_context
         if isinstance(context, ServerContext):
-            if self.column.name in context.available_rasters:
+            # map names of raster files fields in the schema to those in the RasterOptions class
+            raster_name_mapping = {
+                "friction_coefficient_file": "frict_coef_file",
+                "initial_water_level_file": "initial_waterlevel_file",
+                "groundwater_hydraulic_conductivity_file": "groundwater_hydro_connectivity_file",
+                "max_infiltration_volume_file": "max_infiltration_capacity_file",
+            }
+            raster_col = self.column.name
+            if self.column.name in raster_name_mapping:
+                raster_col = raster_name_mapping[self.column.name]
+            if raster_col in context.available_rasters:
                 return []
             else:
                 return self.to_check(session).all()
@@ -159,7 +171,7 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
     """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite."""
 
     def get_invalid(self, session):
-        epsg_code_query = session.query(models.GlobalSetting.epsg_code).first()
+        epsg_code_query = session.query(models.ModelSettings.epsg_code).first()
         if epsg_code_query is not None:
             self.epsg_code = epsg_code_query[0]
         else:
@@ -175,7 +187,7 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
             return raster.epsg_code == self.epsg_code
 
     def description(self):
-        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match v2_global_settings.epsg_code"
+        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match model_settings.epsg_code"
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):
@@ -202,9 +214,11 @@ class RasterGridSizeCheck(BaseRasterCheck):
     """Check whether the global settings' grid size is an even multiple of a raster's cell size (at least 2x)."""
 
     def get_invalid(self, session):
-        grid_space_query = session.query(models.GlobalSetting.grid_space).first()
-        if grid_space_query is not None:
-            self.grid_space = grid_space_query[0]
+        minimum_cell_size_query = session.query(
+            models.ModelSettings.minimum_cell_size
+        ).first()
+        if minimum_cell_size_query is not None:
+            self.minimum_cell_size = minimum_cell_size_query[0]
         else:
             return []
         return super().get_invalid(session)
@@ -217,17 +231,17 @@ class RasterGridSizeCheck(BaseRasterCheck):
             try:
                 return (
                     isclose(
-                        a=((self.grid_space / raster.pixel_size[0]) % 2),
+                        a=((self.minimum_cell_size / raster.pixel_size[0]) % 2),
                         b=0,
                         rel_tol=1e-09,
                     )
-                ) and (self.grid_space >= (2 * raster.pixel_size[0]))
+                ) and (self.minimum_cell_size >= (2 * raster.pixel_size[0]))
             # if one of the fields is a NoneType it will be caught elsewhere
             except TypeError:
                 return True
 
     def description(self):
-        return "v2_global_settings.grid_space is not a positive even multiple of the raster cell size."
+        return "model_settings.minimum_cell_size is not a positive even multiple of the raster cell size."
 
 
 class RasterPixelCountCheck(BaseRasterCheck):
