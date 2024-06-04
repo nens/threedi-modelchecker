@@ -2,6 +2,7 @@ from inspect import isclass
 
 import factory
 from factory import Faker
+from geoalchemy2 import Geometry
 from threedi_schema import constants, models
 
 
@@ -194,22 +195,22 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     type = constants.Later2dType.SURFACE
 
 
-class ImperviousSurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.ImperviousSurface
-        sqlalchemy_session = None
+# class ImperviousSurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
+#     class Meta:
+#         model = models.ImperviousSurface
+#         sqlalchemy_session = None
+#
+#     surface_class = "pand"
+#     surface_inclination = "vlak"
+#     area = 0.0
 
-    surface_class = "pand"
-    surface_inclination = "vlak"
-    area = 0.0
 
-
-class ImperviousSurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.ImperviousSurfaceMap
-        sqlalchemy_session = None
-
-    percentage = 100.0
+# class ImperviousSurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+#     class Meta:
+#         model = models.ImperviousSurfaceMap
+#         sqlalchemy_session = None
+#
+#     percentage = 100.0
 
 
 class SurfaceParameterFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -226,13 +227,23 @@ class SurfaceParameterFactory(factory.alchemy.SQLAlchemyModelFactory):
     infiltration_recovery_constant = 2.0
 
 
+class DryWeatherFlowFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.DryWeatherFlow
+        sqlalchemy_session = None
+
+    geom = "SRID=4326;POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))"
+
+
 class SurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Surface
         sqlalchemy_session = None
 
     area = 0.0
-    surface_parameters = factory.SubFactory(SurfaceParameterFactory)
+    geom = "SRID=4326;POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))"
+
+    # surface_parameters = factory.SubFactory(SurfaceParameterFactory)
 
 
 class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -241,6 +252,7 @@ class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     percentage = 100.0
+    geom = "SRID=4326;LINESTRING(30 10, 10 30, 40 40)"
 
 
 class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):

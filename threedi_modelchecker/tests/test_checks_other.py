@@ -19,17 +19,16 @@ from threedi_modelchecker.checks.other import (
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     FeatureClosedCrossSectionCheck,
-    ImperviousNodeInflowAreaCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
-    PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
+    SurfaceNodeInflowAreaCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
 )
@@ -537,17 +536,17 @@ def test_pumpstation_storage_timestep(
         (1001, 1),  # total area = 1001 + 9000 = 10001 > 10000; error
     ],
 )
-def test_impervious_connection_node_inflow_area(session, value, expected_result):
-    connection_node = factories.ConnectionNodeFactory()
-    first_impervious_surface = factories.ImperviousSurfaceFactory(area=9000)
-    second_impervious_surface = factories.ImperviousSurfaceFactory(area=value)
-    factories.ImperviousSurfaceMapFactory(
-        impervious_surface=first_impervious_surface, connection_node=connection_node
+def test_surface_connection_node_inflow_area(session, value, expected_result):
+    connection_node = factories.ConnectionNodeFactory(id=1)
+    first_surface = factories.SurfaceFactory(id=1, area=9000)
+    second_surface = factories.SurfaceFactory(id=2, area=value)
+    factories.SurfaceMapFactory(
+        surface_id=first_surface.id, connection_node_id=connection_node.id
     )
-    factories.ImperviousSurfaceMapFactory(
-        impervious_surface=second_impervious_surface, connection_node=connection_node
+    factories.SurfaceMapFactory(
+        surface_id=second_surface.id, connection_node_id=connection_node.id
     )
-    check = ImperviousNodeInflowAreaCheck()
+    check = SurfaceNodeInflowAreaCheck()
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
@@ -564,56 +563,14 @@ def test_inflow_no_features_impervious(session, surface_number, expected_result)
     # add fields
     factories.ModelSettingsFactory()
     if surface_number > 0:
-        factories.ImperviousSurfaceFactory.create_batch(size=surface_number)
-
-    # test
-    check = InflowNoFeaturesCheck(surface_table=models.ImperviousSurface)
-    invalid = check.get_invalid(session)
-    assert len(invalid) == expected_result
-
-
-@pytest.mark.parametrize(
-    "surface_number,expected_result",
-    [
-        (0, 1),
-        (1, 0),
-        (10, 0),
-    ],
-)
-def test_inflow_no_features_pervious(session, surface_number, expected_result):
-    # add fields
-    factories.ModelSettingsFactory()
-    if surface_number > 0:
         factories.SurfaceFactory.create_batch(size=surface_number)
 
-    # test
-    check = InflowNoFeaturesCheck(surface_table=models.Surface)
+    # Only test this for surface because InflowNoFeaturesCheck only uses table length and not table contents
+    check = InflowNoFeaturesCheck(feature_table=models.Surface)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
 
-@pytest.mark.parametrize(
-    "value,expected_result",
-    [
-        (1000, 0),  # total area = 1000 + 9000 = 10000 <= 10000; no error
-        (1001, 1),  # total area = 1001 + 9000 = 10001 > 10000; error
-    ],
-)
-def test_pervious_connection_node_inflow_area(session, value, expected_result):
-    factories.ConnectionNodeFactory(id=1)
-    factories.SurfaceFactory(id=1, area=9000)
-    factories.SurfaceFactory(id=2, area=value)
-    factories.SurfaceMapFactory(surface_id=1, connection_node_id=1)
-    factories.SurfaceMapFactory(surface_id=2, connection_node_id=1)
-    check = PerviousNodeInflowAreaCheck()
-    invalid = check.get_invalid(session)
-    assert len(invalid) == expected_result
-
-
-@pytest.mark.parametrize(
-    "surface_type",
-    [("impervious"), ("pervious")],
-)
 @pytest.mark.parametrize(
     "connected_surfaces_count,expected_result",
     [
@@ -622,18 +579,12 @@ def test_pervious_connection_node_inflow_area(session, value, expected_result):
     ],
 )
 def test_connection_node_mapped_surfaces(
-    session, surface_type, connected_surfaces_count, expected_result
+    session, connected_surfaces_count, expected_result
 ):
     factories.ConnectionNodeFactory(id=1)
-    if surface_type == "pervious":
-        for i in range(connected_surfaces_count):
-            factories.SurfaceMapFactory(connection_node_id=1, surface_id=i + 1)
-    elif surface_type == "impervious":
-        for i in range(connected_surfaces_count):
-            factories.ImperviousSurfaceMapFactory(
-                connection_node_id=1, impervious_surface_id=i + 1
-            )
-    check = NodeSurfaceConnectionsCheck(check_type=surface_type)
+    for i in range(connected_surfaces_count):
+        factories.SurfaceMapFactory(connection_node_id=1, surface_id=i + 1)
+    check = NodeSurfaceConnectionsCheck()
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
@@ -659,6 +610,7 @@ def test_feature_closed_cross_section(session, configuration, expected_result):
     assert len(invalid) == expected_result
 
 
+
 @pytest.mark.parametrize(
     "defined_area, max_difference, expected_result",
     [
@@ -668,8 +620,8 @@ def test_feature_closed_cross_section(session, configuration, expected_result):
     ],
 )
 def test_defined_area(session, defined_area, max_difference, expected_result):
-    the_geom = "SRID=4326;POLYGON((4.7 52.5, 4.7 52.50001, 4.70001 52.50001, 4.70001 52.50001))"
-    factories.SurfaceFactory(area=defined_area, the_geom=the_geom)
+    geom = "SRID=4326;POLYGON((4.7 52.5, 4.7 52.50001, 4.70001 52.50001, 4.70001 52.50001))"
+    factories.SurfaceFactory(area=defined_area, geom=geom)
     check = DefinedAreaCheck(models.Surface.area, max_difference=max_difference)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
@@ -898,21 +850,14 @@ def test_all_present_variable_vegetation_parameters(
     ],
 )
 @pytest.mark.parametrize("add_surface", [True, False])
-@pytest.mark.parametrize("add_impervious_surface", [True, False])
-def test_use_0d_flow_check(
-    session, use_0d_inflow: int, add_surface: bool, add_impervious_surface: bool
-):
+def test_use_0d_flow_check(session, use_0d_inflow: int, add_surface: bool):
     factories.SimulationTemplateSettingsFactory(use_0d_inflow=use_0d_inflow)
     if add_surface:
         factories.SurfaceFactory()
-    if add_impervious_surface:
-        factories.ImperviousSurfaceFactory()
     if use_0d_inflow == constants.InflowType.NO_INFLOW:
         nof_invalid_expected = 0
-    elif use_0d_inflow == constants.InflowType.SURFACE:
+    else:
         nof_invalid_expected = 0 if add_surface else 1
-    elif use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE:
-        nof_invalid_expected = 0 if add_impervious_surface else 1
     check = Use0DFlowCheck()
     assert (len(check.get_invalid(session))) == nof_invalid_expected
 

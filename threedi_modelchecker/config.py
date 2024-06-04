@@ -59,17 +59,16 @@ from .checks.other import (  # Use0DFlowCheck,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     FeatureClosedCrossSectionCheck,
-    ImperviousNodeInflowAreaCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
-    PerviousNodeInflowAreaCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
+    SurfaceNodeInflowAreaCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
 )
@@ -111,6 +110,10 @@ CONDITIONS = {
     ),
     "has_no_dem": Query(models.ModelSettings).filter(
         is_none_or_empty(models.ModelSettings.dem_file)
+    ),
+    "has_inflow": Query(models.SimulationTemplateSettings).filter(
+        models.SimulationTemplateSettings.use_0d_inflow
+        != constants.InflowType.NO_INFLOW,
     ),
     "0d_surf": Query(models.SimulationTemplateSettings).filter(
         models.SimulationTemplateSettings.use_0d_inflow == constants.InflowType.SURFACE,
@@ -849,8 +852,9 @@ CHECKS += [
     )
 ]
 CHECKS += [
-    DefinedAreaCheck(error_code=208, column=table.area, level=CheckLevel.WARNING)
-    for table in [models.Surface, models.ImperviousSurface]
+    DefinedAreaCheck(
+        error_code=208, column=models.Surface.area, level=CheckLevel.WARNING
+    )
 ]
 
 
@@ -1626,7 +1630,6 @@ CHECKS += [
         column=models.SimpleInfiltration.max_infiltration_volume,
         min_value=0,
     ),
-    # TODO: fix this check
     QueryCheck(
         error_code=423,
         level=CheckLevel.WARNING,
@@ -1828,80 +1831,66 @@ CHECKS += [
 ]
 
 ## 06xx: INFLOW
-for (surface, surface_map, filters) in [
-    (models.Surface, models.SurfaceMap, CONDITIONS["0d_surf"].exists()),
-    (
-        models.ImperviousSurface,
-        models.ImperviousSurfaceMap,
-        CONDITIONS["0d_imp"].exists(),
-    ),
-]:
-    CHECKS += [
-        RangeCheck(
-            error_code=601,
-            column=surface.area,
-            min_value=0,
-            filters=filters,
-        ),
-        RangeCheck(
-            level=CheckLevel.WARNING,
-            error_code=602,
-            column=surface.dry_weather_flow,
-            min_value=0,
-            filters=filters,
-        ),
-        RangeCheck(
-            error_code=603,
-            column=surface_map.percentage,
-            min_value=0,
-            filters=filters,
-        ),
-        RangeCheck(
-            error_code=604,
-            level=CheckLevel.WARNING,
-            column=surface_map.percentage,
-            max_value=100,
-            filters=filters,
-        ),
-        RangeCheck(
-            error_code=605,
-            column=surface.nr_of_inhabitants,
-            min_value=0,
-            filters=filters,
-        ),
-        QueryCheck(
-            level=CheckLevel.WARNING,
-            error_code=612,
-            column=surface_map.connection_node_id,
-            filters=filters,
-            invalid=Query(surface_map).filter(
-                surface_map.connection_node_id.in_(
-                    Query(models.BoundaryCondition1D.connection_node_id)
-                ),
-            ),
-            message=f"{surface_map.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
-        ),
-    ]
 CHECKS += [
-    ImperviousNodeInflowAreaCheck(
-        error_code=613, level=CheckLevel.WARNING, filters=CONDITIONS["0d_imp"].exists()
-    ),
-    PerviousNodeInflowAreaCheck(
-        error_code=613, level=CheckLevel.WARNING, filters=CONDITIONS["0d_surf"].exists()
+    RangeCheck(
+        error_code=601,
+        column=column,
+        min_value=0,
+        filters=CONDITIONS["has_inflow"].exists(),
+    )
+    for column in [models.DryWeatherFlow.multiplier, models.DryWeatherFlow.daily_total]
+]
+
+CHECKS += [
+    RangeCheck(
+        error_code=601,
+        column=models.Surface.area,
+        min_value=0,
+        filters=CONDITIONS["has_inflow"].exists(),
+    )
+]
+
+CHECKS += [
+    RangeCheck(
+        error_code=601,
+        column=map_table.percentage,
+        min_value=0,
+        filters=CONDITIONS["has_inflow"].exists(),
+    )
+    for map_table in [models.DryWeatherFlowMap, models.SurfaceMap]
+]
+
+CHECKS += [
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=612,
+        column=map_table.connection_node_id,
+        filters=CONDITIONS["has_inflow"].exists(),
+        invalid=Query(map_table).filter(
+            map_table.connection_node_id.in_(
+                Query(models.BoundaryCondition1D.connection_node_id)
+            ),
+        ),
+        message=f"{map_table.__tablename__} will be ignored because it is connected to a 1D boundary condition.",
+    )
+    for map_table in [models.DryWeatherFlowMap, models.SurfaceMap]
+]
+
+CHECKS += [
+    SurfaceNodeInflowAreaCheck(
+        error_code=613,
+        level=CheckLevel.WARNING,
+        filters=CONDITIONS["has_inflow"].exists(),
     ),
 ]
 CHECKS += [
     NodeSurfaceConnectionsCheck(
-        check_type=check_type,
         error_code=614,
         level=CheckLevel.WARNING,
-        filters=CONDITIONS[filter_key].exists(),
+        filters=CONDITIONS["has_inflow"].exists(),
     )
-    for check_type, filter_key in [
-        ("pervious", "0d_surf"),
-        ("impervious", "0d_imp"),
-    ]
 ]
+
 
 CHECKS += [
     QueryCheck(
@@ -1913,42 +1902,39 @@ CHECKS += [
         ),
         message=f"{column.table.name}.{column.name} references a {referenced_table.__tablename__} feature that does not exist.",
     )
-    for column, referenced_table in (
-        (
-            models.SurfaceMap.surface_id,
-            models.Surface,
-        ),
-        (models.ImperviousSurfaceMap.impervious_surface_id, models.ImperviousSurface),
+    for column, referenced_table in [
+        (models.SurfaceMap.surface_id, models.Surface),
         (models.SurfaceMap.connection_node_id, models.ConnectionNode),
-        (models.ImperviousSurfaceMap.connection_node_id, models.ConnectionNode),
-    )
+        (models.Surface.surface_parameters_id, models.SurfaceParameter),
+        (models.DryWeatherFlowMap.dry_weather_flow_id, models.DryWeatherFlow),
+        (models.DryWeatherFlowMap.connection_node_id, models.ConnectionNode),
+        (
+            models.DryWeatherFlow.dry_weather_flow_distribution_id,
+            models.DryWeatherFlowDistribution,
+        ),
+    ]
 ]
+
 CHECKS += [
     QueryCheck(
         error_code=616,
         level=CheckLevel.WARNING,
         column=table.id,
-        filters=~CONDITIONS[condition].exists(),
+        filters=~CONDITIONS["has_inflow"].exists(),
         invalid=Query(table),
         message=f"No inflow will be generated for this feature, because model_settings.use_0d_inflow is not set to use {table.__tablename__}.",
     )
-    for table, condition in (
-        (models.ImperviousSurface, "0d_imp"),
-        (models.Surface, "0d_surf"),
-    )
+    for table in [models.DryWeatherFlow, models.Surface]
 ]
 
 CHECKS += [
     InflowNoFeaturesCheck(
         error_code=617,
         level=CheckLevel.WARNING,
-        surface_table=table,
-        condition=CONDITIONS[condition].exists(),
+        feature_table=table,
+        condition=CONDITIONS["has_inflow"].exists(),
     )
-    for table, condition in (
-        (models.ImperviousSurface, "0d_imp"),
-        (models.Surface, "0d_surf"),
-    )
+    for table in [models.DryWeatherFlow, models.Surface]
 ]
 
 CHECKS += [
@@ -1956,35 +1942,17 @@ CHECKS += [
         error_code=606,
         column=models.SurfaceParameter.outflow_delay,
         min_value=0,
-        filters=filters,
-    ),
-    RangeCheck(
-        error_code=607,
-        column=models.SurfaceParameter.max_infiltration_capacity,
-        min_value=0,
-        filters=filters,
-    ),
-    RangeCheck(
-        error_code=608,
-        column=models.SurfaceParameter.min_infiltration_capacity,
-        min_value=0,
-        filters=filters,
-    ),
-    RangeCheck(
-        error_code=609,
-        column=models.SurfaceParameter.infiltration_decay_constant,
-        min_value=0,
-        filters=filters,
-    ),
-    RangeCheck(
-        error_code=610,
-        column=models.SurfaceParameter.infiltration_recovery_constant,
-        min_value=0,
-        filters=filters,
-    ),
-    Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING),
+        filters=CONDITIONS["has_inflow"].exists(),
+    )
+    for code, column in [
+        (606, models.SurfaceParameter.outflow_delay),
+        (607, models.SurfaceParameter.max_infiltration_capacity),
+        (608, models.SurfaceParameter.min_infiltration_capacity),
+        (609, models.SurfaceParameter.infiltration_decay_constant),
+        (610, models.SurfaceParameter.infiltration_recovery_constant),
+    ]
 ]
-
+CHECKS += [Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING)]
 
 # 07xx: RASTERS
 RASTER_COLUMNS = [

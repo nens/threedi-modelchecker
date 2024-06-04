@@ -233,37 +233,20 @@ class Use0DFlowCheck(BaseCheck):
             column=models.SimulationTemplateSettings.use_0d_inflow, *args, **kwargs
         )
 
-    def to_check(self, session):
-        """Return a Query object on which this check is applied"""
-        return session.query(models.SimulationTemplateSettings).filter(
-            models.SimulationTemplateSettings.use_0d_inflow != 0
-        )
-
     def get_invalid(self, session):
-        surface_count = session.query(func.count(models.Surface.id)).scalar()
-        impervious_surface_count = session.query(
-            func.count(models.ImperviousSurface.id)
-        ).scalar()
-
-        invalid_rows = []
-        for row in self.to_check(session):
-            if (
-                row.use_0d_inflow == constants.InflowType.IMPERVIOUS_SURFACE
-                and impervious_surface_count == 0
-            ):
-                invalid_rows.append(row)
-            elif (
-                row.use_0d_inflow == constants.InflowType.SURFACE and surface_count == 0
-            ):
-                invalid_rows.append(row)
-            else:
-                continue
-        return invalid_rows
+        settings = session.query(models.SimulationTemplateSettings).one_or_none()
+        if settings is None:
+            return []
+        use_0d_flow = settings.use_0d_inflow
+        if use_0d_flow != constants.InflowType.NO_INFLOW:
+            surface_count = session.query(func.count(models.Surface.id)).scalar()
+            if surface_count == 0:
+                return [settings]
+        return []
 
     def description(self):
         return (
-            f"When {self.column_name} is used, there should exist at least one "
-            "(impervious) surface."
+            f"When {self.column_name} is used, there should exist at least one surface."
         )
 
 
@@ -742,30 +725,27 @@ class PumpStorageTimestepCheck(BaseCheck):
         return f"{self.column_name} will empty its storage faster than one timestep, which can cause simulation instabilities"
 
 
-class ImperviousNodeInflowAreaCheck(BaseCheck):
+class SurfaceNodeInflowAreaCheck(BaseCheck):
     """Check that total inflow area per connection node is no larger than 10000 square metres"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(column=models.ConnectionNode.id, *args, **kwargs)
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        impervious_surfaces = (
-            select(models.ImperviousSurfaceMap.connection_node_id)
-            .select_from(models.ImperviousSurfaceMap)
+        surfaces = (
+            select(models.SurfaceMap.connection_node_id)
+            .select_from(models.SurfaceMap)
             .join(
-                models.ImperviousSurface,
-                models.ImperviousSurfaceMap.impervious_surface_id
-                == models.ImperviousSurface.id,
+                models.Surface,
+                models.SurfaceMap.surface_id == models.Surface.id,
             )
-            .group_by(models.ImperviousSurfaceMap.connection_node_id)
-            .having(func.sum(models.ImperviousSurface.area) > 10000)
+            .group_by(models.SurfaceMap.connection_node_id)
+            .having(func.sum(models.Surface.area) > 10000)
         ).subquery()
 
         return (
             session.query(models.ConnectionNode)
-            .filter(
-                models.ConnectionNode.id == impervious_surfaces.c.connection_node_id
-            )
+            .filter(models.ConnectionNode.id == surfaces.c.connection_node_id)
             .all()
         )
 
@@ -804,14 +784,14 @@ class PerviousNodeInflowAreaCheck(BaseCheck):
 class InflowNoFeaturesCheck(BaseCheck):
     """Check that the surface table in the global use_0d_inflow setting contains at least 1 feature."""
 
-    def __init__(self, *args, surface_table, condition=True, **kwargs):
+    def __init__(self, *args, feature_table, condition=True, **kwargs):
         super().__init__(*args, column=models.ModelSettings.id, **kwargs)
-        self.surface_table = surface_table
+        self.feature_table = feature_table
         self.condition = condition
 
     def get_invalid(self, session: Session):
         surface_table_length = session.execute(
-            select(func.count(self.surface_table.id))
+            select(func.count(self.feature_table.id))
         ).scalar()
         return (
             session.query(models.ModelSettings)
@@ -820,41 +800,28 @@ class InflowNoFeaturesCheck(BaseCheck):
         )
 
     def description(self) -> str:
-        return f"model_settings.use_0d_inflow is set to use {self.surface_table.__tablename__}, but {self.surface_table.__tablename__} does not contain any features."
+        return f"model_settings.use_0d_inflow is set to use {self.feature_table.__tablename__}, but {self.feature_table.__tablename__} does not contain any features."
 
 
 class NodeSurfaceConnectionsCheck(BaseCheck):
     """Check that no more than 50 surfaces are mapped to a connection node"""
 
-    def __init__(
-        self,
-        check_type: Literal["impervious", "pervious"] = "impervious",
-        *args,
-        **kwargs,
-    ):
+    def __init__(self, *args, **kwargs):
         super().__init__(column=models.ConnectionNode.id, *args, **kwargs)
-
-        self.surface_column = None
-        if check_type == "impervious":
-            self.surface_column = models.ImperviousSurfaceMap
-        elif check_type == "pervious":
-            self.surface_column = models.SurfaceMap
+        self.surface_column = models.SurfaceMap
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         if self.surface_column is None:
             return []
-
         overloaded_connections = (
-            select(self.surface_column.connection_node_id)
-            .group_by(self.surface_column.connection_node_id)
-            .having(func.count(self.surface_column.connection_node_id) > 50)
-        ).subquery()
+            select(models.SurfaceMap.connection_node_id)
+            .group_by(models.SurfaceMap.connection_node_id)
+            .having(func.count(models.SurfaceMap.connection_node_id) > 50)
+        )
 
         return (
-            session.query(models.ConnectionNode)
-            .filter(
-                models.ConnectionNode.id == overloaded_connections.c.connection_node_id
-            )
+            self.to_check(session)
+            .filter(models.ConnectionNode.id.in_(overloaded_connections))
             .all()
         )
 
@@ -923,8 +890,8 @@ class DefinedAreaCheck(BaseCheck):
         all_results = select(
             self.table.c.id,
             self.table.c.area,
-            self.table.c.the_geom,
-            func.ST_Area(transform(self.table.c.the_geom)).label("calculated_area"),
+            self.table.c.geom,
+            func.ST_Area(transform(self.table.c.geom)).label("calculated_area"),
         ).subquery()
         return (
             session.query(all_results)
