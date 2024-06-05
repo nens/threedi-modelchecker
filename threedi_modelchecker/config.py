@@ -1833,17 +1833,19 @@ CHECKS += [
 ## 06xx: INFLOW
 CHECKS += [
     RangeCheck(
-        error_code=601,
+        error_code=601 + i,
         column=column,
         min_value=0,
         filters=CONDITIONS["has_inflow"].exists(),
     )
-    for column in [models.DryWeatherFlow.multiplier, models.DryWeatherFlow.daily_total]
+    for i, column in enumerate(
+        [models.DryWeatherFlow.multiplier, models.DryWeatherFlow.daily_total]
+    )
 ]
 
 CHECKS += [
     RangeCheck(
-        error_code=601,
+        error_code=603,
         column=models.Surface.area,
         min_value=0,
         filters=CONDITIONS["has_inflow"].exists(),
@@ -1852,13 +1854,30 @@ CHECKS += [
 
 CHECKS += [
     RangeCheck(
-        error_code=601,
+        error_code=604,
         column=map_table.percentage,
         min_value=0,
         filters=CONDITIONS["has_inflow"].exists(),
     )
-    for map_table in [models.DryWeatherFlowMap, models.SurfaceMap]
+    for i, map_table in enumerate([models.DryWeatherFlowMap, models.SurfaceMap])
 ]
+
+CHECKS += [
+    RangeCheck(
+        error_code=code,
+        column=models.SurfaceParameter.outflow_delay,
+        min_value=0,
+        filters=CONDITIONS["has_inflow"].exists(),
+    )
+    for code, column in [
+        (606, models.SurfaceParameter.outflow_delay),
+        (607, models.SurfaceParameter.max_infiltration_capacity),
+        (608, models.SurfaceParameter.min_infiltration_capacity),
+        (609, models.SurfaceParameter.infiltration_decay_constant),
+        (610, models.SurfaceParameter.infiltration_recovery_constant),
+    ]
+]
+CHECKS += [Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING)]
 
 CHECKS += [
     QueryCheck(
@@ -1938,21 +1957,23 @@ CHECKS += [
 ]
 
 CHECKS += [
-    RangeCheck(
-        error_code=606,
-        column=models.SurfaceParameter.outflow_delay,
-        min_value=0,
+    QueryCheck(
+        error_code=618 + i,
+        level=CheckLevel.WARNING,
+        column=column,
+        invalid=Query(table).filter(column == None),
         filters=CONDITIONS["has_inflow"].exists(),
+        message=f"{table.__tablename__}.{column.name} cannot be Null",
     )
-    for code, column in [
-        (606, models.SurfaceParameter.outflow_delay),
-        (607, models.SurfaceParameter.max_infiltration_capacity),
-        (608, models.SurfaceParameter.min_infiltration_capacity),
-        (609, models.SurfaceParameter.infiltration_decay_constant),
-        (610, models.SurfaceParameter.infiltration_recovery_constant),
-    ]
+    for i, (table, column) in enumerate(
+        [
+            (models.Surface, models.Surface.area),
+            (models.DryWeatherFlow, models.DryWeatherFlow.multiplier),
+            (models.DryWeatherFlow, models.DryWeatherFlow.daily_total),
+        ]
+    )
 ]
-CHECKS += [Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING)]
+
 
 # 07xx: RASTERS
 RASTER_COLUMNS = [
