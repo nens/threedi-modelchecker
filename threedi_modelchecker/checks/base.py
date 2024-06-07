@@ -392,3 +392,22 @@ class RangeCheck(BaseCheck):
         if self.max_value is not None:
             parts.append(f"{'>' if self.right_inclusive else '>='}{self.max_value}")
         return f"{self.column_name} is {' and/or '.join(parts)}"
+
+
+class ListOfIntsCheck(BaseCheck):
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            # check if casting to int works
+            try:
+                [int(x) for x in getattr(record, self.column.name).split(" ")]
+            except ValueError:
+                invalids.append(record)
+        return invalids
+
+    def description(self) -> str:
+        return (
+            f"{self.table.name}.{self.column} is not a comma seperated list of integers"
+        )

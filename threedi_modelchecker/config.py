@@ -11,6 +11,7 @@ from .checks.base import (
     BaseCheck,
     CheckLevel,
     ForeignKeyCheck,
+    ListOfIntsCheck,
     NotNullCheck,
     QueryCheck,
     RangeCheck,
@@ -69,6 +70,7 @@ from .checks.other import (  # Use0DFlowCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
     SurfaceNodeInflowAreaCheck,
+    TagsValid,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
 )
@@ -3004,6 +3006,67 @@ CHECKS += [
         message="Some values in CrossSectionDefinition.friction_values are less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
     )
 ]
+
+
+# Tags 2xxx
+CHECKS += [
+    ListOfIntsCheck(
+        error_code=2001 + i,
+        level=CheckLevel.WARNING,
+        column=table.tags,
+        filters=CONDITIONS["has_inflow"].exists(),
+    )
+    for i, table in enumerate(
+        [
+            models.Surface,
+            models.SurfaceMap,
+            models.SurfaceParameter,
+            models.DryWeatherFlow,
+            models.DryWeatherFlowMap,
+            models.DryWeatherFlowDistribution,
+        ]
+    )
+]
+
+
+CHECKS += [
+    ListOfIntsCheck(
+        error_code=2001 + i,
+        level=CheckLevel.WARNING,
+        column=table.tags,
+        filters=CONDITIONS["has_inflow"].exists(),
+    )
+    for i, table in enumerate(
+        [
+            models.Surface,
+            models.SurfaceMap,
+            models.SurfaceParameter,
+            models.DryWeatherFlow,
+            models.DryWeatherFlowMap,
+            models.DryWeatherFlowDistribution,
+        ]
+    )
+]
+
+CHECKS += [
+    TagsValid(
+        error_code=2007 + i,
+        level=CheckLevel.WARNING,
+        column=table.tags,
+        filters=CONDITIONS["has_inflow"].exists(),
+    )
+    for i, table in enumerate(
+        [
+            models.Surface,
+            models.SurfaceMap,
+            models.SurfaceParameter,
+            models.DryWeatherFlow,
+            models.DryWeatherFlowMap,
+            models.DryWeatherFlowDistribution,
+        ]
+    )
+]
+
 
 # These checks are optional, depending on a command line argument
 beta_features_check = []
