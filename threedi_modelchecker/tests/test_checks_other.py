@@ -29,6 +29,7 @@ from threedi_modelchecker.checks.other import (
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
     SurfaceNodeInflowAreaCheck,
+    TagsValidCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
 )
@@ -610,7 +611,6 @@ def test_feature_closed_cross_section(session, configuration, expected_result):
     assert len(invalid) == expected_result
 
 
-
 @pytest.mark.parametrize(
     "defined_area, max_difference, expected_result",
     [
@@ -892,3 +892,12 @@ def test_max_one_record_check(session, nof_rows_to_add: int, fail: bool):
     check = MaxOneRecordCheck(column=models.ModelSettings.id)
     nof_invalid = len(check.get_invalid(session))
     assert (nof_invalid > 0) == fail
+
+
+def test_tags_valid(session):
+    factories.TagsFactory(id=1, description="foo")
+    factories.DryWeatherFlowFactory(tags="1,2")
+    check = TagsValidCheck(column=models.DryWeatherFlow.tags)
+    assert len(check.get_invalid(session)) == 1
+    factories.TagsFactory(id=2, description="bar")
+    assert len(check.get_invalid(session)) == 0

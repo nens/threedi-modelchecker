@@ -2,7 +2,6 @@ from inspect import isclass
 
 import factory
 from factory import Faker
-from geoalchemy2 import Geometry
 from threedi_schema import constants, models
 
 
@@ -253,6 +252,12 @@ class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     percentage = 100.0
     geom = "SRID=4326;LINESTRING(30 10, 10 30, 40 40)"
+
+
+class TagsFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Tags
+        sqlalchemy_session = None
 
 
 class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):

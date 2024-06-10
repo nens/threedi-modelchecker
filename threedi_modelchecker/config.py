@@ -70,7 +70,7 @@ from .checks.other import (  # Use0DFlowCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
     SurfaceNodeInflowAreaCheck,
-    TagsValid,
+    TagsValidCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
 )
@@ -3049,7 +3049,7 @@ CHECKS += [
 ]
 
 CHECKS += [
-    TagsValid(
+    TagsValidCheck(
         error_code=2007 + i,
         level=CheckLevel.WARNING,
         column=table.tags,
