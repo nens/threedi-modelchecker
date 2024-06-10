@@ -402,7 +402,7 @@ class ListOfIntsCheck(BaseCheck):
         ):
             # check if casting to int works
             try:
-                [int(x) for x in getattr(record, self.column.name).split(" ")]
+                [int(x) for x in getattr(record, self.column.name).split(",")]
             except ValueError:
                 invalids.append(record)
         return invalids

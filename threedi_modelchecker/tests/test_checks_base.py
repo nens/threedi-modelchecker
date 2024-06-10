@@ -12,6 +12,7 @@ from threedi_modelchecker.checks.base import (
     ForeignKeyCheck,
     GeometryCheck,
     GeometryTypeCheck,
+    ListOfIntsCheck,
     NotNullCheck,
     QueryCheck,
     RangeCheck,
@@ -694,3 +695,14 @@ def test_range_check_invalid(
     assert len(invalid_rows) == 1
 
     assert check.description() == msg.format("v2_connection_nodes.storage_area")
+
+
+@pytest.mark.parametrize(
+    "tag_ids_string, nof_invalid_expected",
+    [("1,2,3", 0), ("1.0,2,3", 1), ("foo,bar", 1)],
+)
+def test_list_of_inst_check(session, tag_ids_string, nof_invalid_expected):
+    factories.DryWeatherFlowFactory(tags=tag_ids_string)
+    check = ListOfIntsCheck(column=models.DryWeatherFlow.tags)
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == nof_invalid_expected
