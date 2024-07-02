@@ -3014,7 +3014,6 @@ CHECKS += [
         error_code=2001 + i,
         level=CheckLevel.WARNING,
         column=table.tags,
-        filters=CONDITIONS["has_inflow"].exists(),
     )
     for i, table in enumerate(
         [
@@ -3028,32 +3027,12 @@ CHECKS += [
     )
 ]
 
-
-CHECKS += [
-    ListOfIntsCheck(
-        error_code=2001 + i,
-        level=CheckLevel.WARNING,
-        column=table.tags,
-        filters=CONDITIONS["has_inflow"].exists(),
-    )
-    for i, table in enumerate(
-        [
-            models.Surface,
-            models.SurfaceMap,
-            models.SurfaceParameter,
-            models.DryWeatherFlow,
-            models.DryWeatherFlowMap,
-            models.DryWeatherFlowDistribution,
-        ]
-    )
-]
 
 CHECKS += [
     TagsValidCheck(
         error_code=2007 + i,
         level=CheckLevel.WARNING,
         column=table.tags,
-        filters=CONDITIONS["has_inflow"].exists(),
     )
     for i, table in enumerate(
         [
