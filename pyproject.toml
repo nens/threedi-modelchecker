@@ -19,7 +19,7 @@ dependencies = [
     "Click",
     "GeoAlchemy2>=0.9,!=0.11.*",
     "SQLAlchemy>=1.4",
-    "threedi-schema==0.223.dev0"
+    "threedi-schema==0.223.dev1"
 ]
 
 [project.optional-dependencies]
