@@ -6,4 +6,4 @@ threedi-api-client
 aiofiles
 aiohttp
 pytest-asyncio
-numpy
+numpy>=1.15,<2.0
