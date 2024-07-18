@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.8.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Pin NumPy to less than 2.0.0
 
 
 2.8.0 (2024-05-22)
