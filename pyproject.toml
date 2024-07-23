@@ -32,7 +32,6 @@ test = [
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
-    "numpy>=1.15,<3.0",
 ]
 
 [project.scripts]
