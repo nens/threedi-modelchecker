@@ -53,8 +53,7 @@ jobs:
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
-          pip install ${{ matrix.pins }}
-          pip install .[test,rasterio]
+          pip install ${{ matrix.pins }} .[test,rasterio]
           pip install GDAL==$(gdal-config --version) --no-build-isolation # install gdal AFTER numpy
           pip list
 
