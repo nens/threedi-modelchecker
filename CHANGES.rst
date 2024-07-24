@@ -5,7 +5,8 @@ Changelog of threedi-modelchecker
 2.8.1 (unreleased)
 ------------------
 
-- Pin NumPy to less than 2.0.0
+- Add explicit support for NumPy 2.
+- Require rasterio>=1.3.10.
 
 
 2.8.0 (2024-05-22)

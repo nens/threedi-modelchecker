@@ -17,19 +17,22 @@ jobs:
         include:
           # 2019
           - python: 3.8
-            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.* rasterio==1.3.0"
+            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
           # 2021
           - python: 3.9
-            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.* rasterio==1.3.3"
+            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
           # 2022
           - python: "3.10"
-            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.* rasterio==1.3.5.post1"
-          # 2023
+            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
+          # 2023 NumPy 1
           - python: "3.11"
-            pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 rasterio==1.3.9"
+            pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==1.26.4"
+          # 2023 NumPy 2
+          - python: "3.11"
+            pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==2.0.1"
           # current
           - python: "3.12"
-            #pins: "sqlalchemy==2.0.* alembic==1.13.* geoalchemy2==0.14.* rasterio==1.3.9.*"
+            #pins: "sqlalchemy==2.0.* alembic==1.13.* geoalchemy2==0.14.*"
 
     steps:
       - uses: actions/checkout@v3
@@ -50,7 +53,8 @@ jobs:
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
-          pip install ${{ matrix.pins }} .[test,rasterio] pygdal==$(gdal-config --version).*
+          pip install ${{ matrix.pins }} .[test,rasterio]
+          pip install GDAL==$(gdal-config --version) --no-build-isolation # install gdal AFTER numpy
           pip list
 
       - name: Run tests
