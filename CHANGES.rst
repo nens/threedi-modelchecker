@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.8.1 (unreleased)
+2.8.1 (2024-07-24)
 ------------------
 
 - Add explicit support for NumPy 2.
