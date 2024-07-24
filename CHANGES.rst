@@ -2,10 +2,17 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.8.1 (unreleased)
+2.8.2 (unreleased)
 ------------------
 
 - Adapt modelchecker to work with schema upgrades for inflow (0.223)
+
+
+2.8.1 (2024-07-24)
+------------------
+
+- Add explicit support for NumPy 2.
+- Require rasterio>=1.3.10.
 
 
 2.8.0 (2024-05-22)
