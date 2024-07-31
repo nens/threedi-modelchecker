@@ -194,24 +194,6 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     type = constants.Later2dType.SURFACE
 
 
-# class ImperviousSurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
-#     class Meta:
-#         model = models.ImperviousSurface
-#         sqlalchemy_session = None
-#
-#     surface_class = "pand"
-#     surface_inclination = "vlak"
-#     area = 0.0
-
-
-# class ImperviousSurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
-#     class Meta:
-#         model = models.ImperviousSurfaceMap
-#         sqlalchemy_session = None
-#
-#     percentage = 100.0
-
-
 class SurfaceParameterFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.SurfaceParameter
