@@ -5,7 +5,7 @@ Changelog of threedi-modelchecker
 2.8.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Adapt modelchecker to work with schema upgrades for inflow (0.223)
 
 
 2.8.1 (2024-07-24)
