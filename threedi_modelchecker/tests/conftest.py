@@ -20,8 +20,8 @@ def threedi_db(tmpdir_factory):
     https://factoryboy.readthedocs.io/en/latest/orms.html#managing-sessions
     """
     tmp_path = tmpdir_factory.mktemp("spatialite4")
-    tmp_sqlite = tmp_path / "empty.gpkg"
-    shutil.copyfile(data_dir / "empty.gpkg", tmp_sqlite)
+    tmp_sqlite = tmp_path / "empty.sqlite"
+    shutil.copyfile(data_dir / "empty.sqlite", tmp_sqlite)
     db = ThreediDatabase(tmp_sqlite)
     schema = ModelSchema(db)
     schema.upgrade(backup=False, upgrade_spatialite_version=False)
