@@ -2559,87 +2559,97 @@ CHECKS += [
 ]
 CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 
-## 122x Structure controls
+## 12xx Structure controls
 
 CHECKS += [
     ForeignKeyCheck(
         error_code=1220,
-        column=models.ControlMeasureMap.object_id,
+        column=models.ControlMeasureLocation.object_id,
         reference_column=models.ConnectionNode.id,
-        filters=models.ControlMeasureMap.object_type == "v2_connection_node",
+        filters=models.ControlMeasureLocation.object_type == "connection_node",
     )
 ]
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1221,
-        column=control_table.target_id,
-        reference_column=models.Channel.id,
-        filters=control_table.target_type == "v2_channel",
-    )
-    for control_table in (models.ControlMemory, models.ControlTable)
+
+# 1221 - 1226
+ref_cols = [
+    models.Channel.id,
+    models.Pipe.id,
+    models.Orifice.id,
+    models.Culvert.id,
+    models.Weir.id,
+    models.Pumpstation.id,
 ]
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1222,
-        column=control_table.target_id,
-        reference_column=models.Pipe.id,
-        filters=control_table.target_type == "v2_pipe",
-    )
-    for control_table in (models.ControlMemory, models.ControlTable)
+target_types = [
+    "v2_channel",
+    "v2_pipe",
+    "v2_orifice",
+    "v2_culvert",
+    "v2_weir",
+    "v2_pumpstation",
 ]
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1223,
-        column=control_table.target_id,
-        reference_column=models.Orifice.id,
-        filters=control_table.target_type == "v2_orifice",
-    )
-    for control_table in (models.ControlMemory, models.ControlTable)
-]
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1224,
-        column=control_table.target_id,
-        reference_column=models.Culvert.id,
-        filters=control_table.target_type == "v2_culvert",
-    )
-    for control_table in (models.ControlMemory, models.ControlTable)
-]
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1225,
-        column=control_table.target_id,
-        reference_column=models.Weir.id,
-        filters=control_table.target_type == "v2_weir",
-    )
-    for control_table in (models.ControlMemory, models.ControlTable)
-]
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1226,
-        column=control_table.target_id,
-        reference_column=models.Pumpstation.id,
-        filters=control_table.target_type == "v2_pumpstation",
-    )
-    for control_table in (models.ControlMemory, models.ControlTable)
-]
+for i, (ref_col, target_type) in enumerate(zip(ref_cols, target_types)):
+    for control_table in (models.ControlMemory, models.ControlTable):
+        CHECKS += [
+            ForeignKeyCheck(
+                error_code=1221 + i,
+                column=control_table.target_id,
+                reference_column=ref_col,
+                filters=control_table.target_type == target_type,
+            )
+        ]
+
+
 CHECKS += [
     QueryCheck(
         error_code=1227,
-        column=models.Control.id,
-        invalid=Query(models.Control).filter(
+        column=models.ControlMeasureMap.id,
+        invalid=Query(models.ControlMeasureMap).filter(
             (
-                (models.Control.control_type == "memory")
-                & models.Control.control_id.not_in(Query(models.ControlMemory.id))
+                (models.ControlMeasureMap.control_type == "memory")
+                & models.ControlMeasureMap.control_id.not_in(
+                    Query(models.ControlMemory.id)
+                )
             )
             | (
-                (models.Control.control_type == "table")
-                & models.Control.control_id.not_in(Query(models.ControlTable.id))
+                (models.ControlMeasureMap.control_type == "table")
+                & models.ControlMeasureMap.control_id.not_in(
+                    Query(models.ControlTable.id)
+                )
             )
         ),
-        message="v2_control.control_id references an id in v2_control_memory or v2_control_table, but the table it references does not contain an entry with that id.",
+        message="v2_control_measure_map.control_id references an id in memory_control or table_control, but the table it references does not contain an entry with that id.",
     )
 ]
+
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1228,
+        column=models.ControlMeasureMap.control_measure_location_id,
+        reference_column=models.ControlMeasureLocation.id,
+    )
+]
+
+# 1230 - 1242
+not_null_cols = [
+    models.ControlMemory.measure_variable,
+    models.ControlMemory.action_type,
+    models.ControlMemory.action_value_1,
+    models.ControlMemory.action_value_2,
+    models.ControlMemory.target_type,
+    models.ControlMemory.target_id,
+    models.ControlTable.action_table,
+    models.ControlTable.action_type,
+    models.ControlTable.measure_variable,
+    models.ControlTable.target_type,
+    models.ControlMeasureMap.weight,
+    models.ControlMeasureMap.control_measure_location_id,
+    models.ControlMeasureLocation.object_id,
+    models.ControlMeasureLocation.object_type,
+]
+CHECKS += [
+    NotNullCheck(error_code=1230 + i, column=col) for i, col in enumerate(not_null_cols)
+]
+
 
 ## 018x cross section parameters (continues 008x)
 vegetation_parameter_columns = [

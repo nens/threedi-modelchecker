@@ -41,12 +41,6 @@ class ModelSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     friction_type = constants.FrictionType.CHEZY
 
 
-class ControlGroupFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.ControlGroup
-        sqlalchemy_session = None
-
-
 class ConnectionNodeFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.ConnectionNode
@@ -261,7 +255,8 @@ class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     action_type = constants.ControlTableActionTypes.set_discharge_coefficients
-    action_value = "0.0 -1.0"
+    action_value_1 = 0.0
+    action_value_2 = -1.0
     measure_variable = constants.MeasureVariables.waterlevel
     target_type = constants.StructureControlTypes.channel
     target_id = 10
@@ -269,32 +264,6 @@ class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):
     is_active = True
     upper_threshold = 1.0
     lower_threshold = -1.0
-
-
-class ControlMeasureGroupFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.ControlMeasureGroup
-        sqlalchemy_session = None
-
-
-class ControlMeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.ControlMeasureMap
-        sqlalchemy_session = None
-
-    object_type = "v2_connection_nodes"
-    object_id = 101
-    weight = 0.1
-
-
-class ControlFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.Control
-        sqlalchemy_session = None
-
-    start = "0"
-    end = "300"
-    measure_frequency = 10
 
 
 class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
