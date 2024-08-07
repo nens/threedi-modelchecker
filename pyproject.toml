@@ -19,7 +19,7 @@ dependencies = [
     "Click",
     "GeoAlchemy2>=0.9,!=0.11.*",
     "SQLAlchemy>=1.4",
-    "threedi-schema==0.224.0.dev0"
+    "threedi-schema==0.224.0.dev1"
 #    "threedi-schema@git+https://github.com/nens/threedi-schema@margriet_70_schema_300_structure_control",
 ]
 
