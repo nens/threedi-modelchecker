@@ -2566,7 +2566,6 @@ CHECKS += [
         error_code=1220,
         column=models.ControlMeasureLocation.object_id,
         reference_column=models.ConnectionNode.id,
-        filters=models.ControlMeasureLocation.object_type == "connection_node",
     )
 ]
 
@@ -2644,7 +2643,6 @@ not_null_cols = [
     models.ControlMeasureMap.weight,
     models.ControlMeasureMap.control_measure_location_id,
     models.ControlMeasureLocation.object_id,
-    models.ControlMeasureLocation.object_type,
 ]
 CHECKS += [
     NotNullCheck(error_code=1230 + i, column=col) for i, col in enumerate(not_null_cols)
