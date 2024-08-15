@@ -6,6 +6,7 @@ Changelog of threedi-modelchecker
 ------------------
 
 - Adapt modelchecker to work with schema upgrades for structure control (0.224)
+- Add check for control_table.action_table contents
 
 
 2.9.0 (2024-08-01)

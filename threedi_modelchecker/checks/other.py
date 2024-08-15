@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
@@ -1100,3 +1101,61 @@ class TagsValidCheck(BaseCheck):
 
     def description(self) -> str:
         return f"{self.table.name}.{self.column} refers to tag ids that are not present in Tags, "
+
+
+class TableStrCheck(BaseCheck):
+    def __init__(
+        self, column, pattern, filters=None, level=CheckLevel.ERROR, error_code=0
+    ):
+        self.pattern = pattern
+        super().__init__(
+            column=column, filters=filters, level=level, error_code=error_code
+        )
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        # return mock list in case the table is empty when it shouldn't be
+        invalids = []
+        for record in self.to_check(session).all():
+            if re.match(self.pattern, getattr(record, self.column.name)) is None:
+                invalids.append(record)
+        return invalids
+
+
+class ControlTableActionTableCheckDefault(TableStrCheck):
+    def __init__(self, level=CheckLevel.ERROR, error_code=0):
+        # check for action_table for action_type != set_discharge_coefficients
+        # expected format: multiple rows, separated by \n of "val,val"
+        super().__init__(
+            column=models.ControlTable.action_table,
+            pattern=r"^(-?\d+(\.\d+)?,-?\d+(\.\d+)?\n?)+$",
+            filters=models.ControlTable.action_type
+            != constants.ControlTableActionTypes.set_discharge_coefficients,
+            level=level,
+            error_code=error_code,
+        )
+
+        def description(self) -> str:
+            return (
+                f"{self.table.name}.{self.column} is not properly formatted."
+                f"Expected one or more rows of: 'number, number number'"
+            )
+
+
+class ControlTableActionTableCheckDischareCoefficients(TableStrCheck):
+    def __init__(self, level=CheckLevel.ERROR, error_code=0):
+        # check for action_table for action_type = set_discharge_coefficients
+        # expected format: multiple rows, separated by \n of "val,val val"
+        super().__init__(
+            column=models.ControlTable.action_table,
+            pattern=r"^(-?\d+(\.\d+)?,-?\d+(\.\d+)? -?\d+(\.\d+)?\n?)+$",
+            filters=models.ControlTable.action_type
+            == constants.ControlTableActionTypes.set_discharge_coefficients,
+            level=level,
+            error_code=error_code,
+        )
+
+    def description(self) -> str:
+        return (
+            f"{self.table.name}.{self.column} is not properly formatted."
+            f"Expected one or more rows of: 'number, number'"
+        )
