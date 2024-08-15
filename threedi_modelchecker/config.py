@@ -2616,7 +2616,7 @@ CHECKS += [
                 )
             )
         ),
-        message="v2_control_measure_map.control_id references an id in memory_control or table_control, but the table it references does not contain an entry with that id.",
+        message="control_measure_map.control_id references an id in memory_control or table_control, but the table it references does not contain an entry with that id.",
     )
 ]
 
