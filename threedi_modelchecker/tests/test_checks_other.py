@@ -14,6 +14,8 @@ from threedi_modelchecker.checks.other import (
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
+    ControlTableActionTableCheckDefault,
+    ControlTableActionTableCheckDischargeCoefficients,
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
@@ -901,3 +903,54 @@ def test_tags_valid(session):
     assert len(check.get_invalid(session)) == 1
     factories.TagsFactory(id=2, description="bar")
     assert len(check.get_invalid(session)) == 0
+
+
+@pytest.mark.parametrize(
+    "action_table, valid",
+    [
+        ("1,2", True),
+        ("1,2\n3,4", True),
+        ("2,3\n3,4\n", True),
+        ("1.0,2", True),
+        ("1,2.1", True),
+        ("1, 2", False),
+        ("1;2", False),
+        ("1,2 3", False),
+        ("1,2,3", False),
+    ],
+)
+def test_control_table_action_table_check_default(session, action_table, valid):
+    factories.ControlTableFactory(
+        action_table=action_table,
+        action_type=constants.ControlTableActionTypes.set_capacity,
+    )
+    check = ControlTableActionTableCheckDefault()
+    assert (len(check.get_invalid(session)) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "action_table, valid",
+    [
+        ("1,2 3", True),
+        ("1,2 3\n3,4 5", True),
+        ("2,3 3\n3,4 5\n", True),
+        ("1.0,2 3", True),
+        ("1,2.1 3", True),
+        ("1,2.1 3", True),
+        ("1,2.1 3.3", True),
+        ("1,2", False),
+        ("1, 2 3", False),
+        ("1;2 3", False),
+        ("1,2,3", False),
+        ("1,2 3 4", False),
+    ],
+)
+def test_control_table_action_table_check_discharge_coefficients(
+    session, action_table, valid
+):
+    factories.ControlTableFactory(
+        action_table=action_table,
+        action_type=constants.ControlTableActionTypes.set_discharge_coefficients,
+    )
+    check = ControlTableActionTableCheckDischargeCoefficients()
+    assert (len(check.get_invalid(session)) == 0) == valid
