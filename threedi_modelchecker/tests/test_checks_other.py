@@ -15,7 +15,7 @@ from threedi_modelchecker.checks.other import (
     ConnectionNodesDistance,
     ConnectionNodesLength,
     ControlTableActionTableCheckDefault,
-    ControlTableActionTableCheckDischareCoefficients,
+    ControlTableActionTableCheckDischargeCoefficients,
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
@@ -952,5 +952,5 @@ def test_control_table_action_table_check_discharge_coefficients(
         action_table=action_table,
         action_type=constants.ControlTableActionTypes.set_discharge_coefficients,
     )
-    check = ControlTableActionTableCheckDischareCoefficients()
+    check = ControlTableActionTableCheckDischargeCoefficients()
     assert (len(check.get_invalid(session)) == 0) == valid
