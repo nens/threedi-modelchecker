@@ -1141,7 +1141,7 @@ class ControlTableActionTableCheckDefault(TableStrCheck):
             )
 
 
-class ControlTableActionTableCheckDischareCoefficients(TableStrCheck):
+class ControlTableActionTableCheckDischargeCoefficients(TableStrCheck):
     def __init__(self, level=CheckLevel.ERROR, error_code=0):
         # check for action_table for action_type = set_discharge_coefficients
         # expected format: multiple rows, separated by \n of "val,val val"
