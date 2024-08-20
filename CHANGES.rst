@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.10.1 (unreleased)
+2.10.1 (2024-08-20)
 -------------------
 
 - Add check for control_table.action_table contents
