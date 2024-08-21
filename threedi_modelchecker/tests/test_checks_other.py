@@ -663,9 +663,9 @@ def test_beta_values(session, value, expected_result):
         constants.BoundaryType.GROUNDWATERLEVEL,
         constants.BoundaryType.GROUNDWATERDISCHARGE,
     ]
-    factories.BoundaryConditions1DFactory(boundary_type=value)
+    factories.BoundaryConditions1DFactory(type=value)
     check = BetaValuesCheck(
-        column=models.BoundaryCondition1D.boundary_type, values=beta_values
+        column=models.BoundaryCondition1D.type, values=beta_values
     )
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result

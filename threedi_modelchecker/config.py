@@ -489,10 +489,10 @@ CHECKS += [
     BoundaryCondition1DObjectNumberCheck(error_code=72),
     QueryCheck(
         error_code=73,
-        column=models.BoundaryConditions2D.boundary_type,
+        column=models.BoundaryConditions2D.type,
         filters=~CONDITIONS["has_groundwater_flow"].exists(),
         invalid=Query(models.BoundaryConditions2D).filter(
-            models.BoundaryConditions2D.boundary_type.in_(
+            models.BoundaryConditions2D.type.in_(
                 [
                     constants.BoundaryType.GROUNDWATERLEVEL,
                     constants.BoundaryType.GROUNDWATERDISCHARGE,
@@ -506,9 +506,9 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=74,
-        column=models.BoundaryCondition1D.boundary_type,
+        column=models.BoundaryCondition1D.type,
         invalid=Query(models.BoundaryCondition1D).filter(
-            models.BoundaryCondition1D.boundary_type.in_(
+            models.BoundaryCondition1D.type.in_(
                 [
                     constants.BoundaryType.GROUNDWATERLEVEL,
                     constants.BoundaryType.GROUNDWATERDISCHARGE,

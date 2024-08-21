@@ -96,7 +96,7 @@ class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.BoundaryConditions2D
         sqlalchemy_session = None
 
-    boundary_type = constants.BoundaryType.WATERLEVEL.value
+    type = constants.BoundaryType.WATERLEVEL.value
     timeseries = "0,-0.5"
     display_name = Faker("name")
 
@@ -106,7 +106,7 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.BoundaryCondition1D
         sqlalchemy_session = None
 
-    boundary_type = constants.BoundaryType.WATERLEVEL
+    type = constants.BoundaryType.WATERLEVEL
     timeseries = "0,-0.5"
     connection_node = factory.SubFactory(ConnectionNodeFactory)
 
