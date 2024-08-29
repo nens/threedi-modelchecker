@@ -1412,12 +1412,12 @@ CHECKS += [
     ),
     QueryCheck(
         error_code=406,
-        column=models.GroundWater.equilibrium_infiltration_rate_type,
+        column=models.GroundWater.equilibrium_infiltration_rate_aggregation,
         invalid=Query(models.GroundWater).filter(
-            models.GroundWater.equilibrium_infiltration_rate_type == None,
+            models.GroundWater.equilibrium_infiltration_rate_aggregation == None,
             ~is_none_or_empty(models.GroundWater.equilibrium_infiltration_rate_file),
         ),
-        message="groundwater.equilibrium_infiltration_rate_type should be defined when using an equilibrium_infiltration_rate_file.",
+        message="groundwater.equilibrium_infiltration_rate_aggregation should be defined when using an equilibrium_infiltration_rate_file.",
     ),
     QueryCheck(
         error_code=407,
@@ -2564,7 +2564,7 @@ CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 CHECKS += [
     ForeignKeyCheck(
         error_code=1220,
-        column=models.ControlMeasureLocation.object_id,
+        column=models.ControlMeasureLocation.connection_node_id,
         reference_column=models.ConnectionNode.id,
     )
 ]
@@ -2642,7 +2642,7 @@ not_null_cols = [
     models.ControlTable.target_type,
     models.ControlMeasureMap.weight,
     models.ControlMeasureMap.control_measure_location_id,
-    models.ControlMeasureLocation.object_id,
+    models.ControlMeasureLocation.connection_node_id,
 ]
 CHECKS += [
     NotNullCheck(error_code=1230 + i, column=col) for i, col in enumerate(not_null_cols)
