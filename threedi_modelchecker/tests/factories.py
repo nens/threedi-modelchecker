@@ -295,8 +295,7 @@ class PotentialBreachFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     display_name = Faker("name")
     code = "code"
-    the_geom = "SRID=4326;LINESTRING(-71.06452 42.2874, -71.06452 42.286)"
-    channel = factory.SubFactory(ChannelFactory)
+    geom = "SRID=4326;LINESTRING(-71.06452 42.2874, -71.06452 42.286)"
 
 
 class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):

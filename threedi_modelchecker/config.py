@@ -1015,11 +1015,11 @@ CHECKS += [
     QueryCheck(
         error_code=263,
         level=CheckLevel.WARNING,
-        column=models.ExchangeLine.the_geom,
+        column=models.ExchangeLine.geom,
         invalid=Query(models.ExchangeLine)
         .join(models.Channel)
         .filter(
-            geo_query.length(models.ExchangeLine.the_geom)
+            geo_query.length(models.ExchangeLine.geom)
             < (0.8 * geo_query.length(models.Channel.the_geom))
         ),
         message=(
@@ -1030,11 +1030,11 @@ CHECKS += [
     QueryCheck(
         error_code=264,
         level=CheckLevel.WARNING,
-        column=models.ExchangeLine.the_geom,
+        column=models.ExchangeLine.geom,
         invalid=Query(models.ExchangeLine)
         .join(models.Channel)
         .filter(
-            geo_query.distance(models.ExchangeLine.the_geom, models.Channel.the_geom)
+            geo_query.distance(models.ExchangeLine.geom, models.Channel.the_geom)
             > 500.0
         ),
         message=(
@@ -1079,7 +1079,7 @@ CHECKS += [
         )
         .group_by(
             models.PotentialBreach.channel_id,
-            func.PointN(models.PotentialBreach.the_geom, 1),
+            func.PointN(models.PotentialBreach.geom, 1),
         )
         .having(func.count(models.PotentialBreach.id) > 1),
         message="v2_channel can have max 1 v2_potential_breach at the same position "
@@ -1097,7 +1097,7 @@ CHECKS += [
         )
         .group_by(
             models.PotentialBreach.channel_id,
-            func.PointN(models.PotentialBreach.the_geom, 1),
+            func.PointN(models.PotentialBreach.geom, 1),
         )
         .having(func.count(models.PotentialBreach.id) > 2),
         message="v2_channel can have max 2 v2_potential_breach at the same position "
@@ -1111,7 +1111,7 @@ CHECKS += [
         .join(models.Channel)
         .filter(
             geo_query.distance(
-                func.PointN(models.PotentialBreach.the_geom, 1), models.Channel.the_geom
+                func.PointN(models.PotentialBreach.geom, 1), models.Channel.the_geom
             )
             > TOLERANCE_M
         ),
@@ -1120,24 +1120,24 @@ CHECKS += [
     PotentialBreachStartEndCheck(
         error_code=274,
         level=CheckLevel.ERROR,
-        column=models.PotentialBreach.the_geom,
+        column=models.PotentialBreach.geom,
         min_distance=TOLERANCE_M,
     ),
     PotentialBreachInterdistanceCheck(
         error_code=275,
         level=CheckLevel.ERROR,
-        column=models.PotentialBreach.the_geom,
+        column=models.PotentialBreach.geom,
         min_distance=TOLERANCE_M,
     ),
     RangeCheck(
         error_code=276,
-        column=models.PotentialBreach.exchange_level,
+        column=models.PotentialBreach.initial_exchange_level,
         min_value=-9998.0,
         max_value=8848.0,
     ),
     RangeCheck(
         error_code=277,
-        column=models.PotentialBreach.maximum_breach_depth,
+        column=models.PotentialBreach.final_exchange_level,
         min_value=0.0,
         max_value=100.0,
         left_inclusive=False,
@@ -2209,30 +2209,30 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=800,
-        column=model.refinement_level,
-        invalid=Query(model).filter(model.refinement_level > nr_grid_levels),
+        column=model.grid_level,
+        invalid=Query(model).filter(model.grid_level > nr_grid_levels),
         message=f"{model.__table__.name}.refinement_level must not be greater than model_settings.nr_grid_levels",
     )
-    for model in (models.GridRefinement, models.GridRefinementArea)
+    for model in (models.GridRefinementLine, models.GridRefinementArea)
 ]
 CHECKS += [
     RangeCheck(
         error_code=801,
-        column=model.refinement_level,
+        column=model.grid_level,
         min_value=1,
     )
-    for model in (models.GridRefinement, models.GridRefinementArea)
+    for model in (models.GridRefinementLine, models.GridRefinementArea)
 ]
 CHECKS += [
     QueryCheck(
         error_code=802,
         level=CheckLevel.INFO,
-        column=model.refinement_level,
-        invalid=Query(model).filter(model.refinement_level == nr_grid_levels),
+        column=model.grid_level,
+        invalid=Query(model).filter(model.grid_level == nr_grid_levels),
         message=f"{model.__table__.name}.refinement_level is equal to model_settings.nr_grid_levels and will "
         "therefore not have any effect. Lower the refinement_level to make the cells smaller.",
     )
-    for model in (models.GridRefinement, models.GridRefinementArea)
+    for model in (models.GridRefinementLine, models.GridRefinementArea)
 ]
 
 ## 110x: SIMULATION SETTINGS, timestep
@@ -3103,9 +3103,9 @@ class Config:
             self.checks += generate_geometry_checks(
                 model.__table__,
                 custom_level_map={
-                    "v2_grid_refinement.the_geom": "warning",
-                    "v2_grid_refinement_area.the_geom": "warning",
-                    "v2_dem_average_area.the_geom": "warning",
+                    "grid_refinement_line.geom": "warning",
+                    "grid_refinement_area.geom": "warning",
+                    "dem_average_area.geom": "warning",
                     "v2_surface.the_geom": "warning",
                     "v2_impervious_surface.the_geom": "warning",
                 },
