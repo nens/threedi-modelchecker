@@ -3106,8 +3106,8 @@ class Config:
                     "v2_grid_refinement.the_geom": "warning",
                     "v2_grid_refinement_area.the_geom": "warning",
                     "v2_dem_average_area.the_geom": "warning",
-                    "v2_surface.the_geom": "warning",
-                    "v2_impervious_surface.the_geom": "warning",
+                    "surface.geom": "warning",
+                    "dry_weather_flow.geom": "warning",
                 },
                 error_code=5,
             )
