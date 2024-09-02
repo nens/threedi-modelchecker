@@ -980,7 +980,7 @@ CHECKS += [
                 }
             )
         ),
-        message="v2_channel can only have a v2_exchange_line if it has "
+        message="v2_channel can only have an exchange_line if it has "
         "a (double) connected (102 or 105) calculation type",
     ),
     QueryCheck(
@@ -994,7 +994,7 @@ CHECKS += [
         )
         .group_by(models.ExchangeLine.channel_id)
         .having(func.count(models.ExchangeLine.id) > 1),
-        message="v2_channel can have max 1 v2_exchange_line if it has "
+        message="v2_channel can have max 1 exchange_line if it has "
         "connected (102) calculation type",
     ),
     QueryCheck(
@@ -1009,7 +1009,7 @@ CHECKS += [
         )
         .group_by(models.ExchangeLine.channel_id)
         .having(func.count(models.ExchangeLine.id) > 2),
-        message="v2_channel can have max 2 v2_exchange_line if it has "
+        message="v2_channel can have max 2 exchange_line if it has "
         "double connected (105) calculation type",
     ),
     QueryCheck(
@@ -1023,7 +1023,7 @@ CHECKS += [
             < (0.8 * geo_query.length(models.Channel.the_geom))
         ),
         message=(
-            "v2_exchange_line.the_geom should not be significantly shorter than its "
+            "exchange_line.geom should not be significantly shorter than its "
             "corresponding channel."
         ),
     ),
@@ -1037,9 +1037,7 @@ CHECKS += [
             geo_query.distance(models.ExchangeLine.geom, models.Channel.the_geom)
             > 500.0
         ),
-        message=(
-            "v2_exchange_line.the_geom is far (> 500 m) from its corresponding channel"
-        ),
+        message=("exchange_line.geom is far (> 500 m) from its corresponding channel"),
     ),
     RangeCheck(
         error_code=265,
@@ -1065,8 +1063,7 @@ CHECKS += [
                 }
             )
         ),
-        message="v2_potential_breach is assigned to an isolated "
-        "or embedded channel.",
+        message="potential_breach is assigned to an isolated " "or embedded channel.",
     ),
     QueryCheck(
         error_code=271,
@@ -1082,7 +1079,7 @@ CHECKS += [
             func.PointN(models.PotentialBreach.geom, 1),
         )
         .having(func.count(models.PotentialBreach.id) > 1),
-        message="v2_channel can have max 1 v2_potential_breach at the same position "
+        message="v2_channel can have max 1 potential_breach at the same position "
         "on a channel of connected (102) calculation type",
     ),
     QueryCheck(
@@ -1100,7 +1097,7 @@ CHECKS += [
             func.PointN(models.PotentialBreach.geom, 1),
         )
         .having(func.count(models.PotentialBreach.id) > 2),
-        message="v2_channel can have max 2 v2_potential_breach at the same position "
+        message="v2_channel can have max 2 potential_breach at the same position "
         "on a channel of double connected (105) calculation type",
     ),
     QueryCheck(
@@ -1115,7 +1112,7 @@ CHECKS += [
             )
             > TOLERANCE_M
         ),
-        message="v2_potential_breach.the_geom must begin at the channel it is assigned to",
+        message="potential_breach.geom must begin at the channel it is assigned to",
     ),
     PotentialBreachStartEndCheck(
         error_code=274,
@@ -3103,9 +3100,9 @@ class Config:
             self.checks += generate_geometry_checks(
                 model.__table__,
                 custom_level_map={
-                    "v2_grid_refinement.the_geom": "warning",
-                    "v2_grid_refinement_area.the_geom": "warning",
-                    "v2_dem_average_area.the_geom": "warning",
+                    "grid_refinement_line.geom": "warning",
+                    "grid_refinement_area.geom": "warning",
+                    "dem_average_area.geom": "warning",
                     "surface.geom": "warning",
                     "dry_weather_flow.geom": "warning",
                 },
