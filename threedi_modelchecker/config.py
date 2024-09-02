@@ -971,7 +971,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.Channel.id,
         invalid=Query(models.Channel)
-        .join(models.ExchangeLine)
+        .join(models.ExchangeLine, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
             models.Channel.calculation_type.notin_(
                 {
@@ -988,7 +988,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.Channel.id,
         invalid=Query(models.Channel)
-        .join(models.ExchangeLine)
+        .join(models.ExchangeLine, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
             models.Channel.calculation_type == constants.CalculationType.CONNECTED,
         )
@@ -1002,7 +1002,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.Channel.id,
         invalid=Query(models.Channel)
-        .join(models.ExchangeLine)
+        .join(models.ExchangeLine, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
             models.Channel.calculation_type
             == constants.CalculationType.DOUBLE_CONNECTED,
@@ -1017,7 +1017,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.ExchangeLine.geom,
         invalid=Query(models.ExchangeLine)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
             geo_query.length(models.ExchangeLine.geom)
             < (0.8 * geo_query.length(models.Channel.the_geom))
@@ -1032,7 +1032,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.ExchangeLine.geom,
         invalid=Query(models.ExchangeLine)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
             geo_query.distance(models.ExchangeLine.geom, models.Channel.the_geom)
             > 500.0
@@ -1056,7 +1056,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
             models.Channel.calculation_type.notin_(
                 {
@@ -1073,7 +1073,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
             models.Channel.calculation_type == constants.CalculationType.CONNECTED,
         )
@@ -1090,7 +1090,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
             models.Channel.calculation_type
             == constants.CalculationType.DOUBLE_CONNECTED,
@@ -1108,7 +1108,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
             geo_query.distance(
                 func.PointN(models.PotentialBreach.geom, 1), models.Channel.the_geom
