@@ -1135,8 +1135,8 @@ CHECKS += [
     RangeCheck(
         error_code=277,
         column=models.PotentialBreach.final_exchange_level,
-        min_value=0.0,
-        max_value=100.0,
+        min_value=-9998.0,
+        max_value=8848.0,
         left_inclusive=False,
     ),
 ]
