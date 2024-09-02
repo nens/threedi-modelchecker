@@ -3028,6 +3028,10 @@ CHECKS += [
             models.DryWeatherFlow,
             models.DryWeatherFlowMap,
             models.DryWeatherFlowDistribution,
+            models.ControlMemory,
+            models.ControlTable,
+            models.ControlMeasureLocation,
+            models.ControlMeasureMap,
         ]
     )
 ]
