@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.10.2 (unreleased)
+2.10.2 (2024-09-02)
 -------------------
 
 - Rename groundwater.equilibrium_infiltration_rate_type to equilibrium_infiltration_rate_aggregation
