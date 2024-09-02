@@ -3032,6 +3032,12 @@ CHECKS += [
             models.ControlTable,
             models.ControlMeasureLocation,
             models.ControlMeasureMap,
+            models.DemAverageArea,
+            models.ExchangeLine,
+            models.GridRefinementArea,
+            models.GridRefinementArea,
+            models.Obstacle,
+            models.PotentialBreach,
         ]
     )
 ]
@@ -3051,6 +3057,16 @@ CHECKS += [
             models.DryWeatherFlow,
             models.DryWeatherFlowMap,
             models.DryWeatherFlowDistribution,
+            models.ControlMemory,
+            models.ControlTable,
+            models.ControlMeasureLocation,
+            models.ControlMeasureMap,
+            models.DemAverageArea,
+            models.ExchangeLine,
+            models.GridRefinementArea,
+            models.GridRefinementArea,
+            models.Obstacle,
+            models.PotentialBreach,
         ]
     )
 ]
