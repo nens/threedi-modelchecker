@@ -1045,6 +1045,14 @@ CHECKS += [
         min_value=-9998.0,
         max_value=8848.0,
     ),
+    QueryCheck(
+        error_code=266,
+        column=models.ExchangeLine.channel_id,
+        invalid=Query(models.ExchangeLine).filter(
+            models.ExchangeLine.channel_id.not_in(Query(models.Channel.id))
+        ),
+        message="exchange_line.channel_id references to non existing channel.id",
+    ),
 ]
 
 ## 027x: Potential breaches
@@ -1139,7 +1147,16 @@ CHECKS += [
         max_value=8848.0,
         left_inclusive=False,
     ),
+    QueryCheck(
+        error_code=278,
+        column=models.PotentialBreach.channel_id,
+        invalid=Query(models.PotentialBreach).filter(
+            models.PotentialBreach.channel_id.not_in(Query(models.Channel.id))
+        ),
+        message="potential_breach.channel_id references to non existing channel.id",
+    ),
 ]
+
 
 ## 030x: SETTINGS
 
