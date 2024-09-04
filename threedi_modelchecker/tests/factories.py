@@ -108,7 +108,7 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     type = constants.BoundaryType.WATERLEVEL
     timeseries = "0,-0.5"
-    connection_node = factory.SubFactory(ConnectionNodeFactory)
+    connection_node_id = 1
 
 
 class PumpstationFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -175,7 +175,7 @@ class Lateral1dFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     timeseries = "0,-0.1"
-    connection_node = factory.SubFactory(ConnectionNodeFactory)
+    connection_node_id = 1
 
 
 class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
