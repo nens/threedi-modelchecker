@@ -517,6 +517,14 @@ CHECKS += [
         ),
         message=("v2_1d_boundary_conditions cannot have a groundwater type"),
     ),
+    QueryCheck(
+        error_code=75,
+        column=models.BoundaryCondition1D.connection_node_id,
+        invalid=Query(models.BoundaryCondition1D)
+        .outerjoin(models.ConnectionNode, models.BoundaryCondition1D.connection_node_id == models.ConnectionNode.id)
+        .filter(models.ConnectionNode.id == None),
+        message=("boundary_condition_1d.connection_node_id must point to an existing connection_node.id"),
+    ),
 ]
 
 ## 008x: CROSS SECTION DEFINITIONS
@@ -2646,6 +2654,18 @@ not_null_cols = [
 ]
 CHECKS += [
     NotNullCheck(error_code=1230 + i, column=col) for i, col in enumerate(not_null_cols)
+]
+
+# 124x laterals
+CHECKS += [
+    QueryCheck(
+        error_code=1240,
+        column=models.Lateral1d.connection_node_id,
+        invalid=Query(models.Lateral1d)
+        .outerjoin(models.ConnectionNode, models.Lateral1d.connection_node_id == models.ConnectionNode.id)
+        .filter(models.ConnectionNode.id == None),
+        message=("lateral_1d.connection_node_id must point to an existing connection_node.id"),
+    ),
 ]
 
 
