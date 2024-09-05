@@ -99,6 +99,7 @@ class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     type = constants.BoundaryType.WATERLEVEL.value
     timeseries = "0,-0.5"
     display_name = Faker("name")
+    geom = "SRID=4326;LINESTRING(4.885534714757985 52.38513158257129,4.88552805617346 52.38573773758626)"
 
 
 class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -109,6 +110,7 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
     type = constants.BoundaryType.WATERLEVEL
     timeseries = "0,-0.5"
     connection_node_id = 1
+    the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
 class PumpstationFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -176,6 +178,7 @@ class Lateral1dFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     timeseries = "0,-0.1"
     connection_node_id = 1
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
 class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -184,7 +187,7 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     timeseries = "0,-0.2"
-    the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
     type = constants.Later2dType.SURFACE
 
 
