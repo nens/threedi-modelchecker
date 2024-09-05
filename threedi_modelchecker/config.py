@@ -483,7 +483,7 @@ CHECKS += [
                 == models.Pumpstation.connection_node_end_id
             ),
         ),
-        message="v2_1d_boundary_conditions cannot be connected to a pumpstation",
+        message="boundary_condition_1d cannot be connected to a pumpstation",
     ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),
@@ -500,7 +500,7 @@ CHECKS += [
             )
         ),
         message=(
-            "v2_2d_boundary_conditions cannot have a groundwater type when there "
+            "boundary_condition_2d cannot have a groundwater type when there "
             "is no groundwater hydraulic conductivity"
         ),
     ),
@@ -515,7 +515,7 @@ CHECKS += [
                 ]
             )
         ),
-        message=("v2_1d_boundary_conditions cannot have a groundwater type"),
+        message=("boundary_condition_1d cannot have a groundwater type"),
     ),
     QueryCheck(
         error_code=75,
