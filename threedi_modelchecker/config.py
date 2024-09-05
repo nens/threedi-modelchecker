@@ -3060,11 +3060,11 @@ CHECKS += [
             models.SurfaceParameter,
             models.Lateral2D,
             models.Lateral1d,
-            models.BoundaryConditions2D,
-            models.BoundaryCondition1D,
             models.DryWeatherFlow,
             models.DryWeatherFlowMap,
             models.DryWeatherFlowDistribution,
+            models.BoundaryConditions2D,
+            models.BoundaryCondition1D,
         ]
     )
 ]
@@ -3086,6 +3086,8 @@ CHECKS += [
             models.DryWeatherFlow,
             models.DryWeatherFlowMap,
             models.DryWeatherFlowDistribution,
+            models.BoundaryConditions2D,
+            models.BoundaryCondition1D,
         ]
     )
 ]
