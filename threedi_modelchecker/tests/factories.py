@@ -110,7 +110,7 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
     type = constants.BoundaryType.WATERLEVEL
     timeseries = "0,-0.5"
     connection_node_id = 1
-    the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
 class PumpstationFactory(factory.alchemy.SQLAlchemyModelFactory):
