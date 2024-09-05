@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.10.3 (unreleased)
+2.10.3 (2024-09-05)
 -------------------
 
 - Add checks for tags in tables ControlMemory, ControlTable, ControlMeasureLocation and ControlMeasureMap
