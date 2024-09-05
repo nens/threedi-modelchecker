@@ -521,9 +521,14 @@ CHECKS += [
         error_code=75,
         column=models.BoundaryCondition1D.connection_node_id,
         invalid=Query(models.BoundaryCondition1D)
-        .outerjoin(models.ConnectionNode, models.BoundaryCondition1D.connection_node_id == models.ConnectionNode.id)
+        .outerjoin(
+            models.ConnectionNode,
+            models.BoundaryCondition1D.connection_node_id == models.ConnectionNode.id,
+        )
         .filter(models.ConnectionNode.id == None),
-        message=("boundary_condition_1d.connection_node_id must point to an existing connection_node.id"),
+        message=(
+            "boundary_condition_1d.connection_node_id must point to an existing connection_node.id"
+        ),
     ),
 ]
 
@@ -2662,9 +2667,14 @@ CHECKS += [
         error_code=1240,
         column=models.Lateral1d.connection_node_id,
         invalid=Query(models.Lateral1d)
-        .outerjoin(models.ConnectionNode, models.Lateral1d.connection_node_id == models.ConnectionNode.id)
+        .outerjoin(
+            models.ConnectionNode,
+            models.Lateral1d.connection_node_id == models.ConnectionNode.id,
+        )
         .filter(models.ConnectionNode.id == None),
-        message=("lateral_1d.connection_node_id must point to an existing connection_node.id"),
+        message=(
+            "lateral_1d.connection_node_id must point to an existing connection_node.id"
+        ),
     ),
 ]
 
