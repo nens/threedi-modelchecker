@@ -19,7 +19,7 @@ dependencies = [
     "Click",
     "GeoAlchemy2>=0.9,!=0.11.*",
     "SQLAlchemy>=1.4",
-    "threedi-schema @ https://github.com/nens/threedi-schema/archive/eli-laterals-and-boundary-conditions.zip"
+    "threedi-schema==0.225.*"
 ]
 
 [project.optional-dependencies]
