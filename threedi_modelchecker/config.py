@@ -3065,6 +3065,10 @@ CHECKS += [
             models.DryWeatherFlowDistribution,
             models.BoundaryConditions2D,
             models.BoundaryCondition1D,
+            models.ControlMemory,
+            models.ControlTable,
+            models.ControlMeasureLocation,
+            models.ControlMeasureMap,
         ]
     )
 ]
@@ -3088,6 +3092,10 @@ CHECKS += [
             models.DryWeatherFlowDistribution,
             models.BoundaryConditions2D,
             models.BoundaryCondition1D,
+            models.ControlMemory,
+            models.ControlTable,
+            models.ControlMeasureLocation,
+            models.ControlMeasureMap,
         ]
     )
 ]

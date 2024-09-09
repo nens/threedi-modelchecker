@@ -2,10 +2,16 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.10.3 (unreleased)
+2.10.4 (unreleased)
 -------------------
 
 - Adapt modelchecker to work with schema upgrades for boundary conditions and laterals (0.225)
+
+
+2.10.3 (2024-09-05)
+-------------------
+
+- Add checks for tags in tables ControlMemory, ControlTable, ControlMeasureLocation and ControlMeasureMap
 
 
 2.10.2 (2024-09-02)
