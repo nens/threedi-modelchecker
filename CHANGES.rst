@@ -2,7 +2,7 @@ Changelog of threedi-modelchecker
 =================================
 
 
-2.10.4 (unreleased)
+2.11.0 (2024-09-09)
 -------------------
 
 - Adapt modelchecker to work with schema upgrades for boundary conditions and laterals (0.225)
