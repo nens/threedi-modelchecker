@@ -124,7 +124,7 @@ class FirstTimeSeriesEqualTimestepsCheck(BaseCheck):
 
     def description(self):
         return (
-            "The timesteps for the first v2_1d_boundary_conditions.timeseries did not match the timesteps for the first v2_2d_boundary_conditions.timeseries. "
+            "The timesteps for the first boundary_condition_1d.timeseries did not match the timesteps for the first boundary_condition_2d.timeseries. "
             + "All boundary conditions must have the same timesteps in their timeseries."
         )
 

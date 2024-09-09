@@ -45,7 +45,7 @@ def test_gen_enum_checks():
     enum_checks = generate_enum_checks(models.BoundaryConditions2D.__table__)
 
     assert len(enum_checks) == 1
-    assert enum_checks[0].column == models.BoundaryConditions2D.boundary_type
+    assert enum_checks[0].column == models.BoundaryConditions2D.type
 
 
 def test_gen_enum_checks_varcharenum():

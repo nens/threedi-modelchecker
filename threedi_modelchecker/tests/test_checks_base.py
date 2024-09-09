@@ -340,7 +340,7 @@ def test_geometry_type_check(session):
 def test_enum_check(session):
     factories.BoundaryConditions2DFactory()
 
-    enum_check = EnumCheck(models.BoundaryConditions2D.boundary_type)
+    enum_check = EnumCheck(models.BoundaryConditions2D.type)
     invalid_rows = enum_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -355,9 +355,9 @@ def test_enum_check_with_null_values(session):
 
 def test_enum_check_with_invalid_value(session):
     factories.BoundaryConditions2DFactory()
-    faulty_boundary = factories.BoundaryConditions2DFactory(boundary_type=-1)
+    faulty_boundary = factories.BoundaryConditions2DFactory(type=-1)
 
-    enum_check = EnumCheck(models.BoundaryConditions2D.boundary_type)
+    enum_check = EnumCheck(models.BoundaryConditions2D.type)
     invalid_rows = enum_check.get_invalid(session)
     assert len(invalid_rows) == 1
     assert invalid_rows[0].id == faulty_boundary.id

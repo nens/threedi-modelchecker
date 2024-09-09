@@ -483,16 +483,16 @@ CHECKS += [
                 == models.Pumpstation.connection_node_end_id
             ),
         ),
-        message="v2_1d_boundary_conditions cannot be connected to a pumpstation",
+        message="boundary_condition_1d cannot be connected to a pumpstation",
     ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),
     QueryCheck(
         error_code=73,
-        column=models.BoundaryConditions2D.boundary_type,
+        column=models.BoundaryConditions2D.type,
         filters=~CONDITIONS["has_groundwater_flow"].exists(),
         invalid=Query(models.BoundaryConditions2D).filter(
-            models.BoundaryConditions2D.boundary_type.in_(
+            models.BoundaryConditions2D.type.in_(
                 [
                     constants.BoundaryType.GROUNDWATERLEVEL,
                     constants.BoundaryType.GROUNDWATERDISCHARGE,
@@ -500,22 +500,35 @@ CHECKS += [
             )
         ),
         message=(
-            "v2_2d_boundary_conditions cannot have a groundwater type when there "
+            "boundary_condition_2d cannot have a groundwater type when there "
             "is no groundwater hydraulic conductivity"
         ),
     ),
     QueryCheck(
         error_code=74,
-        column=models.BoundaryCondition1D.boundary_type,
+        column=models.BoundaryCondition1D.type,
         invalid=Query(models.BoundaryCondition1D).filter(
-            models.BoundaryCondition1D.boundary_type.in_(
+            models.BoundaryCondition1D.type.in_(
                 [
                     constants.BoundaryType.GROUNDWATERLEVEL,
                     constants.BoundaryType.GROUNDWATERDISCHARGE,
                 ]
             )
         ),
-        message=("v2_1d_boundary_conditions cannot have a groundwater type"),
+        message=("boundary_condition_1d cannot have a groundwater type"),
+    ),
+    QueryCheck(
+        error_code=75,
+        column=models.BoundaryCondition1D.connection_node_id,
+        invalid=Query(models.BoundaryCondition1D)
+        .outerjoin(
+            models.ConnectionNode,
+            models.BoundaryCondition1D.connection_node_id == models.ConnectionNode.id,
+        )
+        .filter(models.ConnectionNode.id == None),
+        message=(
+            "boundary_condition_1d.connection_node_id must point to an existing connection_node.id"
+        ),
     ),
 ]
 
@@ -2662,6 +2675,23 @@ CHECKS += [
     NotNullCheck(error_code=1230 + i, column=col) for i, col in enumerate(not_null_cols)
 ]
 
+# 124x laterals
+CHECKS += [
+    QueryCheck(
+        error_code=1240,
+        column=models.Lateral1d.connection_node_id,
+        invalid=Query(models.Lateral1d)
+        .outerjoin(
+            models.ConnectionNode,
+            models.Lateral1d.connection_node_id == models.ConnectionNode.id,
+        )
+        .filter(models.ConnectionNode.id == None),
+        message=(
+            "lateral_1d.connection_node_id must point to an existing connection_node.id"
+        ),
+    ),
+]
+
 
 ## 018x cross section parameters (continues 008x)
 vegetation_parameter_columns = [
@@ -3042,9 +3072,13 @@ CHECKS += [
             models.Surface,
             models.SurfaceMap,
             models.SurfaceParameter,
+            models.Lateral2D,
+            models.Lateral1d,
             models.DryWeatherFlow,
             models.DryWeatherFlowMap,
             models.DryWeatherFlowDistribution,
+            models.BoundaryConditions2D,
+            models.BoundaryCondition1D,
             models.ControlMemory,
             models.ControlTable,
             models.ControlMeasureLocation,
@@ -3071,9 +3105,13 @@ CHECKS += [
             models.Surface,
             models.SurfaceMap,
             models.SurfaceParameter,
+            models.Lateral2D,
+            models.Lateral1d,
             models.DryWeatherFlow,
             models.DryWeatherFlowMap,
             models.DryWeatherFlowDistribution,
+            models.BoundaryConditions2D,
+            models.BoundaryCondition1D,
             models.ControlMemory,
             models.ControlTable,
             models.ControlMeasureLocation,
