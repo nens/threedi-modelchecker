@@ -37,7 +37,7 @@ jobs:
             display_name: "2023 NumPy 2"
           # current with GDAL 3.6
           - python: "3.12"
-            pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==2.0.1"
+            pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==1.26.4"
             display_name: "2024 GDAL 3.6"
             use_gdal_36: true
           # current
