@@ -2,10 +2,13 @@ Changelog of threedi-modelchecker
 =================================
 
 
+
 2.11.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Modify existing checks to work with schema changes for 2d and 1d2d
+- Add checks to test if `ExchangeLine.channel_id` and `PotentialBreach.channel_id` refer to existing channels
+- Add checks for new tag columns
 
 
 2.11.0 (2024-09-09)

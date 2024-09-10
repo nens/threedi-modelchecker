@@ -635,7 +635,7 @@ class PotentialBreachStartEndCheck(BaseCheck):
         dist_2 = (1 - breach_point) * length(linestring)
         return (
             self.to_check(session)
-            .join(models.Channel)
+            .join(models.Channel, self.table.c.channel_id == models.Channel.id)
             .filter(((dist_1 > 0) & (dist_1 < tol)) | ((dist_2 > 0) & (dist_2 < tol)))
             .all()
         )
@@ -667,7 +667,7 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
             session.query(
                 self.table, get_position(self.column, models.Channel.the_geom)
             )
-            .join(models.Channel)
+            .join(models.Channel, self.table.c.channel_id == models.Channel.id)
             .all(),
             key=lambda x: (x.channel_id, x[-1]),
         )

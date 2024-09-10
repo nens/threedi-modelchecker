@@ -984,7 +984,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.Channel.id,
         invalid=Query(models.Channel)
-        .join(models.ExchangeLine)
+        .join(models.ExchangeLine, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
             models.Channel.calculation_type.notin_(
                 {
@@ -993,7 +993,7 @@ CHECKS += [
                 }
             )
         ),
-        message="v2_channel can only have a v2_exchange_line if it has "
+        message="v2_channel can only have an exchange_line if it has "
         "a (double) connected (102 or 105) calculation type",
     ),
     QueryCheck(
@@ -1001,13 +1001,13 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.Channel.id,
         invalid=Query(models.Channel)
-        .join(models.ExchangeLine)
+        .join(models.ExchangeLine, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
             models.Channel.calculation_type == constants.CalculationType.CONNECTED,
         )
         .group_by(models.ExchangeLine.channel_id)
         .having(func.count(models.ExchangeLine.id) > 1),
-        message="v2_channel can have max 1 v2_exchange_line if it has "
+        message="v2_channel can have max 1 exchange_line if it has "
         "connected (102) calculation type",
     ),
     QueryCheck(
@@ -1015,50 +1015,56 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.Channel.id,
         invalid=Query(models.Channel)
-        .join(models.ExchangeLine)
+        .join(models.ExchangeLine, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
             models.Channel.calculation_type
             == constants.CalculationType.DOUBLE_CONNECTED,
         )
         .group_by(models.ExchangeLine.channel_id)
         .having(func.count(models.ExchangeLine.id) > 2),
-        message="v2_channel can have max 2 v2_exchange_line if it has "
+        message="v2_channel can have max 2 exchange_line if it has "
         "double connected (105) calculation type",
     ),
     QueryCheck(
         error_code=263,
         level=CheckLevel.WARNING,
-        column=models.ExchangeLine.the_geom,
+        column=models.ExchangeLine.geom,
         invalid=Query(models.ExchangeLine)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            geo_query.length(models.ExchangeLine.the_geom)
+            geo_query.length(models.ExchangeLine.geom)
             < (0.8 * geo_query.length(models.Channel.the_geom))
         ),
         message=(
-            "v2_exchange_line.the_geom should not be significantly shorter than its "
+            "exchange_line.geom should not be significantly shorter than its "
             "corresponding channel."
         ),
     ),
     QueryCheck(
         error_code=264,
         level=CheckLevel.WARNING,
-        column=models.ExchangeLine.the_geom,
+        column=models.ExchangeLine.geom,
         invalid=Query(models.ExchangeLine)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            geo_query.distance(models.ExchangeLine.the_geom, models.Channel.the_geom)
+            geo_query.distance(models.ExchangeLine.geom, models.Channel.the_geom)
             > 500.0
         ),
-        message=(
-            "v2_exchange_line.the_geom is far (> 500 m) from its corresponding channel"
-        ),
+        message=("exchange_line.geom is far (> 500 m) from its corresponding channel"),
     ),
     RangeCheck(
         error_code=265,
         column=models.ExchangeLine.exchange_level,
         min_value=-9998.0,
         max_value=8848.0,
+    ),
+    QueryCheck(
+        error_code=266,
+        column=models.ExchangeLine.channel_id,
+        invalid=Query(models.ExchangeLine).filter(
+            models.ExchangeLine.channel_id.not_in(Query(models.Channel.id))
+        ),
+        message="exchange_line.channel_id references to non existing channel.id",
     ),
 ]
 
@@ -1069,7 +1075,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
             models.Channel.calculation_type.notin_(
                 {
@@ -1078,24 +1084,23 @@ CHECKS += [
                 }
             )
         ),
-        message="v2_potential_breach is assigned to an isolated "
-        "or embedded channel.",
+        message="potential_breach is assigned to an isolated " "or embedded channel.",
     ),
     QueryCheck(
         error_code=271,
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
             models.Channel.calculation_type == constants.CalculationType.CONNECTED,
         )
         .group_by(
             models.PotentialBreach.channel_id,
-            func.PointN(models.PotentialBreach.the_geom, 1),
+            func.PointN(models.PotentialBreach.geom, 1),
         )
         .having(func.count(models.PotentialBreach.id) > 1),
-        message="v2_channel can have max 1 v2_potential_breach at the same position "
+        message="v2_channel can have max 1 potential_breach at the same position "
         "on a channel of connected (102) calculation type",
     ),
     QueryCheck(
@@ -1103,17 +1108,17 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
             models.Channel.calculation_type
             == constants.CalculationType.DOUBLE_CONNECTED,
         )
         .group_by(
             models.PotentialBreach.channel_id,
-            func.PointN(models.PotentialBreach.the_geom, 1),
+            func.PointN(models.PotentialBreach.geom, 1),
         )
         .having(func.count(models.PotentialBreach.id) > 2),
-        message="v2_channel can have max 2 v2_potential_breach at the same position "
+        message="v2_channel can have max 2 potential_breach at the same position "
         "on a channel of double connected (105) calculation type",
     ),
     QueryCheck(
@@ -1121,41 +1126,50 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.PotentialBreach.id,
         invalid=Query(models.PotentialBreach)
-        .join(models.Channel)
+        .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
             geo_query.distance(
-                func.PointN(models.PotentialBreach.the_geom, 1), models.Channel.the_geom
+                func.PointN(models.PotentialBreach.geom, 1), models.Channel.the_geom
             )
             > TOLERANCE_M
         ),
-        message="v2_potential_breach.the_geom must begin at the channel it is assigned to",
+        message="potential_breach.geom must begin at the channel it is assigned to",
     ),
     PotentialBreachStartEndCheck(
         error_code=274,
         level=CheckLevel.ERROR,
-        column=models.PotentialBreach.the_geom,
+        column=models.PotentialBreach.geom,
         min_distance=TOLERANCE_M,
     ),
     PotentialBreachInterdistanceCheck(
         error_code=275,
         level=CheckLevel.ERROR,
-        column=models.PotentialBreach.the_geom,
+        column=models.PotentialBreach.geom,
         min_distance=TOLERANCE_M,
     ),
     RangeCheck(
         error_code=276,
-        column=models.PotentialBreach.exchange_level,
+        column=models.PotentialBreach.initial_exchange_level,
         min_value=-9998.0,
         max_value=8848.0,
     ),
     RangeCheck(
         error_code=277,
-        column=models.PotentialBreach.maximum_breach_depth,
-        min_value=0.0,
-        max_value=100.0,
+        column=models.PotentialBreach.final_exchange_level,
+        min_value=-9998.0,
+        max_value=8848.0,
         left_inclusive=False,
     ),
+    QueryCheck(
+        error_code=278,
+        column=models.PotentialBreach.channel_id,
+        invalid=Query(models.PotentialBreach).filter(
+            models.PotentialBreach.channel_id.not_in(Query(models.Channel.id))
+        ),
+        message="potential_breach.channel_id references to non existing channel.id",
+    ),
 ]
+
 
 ## 030x: SETTINGS
 
@@ -2222,30 +2236,30 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=800,
-        column=model.refinement_level,
-        invalid=Query(model).filter(model.refinement_level > nr_grid_levels),
+        column=model.grid_level,
+        invalid=Query(model).filter(model.grid_level > nr_grid_levels),
         message=f"{model.__table__.name}.refinement_level must not be greater than model_settings.nr_grid_levels",
     )
-    for model in (models.GridRefinement, models.GridRefinementArea)
+    for model in (models.GridRefinementLine, models.GridRefinementArea)
 ]
 CHECKS += [
     RangeCheck(
         error_code=801,
-        column=model.refinement_level,
+        column=model.grid_level,
         min_value=1,
     )
-    for model in (models.GridRefinement, models.GridRefinementArea)
+    for model in (models.GridRefinementLine, models.GridRefinementArea)
 ]
 CHECKS += [
     QueryCheck(
         error_code=802,
         level=CheckLevel.INFO,
-        column=model.refinement_level,
-        invalid=Query(model).filter(model.refinement_level == nr_grid_levels),
+        column=model.grid_level,
+        invalid=Query(model).filter(model.grid_level == nr_grid_levels),
         message=f"{model.__table__.name}.refinement_level is equal to model_settings.nr_grid_levels and will "
         "therefore not have any effect. Lower the refinement_level to make the cells smaller.",
     )
-    for model in (models.GridRefinement, models.GridRefinementArea)
+    for model in (models.GridRefinementLine, models.GridRefinementArea)
 ]
 
 ## 110x: SIMULATION SETTINGS, timestep
@@ -3069,6 +3083,12 @@ CHECKS += [
             models.ControlTable,
             models.ControlMeasureLocation,
             models.ControlMeasureMap,
+            models.DemAverageArea,
+            models.ExchangeLine,
+            models.GridRefinementArea,
+            models.GridRefinementArea,
+            models.Obstacle,
+            models.PotentialBreach,
         ]
     )
 ]
@@ -3096,6 +3116,12 @@ CHECKS += [
             models.ControlTable,
             models.ControlMeasureLocation,
             models.ControlMeasureMap,
+            models.DemAverageArea,
+            models.ExchangeLine,
+            models.GridRefinementArea,
+            models.GridRefinementArea,
+            models.Obstacle,
+            models.PotentialBreach,
         ]
     )
 ]
@@ -3149,9 +3175,9 @@ class Config:
             self.checks += generate_geometry_checks(
                 model.__table__,
                 custom_level_map={
-                    "v2_grid_refinement.the_geom": "warning",
-                    "v2_grid_refinement_area.the_geom": "warning",
-                    "v2_dem_average_area.the_geom": "warning",
+                    "grid_refinement_line.geom": "warning",
+                    "grid_refinement_area.geom": "warning",
+                    "dem_average_area.geom": "warning",
                     "surface.geom": "warning",
                     "dry_weather_flow.geom": "warning",
                 },
