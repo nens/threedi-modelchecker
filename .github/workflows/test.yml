@@ -9,29 +9,39 @@ on:
 
 jobs:
   TestLinux:
-    name: Linux, Python ${{ matrix.python }}
-    runs-on: ubuntu-latest
+    name: Linux ${{ matrix.os }}, Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           # 2019
-          - python: 3.8
+          - os: "ubuntu-latest"
+            python: 3.8
             pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
           # 2021
-          - python: 3.9
+          - os: "ubuntu-latest"
+            python: 3.9
             pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
           # 2022
-          - python: "3.10"
+          - os: "ubuntu-latest"
+            python: "3.10"
             pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
           # 2023 NumPy 1
-          - python: "3.11"
+          - os: "ubuntu-latest"
+            python: "3.11"
             pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==1.26.4"
           # 2023 NumPy 2
-          - python: "3.11"
+          - os: "ubuntu-latest"
+            python: "3.11"
             pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==2.0.1"
           # current
-          - python: "3.12"
+          - os: "ubuntu-latest"
+            python: "3.12"
+          # 2024 ubuntu 24.04
+          - os: "ubuntu-24.04"
+            python: "3.12"
+            pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==1.26.4"
             #pins: "sqlalchemy==2.0.* alembic==1.13.* geoalchemy2==0.14.*"
 
     steps:
