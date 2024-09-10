@@ -6,7 +6,7 @@ Changelog of threedi-modelchecker
 2.12.1 (unreleased)
 -------------------
 
-- Add Ubuntu 24.04 GDAL 3.8.4 test to workflow matrix.
+- Add GDAL 3.6 test to workflow matrix.
 
 
 2.12.0 (2024-09-10)
