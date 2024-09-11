@@ -9,8 +9,8 @@ on:
 
 jobs:
   TestLinux:
-    name: Linux, Python ${{ matrix.python }}
-    runs-on: ubuntu-latest
+    name: Linux, Python ${{ matrix.python }} ${{ matrix.display_name }}
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -18,21 +18,32 @@ jobs:
           # 2019
           - python: 3.8
             pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
+            display_name: "2019"
           # 2021
           - python: 3.9
             pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
+            display_name: "2021"
           # 2022
           - python: "3.10"
             pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
+            display_name: "2022"
           # 2023 NumPy 1
           - python: "3.11"
             pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==1.26.4"
+            display_name: "2023 NumPy 1"
           # 2023 NumPy 2
           - python: "3.11"
             pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==2.0.1"
+            display_name: "2023 NumPy 2"
+          # current with GDAL 3.6
+          - python: "3.12"
+            pins: "sqlalchemy==2.0.24 alembic==1.13.1 geoalchemy2==0.14.3 numpy==1.26.4"
+            display_name: "2024 GDAL 3.6"
+            use_gdal_36: true
           # current
           - python: "3.12"
             #pins: "sqlalchemy==2.0.* alembic==1.13.* geoalchemy2==0.14.*"
+            display_name: "current"
 
     steps:
       - uses: actions/checkout@v3
@@ -43,6 +54,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
+      
+      - name: Add PPA
+        run: |
+          sudo add-apt-repository "ppa:ubuntugis/ppa" -y && sudo apt update
+          apt show libgdal-dev | grep Version          
+        if: matrix.use_gdal_36
 
       - name: Install GDAL, sqlite3 and spatialite
         run: |
