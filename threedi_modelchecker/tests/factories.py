@@ -247,7 +247,6 @@ class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
     action_type = constants.ControlTableActionTypes.set_discharge_coefficients
     action_table = "0.0,-1.0 2.0\n1.0,-1.1 2.1"
     measure_operator = constants.MeasureOperators.greater_than
-    measure_variable = constants.MeasureVariables.waterlevel
     target_type = constants.StructureControlTypes.channel
     target_id = 10
     geom = "SRID=4326;POINT(-71.064544 42.28787)"
@@ -261,13 +260,29 @@ class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):
     action_type = constants.ControlTableActionTypes.set_discharge_coefficients
     action_value_1 = 0.0
     action_value_2 = -1.0
-    measure_variable = constants.MeasureVariables.waterlevel
     target_type = constants.StructureControlTypes.channel
     target_id = 10
     is_inverse = False
     is_active = True
     upper_threshold = 1.0
     lower_threshold = -1.0
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+
+
+class ControlMeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ControlMeasureMap
+        sqlalchemy_session = None
+
+    control_type = constants.MeasureVariables.waterlevel
+    geom = "SRID=4326;LINESTRING(30 10, 10 30, 40 40)"
+
+
+class ControlMeasureLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.ControlMeasureLocation
+        sqlalchemy_session = None
+
     geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
