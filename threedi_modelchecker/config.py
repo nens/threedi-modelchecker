@@ -347,16 +347,17 @@ CHECKS += [
     )
     for table in [models.Channel, models.Pipe, models.Culvert]
 ]
-# TODO: fix -> moved to ConnectionNode
-# CHECKS += [
-#     QueryCheck(
-#         error_code=44,
-#         column=models.ConnectionNode.storage_area,
-#         invalid=Query(models.ConnectionNode)
-#         .filter(models.ConnectionNode.manhole_indicator, models.ConnectionNode.storage_area < 0),
-#         message="connection_nodes.storage_area for manhole connection node should greater than or equal to 0",
-#     ),
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=44,
+        column=models.ConnectionNode.storage_area,
+        invalid=Query(models.ConnectionNode).filter(
+            models.ConnectionNode.manhole_indicator != None,
+            models.ConnectionNode.storage_area < 0,
+        ),
+        message="connection_nodes.storage_area for manhole connection node should greater than or equal to 0",
+    ),
+]
 CHECKS += [
     RangeCheck(
         error_code=45,
