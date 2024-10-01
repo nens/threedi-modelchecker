@@ -17,26 +17,27 @@ from .checks.base import (
     RangeCheck,
     UniqueCheck,
 )
-from .checks.cross_section_definitions import (
-    CrossSectionEqualElementsCheck,
-    CrossSectionExpectEmptyCheck,
-    CrossSectionFirstElementNonZeroCheck,
-    CrossSectionFirstElementZeroCheck,
-    CrossSectionFloatCheck,
-    CrossSectionFloatListCheck,
-    CrossSectionGreaterZeroCheck,
-    CrossSectionIncreasingCheck,
-    CrossSectionMinimumDiameterCheck,
-    CrossSectionNullCheck,
-    CrossSectionVariableCorrectLengthCheck,
-    CrossSectionVariableFrictionRangeCheck,
-    CrossSectionVariableRangeCheck,
-    CrossSectionYZCoordinateCountCheck,
-    CrossSectionYZHeightCheck,
-    CrossSectionYZIncreasingWidthIfOpenCheck,
-    OpenIncreasingCrossSectionConveyanceFrictionCheck,
-    OpenIncreasingCrossSectionVariableCheck,
-)
+
+# from .checks.cross_section_definitions import (
+#     CrossSectionEqualElementsCheck,
+#     CrossSectionExpectEmptyCheck,
+#     CrossSectionFirstElementNonZeroCheck,
+#     CrossSectionFirstElementZeroCheck,
+#     CrossSectionFloatCheck,
+#     CrossSectionFloatListCheck,
+#     CrossSectionGreaterZeroCheck,
+#     CrossSectionIncreasingCheck,
+#     CrossSectionMinimumDiameterCheck,
+#     CrossSectionNullCheck,
+#     CrossSectionVariableCorrectLengthCheck,
+#     CrossSectionVariableFrictionRangeCheck,
+#     CrossSectionVariableRangeCheck,
+#     CrossSectionYZCoordinateCountCheck,
+#     CrossSectionYZHeightCheck,
+#     CrossSectionYZIncreasingWidthIfOpenCheck,
+#     OpenIncreasingCrossSectionConveyanceFrictionCheck,
+#     OpenIncreasingCrossSectionVariableCheck,
+# )
 from .checks.factories import (
     generate_enum_checks,
     generate_foreign_key_checks,
@@ -46,28 +47,21 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,
-    AllPresentFixedVegetationParameters,
-    AllPresentVariableVegetationParameters,
+from .checks.other import (  # Use0DFlowCheck,; AllPresentFixedVegetationParameters,; AllPresentVariableVegetationParameters,; ChannelManholeLevelCheck,; CrossSectionSameConfigurationCheck,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,; PumpStorageTimestepCheck,
     BetaColumnsCheck,
     BetaValuesCheck,
     BoundaryCondition1DObjectNumberCheck,
-    ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
-    CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
-    FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
-    OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
-    PumpStorageTimestepCheck,
     SpatialIndexCheck,
     SurfaceNodeInflowAreaCheck,
     TagsValidCheck,
@@ -143,26 +137,27 @@ CHECKS: List[BaseCheck] = []
 
 ## 002x: FRICTION
 ## Use same error code as other null checks
-CHECKS += [
-    QueryCheck(
-        error_code=20,
-        column=models.CrossSectionLocation.friction_value,
-        invalid=(
-            Query(models.CrossSectionLocation)
-            .join(
-                models.CrossSectionDefinition,
-                models.CrossSectionLocation.definition_id
-                == models.CrossSectionDefinition.id,
-            )
-            .filter(
-                models.CrossSectionDefinition.shape
-                != constants.CrossSectionShape.TABULATED_YZ
-            )
-            .filter(models.CrossSectionLocation.friction_value == None)
-        ),
-        message="CrossSectionLocation.friction_value cannot be null or empty",
-    )
-]
+# TODO: change - data now in objects and CrossSectionLocation
+# CHECKS += [
+#     QueryCheck(
+#         error_code=20,
+#         column=models.CrossSectionLocation.friction_value,
+#         invalid=(
+#             Query(models.CrossSectionLocation)
+#             .join(
+#                 models.CrossSectionDefinition,
+#                 models.CrossSectionLocation.definition_id
+#                 == models.CrossSectionDefinition.id,
+#             )
+#             .filter(
+#                 models.CrossSectionDefinition.shape
+#                 != constants.CrossSectionShape.TABULATED_YZ
+#             )
+#             .filter(models.CrossSectionLocation.friction_value == None)
+#         ),
+#         message="CrossSectionLocation.friction_value cannot be null or empty",
+#     )
+# ]
 CHECKS += [
     RangeCheck(
         error_code=21,
@@ -258,55 +253,57 @@ CHECKS += [
 ]
 # Friction with conveyance should only be used on
 # tabulated rectangle, tabulated trapezium, or tabulated yz shapes
-CHECKS += [
-    QueryCheck(
-        error_code=27,
-        column=models.CrossSectionLocation.id,
-        invalid=Query(models.CrossSectionLocation)
-        .join(models.CrossSectionDefinition)
-        .filter(
-            (
-                models.CrossSectionDefinition.shape.not_in(
-                    [
-                        constants.CrossSectionShape.TABULATED_RECTANGLE,
-                        constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-                        constants.CrossSectionShape.TABULATED_YZ,
-                    ]
-                )
-            )
-            & (
-                models.CrossSectionLocation.friction_type.in_(
-                    [
-                        constants.FrictionType.CHEZY_CONVEYANCE,
-                        constants.FrictionType.MANNING_CONVEYANCE,
-                    ]
-                )
-            )
-        ),
-        message=(
-            "in v2_cross_section_location, friction with "
-            "conveyance, such as chezy_conveyance and "
-            "manning_conveyance, may only be used with "
-            "tabulated rectangle (5), tabulated trapezium (6), "
-            "or tabulated yz (7) shapes"
-        ),
-    )
-]
-CHECKS += [
-    OpenIncreasingCrossSectionConveyanceFrictionCheck(
-        error_code=28,
-    )
-]
+# TODO: fix
+# CHECKS += [
+#     QueryCheck(
+#         error_code=27,
+#         column=models.CrossSectionLocation.id,
+#         invalid=Query(models.CrossSectionLocation)
+#         .join(models.CrossSectionDefinition)
+#         .filter(
+#             (
+#                 models.CrossSectionDefinition.shape.not_in(
+#                     [
+#                         constants.CrossSectionShape.TABULATED_RECTANGLE,
+#                         constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+#                         constants.CrossSectionShape.TABULATED_YZ,
+#                     ]
+#                 )
+#             )
+#             & (
+#                 models.CrossSectionLocation.friction_type.in_(
+#                     [
+#                         constants.FrictionType.CHEZY_CONVEYANCE,
+#                         constants.FrictionType.MANNING_CONVEYANCE,
+#                     ]
+#                 )
+#             )
+#         ),
+#         message=(
+#             "in v2_cross_section_location, friction with "
+#             "conveyance, such as chezy_conveyance and "
+#             "manning_conveyance, may only be used with "
+#             "tabulated rectangle (5), tabulated trapezium (6), "
+#             "or tabulated yz (7) shapes"
+#         ),
+#     )
+# ]
+# TODO: fix
+# CHECKS += [
+#     OpenIncreasingCrossSectionConveyanceFrictionCheck(
+#         error_code=28,
+#     )
+# ]
 
 ## 003x: CALCULATION TYPE
 
 CHECKS += [
     QueryCheck(
         error_code=31,
-        column=models.Channel.calculation_type,
+        column=models.Channel.exchange_type,
         filters=CONDITIONS["has_no_dem"].exists(),
         invalid=Query(models.Channel).filter(
-            models.Channel.calculation_type.in_(
+            models.Channel.exchange_type.in_(
                 [
                     constants.CalculationType.EMBEDDED,
                     constants.CalculationType.CONNECTED,
@@ -314,7 +311,7 @@ CHECKS += [
                 ]
             ),
         ),
-        message=f"v2_channel.calculation_type cannot be "
+        message=f"v2_channel.exchange_type cannot be "
         f"{constants.CalculationType.EMBEDDED}, "
         f"{constants.CalculationType.CONNECTED} or "
         f"{constants.CalculationType.DOUBLE_CONNECTED} when "
@@ -343,31 +340,31 @@ CHECKS += [
     RangeCheck(
         error_code=43,
         level=CheckLevel.WARNING,
-        column=table.dist_calc_points,
+        column=table.calculation_point_distance,
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
-        message=f"{table.__tablename__}.dist_calc_points is not greater than 0, in the future this will lead to an error",
+        message=f"{table.__tablename__}.calculation_point_distance is not greater than 0, in the future this will lead to an error",
     )
     for table in [models.Channel, models.Pipe, models.Culvert]
 ]
-CHECKS += [
-    QueryCheck(
-        error_code=44,
-        column=models.ConnectionNode.storage_area,
-        invalid=Query(models.ConnectionNode)
-        .join(models.Manhole)
-        .filter(models.ConnectionNode.storage_area < 0),
-        message="v2_connection_nodes.storage_area is not greater than or equal to 0",
-    ),
-]
+# TODO: fix -> moved to ConnectionNode
+# CHECKS += [
+#     QueryCheck(
+#         error_code=44,
+#         column=models.ConnectionNode.storage_area,
+#         invalid=Query(models.ConnectionNode)
+#         .filter(models.ConnectionNode.manhole_indicator, models.ConnectionNode.storage_area < 0),
+#         message="connection_nodes.storage_area for manhole connection node should greater than or equal to 0",
+#     ),
+# ]
 CHECKS += [
     RangeCheck(
         error_code=45,
         level=CheckLevel.WARNING,
-        column=table.dist_calc_points,
+        column=table.calculation_point_distance,
         min_value=5,
         left_inclusive=True,
-        message=f"{table.__tablename__}.dist_calc_points should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
+        message=f"{table.__tablename__}.calculation_point_distance should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
     )
     for table in [models.Channel, models.Pipe, models.Culvert]
 ]
@@ -379,7 +376,8 @@ CHECKS += [
     CrossSectionLocationCheck(
         level=CheckLevel.WARNING, max_distance=TOLERANCE_M, error_code=52
     ),
-    OpenChannelsWithNestedNewton(error_code=53),
+    # TODO: fix
+    # OpenChannelsWithNestedNewton(error_code=53),
     QueryCheck(
         error_code=54,
         level=CheckLevel.WARNING,
@@ -390,101 +388,104 @@ CHECKS += [
         ),
         message="v2_cross_section_location.bank_level will be ignored if it is below the reference_level",
     ),
-    QueryCheck(
-        error_code=55,
-        column=models.Channel.id,
-        invalid=Query(models.Channel).filter(
-            ~models.Channel.cross_section_locations.any()
-        ),
-        message="v2_channel has no cross section locations",
-    ),
-    CrossSectionSameConfigurationCheck(
-        error_code=56,
-        level=CheckLevel.ERROR,
-        column=models.Channel.id,
-    ),
+    # TODO fix
+    # QueryCheck(
+    #     error_code=55,
+    #     column=models.Channel.id,
+    #     invalid=Query(models.Channel).filter(
+    #         ~models.Channel.cross_section_locations.any()
+    #     ),
+    #     message="v2_channel has no cross section locations",
+    # ),
+    # TODO fix
+    # CrossSectionSameConfigurationCheck(
+    #     error_code=56,
+    #     level=CheckLevel.ERROR,
+    #     column=models.Channel.id,
+    # ),
 ]
-CHECKS += [
-    FeatureClosedCrossSectionCheck(
-        error_code=57, level=CheckLevel.INFO, column=table.id
-    )
-    for table in [models.Pipe, models.Culvert]
-]
+# TODO: fix
+# CHECKS += [
+#     FeatureClosedCrossSectionCheck(
+#         error_code=57, level=CheckLevel.INFO, column=table.id
+#     )
+#     for table in [models.Pipe, models.Culvert]
+# ]
 
 ## 006x: PUMPSTATIONS
-
-CHECKS += [
-    QueryCheck(
-        error_code=61,
-        column=models.Pumpstation.upper_stop_level,
-        invalid=Query(models.Pumpstation).filter(
-            models.Pumpstation.upper_stop_level <= models.Pumpstation.start_level,
-        ),
-        message="v2_pumpstation.upper_stop_level should be greater than v2_pumpstation.start_level",
-    ),
-    QueryCheck(
-        error_code=62,
-        column=models.Pumpstation.lower_stop_level,
-        invalid=Query(models.Pumpstation).filter(
-            models.Pumpstation.lower_stop_level >= models.Pumpstation.start_level,
-        ),
-        message="v2_pumpstation.lower_stop_level should be less than v2_pumpstation.start_level",
-    ),
-    QueryCheck(
-        error_code=63,
-        level=CheckLevel.WARNING,
-        column=models.ConnectionNode.storage_area,
-        invalid=Query(models.ConnectionNode)
-        .join(
-            models.Pumpstation,
-            models.Pumpstation.connection_node_end_id == models.ConnectionNode.id,
-        )
-        .filter(models.ConnectionNode.storage_area != None)
-        .filter(
-            models.ConnectionNode.storage_area * 1000 <= models.Pumpstation.capacity
-        ),
-        message=(
-            "v2_connection_nodes.storage_area * 1000 for each pumpstation's end connection node must be greater than v2_pumpstation.capacity; "
-            + "water level should not rise >= 1 m in one second"
-        ),
-    ),
-    RangeCheck(
-        error_code=64,
-        column=models.Pumpstation.capacity,
-        min_value=0,
-    ),
-    QueryCheck(
-        error_code=65,
-        level=CheckLevel.WARNING,
-        column=models.Pumpstation.capacity,
-        invalid=Query(models.Pumpstation).filter(models.Pumpstation.capacity == 0.0),
-        message="v2_pumpstation.capacity should be be greater than 0",
-    ),
-    PumpStorageTimestepCheck(
-        error_code=66,
-        level=CheckLevel.WARNING,
-        column=models.Pumpstation.capacity,
-    ),
-]
+# TODO: fix
+# CHECKS += [
+#     QueryCheck(
+#         error_code=61,
+#         column=models.Pumpstation.upper_stop_level,
+#         invalid=Query(models.Pumpstation).filter(
+#             models.Pumpstation.upper_stop_level <= models.Pumpstation.start_level,
+#         ),
+#         message="v2_pumpstation.upper_stop_level should be greater than v2_pumpstation.start_level",
+#     ),
+#     QueryCheck(
+#         error_code=62,
+#         column=models.Pumpstation.lower_stop_level,
+#         invalid=Query(models.Pumpstation).filter(
+#             models.Pumpstation.lower_stop_level >= models.Pumpstation.start_level,
+#         ),
+#         message="v2_pumpstation.lower_stop_level should be less than v2_pumpstation.start_level",
+#     ),
+#     QueryCheck(
+#         error_code=63,
+#         level=CheckLevel.WARNING,
+#         column=models.ConnectionNode.storage_area,
+#         invalid=Query(models.ConnectionNode)
+#         .join(
+#             models.Pumpstation,
+#             models.Pumpstation.connection_node_end_id == models.ConnectionNode.id,
+#         )
+#         .filter(models.ConnectionNode.storage_area != None)
+#         .filter(
+#             models.ConnectionNode.storage_area * 1000 <= models.Pumpstation.capacity
+#         ),
+#         message=(
+#             "v2_connection_nodes.storage_area * 1000 for each pumpstation's end connection node must be greater than v2_pumpstation.capacity; "
+#             + "water level should not rise >= 1 m in one second"
+#         ),
+#     ),
+#     RangeCheck(
+#         error_code=64,
+#         column=models.Pumpstation.capacity,
+#         min_value=0,
+#     ),
+#     QueryCheck(
+#         error_code=65,
+#         level=CheckLevel.WARNING,
+#         column=models.Pumpstation.capacity,
+#         invalid=Query(models.Pumpstation).filter(models.Pumpstation.capacity == 0.0),
+#         message="v2_pumpstation.capacity should be be greater than 0",
+#     ),
+#     PumpStorageTimestepCheck(
+#         error_code=66,
+#         level=CheckLevel.WARNING,
+#         column=models.Pumpstation.capacity,
+#     ),
+# ]
 
 ## 007x: BOUNDARY CONDITIONS
-
+# TODO: fix
 CHECKS += [
-    QueryCheck(
-        error_code=71,
-        column=models.BoundaryCondition1D.connection_node_id,
-        invalid=Query(models.BoundaryCondition1D).filter(
-            (
-                models.BoundaryCondition1D.connection_node_id
-                == models.Pumpstation.connection_node_start_id
-            )
-            | (
-                models.BoundaryCondition1D.connection_node_id
-                == models.Pumpstation.connection_node_end_id
-            ),
-        ),
-        message="boundary_condition_1d cannot be connected to a pumpstation",
-    ),
+    # QueryCheck(
+    #     error_code=71,
+    #     column=models.BoundaryCondition1D.connection_node_id,
+    #     invalid=Query(models.BoundaryCondition1D).filter(
+    #         (
+    #             models.BoundaryCondition1D.connection_node_id
+    #             == models.Pumpstation.connection_node_start_id
+    #         )
+    #         | (
+    #             models.BoundaryCondition1D.connection_node_id
+    #             == models.Pumpstation.connection_node_end_id
+    #         ),
+    #     ),
+    #     message="boundary_condition_1d cannot be connected to a pumpstation",
+    # ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),
     QueryCheck(
@@ -533,292 +534,293 @@ CHECKS += [
 ]
 
 ## 008x: CROSS SECTION DEFINITIONS
-CHECKS += [
-    QueryCheck(
-        error_code=80,
-        column=models.CrossSectionLocation.friction_value,
-        invalid=(
-            Query(models.CrossSectionDefinition)
-            .filter(
-                models.CrossSectionDefinition.shape
-                == constants.CrossSectionShape.TABULATED_YZ
-            )
-            .join(
-                models.CrossSectionLocation,
-                models.CrossSectionLocation.definition_id
-                == models.CrossSectionDefinition.id,
-            )
-            .filter(models.CrossSectionLocation.friction_value == None)
-            .filter(
-                (models.CrossSectionDefinition.friction_values == None)
-                | (models.CrossSectionDefinition.friction_values == "")
-            )
-        ),
-        message=f"Either {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
-        f"or {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
-    )
-]
-CHECKS += [
-    CrossSectionNullCheck(
-        error_code=81,
-        column=models.CrossSectionDefinition.width,
-        shapes=None,  # all shapes
-    ),
-    CrossSectionNullCheck(
-        error_code=82,
-        column=models.CrossSectionDefinition.height,
-        shapes=(
-            constants.CrossSectionShape.CLOSED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
-    ),
-    CrossSectionFloatCheck(
-        error_code=83,
-        column=models.CrossSectionDefinition.width,
-        shapes=(
-            constants.CrossSectionShape.RECTANGLE,
-            constants.CrossSectionShape.CIRCLE,
-            constants.CrossSectionShape.CLOSED_RECTANGLE,
-            constants.CrossSectionShape.EGG,
-        ),
-    ),
-    CrossSectionFloatCheck(
-        error_code=84,
-        column=models.CrossSectionDefinition.height,
-        shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
-    ),
-    CrossSectionGreaterZeroCheck(
-        error_code=85,
-        column=models.CrossSectionDefinition.width,
-        shapes=(
-            constants.CrossSectionShape.RECTANGLE,
-            constants.CrossSectionShape.CIRCLE,
-            constants.CrossSectionShape.CLOSED_RECTANGLE,
-            constants.CrossSectionShape.EGG,
-            constants.CrossSectionShape.INVERTED_EGG,
-        ),
-    ),
-    CrossSectionGreaterZeroCheck(
-        error_code=86,
-        column=models.CrossSectionDefinition.height,
-        shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
-    ),
-    CrossSectionFloatListCheck(
-        error_code=87,
-        column=models.CrossSectionDefinition.width,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
-    ),
-    CrossSectionFloatListCheck(
-        error_code=88,
-        column=models.CrossSectionDefinition.height,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
-    ),
-    CrossSectionEqualElementsCheck(
-        error_code=89,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
-    ),
-    CrossSectionIncreasingCheck(
-        error_code=90,
-        column=models.CrossSectionDefinition.height,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-        ),
-    ),
-    CrossSectionFirstElementNonZeroCheck(
-        error_code=91,
-        column=models.CrossSectionDefinition.width,
-        shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
-    ),
-    CrossSectionFirstElementZeroCheck(
-        error_code=92,
-        level=CheckLevel.WARNING,
-        column=models.CrossSectionDefinition.height,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-        ),
-    ),
-    CrossSectionExpectEmptyCheck(
-        error_code=94,
-        level=CheckLevel.WARNING,
-        column=models.CrossSectionDefinition.height,
-        shapes=(
-            constants.CrossSectionShape.CIRCLE,
-            constants.CrossSectionShape.EGG,
-            constants.CrossSectionShape.INVERTED_EGG,
-        ),
-    ),
-    CrossSectionYZHeightCheck(
-        error_code=95,
-        column=models.CrossSectionDefinition.height,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    ),
-    CrossSectionYZCoordinateCountCheck(
-        error_code=96,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    ),
-    CrossSectionYZIncreasingWidthIfOpenCheck(
-        error_code=97,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    ),
-    CrossSectionMinimumDiameterCheck(
-        error_code=98,
-        level=CheckLevel.WARNING,
-    ),
-]
-CHECKS += [
-    CrossSectionFloatListCheck(
-        error_code=87,
-        column=models.CrossSectionDefinition.friction_values,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    )
-]
+# TODO: fix
+# CHECKS += [
+#     QueryCheck(
+#         error_code=80,
+#         column=models.CrossSectionLocation.friction_value,
+#         invalid=(
+#             Query(models.CrossSectionDefinition)
+#             .filter(
+#                 models.CrossSectionDefinition.shape
+#                 == constants.CrossSectionShape.TABULATED_YZ
+#             )
+#             .join(
+#                 models.CrossSectionLocation,
+#                 models.CrossSectionLocation.definition_id
+#                 == models.CrossSectionDefinition.id,
+#             )
+#             .filter(models.CrossSectionLocation.friction_value == None)
+#             .filter(
+#                 (models.CrossSectionDefinition.friction_values == None)
+#                 | (models.CrossSectionDefinition.friction_values == "")
+#             )
+#         ),
+#         message=f"Either {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+#         f"or {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+#         f"must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
+#     )
+# ]
+# CHECKS += [
+#     CrossSectionNullCheck(
+#         error_code=81,
+#         column=models.CrossSectionDefinition.width,
+#         shapes=None,  # all shapes
+#     ),
+#     CrossSectionNullCheck(
+#         error_code=82,
+#         column=models.CrossSectionDefinition.height,
+#         shapes=(
+#             constants.CrossSectionShape.CLOSED_RECTANGLE,
+#             constants.CrossSectionShape.TABULATED_RECTANGLE,
+#             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+#             constants.CrossSectionShape.TABULATED_YZ,
+#         ),
+#     ),
+#     CrossSectionFloatCheck(
+#         error_code=83,
+#         column=models.CrossSectionDefinition.width,
+#         shapes=(
+#             constants.CrossSectionShape.RECTANGLE,
+#             constants.CrossSectionShape.CIRCLE,
+#             constants.CrossSectionShape.CLOSED_RECTANGLE,
+#             constants.CrossSectionShape.EGG,
+#         ),
+#     ),
+#     CrossSectionFloatCheck(
+#         error_code=84,
+#         column=models.CrossSectionDefinition.height,
+#         shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
+#     ),
+#     CrossSectionGreaterZeroCheck(
+#         error_code=85,
+#         column=models.CrossSectionDefinition.width,
+#         shapes=(
+#             constants.CrossSectionShape.RECTANGLE,
+#             constants.CrossSectionShape.CIRCLE,
+#             constants.CrossSectionShape.CLOSED_RECTANGLE,
+#             constants.CrossSectionShape.EGG,
+#             constants.CrossSectionShape.INVERTED_EGG,
+#         ),
+#     ),
+#     CrossSectionGreaterZeroCheck(
+#         error_code=86,
+#         column=models.CrossSectionDefinition.height,
+#         shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
+#     ),
+#     CrossSectionFloatListCheck(
+#         error_code=87,
+#         column=models.CrossSectionDefinition.width,
+#         shapes=(
+#             constants.CrossSectionShape.TABULATED_RECTANGLE,
+#             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+#             constants.CrossSectionShape.TABULATED_YZ,
+#         ),
+#     ),
+#     CrossSectionFloatListCheck(
+#         error_code=88,
+#         column=models.CrossSectionDefinition.height,
+#         shapes=(
+#             constants.CrossSectionShape.TABULATED_RECTANGLE,
+#             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+#             constants.CrossSectionShape.TABULATED_YZ,
+#         ),
+#     ),
+#     CrossSectionEqualElementsCheck(
+#         error_code=89,
+#         shapes=(
+#             constants.CrossSectionShape.TABULATED_RECTANGLE,
+#             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+#             constants.CrossSectionShape.TABULATED_YZ,
+#         ),
+#     ),
+#     CrossSectionIncreasingCheck(
+#         error_code=90,
+#         column=models.CrossSectionDefinition.height,
+#         shapes=(
+#             constants.CrossSectionShape.TABULATED_RECTANGLE,
+#             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+#         ),
+#     ),
+#     CrossSectionFirstElementNonZeroCheck(
+#         error_code=91,
+#         column=models.CrossSectionDefinition.width,
+#         shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
+#     ),
+#     CrossSectionFirstElementZeroCheck(
+#         error_code=92,
+#         level=CheckLevel.WARNING,
+#         column=models.CrossSectionDefinition.height,
+#         shapes=(
+#             constants.CrossSectionShape.TABULATED_RECTANGLE,
+#             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+#         ),
+#     ),
+#     CrossSectionExpectEmptyCheck(
+#         error_code=94,
+#         level=CheckLevel.WARNING,
+#         column=models.CrossSectionDefinition.height,
+#         shapes=(
+#             constants.CrossSectionShape.CIRCLE,
+#             constants.CrossSectionShape.EGG,
+#             constants.CrossSectionShape.INVERTED_EGG,
+#         ),
+#     ),
+#     CrossSectionYZHeightCheck(
+#         error_code=95,
+#         column=models.CrossSectionDefinition.height,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#     ),
+#     CrossSectionYZCoordinateCountCheck(
+#         error_code=96,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#     ),
+#     CrossSectionYZIncreasingWidthIfOpenCheck(
+#         error_code=97,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#     ),
+#     CrossSectionMinimumDiameterCheck(
+#         error_code=98,
+#         level=CheckLevel.WARNING,
+#     ),
+# ]
+# CHECKS += [
+#     CrossSectionFloatListCheck(
+#         error_code=87,
+#         column=models.CrossSectionDefinition.friction_values,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#     )
+# ]
 
 ## 01xx: LEVEL CHECKS
-
-CHECKS += [
-    QueryCheck(
-        level=CheckLevel.WARNING,
-        error_code=102,
-        column=table.invert_level_start_point,
-        invalid=Query(table)
-        .join(
-            models.ConnectionNode,
-            table.connection_node_start_id == models.ConnectionNode.id,
-        )
-        .join(models.Manhole)
-        .filter(
-            table.invert_level_start_point < models.Manhole.bottom_level,
-        ),
-        message=f"{table.__tablename__}.invert_level_start_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
-    )
-    for table in [models.Pipe, models.Culvert]
-]
-CHECKS += [
-    QueryCheck(
-        level=CheckLevel.WARNING,
-        error_code=103,
-        column=table.invert_level_end_point,
-        invalid=Query(table)
-        .join(
-            models.ConnectionNode,
-            table.connection_node_end_id == models.ConnectionNode.id,
-        )
-        .join(models.Manhole)
-        .filter(
-            table.invert_level_end_point < models.Manhole.bottom_level,
-        ),
-        message=f"{table.__tablename__}.invert_level_end_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
-    )
-    for table in [models.Pipe, models.Culvert]
-]
-CHECKS += [
-    QueryCheck(
-        level=CheckLevel.WARNING,
-        error_code=104,
-        column=models.Pumpstation.lower_stop_level,
-        invalid=Query(models.Pumpstation)
-        .join(
-            models.ConnectionNode,
-            models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
-        )
-        .join(models.Manhole)
-        .filter(
-            models.Pumpstation.type_ == constants.PumpType.SUCTION_SIDE,
-            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
-        ),
-        message="v2_pumpstation.lower_stop_level should be higher than "
-        "v2_manhole.bottom_level. In the future, this will lead to an error.",
-    ),
-    QueryCheck(
-        level=CheckLevel.WARNING,
-        error_code=105,
-        column=models.Pumpstation.lower_stop_level,
-        invalid=Query(models.Pumpstation)
-        .join(
-            models.ConnectionNode,
-            models.Pumpstation.connection_node_end_id == models.ConnectionNode.id,
-        )
-        .join(models.Manhole)
-        .filter(
-            models.Pumpstation.type_ == constants.PumpType.DELIVERY_SIDE,
-            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
-        ),
-        message="v2_pumpstation.lower_stop_level should be higher than "
-        "v2_manhole.bottom_level. In the future, this will lead to an error.",
-    ),
-    QueryCheck(
-        level=CheckLevel.WARNING,
-        error_code=106,
-        column=models.Manhole.bottom_level,
-        invalid=Query(models.Manhole).filter(
-            models.Manhole.drain_level < models.Manhole.bottom_level,
-            models.Manhole.calculation_type.in_(
-                [constants.CalculationTypeNode.CONNECTED]
-            ),
-        ),
-        message="v2_manhole.drain_level >= v2_manhole.bottom_level when "
-        "v2_manhole.calculation_type is CONNECTED. In the future, this will lead to an error.",
-    ),
-    QueryCheck(
-        level=CheckLevel.WARNING,
-        error_code=107,
-        column=models.Manhole.drain_level,
-        filters=CONDITIONS["has_no_dem"]
-        .filter(models.ModelSettings.manhole_aboveground_storage_area > 0)
-        .exists(),
-        invalid=Query(models.Manhole).filter(
-            models.Manhole.calculation_type.in_(
-                [constants.CalculationTypeNode.CONNECTED]
-            ),
-            models.Manhole.drain_level == None,
-        ),
-        message="v2_manhole.drain_level cannot be null when using sub-basins (model_settings.manhole_aboveground_storage_area > 0) and no DEM is supplied.",
-    ),
-]
-CHECKS += [
-    QueryCheck(
-        level=CheckLevel.WARNING,
-        error_code=108,
-        column=table.crest_level,
-        invalid=Query(table)
-        .join(
-            models.ConnectionNode,
-            (table.connection_node_start_id == models.ConnectionNode.id)
-            | (table.connection_node_end_id == models.ConnectionNode.id),
-        )
-        .join(models.Manhole)
-        .filter(
-            table.crest_level < models.Manhole.bottom_level,
-        ),
-        message=f"{table.__tablename__}.crest_level should be higher than or equal to v2_manhole.bottom_level for all the connected manholes.",
-    )
-    for table in [models.Weir, models.Orifice]
-]
-CHECKS += [
-    ChannelManholeLevelCheck(
-        level=CheckLevel.INFO, nodes_to_check="start", error_code=109
-    ),
-    ChannelManholeLevelCheck(
-        level=CheckLevel.INFO, nodes_to_check="end", error_code=110
-    ),
-]
+# TODO: fix -> moved to ConnectionNode
+# CHECKS += [
+#     QueryCheck(
+#         level=CheckLevel.WARNING,
+#         error_code=102,
+#         column=table.invert_level_start_point,
+#         invalid=Query(table)
+#         .join(
+#             models.ConnectionNode,
+#             table.connection_node_start_id == models.ConnectionNode.id,
+#         )
+#         .join(models.Manhole)
+#         .filter(
+#             table.invert_level_start_point < models.Manhole.bottom_level,
+#         ),
+#         message=f"{table.__tablename__}.invert_level_start_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
+#     )
+#     for table in [models.Pipe, models.Culvert]
+# ]
+# CHECKS += [
+#     QueryCheck(
+#         level=CheckLevel.WARNING,
+#         error_code=103,
+#         column=table.invert_level_end_point,
+#         invalid=Query(table)
+#         .join(
+#             models.ConnectionNode,
+#             table.connection_node_end_id == models.ConnectionNode.id,
+#         )
+#         .join(models.Manhole)
+#         .filter(
+#             table.invert_level_end_point < models.Manhole.bottom_level,
+#         ),
+#         message=f"{table.__tablename__}.invert_level_end_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
+#     )
+#     for table in [models.Pipe, models.Culvert]
+# ]
+# CHECKS += [
+#     QueryCheck(
+#         level=CheckLevel.WARNING,
+#         error_code=104,
+#         column=models.Pumpstation.lower_stop_level,
+#         invalid=Query(models.Pumpstation)
+#         .join(
+#             models.ConnectionNode,
+#             models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+#         )
+#         .join(models.Manhole)
+#         .filter(
+#             models.Pumpstation.type_ == constants.PumpType.SUCTION_SIDE,
+#             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+#         ),
+#         message="v2_pumpstation.lower_stop_level should be higher than "
+#         "v2_manhole.bottom_level. In the future, this will lead to an error.",
+#     ),
+#     QueryCheck(
+#         level=CheckLevel.WARNING,
+#         error_code=105,
+#         column=models.Pumpstation.lower_stop_level,
+#         invalid=Query(models.Pumpstation)
+#         .join(
+#             models.ConnectionNode,
+#             models.Pumpstation.connection_node_end_id == models.ConnectionNode.id,
+#         )
+#         .join(models.Manhole)
+#         .filter(
+#             models.Pumpstation.type_ == constants.PumpType.DELIVERY_SIDE,
+#             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+#         ),
+#         message="v2_pumpstation.lower_stop_level should be higher than "
+#         "v2_manhole.bottom_level. In the future, this will lead to an error.",
+#     ),
+#     QueryCheck(
+#         level=CheckLevel.WARNING,
+#         error_code=106,
+#         column=models.Manhole.bottom_level,
+#         invalid=Query(models.Manhole).filter(
+#             models.Manhole.drain_level < models.Manhole.bottom_level,
+#             models.Manhole.exchange_type.in_(
+#                 [constants.CalculationTypeNode.CONNECTED]
+#             ),
+#         ),
+#         message="v2_manhole.drain_level >= v2_manhole.bottom_level when "
+#         "v2_manhole.exchange_type is CONNECTED. In the future, this will lead to an error.",
+#     ),
+#     QueryCheck(
+#         level=CheckLevel.WARNING,
+#         error_code=107,
+#         column=models.Manhole.drain_level,
+#         filters=CONDITIONS["has_no_dem"]
+#         .filter(models.ModelSettings.manhole_aboveground_storage_area > 0)
+#         .exists(),
+#         invalid=Query(models.Manhole).filter(
+#             models.Manhole.exchange_type.in_(
+#                 [constants.CalculationTypeNode.CONNECTED]
+#             ),
+#             models.Manhole.drain_level == None,
+#         ),
+#         message="v2_manhole.drain_level cannot be null when using sub-basins (model_settings.manhole_aboveground_storage_area > 0) and no DEM is supplied.",
+#     ),
+# ]
+# CHECKS += [
+#     QueryCheck(
+#         level=CheckLevel.WARNING,
+#         error_code=108,
+#         column=table.crest_level,
+#         invalid=Query(table)
+#         .join(
+#             models.ConnectionNode,
+#             (table.connection_node_start_id == models.ConnectionNode.id)
+#             | (table.connection_node_end_id == models.ConnectionNode.id),
+#         )
+#         .join(models.Manhole)
+#         .filter(
+#             table.crest_level < models.Manhole.bottom_level,
+#         ),
+#         message=f"{table.__tablename__}.crest_level should be higher than or equal to v2_manhole.bottom_level for all the connected manholes.",
+#     )
+#     for table in [models.Weir, models.Orifice]
+# ]
+# CHECKS += [
+#     ChannelManholeLevelCheck(
+#         level=CheckLevel.INFO, nodes_to_check="start", error_code=109
+#     ),
+#     ChannelManholeLevelCheck(
+#         level=CheckLevel.INFO, nodes_to_check="end", error_code=110
+#     ),
+# ]
 
 ## 020x: Spatial checks
 
@@ -828,7 +830,7 @@ CHECKS += [
         error_code=202,
         level=CheckLevel.WARNING,
         column=table.id,
-        invalid=Query(table).filter(geo_query.length(table.the_geom) < 5),
+        invalid=Query(table).filter(geo_query.length(table.geom) < 5),
         message=f"The length of {table.__tablename__} is very short (< 5 m). A length of at least 5.0 m is recommended to avoid timestep reduction.",
     )
     for table in [models.Channel, models.Culvert]
@@ -838,8 +840,8 @@ CHECKS += [
         error_code=203,
         level=CheckLevel.WARNING,
         column=models.Pipe.id,
-        start_node=models.Pipe.connection_node_start,
-        end_node=models.Pipe.connection_node_end,
+        start_node=models.Pipe.connection_node_start_id,
+        end_node=models.Pipe.connection_node_end_id,
         min_distance=5.0,
         recommended_distance=5.0,
     )
@@ -850,20 +852,20 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=table.id,
         filters=table.crest_type == constants.CrestType.BROAD_CRESTED,
-        start_node=table.connection_node_start,
-        end_node=table.connection_node_end,
+        start_node=table.connection_node_start_id,
+        end_node=table.connection_node_end_id,
         min_distance=5.0,
         recommended_distance=5.0,
     )
     for table in [models.Orifice, models.Weir]
 ]
 CHECKS += [
-    LinestringLocationCheck(error_code=205, column=table.the_geom, max_distance=1)
+    LinestringLocationCheck(error_code=205, column=table.geom, max_distance=1)
     for table in [models.Channel, models.Culvert]
 ]
 CHECKS += [
     SpatialIndexCheck(
-        error_code=207, column=models.ConnectionNode.the_geom, level=CheckLevel.WARNING
+        error_code=207, column=models.ConnectionNode.geom, level=CheckLevel.WARNING
     )
 ]
 CHECKS += [
@@ -874,35 +876,36 @@ CHECKS += [
 
 
 ## 025x: Connectivity
+# TODO: fix -> moved to ConnectionNode
 
 CHECKS += [
-    QueryCheck(
-        error_code=251,
-        level=CheckLevel.WARNING,
-        column=models.ConnectionNode.id,
-        invalid=Query(models.ConnectionNode)
-        .join(models.Manhole)
-        .filter(
-            models.Manhole.calculation_type == constants.CalculationTypeNode.ISOLATED,
-            models.ConnectionNode.id.notin_(
-                Query(models.Pipe.connection_node_start_id).union_all(
-                    Query(models.Pipe.connection_node_end_id),
-                    Query(models.Channel.connection_node_start_id),
-                    Query(models.Channel.connection_node_end_id),
-                    Query(models.Culvert.connection_node_start_id),
-                    Query(models.Culvert.connection_node_end_id),
-                    Query(models.Weir.connection_node_start_id),
-                    Query(models.Weir.connection_node_end_id),
-                    Query(models.Pumpstation.connection_node_start_id),
-                    Query(models.Pumpstation.connection_node_end_id),
-                    Query(models.Orifice.connection_node_start_id),
-                    Query(models.Orifice.connection_node_end_id),
-                )
-            ),
-        ),
-        message="This is an isolated connection node without connections. Connect it to either a pipe, "
-        "channel, culvert, weir, orifice or pumpstation.",
-    ),
+    # QueryCheck(
+    #     error_code=251,
+    #     level=CheckLevel.WARNING,
+    #     column=models.ConnectionNode.id,
+    #     invalid=Query(models.ConnectionNode)
+    #     .join(models.Manhole)
+    #     .filter(
+    #         models.Manhole.exchange_type == constants.CalculationTypeNode.ISOLATED,
+    #         models.ConnectionNode.id.notin_(
+    #             Query(models.Pipe.connection_node_start_id).union_all(
+    #                 Query(models.Pipe.connection_node_end_id),
+    #                 Query(models.Channel.connection_node_start_id),
+    #                 Query(models.Channel.connection_node_end_id),
+    #                 Query(models.Culvert.connection_node_start_id),
+    #                 Query(models.Culvert.connection_node_end_id),
+    #                 Query(models.Weir.connection_node_start_id),
+    #                 Query(models.Weir.connection_node_end_id),
+    #                 Query(models.Pumpstation.connection_node_start_id),
+    #                 Query(models.Pumpstation.connection_node_end_id),
+    #                 Query(models.Orifice.connection_node_start_id),
+    #                 Query(models.Orifice.connection_node_end_id),
+    #             )
+    #         ),
+    #     ),
+    #     message="This is an isolated connection node without connections. Connect it to either a pipe, "
+    #     "channel, culvert, weir, orifice or pumpstation.",
+    # ),
     QueryCheck(
         level=CheckLevel.WARNING,
         error_code=252,
@@ -913,7 +916,7 @@ CHECKS += [
             models.Pipe.connection_node_start_id == models.ConnectionNode.id,
         )
         .filter(
-            models.Pipe.calculation_type == constants.PipeCalculationType.ISOLATED,
+            models.Pipe.exchange_type == constants.PipeCalculationType.ISOLATED,
             models.ConnectionNode.storage_area.is_(None),
         )
         .union(
@@ -923,7 +926,7 @@ CHECKS += [
                 models.Pipe.connection_node_end_id == models.ConnectionNode.id,
             )
             .filter(
-                models.Pipe.calculation_type == constants.PipeCalculationType.ISOLATED,
+                models.Pipe.exchange_type == constants.PipeCalculationType.ISOLATED,
                 models.ConnectionNode.storage_area.is_(None),
             )
         ),
@@ -944,37 +947,39 @@ CHECKS += [
         models.Culvert,
         models.Orifice,
         models.Pipe,
-        models.Pumpstation,
+        # TODO: fix
+        # models.Pumpstation,
         models.Weir,
     )
 ]
-CHECKS += [
-    QueryCheck(
-        error_code=254,
-        level=CheckLevel.ERROR,
-        column=models.ConnectionNode.id,
-        invalid=Query(models.ConnectionNode)
-        .join(models.Manhole, isouter=True)
-        .filter(
-            models.Manhole.bottom_level == None,
-            models.ConnectionNode.id.notin_(
-                Query(models.Pipe.connection_node_start_id).union_all(
-                    Query(models.Pipe.connection_node_end_id),
-                    Query(models.Channel.connection_node_start_id),
-                    Query(models.Channel.connection_node_end_id),
-                    Query(models.Culvert.connection_node_start_id),
-                    Query(models.Culvert.connection_node_end_id),
-                    Query(models.Weir.connection_node_start_id),
-                    Query(models.Weir.connection_node_end_id),
-                    Query(models.Orifice.connection_node_start_id),
-                    Query(models.Orifice.connection_node_end_id),
-                )
-            ),
-        ),
-        message="A connection node that is not connected to a pipe, "
-        "channel, culvert, weir, or orifice must have a manhole with a bottom_level.",
-    ),
-]
+# TODO: fix -> moved to ConnectionNode
+# CHECKS += [
+#     QueryCheck(
+#         error_code=254,
+#         level=CheckLevel.ERROR,
+#         column=models.ConnectionNode.id,
+#         invalid=Query(models.ConnectionNode)
+#         .join(models.Manhole, isouter=True)
+#         .filter(
+#             models.Manhole.bottom_level == None,
+#             models.ConnectionNode.id.notin_(
+#                 Query(models.Pipe.connection_node_start_id).union_all(
+#                     Query(models.Pipe.connection_node_end_id),
+#                     Query(models.Channel.connection_node_start_id),
+#                     Query(models.Channel.connection_node_end_id),
+#                     Query(models.Culvert.connection_node_start_id),
+#                     Query(models.Culvert.connection_node_end_id),
+#                     Query(models.Weir.connection_node_start_id),
+#                     Query(models.Weir.connection_node_end_id),
+#                     Query(models.Orifice.connection_node_start_id),
+#                     Query(models.Orifice.connection_node_end_id),
+#                 )
+#             ),
+#         ),
+#         message="A connection node that is not connected to a pipe, "
+#         "channel, culvert, weir, or orifice must have a manhole with a bottom_level.",
+#     ),
+# ]
 
 
 ## 026x: Exchange lines
@@ -986,7 +991,7 @@ CHECKS += [
         invalid=Query(models.Channel)
         .join(models.ExchangeLine, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            models.Channel.calculation_type.notin_(
+            models.Channel.exchange_type.notin_(
                 {
                     constants.CalculationType.CONNECTED,
                     constants.CalculationType.DOUBLE_CONNECTED,
@@ -1003,7 +1008,7 @@ CHECKS += [
         invalid=Query(models.Channel)
         .join(models.ExchangeLine, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            models.Channel.calculation_type == constants.CalculationType.CONNECTED,
+            models.Channel.exchange_type == constants.CalculationType.CONNECTED,
         )
         .group_by(models.ExchangeLine.channel_id)
         .having(func.count(models.ExchangeLine.id) > 1),
@@ -1017,8 +1022,7 @@ CHECKS += [
         invalid=Query(models.Channel)
         .join(models.ExchangeLine, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            models.Channel.calculation_type
-            == constants.CalculationType.DOUBLE_CONNECTED,
+            models.Channel.exchange_type == constants.CalculationType.DOUBLE_CONNECTED,
         )
         .group_by(models.ExchangeLine.channel_id)
         .having(func.count(models.ExchangeLine.id) > 2),
@@ -1033,7 +1037,7 @@ CHECKS += [
         .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
             geo_query.length(models.ExchangeLine.geom)
-            < (0.8 * geo_query.length(models.Channel.the_geom))
+            < (0.8 * geo_query.length(models.Channel.geom))
         ),
         message=(
             "exchange_line.geom should not be significantly shorter than its "
@@ -1047,8 +1051,7 @@ CHECKS += [
         invalid=Query(models.ExchangeLine)
         .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            geo_query.distance(models.ExchangeLine.geom, models.Channel.the_geom)
-            > 500.0
+            geo_query.distance(models.ExchangeLine.geom, models.Channel.geom) > 500.0
         ),
         message=("exchange_line.geom is far (> 500 m) from its corresponding channel"),
     ),
@@ -1077,7 +1080,7 @@ CHECKS += [
         invalid=Query(models.PotentialBreach)
         .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
-            models.Channel.calculation_type.notin_(
+            models.Channel.exchange_type.notin_(
                 {
                     constants.CalculationType.CONNECTED,
                     constants.CalculationType.DOUBLE_CONNECTED,
@@ -1093,7 +1096,7 @@ CHECKS += [
         invalid=Query(models.PotentialBreach)
         .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
-            models.Channel.calculation_type == constants.CalculationType.CONNECTED,
+            models.Channel.exchange_type == constants.CalculationType.CONNECTED,
         )
         .group_by(
             models.PotentialBreach.channel_id,
@@ -1110,8 +1113,7 @@ CHECKS += [
         invalid=Query(models.PotentialBreach)
         .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
-            models.Channel.calculation_type
-            == constants.CalculationType.DOUBLE_CONNECTED,
+            models.Channel.exchange_type == constants.CalculationType.DOUBLE_CONNECTED,
         )
         .group_by(
             models.PotentialBreach.channel_id,
@@ -1129,7 +1131,7 @@ CHECKS += [
         .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
             geo_query.distance(
-                func.PointN(models.PotentialBreach.geom, 1), models.Channel.the_geom
+                func.PointN(models.PotentialBreach.geom, 1), models.Channel.geom
             )
             > TOLERANCE_M
         ),
@@ -1705,22 +1707,23 @@ CHECKS += [
         ),
         message="groundwater.groundwater_hydraulic_conductivity is recommended as fallback value when using a groundwater_hydraulic_conductivity_file.",
     ),
-    RangeCheck(
-        error_code=429,
-        column=models.Manhole.exchange_thickness,
-        min_value=0,
-        left_inclusive=False,
-    ),
-    RangeCheck(
-        error_code=430,
-        column=models.Manhole.hydraulic_conductivity_in,
-        min_value=0,
-    ),
-    RangeCheck(
-        error_code=431,
-        column=models.Manhole.hydraulic_conductivity_out,
-        min_value=0,
-    ),
+    # TODO: fix -> moved to ConnectionNode
+    # RangeCheck(
+    #     error_code=429,
+    #     column=models.Manhole.exchange_thickness,
+    #     min_value=0,
+    #     left_inclusive=False,
+    # ),
+    # RangeCheck(
+    #     error_code=430,
+    #     column=models.Manhole.hydraulic_conductivity_in,
+    #     min_value=0,
+    # ),
+    # RangeCheck(
+    #     error_code=431,
+    #     column=models.Manhole.hydraulic_conductivity_out,
+    #     min_value=0,
+    # ),
     RangeCheck(
         error_code=432,
         column=models.Channel.exchange_thickness,
@@ -2603,7 +2606,8 @@ ref_cols = [
     models.Orifice.id,
     models.Culvert.id,
     models.Weir.id,
-    models.Pumpstation.id,
+    # TODO fix
+    # models.Pumpstation.id,
 ]
 target_types = [
     "v2_channel",
@@ -2611,7 +2615,7 @@ target_types = [
     "v2_orifice",
     "v2_culvert",
     "v2_weir",
-    "v2_pumpstation",
+    # "v2_pumpstation",
 ]
 for i, (ref_col, target_type) in enumerate(zip(ref_cols, target_types)):
     for control_table in (models.ControlMemory, models.ControlTable):
@@ -2694,234 +2698,241 @@ CHECKS += [
 
 
 ## 018x cross section parameters (continues 008x)
-vegetation_parameter_columns = [
-    models.CrossSectionDefinition.vegetation_drag_coefficients,
-    models.CrossSectionDefinition.vegetation_heights,
-    models.CrossSectionDefinition.vegetation_stem_diameters,
-    models.CrossSectionDefinition.vegetation_stem_densities,
-]
-CHECKS += [
-    QueryCheck(
-        error_code=180,
-        column=col,
-        invalid=Query(models.CrossSectionDefinition)
-        .filter(
-            models.CrossSectionDefinition.shape
-            != constants.CrossSectionShape.TABULATED_YZ
-        )
-        .filter(col.is_not(None)),
-        message=(
-            f"{col.table.name}.{col.name} can only be used in combination with "
-            f"a {constants.CrossSectionShape.TABULATED_YZ.name} cross section shape"
-        ),
-    )
-    for col in vegetation_parameter_columns
-    + [models.CrossSectionDefinition.friction_values]
-]
-CHECKS += [
-    CrossSectionVariableCorrectLengthCheck(
-        error_code=181,
-        column=col,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-        filters=models.CrossSectionDefinition.height.is_not(None) & col.is_not(None),
-    )
-    for col in vegetation_parameter_columns
-]
-CHECKS += [
-    CrossSectionFloatListCheck(
-        error_code=187,
-        column=col,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    )
-    for col in vegetation_parameter_columns
-]
-CHECKS += [
-    QueryCheck(
-        error_code=182,
-        level=CheckLevel.WARNING,
-        column=col_cross_section_location,
-        invalid=Query(models.CrossSectionDefinition)
-        .join(
-            models.CrossSectionLocation,
-            models.CrossSectionLocation.definition_id
-            == models.CrossSectionDefinition.id,
-        )
-        .filter(
-            col_cross_section_location.is_not(None)
-            & col_cross_section_definition.is_not(None)
-        )
-        .filter(
-            models.CrossSectionLocation.friction_type.is_(constants.FrictionType.CHEZY)
-        ),
-        message=(
-            f"Both {col_cross_section_location.table.name}.{col_cross_section_location.name} and {col_cross_section_definition.table.name}.{col_cross_section_definition.name}"
-            f" defined without conveyance; {col_cross_section_location.table.name}.{col_cross_section_location.name} will be used"
-        ),
-    )
-    for col_cross_section_location, col_cross_section_definition in [
-        (
-            models.CrossSectionLocation.vegetation_drag_coefficient,
-            models.CrossSectionDefinition.vegetation_drag_coefficients,
-        ),
-        (
-            models.CrossSectionLocation.vegetation_height,
-            models.CrossSectionDefinition.vegetation_heights,
-        ),
-        (
-            models.CrossSectionLocation.vegetation_stem_diameter,
-            models.CrossSectionDefinition.vegetation_stem_diameters,
-        ),
-        (
-            models.CrossSectionLocation.vegetation_stem_density,
-            models.CrossSectionDefinition.vegetation_stem_densities,
-        ),
-    ]
-]
-CHECKS += [
-    QueryCheck(
-        error_code=183,
-        level=CheckLevel.WARNING,
-        column=col_cross_section_location,
-        invalid=Query(models.CrossSectionLocation)
-        .join(
-            models.CrossSectionDefinition,
-            models.CrossSectionLocation.definition_id
-            == models.CrossSectionDefinition.id,
-        )
-        .filter(
-            col_cross_section_location.is_not(None)
-            & col_cross_section_definition.is_not(None)
-        )
-        .filter(
-            models.CrossSectionLocation.friction_type.is_(
-                constants.FrictionType.CHEZY_CONVEYANCE
-            )
-        ),
-        message=(
-            f"Both {col_cross_section_location.table.name}.{col_cross_section_location.name} and {col_cross_section_definition.table.name}.{col_cross_section_definition.name}"
-            f" defined without conveyance; {col_cross_section_definition.table.name}.{col_cross_section_definition.name} will be used"
-        ),
-    )
-    for col_cross_section_location, col_cross_section_definition in [
-        (
-            models.CrossSectionLocation.vegetation_drag_coefficient,
-            models.CrossSectionDefinition.vegetation_drag_coefficients,
-        ),
-        (
-            models.CrossSectionLocation.vegetation_height,
-            models.CrossSectionDefinition.vegetation_heights,
-        ),
-        (
-            models.CrossSectionLocation.vegetation_stem_diameter,
-            models.CrossSectionDefinition.vegetation_stem_diameters,
-        ),
-        (
-            models.CrossSectionLocation.vegetation_stem_density,
-            models.CrossSectionDefinition.vegetation_stem_densities,
-        ),
-    ]
-]
-CHECKS += [
-    QueryCheck(
-        error_code=184,
-        level=CheckLevel.WARNING,
-        column=models.CrossSectionDefinition.friction_values,
-        invalid=(
-            Query(models.CrossSectionDefinition)
-            .join(
-                models.CrossSectionLocation,
-                models.CrossSectionLocation.definition_id
-                == models.CrossSectionDefinition.id,
-            )
-            .filter(
-                (
-                    models.CrossSectionLocation.friction_type
-                    == constants.FrictionType.CHEZY
-                )
-                | (
-                    models.CrossSectionLocation.friction_type
-                    == constants.FrictionType.MANNING
-                )
-            )
-            .filter(
-                models.CrossSectionDefinition.friction_values.is_not(None)
-                & models.CrossSectionLocation.friction_value.is_not(None)
-            )
-        ),
-        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
-        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
-        f"are defined for non-conveyance friction. Only "
-        f"{models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
-        f"will be used",
-    ),
-    QueryCheck(
-        error_code=185,
-        level=CheckLevel.WARNING,
-        column=models.CrossSectionDefinition.friction_values,
-        invalid=(
-            Query(models.CrossSectionDefinition)
-            .join(
-                models.CrossSectionLocation,
-                models.CrossSectionLocation.definition_id
-                == models.CrossSectionDefinition.id,
-            )
-            .filter(
-                (
-                    models.CrossSectionLocation.friction_type
-                    == constants.FrictionType.CHEZY_CONVEYANCE
-                )
-                | (
-                    models.CrossSectionLocation.friction_type
-                    == constants.FrictionType.MANNING_CONVEYANCE
-                )
-            )
-            .filter(
-                models.CrossSectionDefinition.friction_values.is_not(None)
-                & models.CrossSectionLocation.friction_value.is_not(None)
-            )
-        ),
-        message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name} "
-        f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name} "
-        f"are defined for conveyance friction. Only "
-        f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name} "
-        f"will be used.",
-    ),
-]
-CHECKS += [
-    OpenIncreasingCrossSectionVariableCheck(
-        error_code=186,
-        column=col,
-    )
-    for col in vegetation_parameter_columns
-    + [models.CrossSectionDefinition.friction_values]
-]
+# TODO: fix
+# vegetation_parameter_columns = [
+#     models.CrossSectionLocation.vegetation_drag_coefficients,
+#     models.CrossSectionLocation.vegetation_heights,
+#     models.CrossSectionLocation.vegetation_stem_diameters,
+#     models.CrossSectionLocation.vegetation_stem_densities,
+# ]
+# CHECKS += [
+#     QueryCheck(
+#         error_code=180,
+#         column=col,
+#         invalid=Query(models.CrossSectionDefinition)
+#         .filter(
+#             models.CrossSectionDefinition.shape
+#             != constants.CrossSectionShape.TABULATED_YZ
+#         )
+#         .filter(col.is_not(None)),
+#         message=(
+#             f"{col.table.name}.{col.name} can only be used in combination with "
+#             f"a {constants.CrossSectionShape.TABULATED_YZ.name} cross section shape"
+#         ),
+#     )
+#     for col in vegetation_parameter_columns
+#     + [models.CrossSectionDefinition.friction_values]
+# ]
+# TODO: fix
+# CHECKS += [
+#     CrossSectionVariableCorrectLengthCheck(
+#         error_code=181,
+#         column=col,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#         filters=models.CrossSectionDefinition.height.is_not(None) & col.is_not(None),
+#     )
+#     for col in vegetation_parameter_columns
+# ]
+# CHECKS += [
+#     CrossSectionFloatListCheck(
+#         error_code=187,
+#         column=col,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#     )
+#     for col in vegetation_parameter_columns
+# ]
+# TODO: fix
+# CHECKS += [
+#     QueryCheck(
+#         error_code=182,
+#         level=CheckLevel.WARNING,
+#         column=col_cross_section_location,
+#         invalid=Query(models.CrossSectionDefinition)
+#         .join(
+#             models.CrossSectionLocation,
+#             models.CrossSectionLocation.definition_id
+#             == models.CrossSectionDefinition.id,
+#         )
+#         .filter(
+#             col_cross_section_location.is_not(None)
+#             & col_cross_section_definition.is_not(None)
+#         )
+#         .filter(
+#             models.CrossSectionLocation.friction_type.is_(constants.FrictionType.CHEZY)
+#         ),
+#         message=(
+#             f"Both {col_cross_section_location.table.name}.{col_cross_section_location.name} and {col_cross_section_definition.table.name}.{col_cross_section_definition.name}"
+#             f" defined without conveyance; {col_cross_section_location.table.name}.{col_cross_section_location.name} will be used"
+#         ),
+#     )
+#     for col_cross_section_location, col_cross_section_definition in [
+#         (
+#             models.CrossSectionLocation.vegetation_drag_coefficient,
+#             models.CrossSectionDefinition.vegetation_drag_coefficients,
+#         ),
+#         (
+#             models.CrossSectionLocation.vegetation_height,
+#             models.CrossSectionDefinition.vegetation_heights,
+#         ),
+#         (
+#             models.CrossSectionLocation.vegetation_stem_diameter,
+#             models.CrossSectionDefinition.vegetation_stem_diameters,
+#         ),
+#         (
+#             models.CrossSectionLocation.vegetation_stem_density,
+#             models.CrossSectionDefinition.vegetation_stem_densities,
+#         ),
+#     ]
+# ]
+# TODO: fix
+# CHECKS += [
+#     QueryCheck(
+#         error_code=183,
+#         level=CheckLevel.WARNING,
+#         column=col_cross_section_location,
+#         invalid=Query(models.CrossSectionLocation)
+#         .join(
+#             models.CrossSectionDefinition,
+#             models.CrossSectionLocation.definition_id
+#             == models.CrossSectionDefinition.id,
+#         )
+#         .filter(
+#             col_cross_section_location.is_not(None)
+#             & col_cross_section_definition.is_not(None)
+#         )
+#         .filter(
+#             models.CrossSectionLocation.friction_type.is_(
+#                 constants.FrictionType.CHEZY_CONVEYANCE
+#             )
+#         ),
+#         message=(
+#             f"Both {col_cross_section_location.table.name}.{col_cross_section_location.name} and {col_cross_section_definition.table.name}.{col_cross_section_definition.name}"
+#             f" defined without conveyance; {col_cross_section_definition.table.name}.{col_cross_section_definition.name} will be used"
+#         ),
+#     )
+#     for col_cross_section_location, col_cross_section_definition in [
+#         (
+#             models.CrossSectionLocation.vegetation_drag_coefficient,
+#             models.CrossSectionDefinition.vegetation_drag_coefficients,
+#         ),
+#         (
+#             models.CrossSectionLocation.vegetation_height,
+#             models.CrossSectionDefinition.vegetation_heights,
+#         ),
+#         (
+#             models.CrossSectionLocation.vegetation_stem_diameter,
+#             models.CrossSectionDefinition.vegetation_stem_diameters,
+#         ),
+#         (
+#             models.CrossSectionLocation.vegetation_stem_density,
+#             models.CrossSectionDefinition.vegetation_stem_densities,
+#         ),
+#     ]
+# ]
+# TODO: fix
+#
+# CHECKS += [
+#     QueryCheck(
+#         error_code=184,
+#         level=CheckLevel.WARNING,
+#         column=models.CrossSectionDefinition.friction_values,
+#         invalid=(
+#             Query(models.CrossSectionDefinition)
+#             .join(
+#                 models.CrossSectionLocation,
+#                 models.CrossSectionLocation.definition_id
+#                 == models.CrossSectionDefinition.id,
+#             )
+#             .filter(
+#                 (
+#                     models.CrossSectionLocation.friction_type
+#                     == constants.FrictionType.CHEZY
+#                 )
+#                 | (
+#                     models.CrossSectionLocation.friction_type
+#                     == constants.FrictionType.MANNING
+#                 )
+#             )
+#             .filter(
+#                 models.CrossSectionDefinition.friction_values.is_not(None)
+#                 & models.CrossSectionLocation.friction_value.is_not(None)
+#             )
+#         ),
+#         message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
+#         f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+#         f"are defined for non-conveyance friction. Only "
+#         f"{models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+#         f"will be used",
+#     ),
+#     QueryCheck(
+#         error_code=185,
+#         level=CheckLevel.WARNING,
+#         column=models.CrossSectionDefinition.friction_values,
+#         invalid=(
+#             Query(models.CrossSectionDefinition)
+#             .join(
+#                 models.CrossSectionLocation,
+#                 models.CrossSectionLocation.definition_id
+#                 == models.CrossSectionDefinition.id,
+#             )
+#             .filter(
+#                 (
+#                     models.CrossSectionLocation.friction_type
+#                     == constants.FrictionType.CHEZY_CONVEYANCE
+#                 )
+#                 | (
+#                     models.CrossSectionLocation.friction_type
+#                     == constants.FrictionType.MANNING_CONVEYANCE
+#                 )
+#             )
+#             .filter(
+#                 models.CrossSectionDefinition.friction_values.is_not(None)
+#                 & models.CrossSectionLocation.friction_value.is_not(None)
+#             )
+#         ),
+#         message=f"Both {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name} "
+#         f"and {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name} "
+#         f"are defined for conveyance friction. Only "
+#         f"{models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name} "
+#         f"will be used.",
+#     ),
+# ]
+# CHECKS += [
+#     OpenIncreasingCrossSectionVariableCheck(
+#         error_code=186,
+#         column=col,
+#     )
+#     for col in vegetation_parameter_columns
+#     + [models.CrossSectionLocation.friction_values]
+# ]
 ## Friction values range
-CHECKS += [
-    CrossSectionVariableFrictionRangeCheck(
-        min_value=0,
-        max_value=1,
-        right_inclusive=False,
-        error_code=188,
-        column=models.CrossSectionDefinition.friction_values,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-        friction_types=[
-            constants.FrictionType.MANNING.value,
-            constants.FrictionType.MANNING_CONVEYANCE.value,
-        ],
-    )
-]
-CHECKS += [
-    CrossSectionVariableFrictionRangeCheck(
-        min_value=0,
-        error_code=189,
-        column=models.CrossSectionDefinition.friction_values,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-        friction_types=[
-            constants.FrictionType.CHEZY.value,
-            constants.FrictionType.CHEZY_CONVEYANCE.value,
-        ],
-    )
-]
+# TODO: fix
+# CHECKS += [
+#     CrossSectionVariableFrictionRangeCheck(
+#         min_value=0,
+#         max_value=1,
+#         right_inclusive=False,
+#         error_code=188,
+#         column=models.CrossSectionLocation.cross_section_friction_values,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#         friction_types=[
+#             constants.FrictionType.MANNING.value,
+#             constants.FrictionType.MANNING_CONVEYANCE.value,
+#         ],
+#     )
+# ]
+# CHECKS += [
+#     CrossSectionVariableFrictionRangeCheck(
+#         min_value=0,
+#         error_code=189,
+#         column=models.CrossSectionLocation.cross_section_friction_values,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#         friction_types=[
+#             constants.FrictionType.CHEZY.value,
+#             constants.FrictionType.CHEZY_CONVEYANCE.value,
+#         ],
+#     )
+# ]
 
 ## 019x vegetation parameter checks
 vegetation_parameter_columns_singular = [
@@ -2930,12 +2941,13 @@ vegetation_parameter_columns_singular = [
     models.CrossSectionLocation.vegetation_stem_diameter,
     models.CrossSectionLocation.vegetation_stem_density,
 ]
-vegetation_parameter_columns_plural = [
-    models.CrossSectionDefinition.vegetation_drag_coefficients,
-    models.CrossSectionDefinition.vegetation_heights,
-    models.CrossSectionDefinition.vegetation_stem_diameters,
-    models.CrossSectionDefinition.vegetation_stem_densities,
-]
+# TODO: fix this
+# vegetation_parameter_columns_plural = [
+#     models.CrossSectionLocation.vegetation_drag_coefficients,
+#     models.CrossSectionLocation.vegetation_heights,
+#     models.CrossSectionLocation.vegetation_stem_diameters,
+#     models.CrossSectionLocation.vegetation_stem_densities,
+# ]
 
 CHECKS += [
     RangeCheck(
@@ -2945,15 +2957,15 @@ CHECKS += [
     )
     for col in vegetation_parameter_columns_singular
 ]
-CHECKS += [
-    CrossSectionVariableRangeCheck(
-        error_code=191,
-        min_value=0,
-        column=col,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    )
-    for col in vegetation_parameter_columns_plural
-]
+# CHECKS += [
+#     CrossSectionVariableRangeCheck(
+#         error_code=191,
+#         min_value=0,
+#         column=col,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#     )
+#     for col in vegetation_parameter_columns_plural
+# ]
 
 CHECKS += [
     QueryCheck(
@@ -2975,42 +2987,44 @@ CHECKS += [
     )
     for col in vegetation_parameter_columns_singular
 ]
+# TODO: fix
+# CHECKS += [
+#     QueryCheck(
+#         error_code=193,
+#         column=col,
+#         invalid=(
+#             Query(models.CrossSectionDefinition)
+#             .join(
+#                 models.CrossSectionLocation,
+#                 models.CrossSectionLocation.definition_id
+#                 == models.CrossSectionDefinition.id,
+#             )
+#             .filter(
+#                 models.CrossSectionLocation.friction_type.in_(
+#                     [
+#                         constants.FrictionType.MANNING,
+#                         constants.FrictionType.MANNING_CONVEYANCE,
+#                     ]
+#                 )
+#                 & col.is_not(None)
+#             )
+#         ),
+#         message=(
+#             f"{col.table.name}.{col.name} cannot be used with MANNING type friction"
+#         ),
+#     )
+#     for col in vegetation_parameter_columns_plural
+# ]
+# TODO: fix
 CHECKS += [
-    QueryCheck(
-        error_code=193,
-        column=col,
-        invalid=(
-            Query(models.CrossSectionDefinition)
-            .join(
-                models.CrossSectionLocation,
-                models.CrossSectionLocation.definition_id
-                == models.CrossSectionDefinition.id,
-            )
-            .filter(
-                models.CrossSectionLocation.friction_type.in_(
-                    [
-                        constants.FrictionType.MANNING,
-                        constants.FrictionType.MANNING_CONVEYANCE,
-                    ]
-                )
-                & col.is_not(None)
-            )
-        ),
-        message=(
-            f"{col.table.name}.{col.name} cannot be used with MANNING type friction"
-        ),
-    )
-    for col in vegetation_parameter_columns_plural
-]
-CHECKS += [
-    AllPresentFixedVegetationParameters(
-        error_code=194,
-        column=vegetation_parameter_columns_singular[0],
-    ),
-    AllPresentVariableVegetationParameters(
-        error_code=195,
-        column=vegetation_parameter_columns_plural[0],
-    ),
+    # AllPresentFixedVegetationParameters(
+    #     error_code=194,
+    #     column=vegetation_parameter_columns_singular[0],
+    # ),
+    # AllPresentVariableVegetationParameters(
+    #     error_code=195,
+    #     column=vegetation_parameter_columns_plural[0],
+    # ),
 ]
 
 # Checks for nonsensical Chezy friction values
@@ -3044,20 +3058,21 @@ CHECKS += [
         models.Weir,
     ]
 ]
-CHECKS += [
-    CrossSectionVariableFrictionRangeCheck(
-        min_value=1,
-        level=CheckLevel.WARNING,
-        error_code=1501,
-        column=models.CrossSectionDefinition.friction_values,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-        friction_types=[
-            constants.FrictionType.CHEZY.value,
-            constants.FrictionType.CHEZY_CONVEYANCE.value,
-        ],
-        message="Some values in CrossSectionDefinition.friction_values are less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
-    )
-]
+# TODO: fix
+# CHECKS += [
+#     CrossSectionVariableFrictionRangeCheck(
+#         min_value=1,
+#         level=CheckLevel.WARNING,
+#         error_code=1501,
+#         column=models.CrossSectionDefinition.friction_values,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#         friction_types=[
+#             constants.FrictionType.CHEZY.value,
+#             constants.FrictionType.CHEZY_CONVEYANCE.value,
+#         ],
+#         message="Some values in CrossSectionDefinition.friction_values are less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
+#     )
+# ]
 
 
 # Tags 2xxx

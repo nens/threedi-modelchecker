@@ -48,7 +48,7 @@ class CrossSectionLocationCheck(BaseCheck):
     """Check if cross section locations are within {max_distance} of their channel."""
 
     def __init__(self, max_distance, *args, **kwargs):
-        super().__init__(column=models.CrossSectionLocation.the_geom, *args, **kwargs)
+        super().__init__(column=models.CrossSectionLocation.geom, *args, **kwargs)
         self.max_distance = max_distance
 
     def get_invalid(self, session):
@@ -57,7 +57,7 @@ class CrossSectionLocationCheck(BaseCheck):
             self.to_check(session)
             .join(models.Channel)
             .filter(
-                distance(models.CrossSectionLocation.the_geom, models.Channel.the_geom)
+                distance(models.CrossSectionLocation.geom, models.Channel.geom)
                 > self.max_distance
             )
             .all()
@@ -65,7 +65,7 @@ class CrossSectionLocationCheck(BaseCheck):
 
     def description(self):
         return (
-            f"v2_cross_section_location.the_geom is invalid: the cross-section location "
+            f"v2_cross_section_location.geom is invalid: the cross-section location "
             f"should be located on the channel geometry (tolerance = {self.max_distance} m)"
         )
 
@@ -303,9 +303,7 @@ class ConnectionNodesLength(BaseCheck):
             self.to_check(session)
             .join(start_node, self.start_node)
             .join(end_node, self.end_node)
-            .filter(
-                distance(start_node.the_geom, end_node.the_geom) < self.min_distance
-            )
+            .filter(distance(start_node.geom, end_node.geom) < self.min_distance)
         )
         return list(q.with_session(session).all())
 
@@ -339,14 +337,14 @@ class ConnectionNodesDistance(BaseCheck):
             f"""SELECT *
                FROM v2_connection_nodes AS cn1, v2_connection_nodes AS cn2
                WHERE
-                   distance(cn1.the_geom, cn2.the_geom, 1) < :min_distance
+                   distance(cn1.geom, cn2.geom, 1) < :min_distance
                    AND cn1.ROWID != cn2.ROWID
                    AND cn2.ROWID IN (
                      SELECT ROWID
                      FROM SpatialIndex
                      WHERE (
                        f_table_name = "v2_connection_nodes"
-                       AND search_frame = Buffer(cn1.the_geom, {self.minimum_distance / 2})));
+                       AND search_frame = Buffer(cn1.geom, {self.minimum_distance / 2})));
             """
         )
         results = (
@@ -413,7 +411,7 @@ class ChannelManholeLevelCheck(BaseCheck):
                 models.CrossSectionLocation,
                 func_agg(
                     func.Line_Locate_Point(
-                        models.Channel.the_geom, models.CrossSectionLocation.the_geom
+                        models.Channel.geom, models.CrossSectionLocation.geom
                     )
                 ),
             )
@@ -527,10 +525,10 @@ class LinestringLocationCheck(BaseCheck):
         start_point = func.ST_PointN(self.column, 1)
         end_point = func.ST_PointN(self.column, func.ST_NPoints(self.column))
 
-        start_ok = distance(start_point, start_node.the_geom) <= tol
-        end_ok = distance(end_point, end_node.the_geom) <= tol
-        start_ok_if_reversed = distance(end_point, start_node.the_geom) <= tol
-        end_ok_if_reversed = distance(start_point, end_node.the_geom) <= tol
+        start_ok = distance(start_point, start_node.geom) <= tol
+        end_ok = distance(end_point, end_node.geom) <= tol
+        start_ok_if_reversed = distance(end_point, start_node.geom) <= tol
+        end_ok_if_reversed = distance(start_point, end_node.geom) <= tol
         return (
             self.to_check(session)
             .join(start_node, start_node.id == self.table.c.connection_node_start_id)
@@ -626,7 +624,7 @@ class PotentialBreachStartEndCheck(BaseCheck):
         super().__init__(*args, **kwargs)
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        linestring = models.Channel.the_geom
+        linestring = models.Channel.geom
         tol = self.min_distance
         breach_point = func.Line_Locate_Point(
             transform(linestring), transform(func.ST_PointN(self.column, 1))
@@ -664,9 +662,7 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
             return (breach_point * length(linestring)).label("position")
 
         potential_breaches = sorted(
-            session.query(
-                self.table, get_position(self.column, models.Channel.the_geom)
-            )
+            session.query(self.table, get_position(self.column, models.Channel.geom))
             .join(models.Channel, self.table.c.channel_id == models.Channel.id)
             .all(),
             key=lambda x: (x.channel_id, x[-1]),
@@ -881,7 +877,7 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
 
 
 class DefinedAreaCheck(BaseCheck):
-    """Check if the value in the 'area' column matches the surface area of 'the_geom'"""
+    """Check if the value in the 'area' column matches the surface area of 'geom'"""
 
     def __init__(self, *args, max_difference=1, **kwargs):
         super().__init__(*args, **kwargs)
