@@ -779,7 +779,6 @@ CHECKS += [
         error_code=107,
         column=models.ConnectionNode.exchange_level,
         filters=CONDITIONS["has_no_dem"]
-        .filter(models.ConnectionNode.visualisation != None)
         .filter(models.ModelSettings.manhole_aboveground_storage_area > 0)
         .exists(),
         invalid=Query(models.ConnectionNode).filter(
@@ -2614,16 +2613,15 @@ ref_cols = [
     models.Orifice.id,
     models.Culvert.id,
     models.Weir.id,
-    # TODO fix
-    # models.Pumpstation.id,
+    models.Pump.id,
 ]
 target_types = [
-    "v2_channel",
-    "v2_pipe",
-    "v2_orifice",
-    "v2_culvert",
-    "v2_weir",
-    # "v2_pumpstation",
+    "channel",
+    "pipe",
+    "orifice",
+    "culvert",
+    "weir",
+    "pump",
 ]
 for i, (ref_col, target_type) in enumerate(zip(ref_cols, target_types)):
     for control_table in (models.ControlMemory, models.ControlTable):
