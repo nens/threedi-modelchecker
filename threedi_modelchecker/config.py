@@ -874,33 +874,34 @@ CHECKS += [
 # TODO: fix -> moved to ConnectionNode
 
 CHECKS += [
-    # QueryCheck(
-    #     error_code=251,
-    #     level=CheckLevel.WARNING,
-    #     column=models.ConnectionNode.id,
-    #     invalid=Query(models.ConnectionNode)
-    #     .join(models.Manhole)
-    #     .filter(
-    #         models.Manhole.exchange_type == constants.CalculationTypeNode.ISOLATED,
-    #         models.ConnectionNode.id.notin_(
-    #             Query(models.Pipe.connection_node_id_start).union_all(
-    #                 Query(models.Pipe.connection_node_id_end),
-    #                 Query(models.Channel.connection_node_id_start),
-    #                 Query(models.Channel.connection_node_id_end),
-    #                 Query(models.Culvert.connection_node_id_start),
-    #                 Query(models.Culvert.connection_node_id_end),
-    #                 Query(models.Weir.connection_node_id_start),
-    #                 Query(models.Weir.connection_node_id_end),
-    #                 Query(models.Pumpstation.connection_node_id_start),
-    #                 Query(models.Pumpstation.connection_node_id_end),
-    #                 Query(models.Orifice.connection_node_id_start),
-    #                 Query(models.Orifice.connection_node_id_end),
-    #             )
-    #         ),
-    #     ),
-    #     message="This is an isolated connection node without connections. Connect it to either a pipe, "
-    #     "channel, culvert, weir, orifice or pumpstation.",
-    # ),
+    QueryCheck(
+        error_code=251,
+        level=CheckLevel.WARNING,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .filter(models.ConnectionNode.manhole_bottom_level != None)
+        .filter(
+            models.ConnectionNode.exchange_type
+            == constants.CalculationTypeNode.ISOLATED,
+            models.ConnectionNode.id.notin_(
+                Query(models.Pipe.connection_node_id_start).union_all(
+                    Query(models.Pipe.connection_node_id_end),
+                    Query(models.Channel.connection_node_id_start),
+                    Query(models.Channel.connection_node_id_end),
+                    Query(models.Culvert.connection_node_id_start),
+                    Query(models.Culvert.connection_node_id_end),
+                    Query(models.Weir.connection_node_id_start),
+                    Query(models.Weir.connection_node_id_end),
+                    Query(models.Pump.connection_node_id),
+                    Query(models.PumpMap.connection_node_id_end),
+                    Query(models.Orifice.connection_node_id_start),
+                    Query(models.Orifice.connection_node_id_end),
+                )
+            ),
+        ),
+        message="This is an isolated connection node without connections. Connect it to either a pipe, "
+        "channel, culvert, weir, orifice or pumpstation.",
+    ),
     QueryCheck(
         level=CheckLevel.WARNING,
         error_code=252,
@@ -947,34 +948,46 @@ CHECKS += [
         models.Weir,
     )
 ]
+# TODO: add check to ensure models.PumpMap.connection_node_id_end != models.Pump.connection_node_id
+CHECKS += [
+    QueryCheck(
+        error_code=255,
+        column=models.Pump.connection_node_id,
+        invalid=Query(models.Pump)
+        .join(models.PumpMap, models.PumpMap.pump_id == models.Pump.id)
+        .filter(
+            models.Pump.connection_node_id == models.PumpMap.connection_node_id_end
+        ),
+        message="a pump cannot be connected to itself (pump.connection_node_id must not equal pumpmap.connection_node_id_end)",
+    )
+]
 # TODO: fix -> moved to ConnectionNode
-# CHECKS += [
-#     QueryCheck(
-#         error_code=254,
-#         level=CheckLevel.ERROR,
-#         column=models.ConnectionNode.id,
-#         invalid=Query(models.ConnectionNode)
-#         .join(models.Manhole, isouter=True)
-#         .filter(
-#             models.Manhole.bottom_level == None,
-#             models.ConnectionNode.id.notin_(
-#                 Query(models.Pipe.connection_node_id_start).union_all(
-#                     Query(models.Pipe.connection_node_id_end),
-#                     Query(models.Channel.connection_node_id_start),
-#                     Query(models.Channel.connection_node_id_end),
-#                     Query(models.Culvert.connection_node_id_start),
-#                     Query(models.Culvert.connection_node_id_end),
-#                     Query(models.Weir.connection_node_id_start),
-#                     Query(models.Weir.connection_node_id_end),
-#                     Query(models.Orifice.connection_node_id_start),
-#                     Query(models.Orifice.connection_node_id_end),
-#                 )
-#             ),
-#         ),
-#         message="A connection node that is not connected to a pipe, "
-#         "channel, culvert, weir, or orifice must have a manhole with a bottom_level.",
-#     ),
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=254,
+        level=CheckLevel.ERROR,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .filter(models.ConnectionNode.manhole_bottom_level != None)
+        .filter(
+            models.ConnectionNode.id.notin_(
+                Query(models.Pipe.connection_node_id_start).union_all(
+                    Query(models.Pipe.connection_node_id_end),
+                    Query(models.Channel.connection_node_id_start),
+                    Query(models.Channel.connection_node_id_end),
+                    Query(models.Culvert.connection_node_id_start),
+                    Query(models.Culvert.connection_node_id_end),
+                    Query(models.Weir.connection_node_id_start),
+                    Query(models.Weir.connection_node_id_end),
+                    Query(models.Orifice.connection_node_id_start),
+                    Query(models.Orifice.connection_node_id_end),
+                )
+            ),
+        ),
+        message="A connection node that is not connected to a pipe, "
+        "channel, culvert, weir, or orifice must have a manhole with a bottom_level.",
+    ),
+]
 
 
 ## 026x: Exchange lines
