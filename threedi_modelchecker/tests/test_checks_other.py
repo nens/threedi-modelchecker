@@ -81,18 +81,18 @@ def test_connection_nodes_length(session):
         id=4, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
     ),
     factories.WeirFactory(
-        connection_node_start_id=1,
-        connection_node_end_id=2,
+        connection_node_id_start=1,
+        connection_node_id_end=2,
     )
     weir_too_short = factories.WeirFactory(
-        connection_node_start_id=3,
-        connection_node_end_id=4,
+        connection_node_id_start=3,
+        connection_node_id_end=4,
     )
 
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
-        start_node=models.Weir.connection_node_start_id,
-        end_node=models.Weir.connection_node_end_id,
+        start_node=models.Weir.connection_node_id_start,
+        end_node=models.Weir.connection_node_id_end,
         min_distance=0.05,
     )
 
@@ -103,14 +103,14 @@ def test_connection_nodes_length(session):
 
 def test_connection_nodes_length_missing_start_node(session):
     factories.ModelSettingsFactory(epsg_code=28992)
-    factories.WeirFactory(connection_node_start_id=1, connection_node_end_id=2)
+    factories.WeirFactory(connection_node_id_start=1, connection_node_id_end=2)
     factories.ConnectionNodeFactory(
         id=2, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
     )
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
-        start_node=models.Weir.connection_node_start_id,
-        end_node=models.Weir.connection_node_end_id,
+        start_node=models.Weir.connection_node_id_start,
+        end_node=models.Weir.connection_node_id_end,
         min_distance=0.05,
     )
 
@@ -122,15 +122,15 @@ def test_connection_nodes_length_missing_end_node(session):
     if session.bind.name == "postgresql":
         pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.ModelSettingsFactory(epsg_code=28992)
-    factories.WeirFactory(connection_node_start_id=1, connection_node_end_id=2)
+    factories.WeirFactory(connection_node_id_start=1, connection_node_id_end=2)
     factories.ConnectionNodeFactory(
         id=1, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
     )
 
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
-        start_node=models.Weir.connection_node_start_id,
-        end_node=models.Weir.connection_node_end_id,
+        start_node=models.Weir.connection_node_id_start,
+        end_node=models.Weir.connection_node_id_end,
         min_distance=0.05,
     )
 
@@ -144,8 +144,8 @@ def test_open_channels_with_nested_newton(session):
     factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(-71.064544 42.28787)")
     factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(-71.0645 42.287)")
     channel = factories.ChannelFactory(
-        connection_node_start_id=1,
-        connection_node_end_id=2,
+        connection_node_id_start=1,
+        connection_node_id_end=2,
         geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
     open_definition = factories.CrossSectionDefinitionFactory(
@@ -282,8 +282,8 @@ def test_channels_location_check(session, channel_geom):
     factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
     factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
     factories.ChannelFactory(
-        connection_node_start_id=1,
-        connection_node_end_id=2,
+        connection_node_id_start=1,
+        connection_node_id_end=2,
         geom=f"SRID=4326;{channel_geom}",
     )
 
@@ -304,8 +304,8 @@ def test_channels_location_check_invalid(session, channel_geom):
     factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
     factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
     factories.ChannelFactory(
-        connection_node_start_id=1,
-        connection_node_end_id=2,
+        connection_node_id_start=1,
+        connection_node_id_end=2,
         geom=f"SRID=4326;{channel_geom}",
     )
 

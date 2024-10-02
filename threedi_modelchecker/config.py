@@ -130,7 +130,7 @@ CONDITIONS = {
         | ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
     ),
     "has_manhole": Query(
-        models.ConnectionNode.manhole_indicator != None,
+        models.ConnectionNode.visualisation != None,
     ),
 }
 
@@ -440,10 +440,10 @@ CHECKS += [
         error_code=63,
         level=CheckLevel.WARNING,
         column=models.ConnectionNode.storage_area,
-        invalid=Query(models.ConnectionNode)
+        invalid=Query(models.ConnectionNode, models.Pump)
         .join(
             models.PumpMap,
-            models.PumpMap.connection_node_end_id == models.ConnectionNode.id,
+            models.PumpMap.connection_node_id_end == models.ConnectionNode.id,
         )
         .join(models.Pump, models.PumpMap.pump_id == models.Pump.id)
         .filter(models.ConnectionNode.storage_area != None)
@@ -481,7 +481,7 @@ CHECKS += [
             models.BoundaryCondition1D.connection_node_id
             == models.Pump.connection_node_id
             | models.BoundaryCondition1D.connection_node_id
-            == models.PumpMap.connection_node_end_id
+            == models.PumpMap.connection_node_id_end
         ),
         message="boundary_condition_1d cannot be connected to a pump",
     ),
@@ -688,39 +688,39 @@ CHECKS += [
 
 ## 01xx: LEVEL CHECKS
 # TODO: fix -> moved to ConnectionNode
-# CHECKS += [
-#     QueryCheck(
-#         level=CheckLevel.WARNING,
-#         error_code=102,
-#         column=table.invert_level_start_point,
-#         invalid=Query(table)
-#         .join(
-#             models.ConnectionNode,
-#             table.connection_node_start_id == models.ConnectionNode.id,
-#         )
-#         .join(models.Manhole)
-#         .filter(
-#             table.invert_level_start_point < models.Manhole.bottom_level,
-#         ),
-#         message=f"{table.__tablename__}.invert_level_start_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
-#     )
-#     for table in [models.Pipe, models.Culvert]
-# ]
+CHECKS += [
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=102,
+        column=table.invert_level_start,
+        invalid=Query(table)
+        .join(
+            models.ConnectionNode,
+            table.connection_node_id_start == models.ConnectionNode.id,
+        )
+        .filter(CONDITIONS["has_manhole"])
+        .filter(
+            table.invert_level_start < models.ConnectionNode.manhole_bottom_level,
+        ),
+        message=f"{table.__tablename__}.invert_level_start should be higher than or equal to connection_node.manhole_bottom_level. In the future, this will lead to an error.",
+    )
+    for table in [models.Pipe, models.Culvert]
+]
 # CHECKS += [
 #     QueryCheck(
 #         level=CheckLevel.WARNING,
 #         error_code=103,
-#         column=table.invert_level_end_point,
+#         column=table.invert_level_end,
 #         invalid=Query(table)
 #         .join(
 #             models.ConnectionNode,
-#             table.connection_node_end_id == models.ConnectionNode.id,
+#             table.connection_node_id_end == models.ConnectionNode.id,
 #         )
 #         .join(models.Manhole)
 #         .filter(
-#             table.invert_level_end_point < models.Manhole.bottom_level,
+#             table.invert_level_end < models.Manhole.bottom_level,
 #         ),
-#         message=f"{table.__tablename__}.invert_level_end_point should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
+#         message=f"{table.__tablename__}.invert_level_end should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
 #     )
 #     for table in [models.Pipe, models.Culvert]
 # ]
@@ -732,7 +732,7 @@ CHECKS += [
 #         invalid=Query(models.Pumpstation)
 #         .join(
 #             models.ConnectionNode,
-#             models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+#             models.Pumpstation.connection_node_id_start == models.ConnectionNode.id,
 #         )
 #         .join(models.Manhole)
 #         .filter(
@@ -749,7 +749,7 @@ CHECKS += [
 #         invalid=Query(models.Pumpstation)
 #         .join(
 #             models.ConnectionNode,
-#             models.Pumpstation.connection_node_end_id == models.ConnectionNode.id,
+#             models.Pumpstation.connection_node_id_end == models.ConnectionNode.id,
 #         )
 #         .join(models.Manhole)
 #         .filter(
@@ -796,8 +796,8 @@ CHECKS += [
 #         invalid=Query(table)
 #         .join(
 #             models.ConnectionNode,
-#             (table.connection_node_start_id == models.ConnectionNode.id)
-#             | (table.connection_node_end_id == models.ConnectionNode.id),
+#             (table.connection_node_id_start == models.ConnectionNode.id)
+#             | (table.connection_node_id_end == models.ConnectionNode.id),
 #         )
 #         .join(models.Manhole)
 #         .filter(
@@ -834,8 +834,8 @@ CHECKS += [
         error_code=203,
         level=CheckLevel.WARNING,
         column=models.Pipe.id,
-        start_node=models.Pipe.connection_node_start_id,
-        end_node=models.Pipe.connection_node_end_id,
+        start_node=models.Pipe.connection_node_id_start,
+        end_node=models.Pipe.connection_node_id_end,
         min_distance=5.0,
         recommended_distance=5.0,
     )
@@ -846,8 +846,8 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=table.id,
         filters=table.crest_type == constants.CrestType.BROAD_CRESTED,
-        start_node=table.connection_node_start_id,
-        end_node=table.connection_node_end_id,
+        start_node=table.connection_node_id_start,
+        end_node=table.connection_node_id_end,
         min_distance=5.0,
         recommended_distance=5.0,
     )
@@ -882,18 +882,18 @@ CHECKS += [
     #     .filter(
     #         models.Manhole.exchange_type == constants.CalculationTypeNode.ISOLATED,
     #         models.ConnectionNode.id.notin_(
-    #             Query(models.Pipe.connection_node_start_id).union_all(
-    #                 Query(models.Pipe.connection_node_end_id),
-    #                 Query(models.Channel.connection_node_start_id),
-    #                 Query(models.Channel.connection_node_end_id),
-    #                 Query(models.Culvert.connection_node_start_id),
-    #                 Query(models.Culvert.connection_node_end_id),
-    #                 Query(models.Weir.connection_node_start_id),
-    #                 Query(models.Weir.connection_node_end_id),
-    #                 Query(models.Pumpstation.connection_node_start_id),
-    #                 Query(models.Pumpstation.connection_node_end_id),
-    #                 Query(models.Orifice.connection_node_start_id),
-    #                 Query(models.Orifice.connection_node_end_id),
+    #             Query(models.Pipe.connection_node_id_start).union_all(
+    #                 Query(models.Pipe.connection_node_id_end),
+    #                 Query(models.Channel.connection_node_id_start),
+    #                 Query(models.Channel.connection_node_id_end),
+    #                 Query(models.Culvert.connection_node_id_start),
+    #                 Query(models.Culvert.connection_node_id_end),
+    #                 Query(models.Weir.connection_node_id_start),
+    #                 Query(models.Weir.connection_node_id_end),
+    #                 Query(models.Pumpstation.connection_node_id_start),
+    #                 Query(models.Pumpstation.connection_node_id_end),
+    #                 Query(models.Orifice.connection_node_id_start),
+    #                 Query(models.Orifice.connection_node_id_end),
     #             )
     #         ),
     #     ),
@@ -907,7 +907,7 @@ CHECKS += [
         invalid=Query(models.Pipe)
         .join(
             models.ConnectionNode,
-            models.Pipe.connection_node_start_id == models.ConnectionNode.id,
+            models.Pipe.connection_node_id_start == models.ConnectionNode.id,
         )
         .filter(
             models.Pipe.exchange_type == constants.PipeCalculationType.ISOLATED,
@@ -917,7 +917,7 @@ CHECKS += [
             Query(models.Pipe)
             .join(
                 models.ConnectionNode,
-                models.Pipe.connection_node_end_id == models.ConnectionNode.id,
+                models.Pipe.connection_node_id_end == models.ConnectionNode.id,
             )
             .filter(
                 models.Pipe.exchange_type == constants.PipeCalculationType.ISOLATED,
@@ -930,11 +930,11 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=253,
-        column=table.connection_node_end_id,
+        column=table.connection_node_id_end,
         invalid=Query(table).filter(
-            table.connection_node_start_id == table.connection_node_end_id
+            table.connection_node_id_start == table.connection_node_id_end
         ),
-        message=f"a {table.__tablename__} cannot be connected to itself (connection_node_start_id must not equal connection_node_end_id)",
+        message=f"a {table.__tablename__} cannot be connected to itself (connection_node_id_start must not equal connection_node_id_end)",
     )
     for table in (
         models.Channel,
@@ -957,16 +957,16 @@ CHECKS += [
 #         .filter(
 #             models.Manhole.bottom_level == None,
 #             models.ConnectionNode.id.notin_(
-#                 Query(models.Pipe.connection_node_start_id).union_all(
-#                     Query(models.Pipe.connection_node_end_id),
-#                     Query(models.Channel.connection_node_start_id),
-#                     Query(models.Channel.connection_node_end_id),
-#                     Query(models.Culvert.connection_node_start_id),
-#                     Query(models.Culvert.connection_node_end_id),
-#                     Query(models.Weir.connection_node_start_id),
-#                     Query(models.Weir.connection_node_end_id),
-#                     Query(models.Orifice.connection_node_start_id),
-#                     Query(models.Orifice.connection_node_end_id),
+#                 Query(models.Pipe.connection_node_id_start).union_all(
+#                     Query(models.Pipe.connection_node_id_end),
+#                     Query(models.Channel.connection_node_id_start),
+#                     Query(models.Channel.connection_node_id_end),
+#                     Query(models.Culvert.connection_node_id_start),
+#                     Query(models.Culvert.connection_node_id_end),
+#                     Query(models.Weir.connection_node_id_start),
+#                     Query(models.Weir.connection_node_id_end),
+#                     Query(models.Orifice.connection_node_id_start),
+#                     Query(models.Orifice.connection_node_id_end),
 #                 )
 #             ),
 #         ),

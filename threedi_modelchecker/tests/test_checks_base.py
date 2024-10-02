@@ -67,12 +67,10 @@ def test_fk_check_no_entries(session):
 @pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_fk_check_null_fk(session):
     conn_node = factories.ConnectionNodeFactory()
-    factories.ManholeFactory.create_batch(5, manhole_indicator=conn_node.id)
-    factories.ManholeFactory(manhole_indicator=None)
+    factories.ManholeFactory.create_batch(5, visualisation=conn_node.id)
+    factories.ManholeFactory(visualisation=None)
 
-    fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id, models.Manhole.manhole_indicator
-    )
+    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Manhole.visualisation)
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -80,12 +78,10 @@ def test_fk_check_null_fk(session):
 @pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_fk_check_missing_fk(session):
     conn_node = factories.ConnectionNodeFactory()
-    factories.ManholeFactory.create_batch(5, manhole_indicator=conn_node.id)
-    missing_fk = factories.ManholeFactory(manhole_indicator=-1)
+    factories.ManholeFactory.create_batch(5, visualisation=conn_node.id)
+    missing_fk = factories.ManholeFactory(visualisation=-1)
 
-    fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id, models.Manhole.manhole_indicator
-    )
+    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Manhole.visualisation)
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 1
     assert invalid_rows[0].id == missing_fk.id
@@ -460,7 +456,7 @@ def test_query_check_with_joins(session):
         Query(models.Pumpstation)
         .join(
             models.ConnectionNode,
-            models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+            models.Pumpstation.connection_node_id_start == models.ConnectionNode.id,
         )
         .join(models.Manhole)
         .filter(
@@ -495,7 +491,7 @@ def test_query_check_on_pumpstation(session):
         Query(models.Pumpstation)
         .join(
             models.ConnectionNode,
-            models.Pumpstation.connection_node_start_id
+            models.Pumpstation.connection_node_id_start
             == models.ConnectionNode.id,  # noqa: E501
         )
         .join(

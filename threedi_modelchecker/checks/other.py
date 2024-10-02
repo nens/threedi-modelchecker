@@ -403,10 +403,10 @@ class ChannelManholeLevelCheck(BaseCheck):
         """
         if self.nodes_to_check == "start":
             func_agg = func.MIN
-            connection_node_id_col = models.Channel.connection_node_start_id
+            connection_node_id_col = models.Channel.connection_node_id_start
         else:
             func_agg = func.MAX
-            connection_node_id_col = models.Channel.connection_node_end_id
+            connection_node_id_col = models.Channel.connection_node_id_end
 
         channels_with_cs_locations = (
             session.query(
@@ -534,8 +534,8 @@ class LinestringLocationCheck(BaseCheck):
         end_ok_if_reversed = distance(start_point, end_node.geom) <= tol
         return (
             self.to_check(session)
-            .join(start_node, start_node.id == self.table.c.connection_node_start_id)
-            .join(end_node, end_node.id == self.table.c.connection_node_end_id)
+            .join(start_node, start_node.id == self.table.c.connection_node_id_start)
+            .join(end_node, end_node.id == self.table.c.connection_node_id_end)
             .filter(
                 ~(start_ok & end_ok),
                 ~(start_ok_if_reversed & end_ok_if_reversed),
@@ -568,12 +568,12 @@ class BoundaryCondition1DObjectNumberCheck(BaseCheck):
             ]:
                 total_objects += (
                     session.query(table)
-                    .filter(table.connection_node_start_id == bc.connection_node_id)
+                    .filter(table.connection_node_id_start == bc.connection_node_id)
                     .count()
                 )
                 total_objects += (
                     session.query(table)
-                    .filter(table.connection_node_end_id == bc.connection_node_id)
+                    .filter(table.connection_node_id_end == bc.connection_node_id)
                     .count()
                 )
             if total_objects != 1:

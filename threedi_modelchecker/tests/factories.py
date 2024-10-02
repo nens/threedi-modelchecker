@@ -84,8 +84,8 @@ class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
     friction_value = 2.0
     friction_type = constants.FrictionType.CHEZY
     sewerage = False
-    connection_node_start_id = 1
-    connection_node_end_id = 1
+    connection_node_id_start = 1
+    connection_node_id_end = 1
     geom = "SRID=4326;LINESTRING(4.885534714757985 52.38513158257129,4.88552805617346 52.38573773758626)"
 
 
@@ -279,8 +279,8 @@ class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
     friction_value = 0.03
     friction_type = 2
-    invert_level_start_point = 0.1
-    invert_level_end_point = 1.1
+    invert_level_start = 0.1
+    invert_level_end = 1.1
     # cross_section_definition = factory.SubFactory(CrossSectionDefinitionFactory)
     discharge_coefficient_negative = 1.0
     discharge_coefficient_positive = 1.0
