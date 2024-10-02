@@ -55,7 +55,10 @@ class CrossSectionLocationCheck(BaseCheck):
         # get all channels with more than 1 cross section location
         return (
             self.to_check(session)
-            .join(models.Channel, models.Channel.id == models.CrossSectionLocation.channel_id)
+            .join(
+                models.Channel,
+                models.Channel.id == models.CrossSectionLocation.channel_id,
+            )
             .filter(
                 distance(models.CrossSectionLocation.geom, models.Channel.geom)
                 > self.max_distance
@@ -301,8 +304,8 @@ class ConnectionNodesLength(BaseCheck):
         end_node = aliased(models.ConnectionNode)
         q = (
             self.to_check(session)
-            .join(start_node, start_node.id==self.start_node)
-            .join(end_node, end_node.id==self.end_node)
+            .join(start_node, start_node.id == self.start_node)
+            .join(end_node, end_node.id == self.end_node)
             .filter(distance(start_node.geom, end_node.geom) < self.min_distance)
         )
         return list(q.with_session(session).all())
@@ -690,10 +693,10 @@ class PumpStorageTimestepCheck(BaseCheck):
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         return (
-            session.query(models.Pumpstation)
+            session.query(models.Pump)
             .join(
                 models.ConnectionNode,
-                models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+                models.Pump.connection_node_id == models.ConnectionNode.id,
             )
             .filter(
                 (models.ConnectionNode.storage_area != None)
@@ -705,13 +708,10 @@ class PumpStorageTimestepCheck(BaseCheck):
                             # conditional type cast, no invalid results would be returned
                             # even if the storage_area was set to None.
                             models.ConnectionNode.storage_area
-                            * (
-                                models.Pumpstation.start_level
-                                - models.Pumpstation.lower_stop_level
-                            )
+                            * (models.Pump.start_level - models.Pump.lower_stop_level)
                         )
                     )
-                    / (models.Pumpstation.capacity / 1000)
+                    / (models.Pump.capacity / 1000)
                     < Query(models.TimeStepSettings.time_step).scalar_subquery()
                 )
             )

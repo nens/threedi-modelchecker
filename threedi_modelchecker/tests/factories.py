@@ -111,19 +111,19 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
-# class PumpstationFactory(factory.alchemy.SQLAlchemyModelFactory):
-#     class Meta:
-#         model = models.Pumpstation
-#         sqlalchemy_session = None
-#
-#     code = "code"
-#     display_name = "display_name"
-#     sewerage = False
-#     type_ = constants.PumpType.DELIVERY_SIDE
-#     start_level = 1.0
-#     lower_stop_level = 0.0
-#     capacity = 5.0
-#     connection_node_start = factory.SubFactory(ConnectionNodeFactory)
+class PumpFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.Pump
+        sqlalchemy_session = None
+
+    code = "code"
+    display_name = "display_name"
+    sewerage = False
+    type_ = constants.PumpType.DELIVERY_SIDE
+    start_level = 1.0
+    lower_stop_level = 0.0
+    capacity = 5.0
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
 # class CrossSectionDefinitionFactory(factory.alchemy.SQLAlchemyModelFactory):

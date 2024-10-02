@@ -47,7 +47,7 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,; AllPresentFixedVegetationParameters,; AllPresentVariableVegetationParameters,; ChannelManholeLevelCheck,; CrossSectionSameConfigurationCheck,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,; PumpStorageTimestepCheck,
+from .checks.other import (  # Use0DFlowCheck,; AllPresentFixedVegetationParameters,; AllPresentVariableVegetationParameters,; ChannelManholeLevelCheck,; CrossSectionSameConfigurationCheck,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,,
     BetaColumnsCheck,
     BetaValuesCheck,
     BoundaryCondition1DObjectNumberCheck,
@@ -62,6 +62,7 @@ from .checks.other import (  # Use0DFlowCheck,; AllPresentFixedVegetationParamet
     NodeSurfaceConnectionsCheck,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
+    PumpStorageTimestepCheck,
     SpatialIndexCheck,
     SurfaceNodeInflowAreaCheck,
     TagsValidCheck,
@@ -418,59 +419,58 @@ CHECKS += [
 
 ## 006x: PUMPSTATIONS
 # TODO: fix
-# CHECKS += [
-#     QueryCheck(
-#         error_code=61,
-#         column=models.Pumpstation.upper_stop_level,
-#         invalid=Query(models.Pumpstation).filter(
-#             models.Pumpstation.upper_stop_level <= models.Pumpstation.start_level,
-#         ),
-#         message="v2_pumpstation.upper_stop_level should be greater than v2_pumpstation.start_level",
-#     ),
-#     QueryCheck(
-#         error_code=62,
-#         column=models.Pumpstation.lower_stop_level,
-#         invalid=Query(models.Pumpstation).filter(
-#             models.Pumpstation.lower_stop_level >= models.Pumpstation.start_level,
-#         ),
-#         message="v2_pumpstation.lower_stop_level should be less than v2_pumpstation.start_level",
-#     ),
-#     QueryCheck(
-#         error_code=63,
-#         level=CheckLevel.WARNING,
-#         column=models.ConnectionNode.storage_area,
-#         invalid=Query(models.ConnectionNode)
-#         .join(
-#             models.Pumpstation,
-#             models.Pumpstation.connection_node_end_id == models.ConnectionNode.id,
-#         )
-#         .filter(models.ConnectionNode.storage_area != None)
-#         .filter(
-#             models.ConnectionNode.storage_area * 1000 <= models.Pumpstation.capacity
-#         ),
-#         message=(
-#             "v2_connection_nodes.storage_area * 1000 for each pumpstation's end connection node must be greater than v2_pumpstation.capacity; "
-#             + "water level should not rise >= 1 m in one second"
-#         ),
-#     ),
-#     RangeCheck(
-#         error_code=64,
-#         column=models.Pumpstation.capacity,
-#         min_value=0,
-#     ),
-#     QueryCheck(
-#         error_code=65,
-#         level=CheckLevel.WARNING,
-#         column=models.Pumpstation.capacity,
-#         invalid=Query(models.Pumpstation).filter(models.Pumpstation.capacity == 0.0),
-#         message="v2_pumpstation.capacity should be be greater than 0",
-#     ),
-#     PumpStorageTimestepCheck(
-#         error_code=66,
-#         level=CheckLevel.WARNING,
-#         column=models.Pumpstation.capacity,
-#     ),
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=61,
+        column=models.Pump.upper_stop_level,
+        invalid=Query(models.Pump).filter(
+            models.Pump.upper_stop_level <= models.Pump.start_level,
+        ),
+        message="pump.upper_stop_level should be greater than pump.start_level",
+    ),
+    QueryCheck(
+        error_code=62,
+        column=models.Pump.lower_stop_level,
+        invalid=Query(models.Pump).filter(
+            models.Pump.lower_stop_level >= models.Pump.start_level,
+        ),
+        message="pump.lower_stop_level should be less than pump.start_level",
+    ),
+    QueryCheck(
+        error_code=63,
+        level=CheckLevel.WARNING,
+        column=models.ConnectionNode.storage_area,
+        invalid=Query(models.ConnectionNode)
+        .join(
+            models.PumpMap,
+            models.PumpMap.connection_node_end_id == models.ConnectionNode.id,
+        )
+        .join(models.Pump, models.PumpMap.pump_id == models.Pump.id)
+        .filter(models.ConnectionNode.storage_area != None)
+        .filter(models.ConnectionNode.storage_area * 1000 <= models.Pump.capacity),
+        message=(
+            "connection_node.storage_area * 1000 for each pump's end connection node must be greater than pump.capacity; "
+            + "water level should not rise >= 1 m in one second"
+        ),
+    ),
+    RangeCheck(
+        error_code=64,
+        column=models.Pump.capacity,
+        min_value=0,
+    ),
+    QueryCheck(
+        error_code=65,
+        level=CheckLevel.WARNING,
+        column=models.Pump.capacity,
+        invalid=Query(models.Pump).filter(models.Pump.capacity == 0.0),
+        message="pump.capacity should be be greater than 0",
+    ),
+    PumpStorageTimestepCheck(
+        error_code=66,
+        level=CheckLevel.WARNING,
+        column=models.Pump.capacity,
+    ),
+]
 
 ## 007x: BOUNDARY CONDITIONS
 # TODO: fix

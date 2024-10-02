@@ -7,28 +7,28 @@ from threedi_schema import constants, models, ThreediDatabase
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
 from threedi_modelchecker.checks.other import (
-    # AllPresentFixedVegetationParameters,
-    # AllPresentVariableVegetationParameters,
+    AllPresentFixedVegetationParameters,
+    AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
-    # ChannelManholeLevelCheck,
+    ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
     ControlTableActionTableCheckDefault,
     ControlTableActionTableCheckDischargeCoefficients,
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
-    # CrossSectionSameConfigurationCheck,
+    CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
-    # FeatureClosedCrossSectionCheck,
+    FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
-    # OpenChannelsWithNestedNewton,
+    OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
-    # PumpStorageTimestepCheck,
+    PumpStorageTimestepCheck,
     SpatialIndexCheck,
     SurfaceNodeInflowAreaCheck,
     TagsValidCheck,
@@ -72,21 +72,13 @@ def test_aggregation_settings(
 
 def test_connection_nodes_length(session):
     factories.ModelSettingsFactory(epsg_code=28992)
+    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(-71.064544 42.28787)")
+    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(-71.0645 42.287)")
     factories.ConnectionNodeFactory(
-        id=1,
-        geom="SRID=4326;POINT(-71.064544 42.28787)"
-    )
-    factories.ConnectionNodeFactory(
-        id=2,
-        geom="SRID=4326;POINT(-71.0645 42.287)"
-    )
-    factories.ConnectionNodeFactory(
-        id=3,
-        geom="SRID=4326;POINT(-0.38222938832999598 -0.13872236685816669)"
+        id=3, geom="SRID=4326;POINT(-0.38222938832999598 -0.13872236685816669)"
     ),
     factories.ConnectionNodeFactory(
-        id=4,
-        geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
+        id=4, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
     ),
     factories.WeirFactory(
         connection_node_start_id=1,
@@ -111,13 +103,9 @@ def test_connection_nodes_length(session):
 
 def test_connection_nodes_length_missing_start_node(session):
     factories.ModelSettingsFactory(epsg_code=28992)
-    factories.WeirFactory(
-        connection_node_start_id=1,
-        connection_node_end_id=2
-    )
+    factories.WeirFactory(connection_node_start_id=1, connection_node_end_id=2)
     factories.ConnectionNodeFactory(
-        id=2,
-        geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
+        id=2, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
     )
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
@@ -134,13 +122,9 @@ def test_connection_nodes_length_missing_end_node(session):
     if session.bind.name == "postgresql":
         pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.ModelSettingsFactory(epsg_code=28992)
-    factories.WeirFactory(
-        connection_node_start_id=1,
-        connection_node_end_id=2
-    )
+    factories.WeirFactory(connection_node_start_id=1, connection_node_end_id=2)
     factories.ConnectionNodeFactory(
-        id=1,
-        geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
+        id=1, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
     )
 
     check_length = ConnectionNodesLength(
@@ -157,14 +141,8 @@ def test_connection_nodes_length_missing_end_node(session):
 @pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_open_channels_with_nested_newton(session):
     factories.NumericalSettingsFactory(use_nested_newton=0)
-    factories.ConnectionNodeFactory(
-        id=1,
-        geom="SRID=4326;POINT(-71.064544 42.28787)"
-    )
-    factories.ConnectionNodeFactory(
-        id=2,
-        geom="SRID=4326;POINT(-71.0645 42.287)"
-    )
+    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(-71.064544 42.28787)")
+    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(-71.0645 42.287)")
     channel = factories.ChannelFactory(
         connection_node_start_id=1,
         connection_node_end_id=2,
@@ -277,9 +255,9 @@ def test_node_distance(session):
     # sanity check to see the distances between the nodes
     node_a = aliased(models.ConnectionNode)
     node_b = aliased(models.ConnectionNode)
-    distances_query = Query(
-        func.ST_Distance(node_a.geom, node_b.geom, 1)
-    ).filter(node_a.id != node_b.id)
+    distances_query = Query(func.ST_Distance(node_a.geom, node_b.geom, 1)).filter(
+        node_a.id != node_b.id
+    )
     # Shows the distances between all 3 nodes: node 1 and 2 are too close
     distances_query.with_session(session).all()
 
@@ -301,18 +279,12 @@ def test_node_distance(session):
     ],
 )
 def test_channels_location_check(session, channel_geom):
-    factories.ConnectionNodeFactory(
-        id=1,
-        geom="SRID=4326;POINT(5.387204 52.155172)"
-    )
-    factories.ConnectionNodeFactory(
-        id=2,
-        geom="SRID=4326;POINT(5.387204 52.155262)"
-    )
+    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
+    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
     factories.ChannelFactory(
         connection_node_start_id=1,
         connection_node_end_id=2,
-        geom=f"SRID=4326;{channel_geom}"
+        geom=f"SRID=4326;{channel_geom}",
     )
 
     errors = LinestringLocationCheck(
@@ -329,14 +301,8 @@ def test_channels_location_check(session, channel_geom):
     ],
 )
 def test_channels_location_check_invalid(session, channel_geom):
-    factories.ConnectionNodeFactory(
-        id=1,
-        geom="SRID=4326;POINT(5.387204 52.155172)"
-    )
-    factories.ConnectionNodeFactory(
-        id=2,
-        geom="SRID=4326;POINT(5.387204 52.155262)"
-    )
+    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
+    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
     factories.ChannelFactory(
         connection_node_start_id=1,
         connection_node_end_id=2,
@@ -460,9 +426,7 @@ def test_spatial_index_ok(session):
 
 def test_spatial_index_disabled(empty_sqlite_v4):
     session = empty_sqlite_v4.get_session()
-    session.execute(
-        text("SELECT DisableSpatialIndex('v2_connection_nodes', 'geom')")
-    )
+    session.execute(text("SELECT DisableSpatialIndex('v2_connection_nodes', 'geom')"))
     check = SpatialIndexCheck(models.ConnectionNode.geom)
     invalid = check.get_invalid(session)
     assert len(invalid) == 1
@@ -536,7 +500,6 @@ def test_potential_breach_interdistance_other_channel(session):
     assert len(invalid) == 0
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 @pytest.mark.parametrize(
     "storage_area,time_step,expected_result,capacity",
     [
@@ -549,15 +512,15 @@ def test_potential_breach_interdistance_other_channel(session):
 def test_pumpstation_storage_timestep(
     session, storage_area, time_step, expected_result, capacity
 ):
-    connection_node = factories.ConnectionNodeFactory(storage_area=storage_area)
-    factories.PumpstationFactory(
-        connection_node_start=connection_node,
+    factories.ConnectionNodeFactory(storage_area=storage_area, id=1)
+    factories.PumpFactory(
+        connection_node_id=1,
         start_level=-4,
         lower_stop_level=-4.78,
         capacity=capacity,
     )
     factories.TimeStepSettingsFactory(time_step=time_step)
-    check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
+    check = PumpStorageTimestepCheck(models.Pump.capacity)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
