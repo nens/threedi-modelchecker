@@ -473,7 +473,6 @@ CHECKS += [
 ]
 
 ## 007x: BOUNDARY CONDITIONS
-# TODO: fix
 CHECKS += [
     QueryCheck(
         error_code=71,
@@ -535,32 +534,27 @@ CHECKS += [
 
 ## 008x: CROSS SECTION DEFINITIONS
 # TODO: fix
-# CHECKS += [
-#     QueryCheck(
-#         error_code=80,
-#         column=models.CrossSectionLocation.friction_value,
-#         invalid=(
-#             Query(models.CrossSectionDefinition)
-#             .filter(
-#                 models.CrossSectionDefinition.shape
-#                 == constants.CrossSectionShape.TABULATED_YZ
-#             )
-#             .join(
-#                 models.CrossSectionLocation,
-#                 models.CrossSectionLocation.definition_id
-#                 == models.CrossSectionDefinition.id,
-#             )
-#             .filter(models.CrossSectionLocation.friction_value == None)
-#             .filter(
-#                 (models.CrossSectionDefinition.friction_values == None)
-#                 | (models.CrossSectionDefinition.friction_values == "")
-#             )
-#         ),
-#         message=f"Either {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
-#         f"or {models.CrossSectionDefinition.friction_values.table.name}.{models.CrossSectionDefinition.friction_values.name}"
-#         f"must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
-#     )
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=80,
+        column=models.CrossSectionLocation.friction_value,
+        invalid=(
+            Query(models.CrossSectionLocation)
+            .filter(
+                models.CrossSectionLocation.cross_section_shape
+                == constants.CrossSectionShape.TABULATED_YZ
+            )
+            .filter(models.CrossSectionLocation.friction_value == None)
+            .filter(
+                (models.CrossSectionLocation.cross_section_friction_values == None)
+                | (models.CrossSectionLocation.cross_section_friction_values == "")
+            )
+        ),
+        message=f"Either {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
+        f"or {models.CrossSectionLocation.cross_section_friction_values.table.name}.{models.CrossSectionLocation.cross_section_friction_values.name}"
+        f"must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
+    )
+]
 # CHECKS += [
 #     CrossSectionNullCheck(
 #         error_code=81,
