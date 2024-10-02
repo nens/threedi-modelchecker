@@ -129,9 +129,6 @@ CONDITIONS = {
         models.GroundWater.groundwater_hydraulic_conductivity.isnot(None)
         | ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
     ),
-    "has_manhole": Query(
-        models.ConnectionNode.visualisation != None,
-    ),
 }
 
 nr_grid_levels = Query(models.ModelSettings.nr_grid_levels).scalar_subquery()
@@ -356,7 +353,7 @@ CHECKS += [
         error_code=44,
         column=models.ConnectionNode.storage_area,
         invalid=Query(models.ConnectionNode).filter(
-            CONDITIONS["has_manhole"],
+            models.ConnectionNode.visualisation != None,
             models.ConnectionNode.storage_area < 0,
         ),
         message="connection_nodes.storage_area for manhole connection node should greater than or equal to 0",
@@ -698,7 +695,7 @@ CHECKS += [
             models.ConnectionNode,
             table.connection_node_id_start == models.ConnectionNode.id,
         )
-        .filter(CONDITIONS["has_manhole"])
+        .filter(models.ConnectionNode.visualisation != None)
         .filter(
             table.invert_level_start < models.ConnectionNode.manhole_bottom_level,
         ),
@@ -706,107 +703,111 @@ CHECKS += [
     )
     for table in [models.Pipe, models.Culvert]
 ]
-# CHECKS += [
-#     QueryCheck(
-#         level=CheckLevel.WARNING,
-#         error_code=103,
-#         column=table.invert_level_end,
-#         invalid=Query(table)
-#         .join(
-#             models.ConnectionNode,
-#             table.connection_node_id_end == models.ConnectionNode.id,
-#         )
-#         .join(models.Manhole)
-#         .filter(
-#             table.invert_level_end < models.Manhole.bottom_level,
-#         ),
-#         message=f"{table.__tablename__}.invert_level_end should be higher than or equal to v2_manhole.bottom_level. In the future, this will lead to an error.",
-#     )
-#     for table in [models.Pipe, models.Culvert]
-# ]
-# CHECKS += [
-#     QueryCheck(
-#         level=CheckLevel.WARNING,
-#         error_code=104,
-#         column=models.Pumpstation.lower_stop_level,
-#         invalid=Query(models.Pumpstation)
-#         .join(
-#             models.ConnectionNode,
-#             models.Pumpstation.connection_node_id_start == models.ConnectionNode.id,
-#         )
-#         .join(models.Manhole)
-#         .filter(
-#             models.Pumpstation.type_ == constants.PumpType.SUCTION_SIDE,
-#             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
-#         ),
-#         message="v2_pumpstation.lower_stop_level should be higher than "
-#         "v2_manhole.bottom_level. In the future, this will lead to an error.",
-#     ),
-#     QueryCheck(
-#         level=CheckLevel.WARNING,
-#         error_code=105,
-#         column=models.Pumpstation.lower_stop_level,
-#         invalid=Query(models.Pumpstation)
-#         .join(
-#             models.ConnectionNode,
-#             models.Pumpstation.connection_node_id_end == models.ConnectionNode.id,
-#         )
-#         .join(models.Manhole)
-#         .filter(
-#             models.Pumpstation.type_ == constants.PumpType.DELIVERY_SIDE,
-#             models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
-#         ),
-#         message="v2_pumpstation.lower_stop_level should be higher than "
-#         "v2_manhole.bottom_level. In the future, this will lead to an error.",
-#     ),
-#     QueryCheck(
-#         level=CheckLevel.WARNING,
-#         error_code=106,
-#         column=models.Manhole.bottom_level,
-#         invalid=Query(models.Manhole).filter(
-#             models.Manhole.drain_level < models.Manhole.bottom_level,
-#             models.Manhole.exchange_type.in_(
-#                 [constants.CalculationTypeNode.CONNECTED]
-#             ),
-#         ),
-#         message="v2_manhole.drain_level >= v2_manhole.bottom_level when "
-#         "v2_manhole.exchange_type is CONNECTED. In the future, this will lead to an error.",
-#     ),
-#     QueryCheck(
-#         level=CheckLevel.WARNING,
-#         error_code=107,
-#         column=models.Manhole.drain_level,
-#         filters=CONDITIONS["has_no_dem"]
-#         .filter(models.ModelSettings.manhole_aboveground_storage_area > 0)
-#         .exists(),
-#         invalid=Query(models.Manhole).filter(
-#             models.Manhole.exchange_type.in_(
-#                 [constants.CalculationTypeNode.CONNECTED]
-#             ),
-#             models.Manhole.drain_level == None,
-#         ),
-#         message="v2_manhole.drain_level cannot be null when using sub-basins (model_settings.manhole_aboveground_storage_area > 0) and no DEM is supplied.",
-#     ),
-# ]
-# CHECKS += [
-#     QueryCheck(
-#         level=CheckLevel.WARNING,
-#         error_code=108,
-#         column=table.crest_level,
-#         invalid=Query(table)
-#         .join(
-#             models.ConnectionNode,
-#             (table.connection_node_id_start == models.ConnectionNode.id)
-#             | (table.connection_node_id_end == models.ConnectionNode.id),
-#         )
-#         .join(models.Manhole)
-#         .filter(
-#             table.crest_level < models.Manhole.bottom_level,
-#         ),
-#         message=f"{table.__tablename__}.crest_level should be higher than or equal to v2_manhole.bottom_level for all the connected manholes.",
-#     )
-#     for table in [models.Weir, models.Orifice]
-# ]
+CHECKS += [
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=103,
+        column=table.invert_level_end,
+        invalid=Query(table)
+        .join(
+            models.ConnectionNode,
+            table.connection_node_id_end == models.ConnectionNode.id,
+        )
+        .filter(models.ConnectionNode.visualisation != None)
+        .filter(
+            table.invert_level_end < models.ConnectionNode.manhole_bottom_level,
+        ),
+        message=f"{table.__tablename__}.invert_level_end should be higher than or equal to connection_node.bottom_level. In the future, this will lead to an error.",
+    )
+    for table in [models.Pipe, models.Culvert]
+]
+CHECKS += [
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=104,
+        column=models.Pump.lower_stop_level,
+        invalid=Query(models.Pump)
+        .join(
+            models.ConnectionNode,
+            models.Pump.connection_node_id == models.ConnectionNode.id,
+        )
+        .filter(models.ConnectionNode.visualisation != None)
+        .filter(
+            models.Pump.type_ == constants.PumpType.SUCTION_SIDE,
+            models.Pump.lower_stop_level <= models.ConnectionNode.manhole_bottom_level,
+        ),
+        message="pump.lower_stop_level should be higher than "
+        "connection_node.manhole_bottom_level. In the future, this will lead to an error.",
+    ),
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=105,
+        column=models.Pump.lower_stop_level,
+        invalid=Query(models.Pump)
+        .join(
+            models.ConnectionNode,
+            models.Pump.connection_node_id == models.ConnectionNode.id,
+        )
+        .filter(models.ConnectionNode.visualisation != None)
+        .filter(
+            models.Pump.type_ == constants.PumpType.DELIVERY_SIDE,
+            models.Pump.lower_stop_level <= models.ConnectionNode.manhole_bottom_level,
+        ),
+        message="pump.lower_stop_level should be higher than "
+        "connection_node.manhole_bottom_level. In the future, this will lead to an error.",
+    ),
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=106,
+        column=models.ConnectionNode.manhole_bottom_level,
+        invalid=Query(models.ConnectionNode)
+        .filter(models.ConnectionNode.visualisation != None)
+        .filter(
+            models.ConnectionNode.exchange_type.in_(
+                [constants.CalculationTypeNode.CONNECTED]
+            )
+        )
+        .filter(
+            models.ConnectionNode.exchange_level
+            < models.ConnectionNode.manhole_bottom_level
+        ),
+        message="connection_node.exchange_level >= connection_node.manhole_bottom_level when "
+        "connection_node.exchange_type is CONNECTED. In the future, this will lead to an error.",
+    ),
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=107,
+        column=models.ConnectionNode.exchange_level,
+        filters=CONDITIONS["has_no_dem"]
+        .filter(models.ConnectionNode.visualisation != None)
+        .filter(models.ModelSettings.manhole_aboveground_storage_area > 0)
+        .exists(),
+        invalid=Query(models.ConnectionNode).filter(
+            models.ConnectionNode.exchange_type.in_(
+                [constants.CalculationTypeNode.CONNECTED]
+            ),
+            models.ConnectionNode.exchange_level == None,
+        ),
+        message="connection_node.exchange_level cannot be null when using sub-basins (model_settings.manhole_aboveground_storage_area > 0) and no DEM is supplied.",
+    ),
+]
+CHECKS += [
+    QueryCheck(
+        level=CheckLevel.WARNING,
+        error_code=108,
+        column=table.crest_level,
+        invalid=Query(table)
+        .join(
+            models.ConnectionNode,
+            (table.connection_node_id_start == models.ConnectionNode.id)
+            | (table.connection_node_id_end == models.ConnectionNode.id),
+        )
+        .filter(models.ConnectionNode.manhole_bottom_level != None)
+        .filter(table.crest_level < models.ConnectionNode.manhole_bottom_level),
+        message=f"{table.__tablename__}.crest_level should be higher than or equal to connection_node.manhole_bottom_level for all the connected manholes.",
+    )
+    for table in [models.Weir, models.Orifice]
+]
 # CHECKS += [
 #     ChannelManholeLevelCheck(
 #         level=CheckLevel.INFO, nodes_to_check="start", error_code=109
