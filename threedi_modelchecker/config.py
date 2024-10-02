@@ -1716,22 +1716,22 @@ CHECKS += [
         message="groundwater.groundwater_hydraulic_conductivity is recommended as fallback value when using a groundwater_hydraulic_conductivity_file.",
     ),
     # TODO: fix -> moved to ConnectionNode
-    # RangeCheck(
-    #     error_code=429,
-    #     column=models.Manhole.exchange_thickness,
-    #     min_value=0,
-    #     left_inclusive=False,
-    # ),
-    # RangeCheck(
-    #     error_code=430,
-    #     column=models.Manhole.hydraulic_conductivity_in,
-    #     min_value=0,
-    # ),
-    # RangeCheck(
-    #     error_code=431,
-    #     column=models.Manhole.hydraulic_conductivity_out,
-    #     min_value=0,
-    # ),
+    RangeCheck(
+        error_code=429,
+        column=models.ConnectionNode.exchange_thickness,
+        min_value=0,
+        left_inclusive=False,
+    ),
+    RangeCheck(
+        error_code=430,
+        column=models.ConnectionNode.hydraulic_conductivity_in,
+        min_value=0,
+    ),
+    RangeCheck(
+        error_code=431,
+        column=models.ConnectionNode.hydraulic_conductivity_out,
+        min_value=0,
+    ),
     RangeCheck(
         error_code=432,
         column=models.Channel.exchange_thickness,
