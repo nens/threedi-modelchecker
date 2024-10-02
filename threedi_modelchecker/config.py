@@ -128,7 +128,9 @@ CONDITIONS = {
         models.GroundWater.groundwater_hydraulic_conductivity.isnot(None)
         | ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
     ),
-    "has_manhole": Query(models.ConnectionNode.manhole_indicator != None,)
+    "has_manhole": Query(
+        models.ConnectionNode.manhole_indicator != None,
+    ),
 }
 
 nr_grid_levels = Query(models.ModelSettings.nr_grid_levels).scalar_subquery()
