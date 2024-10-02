@@ -475,21 +475,17 @@ CHECKS += [
 ## 007x: BOUNDARY CONDITIONS
 # TODO: fix
 CHECKS += [
-    # QueryCheck(
-    #     error_code=71,
-    #     column=models.BoundaryCondition1D.connection_node_id,
-    #     invalid=Query(models.BoundaryCondition1D).filter(
-    #         (
-    #             models.BoundaryCondition1D.connection_node_id
-    #             == models.Pumpstation.connection_node_start_id
-    #         )
-    #         | (
-    #             models.BoundaryCondition1D.connection_node_id
-    #             == models.Pumpstation.connection_node_end_id
-    #         ),
-    #     ),
-    #     message="boundary_condition_1d cannot be connected to a pumpstation",
-    # ),
+    QueryCheck(
+        error_code=71,
+        column=models.BoundaryCondition1D.connection_node_id,
+        invalid=Query(models.BoundaryCondition1D).filter(
+            models.BoundaryCondition1D.connection_node_id
+            == models.Pump.connection_node_id
+            | models.BoundaryCondition1D.connection_node_id
+            == models.PumpMap.connection_node_end_id
+        ),
+        message="boundary_condition_1d cannot be connected to a pump",
+    ),
     # 1d boundary conditions should be connected to exactly 1 object
     BoundaryCondition1DObjectNumberCheck(error_code=72),
     QueryCheck(
