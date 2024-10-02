@@ -55,7 +55,7 @@ class CrossSectionLocationCheck(BaseCheck):
         # get all channels with more than 1 cross section location
         return (
             self.to_check(session)
-            .join(models.Channel)
+            .join(models.Channel, models.Channel.id == models.CrossSectionLocation.channel_id)
             .filter(
                 distance(models.CrossSectionLocation.geom, models.Channel.geom)
                 > self.max_distance
@@ -301,8 +301,8 @@ class ConnectionNodesLength(BaseCheck):
         end_node = aliased(models.ConnectionNode)
         q = (
             self.to_check(session)
-            .join(start_node, self.start_node)
-            .join(end_node, self.end_node)
+            .join(start_node, start_node.id==self.start_node)
+            .join(end_node, end_node.id==self.end_node)
             .filter(distance(start_node.geom, end_node.geom) < self.min_distance)
         )
         return list(q.with_session(session).all())
@@ -335,7 +335,7 @@ class ConnectionNodesDistance(BaseCheck):
         """
         query = text(
             f"""SELECT *
-               FROM v2_connection_nodes AS cn1, v2_connection_nodes AS cn2
+               FROM connection_node AS cn1, connection_node AS cn2
                WHERE
                    distance(cn1.geom, cn2.geom, 1) < :min_distance
                    AND cn1.ROWID != cn2.ROWID
@@ -343,7 +343,7 @@ class ConnectionNodesDistance(BaseCheck):
                      SELECT ROWID
                      FROM SpatialIndex
                      WHERE (
-                       f_table_name = "v2_connection_nodes"
+                       f_table_name = "connection_node"
                        AND search_frame = Buffer(cn1.geom, {self.minimum_distance / 2})));
             """
         )

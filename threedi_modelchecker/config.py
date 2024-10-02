@@ -128,6 +128,7 @@ CONDITIONS = {
         models.GroundWater.groundwater_hydraulic_conductivity.isnot(None)
         | ~is_none_or_empty(models.GroundWater.groundwater_hydraulic_conductivity_file),
     ),
+    "has_manhole": Query(models.ConnectionNode.manhole_indicator != None,)
 }
 
 nr_grid_levels = Query(models.ModelSettings.nr_grid_levels).scalar_subquery()
@@ -352,7 +353,7 @@ CHECKS += [
         error_code=44,
         column=models.ConnectionNode.storage_area,
         invalid=Query(models.ConnectionNode).filter(
-            models.ConnectionNode.manhole_indicator != None,
+            CONDITIONS["has_manhole"],
             models.ConnectionNode.storage_area < 0,
         ),
         message="connection_nodes.storage_area for manhole connection node should greater than or equal to 0",
