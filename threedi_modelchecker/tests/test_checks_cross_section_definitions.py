@@ -551,7 +551,12 @@ def test_check_cross_section_minimum_diameter(
 def test_check_cross_section_increasing_open_with_conveyance_friction(
     session, shape, width, height, expected_result, friction_type, conveyance
 ):
-    test_check_cross_section_increasing_open_with_conveyance_friction
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+        cross_section_height=height,
+        cross_section_shape=shape,
+        friction_type=friction_type,
+    )
     check = OpenIncreasingCrossSectionConveyanceFrictionCheck()
     # this check should pass on cross-section locations which don't use conveyance,
     # regardless of their other parameters

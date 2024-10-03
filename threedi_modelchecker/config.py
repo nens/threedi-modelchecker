@@ -31,9 +31,10 @@ from .checks.cross_section_definitions import (
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
+    OpenIncreasingCrossSectionConveyanceFrictionCheck,
 )
 
-# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; ,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,;,;,;,; OpenIncreasingCrossSectionConveyanceFrictionCheck,; OpenIncreasingCrossSectionVariableCheck,
+# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; ,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,;,;,;,; ,; OpenIncreasingCrossSectionVariableCheck,
 #     CrossSectionVariableCorrectLengthCheck,
 # )
 from .checks.factories import (
@@ -281,11 +282,11 @@ CHECKS += [
     )
 ]
 # TODO: fix
-# CHECKS += [
-#     OpenIncreasingCrossSectionConveyanceFrictionCheck(
-#         error_code=28,
-#     )
-# ]
+CHECKS += [
+    OpenIncreasingCrossSectionConveyanceFrictionCheck(
+        error_code=28,
+    )
+]
 
 ## 003x: CALCULATION TYPE
 

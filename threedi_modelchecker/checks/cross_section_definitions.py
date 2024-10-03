@@ -465,18 +465,17 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
 
     def get_invalid(self, session):
         invalids = []
+        # todo: make generic (for some reason self.table.c results in failing tests)
         for record in session.execute(
             select(
                 models.CrossSectionLocation.id,
                 models.CrossSectionLocation.friction_type,
-                models.CrossSectionDefinition.shape,
-                models.CrossSectionDefinition.width,
-                models.CrossSectionDefinition.height,
-            )
-            .join(models.CrossSectionDefinition, isouter=True)
-            .where(
-                (models.CrossSectionDefinition.width != None)
-                & (models.CrossSectionDefinition.width != "")
+                models.CrossSectionLocation.cross_section_shape,
+                models.CrossSectionLocation.cross_section_width,
+                models.CrossSectionLocation.cross_section_height,
+            ).where(
+                (models.CrossSectionLocation.cross_section_width != None)
+                & (models.CrossSectionLocation.cross_section_width != "")
                 & (
                     models.CrossSectionLocation.friction_type.in_(
                         [
@@ -486,19 +485,38 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
                     )
                 )
             )
+            # select(
+            #     models.CrossSectionLocation.id,
+            #     models.CrossSectionLocation.friction_type,
+            #     models.CrossSectionLocation.cross_section_shape,
+            #     models.CrossSectionLocation.cross_section_width,
+            #     models.CrossSectionLocation.cross_section_height,
+            # )
+            # .where(
+            #     (models.CrossSectionLocation.cross_section_width != None)
+            #     & (models.CrossSectionLocation.cross_section_width != "")
+            #     & (
+            #         models.CrossSectionLocation.friction_type.in_(
+            #             [
+            #                 constants.FrictionType.CHEZY_CONVEYANCE,
+            #                 constants.FrictionType.MANNING_CONVEYANCE,
+            #             ]
+            #         )
+            #     )
+            # )
         ):
             try:
-                widths = [float(x) for x in record.width.split(" ")]
+                widths = [float(x) for x in record.cross_section_width.split(" ")]
                 heights = (
-                    [float(x) for x in record.height.split(" ")]
-                    if record.height not in [None, ""]
+                    [float(x) for x in record.cross_section_height.split(" ")]
+                    if record.cross_section_height not in [None, ""]
                     else []
                 )
             except ValueError:
                 continue  # other check catches this
 
             _, _, configuration = cross_section_configuration(
-                shape=record.shape.value, heights=heights, widths=widths
+                shape=record.cross_section_shape.value, heights=heights, widths=widths
             )
 
             # friction with conveyance can only be used for cross-sections
