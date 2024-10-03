@@ -20,10 +20,13 @@ from .checks.base import (
 from .checks.cross_section_definitions import (
     CrossSectionEqualElementsCheck,
     CrossSectionExpectEmptyCheck,
+    CrossSectionFloatCheck,
+    CrossSectionFloatListCheck,
+    CrossSectionGreaterZeroCheck,
     CrossSectionNullCheck,
 )
 
-# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; CrossSectionFirstElementNonZeroCheck,; CrossSectionFirstElementZeroCheck,; CrossSectionFloatCheck,; CrossSectionFloatListCheck,; CrossSectionGreaterZeroCheck,; CrossSectionIncreasingCheck,; CrossSectionMinimumDiameterCheck,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,; CrossSectionYZCoordinateCountCheck,; CrossSectionYZHeightCheck,; CrossSectionYZIncreasingWidthIfOpenCheck,; OpenIncreasingCrossSectionConveyanceFrictionCheck,; OpenIncreasingCrossSectionVariableCheck,
+# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; CrossSectionFirstElementNonZeroCheck,; CrossSectionFirstElementZeroCheck,; ,;,,; CrossSectionIncreasingCheck,; CrossSectionMinimumDiameterCheck,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,; CrossSectionYZCoordinateCountCheck,; CrossSectionYZHeightCheck,; CrossSectionYZIncreasingWidthIfOpenCheck,; OpenIncreasingCrossSectionConveyanceFrictionCheck,; OpenIncreasingCrossSectionVariableCheck,
 #     CrossSectionVariableCorrectLengthCheck,
 # )
 from .checks.factories import (
@@ -552,55 +555,55 @@ CHECKS += [
             constants.CrossSectionShape.TABULATED_YZ,
         ),
     ),
-    #     CrossSectionFloatCheck(
-    #         error_code=83,
-    #         column=models.CrossSectionDefinition.width,
-    #         shapes=(
-    #             constants.CrossSectionShape.RECTANGLE,
-    #             constants.CrossSectionShape.CIRCLE,
-    #             constants.CrossSectionShape.CLOSED_RECTANGLE,
-    #             constants.CrossSectionShape.EGG,
-    #         ),
-    #     ),
-    #     CrossSectionFloatCheck(
-    #         error_code=84,
-    #         column=models.CrossSectionDefinition.height,
-    #         shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
-    #     ),
-    #     CrossSectionGreaterZeroCheck(
-    #         error_code=85,
-    #         column=models.CrossSectionDefinition.width,
-    #         shapes=(
-    #             constants.CrossSectionShape.RECTANGLE,
-    #             constants.CrossSectionShape.CIRCLE,
-    #             constants.CrossSectionShape.CLOSED_RECTANGLE,
-    #             constants.CrossSectionShape.EGG,
-    #             constants.CrossSectionShape.INVERTED_EGG,
-    #         ),
-    #     ),
-    #     CrossSectionGreaterZeroCheck(
-    #         error_code=86,
-    #         column=models.CrossSectionDefinition.height,
-    #         shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
-    #     ),
-    #     CrossSectionFloatListCheck(
-    #         error_code=87,
-    #         column=models.CrossSectionDefinition.width,
-    #         shapes=(
-    #             constants.CrossSectionShape.TABULATED_RECTANGLE,
-    #             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-    #             constants.CrossSectionShape.TABULATED_YZ,
-    #         ),
-    #     ),
-    #     CrossSectionFloatListCheck(
-    #         error_code=88,
-    #         column=models.CrossSectionDefinition.height,
-    #         shapes=(
-    #             constants.CrossSectionShape.TABULATED_RECTANGLE,
-    #             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-    #             constants.CrossSectionShape.TABULATED_YZ,
-    #         ),
-    #     ),
+    CrossSectionFloatCheck(
+        error_code=83,
+        column=models.CrossSectionLocation.cross_section_width,
+        shapes=(
+            constants.CrossSectionShape.RECTANGLE,
+            constants.CrossSectionShape.CIRCLE,
+            constants.CrossSectionShape.CLOSED_RECTANGLE,
+            constants.CrossSectionShape.EGG,
+        ),
+    ),
+    CrossSectionFloatCheck(
+        error_code=84,
+        column=models.CrossSectionLocation.cross_section_height,
+        shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
+    ),
+    CrossSectionGreaterZeroCheck(
+        error_code=85,
+        column=models.CrossSectionLocation.cross_section_width,
+        shapes=(
+            constants.CrossSectionShape.RECTANGLE,
+            constants.CrossSectionShape.CIRCLE,
+            constants.CrossSectionShape.CLOSED_RECTANGLE,
+            constants.CrossSectionShape.EGG,
+            constants.CrossSectionShape.INVERTED_EGG,
+        ),
+    ),
+    CrossSectionGreaterZeroCheck(
+        error_code=86,
+        column=models.CrossSectionLocation.cross_section_height,
+        shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
+    ),
+    CrossSectionFloatListCheck(
+        error_code=87,
+        column=models.CrossSectionLocation.cross_section_width,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.TABULATED_YZ,
+        ),
+    ),
+    CrossSectionFloatListCheck(
+        error_code=88,
+        column=models.CrossSectionLocation.cross_section_height,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            constants.CrossSectionShape.TABULATED_YZ,
+        ),
+    ),
     CrossSectionEqualElementsCheck(
         error_code=89,
         shapes=(
@@ -659,13 +662,13 @@ CHECKS += [
     #         level=CheckLevel.WARNING,
     #     ),
 ]
-# CHECKS += [
-#     CrossSectionFloatListCheck(
-#         error_code=87,
-#         column=models.CrossSectionDefinition.friction_values,
-#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-#     )
-# ]
+CHECKS += [
+    CrossSectionFloatListCheck(
+        error_code=87,
+        column=models.CrossSectionLocation.cross_section_friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    )
+]
 
 ## 01xx: LEVEL CHECKS
 # TODO: fix -> moved to ConnectionNode
@@ -2689,12 +2692,6 @@ CHECKS += [
 
 ## 018x cross section parameters (continues 008x)
 # TODO: fix
-# vegetation_parameter_columns = [
-#     models.CrossSectionLocation.vegetation_drag_coefficients,
-#     models.CrossSectionLocation.vegetation_heights,
-#     models.CrossSectionLocation.vegetation_stem_diameters,
-#     models.CrossSectionLocation.vegetation_stem_densities,
-# ]
 CHECKS += [
     QueryCheck(
         error_code=180,
@@ -2726,14 +2723,7 @@ CHECKS += [
 #     )
 #     for col in vegetation_parameter_columns
 # ]
-# CHECKS += [
-#     CrossSectionFloatListCheck(
-#         error_code=187,
-#         column=col,
-#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-#     )
-#     for col in vegetation_parameter_columns
-# ]
+
 # TODO: fix
 CHECKS += [
     QueryCheck(
