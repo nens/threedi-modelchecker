@@ -239,11 +239,10 @@ def test_check_yz_height_invalid(session, height):
     ],
 )
 def test_check_yz_coord_count_invalid(session, width, height):
-    definition = factories.CrossSectionDefinitionFactory(
-        width=width,
-        height=height,
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+        cross_section_height=height,
     )
-    factories.CrossSectionLocationFactory(definition=definition)
     check = CrossSectionYZCoordinateCountCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
@@ -260,11 +259,10 @@ def test_check_yz_coord_count_invalid(session, width, height):
     ],
 )
 def test_check_yz_coord_count_valid(session, width, height):
-    definition = factories.CrossSectionDefinitionFactory(
-        width=width,
-        height=height,
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+        cross_section_height=height,
     )
-    factories.CrossSectionLocationFactory(definition=definition)
     check = CrossSectionYZCoordinateCountCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0

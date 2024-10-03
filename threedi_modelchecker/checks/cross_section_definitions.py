@@ -267,20 +267,24 @@ class CrossSectionYZHeightCheck(CrossSectionBaseCheck):
 class CrossSectionYZCoordinateCountCheck(CrossSectionBaseCheck):
     """yz profiles should have 3 coordinates (excluding a closing coordinate)"""
 
+    # TODO: modify for other tables - use column from arguments
+
     def __init__(self, *args, **kwargs):
-        super().__init__(column=models.CrossSectionDefinition.width, *args, **kwargs)
+        super().__init__(
+            column=models.CrossSectionLocation.cross_section_width, *args, **kwargs
+        )
 
     def get_invalid(self, session):
         invalids = []
         for record in self.to_check(session).filter(
-            (models.CrossSectionDefinition.width != None)
-            & (models.CrossSectionDefinition.width != "")
-            & (models.CrossSectionDefinition.height != None)
-            & (models.CrossSectionDefinition.height != "")
+            (self.table.c.cross_section_width != None)
+            & (self.table.c.cross_section_width != "")
+            & (self.table.c.cross_section_height != None)
+            & (self.table.c.cross_section_height != "")
         ):
             try:
-                widths = [float(x) for x in record.width.split(" ")]
-                heights = [float(x) for x in record.height.split(" ")]
+                widths = [float(x) for x in record.cross_section_width.split(" ")]
+                heights = [float(x) for x in record.cross_section_height.split(" ")]
             except ValueError:
                 continue  # other check catches this
 
