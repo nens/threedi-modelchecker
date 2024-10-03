@@ -414,27 +414,28 @@ def cross_section_configuration(shape, heights, widths):
 class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
     """Check if cross section widths and heights are large enough"""
 
+    # TODO: modify to work with all tables
     def __init__(self, *args, **kwargs):
-        super().__init__(column=models.CrossSectionDefinition.id, *args, **kwargs)
+        super().__init__(column=models.CrossSectionLocation.id, *args, **kwargs)
 
     def get_invalid(self, session):
         invalids = []
         for record in self.to_check(session).filter(
-            (models.CrossSectionDefinition.width != None)
-            & (models.CrossSectionDefinition.width != "")
+            (self.table.c.cross_section_width != None)
+            & (self.table.c.cross_section_width != "")
         ):
             try:
-                widths = [float(x) for x in record.width.split(" ")]
+                widths = [float(x) for x in record.cross_section_width.split(" ")]
                 heights = (
-                    [float(x) for x in record.height.split(" ")]
-                    if record.height not in [None, ""]
+                    [float(x) for x in record.cross_section_height.split(" ")]
+                    if record.cross_section_height not in [None, ""]
                     else []
                 )
             except ValueError:
                 continue  # other check catches this
 
             max_width, max_height, configuration = cross_section_configuration(
-                shape=record.shape.value, heights=heights, widths=widths
+                shape=record.cross_section_shape.value, heights=heights, widths=widths
             )
 
             # See nens/threedi-modelchecker#251
@@ -450,7 +451,7 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
-        return "v2_cross_section_definition.width and/or height should probably be at least 0.1m"
+        return f"{self.table.__tablename__}.cross_section_width and/or cross_section_height should be at least 0.1m"
 
 
 class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):

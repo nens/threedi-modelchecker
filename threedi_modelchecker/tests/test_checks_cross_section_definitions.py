@@ -449,12 +449,11 @@ def test_check_yz_increasing_if_open_valid(session, width, height):
 def test_check_cross_section_minimum_diameter(
     session, shape, width, height, expected_result
 ):
-    definition = factories.CrossSectionDefinitionFactory(
-        shape=shape,
-        width=width,
-        height=height,
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+        cross_section_height=height,
+        cross_section_shape=shape,
     )
-    factories.CrossSectionLocationFactory(definition=definition)
     check = CrossSectionMinimumDiameterCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
@@ -552,14 +551,7 @@ def test_check_cross_section_minimum_diameter(
 def test_check_cross_section_increasing_open_with_conveyance_friction(
     session, shape, width, height, expected_result, friction_type, conveyance
 ):
-    definition = factories.CrossSectionDefinitionFactory(
-        shape=shape,
-        width=width,
-        height=height,
-    )
-    factories.CrossSectionLocationFactory(
-        definition=definition, friction_type=friction_type
-    )
+    test_check_cross_section_increasing_open_with_conveyance_friction
     check = OpenIncreasingCrossSectionConveyanceFrictionCheck()
     # this check should pass on cross-section locations which don't use conveyance,
     # regardless of their other parameters
