@@ -137,37 +137,32 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             select(
                 models.CrossSectionLocation.id.label("cross_section_id"),
                 models.CrossSectionLocation.channel_id,
-                models.CrossSectionDefinition.shape,
-                models.CrossSectionDefinition.width,
-                models.CrossSectionDefinition.height,
+                models.CrossSectionLocation.cross_section_shape,
+                models.CrossSectionLocation.cross_section_width,
+                models.CrossSectionLocation.cross_section_height,
                 self.first_number_in_spaced_string(
-                    models.CrossSectionDefinition.width
+                    models.CrossSectionLocation.cross_section_width
                 ).label("first_width"),
                 self.first_number_in_spaced_string(
-                    models.CrossSectionDefinition.height
+                    models.CrossSectionLocation.cross_section_height
                 ).label("first_height"),
                 self.last_number_in_spaced_string(
-                    models.CrossSectionDefinition.width
+                    models.CrossSectionLocation.cross_section_width
                 ).label("last_width"),
                 self.last_number_in_spaced_string(
-                    models.CrossSectionDefinition.height
+                    models.CrossSectionLocation.cross_section_height
                 ).label("last_height"),
             )
             .select_from(models.CrossSectionLocation)
-            .join(
-                models.CrossSectionDefinition,
-                models.CrossSectionLocation.definition_id
-                == models.CrossSectionDefinition.id,
-            )
             .subquery()
         )
         cross_sections_with_configuration = select(
             cross_sections.c.cross_section_id,
-            cross_sections.c.shape,
+            cross_sections.c.cross_section_shape,
             cross_sections.c.last_width,
             cross_sections.c.channel_id,
             self.configuration_type(
-                shape=cross_sections.c.shape,
+                shape=cross_sections.c.cross_section_shape,
                 first_width=cross_sections.c.first_width,
                 last_width=cross_sections.c.last_width,
                 first_height=cross_sections.c.first_height,
@@ -199,8 +194,8 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
 
         all_cross_sections = session.execute(
             select(
-                models.CrossSectionDefinition.width,
-                models.CrossSectionDefinition.height,
+                models.CrossSectionLocation.cross_section_width,
+                models.CrossSectionLocation.cross_section_height,
             )
         )
 

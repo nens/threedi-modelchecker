@@ -8,7 +8,6 @@ from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
 from threedi_modelchecker.checks.other import (
     AllPresentFixedVegetationParameters,
-    AllPresentVariableVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
     ChannelManholeLevelCheck,
@@ -330,7 +329,6 @@ def test_cross_section_location(session):
     assert len(errors) == 1
 
 
-@pytest.mark.skip(reason="Needs fixing")
 @pytest.mark.parametrize(
     "shape, width, height, same_channels, ok",
     [
@@ -390,29 +388,29 @@ def test_cross_section_same_configuration(
     In this test, the first cross-section has been set to always be open.
     Therefore, the channel should be invalid when the second cross-section is closed, and valid when it is open.
     """
-    first_channel = factories.ChannelFactory(
+    factories.ChannelFactory(
+        id=1,
         geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
     )
-    second_channel = factories.ChannelFactory(
+    factories.ChannelFactory(
+        id=2,
         geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
     )
     # shape 1 is always open
-    open_definition = factories.CrossSectionDefinitionFactory(
-        id=1, shape=1, width="3", height="4"
-    )
     factories.CrossSectionLocationFactory(
-        channel=first_channel,
+        channel_id=1,
         geom="SRID=4326;POINT(4.718278 52.696697)",
-        definition=open_definition,
-    )
-    testing_definition = factories.CrossSectionDefinitionFactory(
-        id=2, width=width, height=height, shape=shape
+        cross_section_shape=1,
+        cross_section_width="3",
+        cross_section_height="4",
     )
     # the second one is parametrised
     factories.CrossSectionLocationFactory(
-        channel=first_channel if same_channels else second_channel,
+        channel_id=1 if same_channels else 2,
         geom="SRID=4326;POINT(4.718265 52.696704)",
-        definition=testing_definition,
+        cross_section_shape=shape,
+        cross_section_width=width,
+        cross_section_height=height,
     )
     errors = CrossSectionSameConfigurationCheck(models.Channel.id).get_invalid(session)
     assert len(errors) == (0 if ok else 1)
@@ -754,82 +752,6 @@ def test_all_present_fixed_vegetation_parameters(
     )
     check = AllPresentFixedVegetationParameters(
         column=models.CrossSectionLocation.vegetation_height
-    )
-    invalid_rows = check.get_invalid(session)
-    assert (len(invalid_rows) == 0) == result
-
-
-@pytest.mark.skip(reason="Needs fixing for schema 227")
-@pytest.mark.parametrize(
-    "cols, val, shape, friction_type, result",
-    [
-        # single column defined: should fail
-        (
-            ["vegetation_heights"],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            False,
-        ),
-        # both columns defined, but one empty: should fail
-        (
-            ["vegetation_heights", "vegetation_stem_diameters"],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            False,
-        ),
-        # no columns defined: should pass
-        (
-            [],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            True,
-        ),
-        # both columns defined: should pass
-        (
-            [
-                "vegetation_drag_coefficients",
-                "vegetation_heights",
-                "vegetation_stem_diameters",
-                "vegetation_stem_densities",
-            ],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            True,
-        ),
-        # shape is not included in check: should pass
-        (
-            ["vegetation_heights"],
-            "1 2",
-            constants.CrossSectionShape.RECTANGLE,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            True,
-        ),
-        # friction type in not included in check: should pass
-        (
-            ["vegetation_heights"],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.MANNING,
-            True,
-        ),
-    ],
-)
-def test_all_present_variable_vegetation_parameters(
-    session, cols, val, shape, friction_type, result
-):
-    veg_args = {col: val for col in cols}
-    definition = factories.CrossSectionDefinitionFactory(
-        shape=shape, friction_values="1 2", **veg_args
-    )
-    factories.CrossSectionLocationFactory(
-        definition=definition, friction_type=friction_type
-    )
-    check = AllPresentVariableVegetationParameters(
-        column=models.CrossSectionDefinition.vegetation_heights
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == result

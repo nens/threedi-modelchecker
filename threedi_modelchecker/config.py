@@ -45,7 +45,7 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,; AllPresentVariableVegetationParameters,; ChannelManholeLevelCheck,; CrossSectionSameConfigurationCheck,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,,
+from .checks.other import (  # Use0DFlowCheck,,; ChannelManholeLevelCheck,; ,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,,
     AllPresentFixedVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
@@ -54,6 +54,7 @@ from .checks.other import (  # Use0DFlowCheck,; AllPresentVariableVegetationPara
     ConnectionNodesLength,
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
+    CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
@@ -395,11 +396,11 @@ CHECKS += [
         message="v2_channel has no cross section locations",
     ),
     # TODO fix
-    # CrossSectionSameConfigurationCheck(
-    #     error_code=56,
-    #     level=CheckLevel.ERROR,
-    #     column=models.Channel.id,
-    # ),
+    CrossSectionSameConfigurationCheck(
+        error_code=56,
+        level=CheckLevel.ERROR,
+        column=models.Channel.id,
+    ),
 ]
 # TODO: fix
 # CHECKS += [
@@ -2951,10 +2952,7 @@ CHECKS += [
     AllPresentFixedVegetationParameters(
         error_code=194, column=models.CrossSectionLocation.vegetation_height
     ),
-    # AllPresentVariableVegetationParameters(
-    #     error_code=195,
-    #     column=vegetation_parameter_columns_plural[0],
-    # ),
+    # TODO: add check for cross_section_vegetation_table based on AllPresentVariableVegetationParameters
 ]
 
 # Checks for nonsensical Chezy friction values
