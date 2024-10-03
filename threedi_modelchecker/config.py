@@ -233,40 +233,38 @@ CHECKS += [
 # Friction with conveyance should only be used on
 # tabulated rectangle, tabulated trapezium, or tabulated yz shapes
 # TODO: fix
-# CHECKS += [
-#     QueryCheck(
-#         error_code=27,
-#         column=models.CrossSectionLocation.id,
-#         invalid=Query(models.CrossSectionLocation)
-#         .join(models.CrossSectionDefinition)
-#         .filter(
-#             (
-#                 models.CrossSectionDefinition.shape.not_in(
-#                     [
-#                         constants.CrossSectionShape.TABULATED_RECTANGLE,
-#                         constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-#                         constants.CrossSectionShape.TABULATED_YZ,
-#                     ]
-#                 )
-#             )
-#             & (
-#                 models.CrossSectionLocation.friction_type.in_(
-#                     [
-#                         constants.FrictionType.CHEZY_CONVEYANCE,
-#                         constants.FrictionType.MANNING_CONVEYANCE,
-#                     ]
-#                 )
-#             )
-#         ),
-#         message=(
-#             "in v2_cross_section_location, friction with "
-#             "conveyance, such as chezy_conveyance and "
-#             "manning_conveyance, may only be used with "
-#             "tabulated rectangle (5), tabulated trapezium (6), "
-#             "or tabulated yz (7) shapes"
-#         ),
-#     )
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=27,
+        column=models.CrossSectionLocation.id,
+        invalid=Query(models.CrossSectionLocation).filter(
+            (
+                models.CrossSectionLocation.cross_section_shape.not_in(
+                    [
+                        constants.CrossSectionShape.TABULATED_RECTANGLE,
+                        constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+                        constants.CrossSectionShape.TABULATED_YZ,
+                    ]
+                )
+            )
+            & (
+                models.CrossSectionLocation.friction_type.in_(
+                    [
+                        constants.FrictionType.CHEZY_CONVEYANCE,
+                        constants.FrictionType.MANNING_CONVEYANCE,
+                    ]
+                )
+            )
+        ),
+        message=(
+            "in v2_cross_section_location, friction with "
+            "conveyance, such as chezy_conveyance and "
+            "manning_conveyance, may only be used with "
+            "tabulated rectangle (5), tabulated trapezium (6), "
+            "or tabulated yz (7) shapes"
+        ),
+    )
+]
 # TODO: fix
 # CHECKS += [
 #     OpenIncreasingCrossSectionConveyanceFrictionCheck(
