@@ -206,24 +206,26 @@ def test_first_nonzero_valid(session, width):
 
 @pytest.mark.parametrize("height", ["0 1 2", "0 1 1", "1 0 1", "foo", None, "0"])
 def test_check_yz_height_valid(session, height):
-    definition = factories.CrossSectionDefinitionFactory(
-        width="1 2 3",
-        height=height,
+    factories.CrossSectionLocationFactory(
+        cross_section_width="1 2 3",
+        cross_section_height=height,
     )
-    factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionYZHeightCheck(column=models.CrossSectionDefinition.height)
+    check = CrossSectionYZHeightCheck(
+        column=models.CrossSectionLocation.cross_section_height
+    )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
 @pytest.mark.parametrize("height", ["1 2 3", "0 -1 1"])
 def test_check_yz_height_invalid(session, height):
-    definition = factories.CrossSectionDefinitionFactory(
-        width="1 2 3",
-        height=height,
+    factories.CrossSectionLocationFactory(
+        cross_section_width="1 2 3",
+        cross_section_height=height,
     )
-    factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionYZHeightCheck(column=models.CrossSectionDefinition.height)
+    check = CrossSectionYZHeightCheck(
+        column=models.CrossSectionLocation.cross_section_height
+    )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 

@@ -27,9 +27,10 @@ from .checks.cross_section_definitions import (
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
     CrossSectionNullCheck,
+    CrossSectionYZHeightCheck,
 )
 
-# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; CrossSectionMinimumDiameterCheck,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,; CrossSectionYZCoordinateCountCheck,; CrossSectionYZHeightCheck,; CrossSectionYZIncreasingWidthIfOpenCheck,; OpenIncreasingCrossSectionConveyanceFrictionCheck,; OpenIncreasingCrossSectionVariableCheck,
+# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; CrossSectionMinimumDiameterCheck,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,; CrossSectionYZCoordinateCountCheck,;,; CrossSectionYZIncreasingWidthIfOpenCheck,; OpenIncreasingCrossSectionConveyanceFrictionCheck,; OpenIncreasingCrossSectionVariableCheck,
 #     CrossSectionVariableCorrectLengthCheck,
 # )
 from .checks.factories import (
@@ -647,11 +648,11 @@ CHECKS += [
             constants.CrossSectionShape.INVERTED_EGG,
         ),
     ),
-    #     CrossSectionYZHeightCheck(
-    #         error_code=95,
-    #         column=models.CrossSectionDefinition.height,
-    #         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    #     ),
+    CrossSectionYZHeightCheck(
+        error_code=95,
+        column=models.CrossSectionLocation.cross_section_height,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    ),
     #     CrossSectionYZCoordinateCountCheck(
     #         error_code=96,
     #         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
