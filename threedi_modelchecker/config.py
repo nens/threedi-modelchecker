@@ -391,14 +391,17 @@ CHECKS += [
         message="v2_cross_section_location.bank_level will be ignored if it is below the reference_level",
     ),
     # TODO fix
-    # QueryCheck(
-    #     error_code=55,
-    #     column=models.Channel.id,
-    #     invalid=Query(models.Channel).filter(
-    #         ~models.Channel.cross_section_locations.any()
-    #     ),
-    #     message="v2_channel has no cross section locations",
-    # ),
+    QueryCheck(
+        error_code=55,
+        column=models.Channel.id,
+        invalid=Query(models.Channel)
+        .outerjoin(
+            models.CrossSectionLocation,
+            models.Channel.id == models.CrossSectionLocation.channel_id,
+        )
+        .filter(models.CrossSectionLocation.channel_id == None),
+        message="v2_channel has no cross section locations",
+    ),
     # TODO fix
     # CrossSectionSameConfigurationCheck(
     #     error_code=56,
@@ -2711,24 +2714,26 @@ CHECKS += [
 #     models.CrossSectionLocation.vegetation_stem_diameters,
 #     models.CrossSectionLocation.vegetation_stem_densities,
 # ]
-# CHECKS += [
-#     QueryCheck(
-#         error_code=180,
-#         column=col,
-#         invalid=Query(models.CrossSectionDefinition)
-#         .filter(
-#             models.CrossSectionDefinition.shape
-#             != constants.CrossSectionShape.TABULATED_YZ
-#         )
-#         .filter(col.is_not(None)),
-#         message=(
-#             f"{col.table.name}.{col.name} can only be used in combination with "
-#             f"a {constants.CrossSectionShape.TABULATED_YZ.name} cross section shape"
-#         ),
-#     )
-#     for col in vegetation_parameter_columns
-#     + [models.CrossSectionDefinition.friction_values]
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=180,
+        column=col,
+        invalid=Query(models.CrossSectionLocation)
+        .filter(
+            models.CrossSectionLocation.cross_section_shape
+            != constants.CrossSectionShape.TABULATED_YZ
+        )
+        .filter(col.is_not(None)),
+        message=(
+            f"{col.table.name}.{col.name} can only be used in combination with "
+            f"a {constants.CrossSectionShape.TABULATED_YZ.name} cross section shape"
+        ),
+    )
+    for col in [
+        models.CrossSectionLocation.cross_section_friction_values,
+        models.CrossSectionLocation.cross_section_vegetation_table,
+    ]
+]
 # TODO: fix
 # CHECKS += [
 #     CrossSectionVariableCorrectLengthCheck(
