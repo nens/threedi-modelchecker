@@ -619,14 +619,11 @@ class CrossSectionVariableFrictionRangeCheck(CrossSectionVariableRangeCheck):
 
     def get_invalid(self, session):
         invalids = []
-        def_table = models.CrossSectionDefinition
-        loc_table = models.CrossSectionLocation
         records = set(
             self.to_check(session)
-            .join(loc_table, loc_table.definition_id == def_table.id)
             .filter(
-                loc_table.friction_type.in_(self.friction_types)
-                & def_table.friction_values.is_not(None)
+                models.CrossSectionLocation.friction_type.in_(self.friction_types)
+                & models.CrossSectionLocation.cross_section_friction_values.is_not(None)
             )
             .filter((self.column != None) & (self.column != ""))
             .all()

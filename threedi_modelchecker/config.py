@@ -17,7 +17,7 @@ from .checks.base import (
     RangeCheck,
     UniqueCheck,
 )
-from .checks.cross_section_definitions import (
+from .checks.cross_section_definitions import (  # CrossSectionVariableRangeCheck,
     CrossSectionEqualElementsCheck,
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
@@ -29,14 +29,14 @@ from .checks.cross_section_definitions import (
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionVariableCorrectLengthCheck,
-    CrossSectionVariableRangeCheck,
+    CrossSectionVariableFrictionRangeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
     OpenIncreasingCrossSectionConveyanceFrictionCheck,
 )
 
-# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; ,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,;,;,;,; ,; OpenIncreasingCrossSectionVariableCheck,
+# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; ,; CrossSectionNullCheck,; ,; ,;,;,;,; ,; OpenIncreasingCrossSectionVariableCheck,
 #     ,
 # )
 from .checks.factories import (
@@ -2851,33 +2851,34 @@ CHECKS += [
 #     + [models.CrossSectionLocation.friction_values]
 # ]
 ## Friction values range
-# TODO: fix
-# CHECKS += [
-#     CrossSectionVariableFrictionRangeCheck(
-#         min_value=0,
-#         max_value=1,
-#         right_inclusive=False,
-#         error_code=188,
-#         column=models.CrossSectionLocation.cross_section_friction_values,
-#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-#         friction_types=[
-#             constants.FrictionType.MANNING.value,
-#             constants.FrictionType.MANNING_CONVEYANCE.value,
-#         ],
-#     )
-# ]
-# CHECKS += [
-#     CrossSectionVariableFrictionRangeCheck(
-#         min_value=0,
-#         error_code=189,
-#         column=models.CrossSectionLocation.cross_section_friction_values,
-#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-#         friction_types=[
-#             constants.FrictionType.CHEZY.value,
-#             constants.FrictionType.CHEZY_CONVEYANCE.value,
-#         ],
-#     )
-# ]
+# TODO add checks for pipe, etc
+CHECKS += [
+    CrossSectionVariableFrictionRangeCheck(
+        min_value=0,
+        max_value=1,
+        right_inclusive=False,
+        error_code=188,
+        column=models.CrossSectionLocation.cross_section_friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        friction_types=[
+            constants.FrictionType.MANNING.value,
+            constants.FrictionType.MANNING_CONVEYANCE.value,
+        ],
+    )
+]
+# TODO add checks for pipe, etc
+CHECKS += [
+    CrossSectionVariableFrictionRangeCheck(
+        min_value=0,
+        error_code=189,
+        column=models.CrossSectionLocation.cross_section_friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        friction_types=[
+            constants.FrictionType.CHEZY.value,
+            constants.FrictionType.CHEZY_CONVEYANCE.value,
+        ],
+    )
+]
 
 ## 019x vegetation parameter checks
 vegetation_parameter_columns_singular = [
@@ -2903,16 +2904,7 @@ CHECKS += [
     for col in vegetation_parameter_columns_singular
 ]
 # TODO: replace with check for cross_section_friction_values and cross_section_vegetation_table
-# TODO: add check for cross_section_vegetation_table
-# TODO add checks for pipe, etc
-CHECKS += [
-    CrossSectionVariableRangeCheck(
-        error_code=191,
-        min_value=0,
-        column=models.CrossSectionLocation.cross_section_friction_values,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    )
-]
+# TODO: add CrossSectionVariableRangeCheck for cross_section_vegetation_table
 
 CHECKS += [
     QueryCheck(
@@ -3001,20 +2993,20 @@ CHECKS += [
     ]
 ]
 # TODO: fix
-# CHECKS += [
-#     CrossSectionVariableFrictionRangeCheck(
-#         min_value=1,
-#         level=CheckLevel.WARNING,
-#         error_code=1501,
-#         column=models.CrossSectionDefinition.friction_values,
-#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-#         friction_types=[
-#             constants.FrictionType.CHEZY.value,
-#             constants.FrictionType.CHEZY_CONVEYANCE.value,
-#         ],
-#         message="Some values in CrossSectionDefinition.friction_values are less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
-#     )
-# ]
+CHECKS += [
+    CrossSectionVariableFrictionRangeCheck(
+        min_value=1,
+        level=CheckLevel.WARNING,
+        error_code=1501,
+        column=models.CrossSectionLocation.cross_section_friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        friction_types=[
+            constants.FrictionType.CHEZY.value,
+            constants.FrictionType.CHEZY_CONVEYANCE.value,
+        ],
+        message="Some values in cross_section_location.cross_section_friction_values are less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
+    )
+]
 
 
 # Tags 2xxx
