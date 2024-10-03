@@ -2763,50 +2763,33 @@ CHECKS += [
     ]
 ]
 # TODO: fix
-# CHECKS += [
-#     QueryCheck(
-#         error_code=183,
-#         level=CheckLevel.WARNING,
-#         column=col_cross_section_location,
-#         invalid=Query(models.CrossSectionLocation)
-#         .join(
-#             models.CrossSectionDefinition,
-#             models.CrossSectionLocation.definition_id
-#             == models.CrossSectionDefinition.id,
-#         )
-#         .filter(
-#             col_cross_section_location.is_not(None)
-#             & col_cross_section_definition.is_not(None)
-#         )
-#         .filter(
-#             models.CrossSectionLocation.friction_type.is_(
-#                 constants.FrictionType.CHEZY_CONVEYANCE
-#             )
-#         ),
-#         message=(
-#             f"Both {col_cross_section_location.table.name}.{col_cross_section_location.name} and {col_cross_section_definition.table.name}.{col_cross_section_definition.name}"
-#             f" defined without conveyance; {col_cross_section_definition.table.name}.{col_cross_section_definition.name} will be used"
-#         ),
-#     )
-#     for col_cross_section_location, col_cross_section_definition in [
-#         (
-#             models.CrossSectionLocation.vegetation_drag_coefficient,
-#             models.CrossSectionDefinition.vegetation_drag_coefficients,
-#         ),
-#         (
-#             models.CrossSectionLocation.vegetation_height,
-#             models.CrossSectionDefinition.vegetation_heights,
-#         ),
-#         (
-#             models.CrossSectionLocation.vegetation_stem_diameter,
-#             models.CrossSectionDefinition.vegetation_stem_diameters,
-#         ),
-#         (
-#             models.CrossSectionLocation.vegetation_stem_density,
-#             models.CrossSectionDefinition.vegetation_stem_densities,
-#         ),
-#     ]
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=183,
+        level=CheckLevel.WARNING,
+        column=col,
+        invalid=Query(models.CrossSectionLocation)
+        .filter(
+            col.is_not(None)
+            & models.CrossSectionLocation.cross_section_vegetation_table.is_not(None)
+        )
+        .filter(
+            models.CrossSectionLocation.friction_type.is_(
+                constants.FrictionType.CHEZY_CONVEYANCE
+            )
+        ),
+        message=(
+            f"Both cross_section_location.{col.name} and cross_section_location.cross_section_vegetation_table "
+            f"defined with conveyance; cross_section_location.cross_section_vegetation_table will be used"
+        ),
+    )
+    for col in [
+        models.CrossSectionLocation.vegetation_drag_coefficient,
+        models.CrossSectionLocation.vegetation_height,
+        models.CrossSectionLocation.vegetation_stem_diameter,
+        models.CrossSectionLocation.vegetation_stem_density,
+    ]
+]
 # TODO: fix
 #
 # CHECKS += [
