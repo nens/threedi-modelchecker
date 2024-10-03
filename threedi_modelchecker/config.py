@@ -29,9 +29,10 @@ from .checks.cross_section_definitions import (
     CrossSectionNullCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
+    CrossSectionYZIncreasingWidthIfOpenCheck,
 )
 
-# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; CrossSectionMinimumDiameterCheck,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,;,;,; CrossSectionYZIncreasingWidthIfOpenCheck,; OpenIncreasingCrossSectionConveyanceFrictionCheck,; OpenIncreasingCrossSectionVariableCheck,
+# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; CrossSectionMinimumDiameterCheck,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,;,;,;,; OpenIncreasingCrossSectionConveyanceFrictionCheck,; OpenIncreasingCrossSectionVariableCheck,
 #     CrossSectionVariableCorrectLengthCheck,
 # )
 from .checks.factories import (
@@ -658,10 +659,10 @@ CHECKS += [
         error_code=96,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
     ),
-    #     CrossSectionYZIncreasingWidthIfOpenCheck(
-    #         error_code=97,
-    #         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    #     ),
+    CrossSectionYZIncreasingWidthIfOpenCheck(
+        error_code=97,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    ),
     #     CrossSectionMinimumDiameterCheck(
     #         error_code=98,
     #         level=CheckLevel.WARNING,
