@@ -460,6 +460,8 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
     are open and monotonically increasing in width
     """
 
+    # TODO: modify for other tables - use column from arguments
+
     def __init__(self, *args, **kwargs):
         super().__init__(column=models.CrossSectionLocation.id, *args, **kwargs)
 
@@ -485,25 +487,6 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
                     )
                 )
             )
-            # select(
-            #     models.CrossSectionLocation.id,
-            #     models.CrossSectionLocation.friction_type,
-            #     models.CrossSectionLocation.cross_section_shape,
-            #     models.CrossSectionLocation.cross_section_width,
-            #     models.CrossSectionLocation.cross_section_height,
-            # )
-            # .where(
-            #     (models.CrossSectionLocation.cross_section_width != None)
-            #     & (models.CrossSectionLocation.cross_section_width != "")
-            #     & (
-            #         models.CrossSectionLocation.friction_type.in_(
-            #             [
-            #                 constants.FrictionType.CHEZY_CONVEYANCE,
-            #                 constants.FrictionType.MANNING_CONVEYANCE,
-            #             ]
-            #         )
-            #     )
-            # )
         ):
             try:
                 widths = [float(x) for x in record.cross_section_width.split(" ")]
@@ -550,7 +533,7 @@ class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
         ):
             try:
                 # only take widths because another check already ensures len(widths) = len(heights)
-                widths = [float(x) for x in record.width.split(" ")]
+                widths = [float(x) for x in record.cross_section_width.split(" ")]
                 values = [
                     float(x) for x in getattr(record, self.column.name).split(" ")
                 ]

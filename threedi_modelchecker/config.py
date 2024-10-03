@@ -28,6 +28,7 @@ from .checks.cross_section_definitions import (
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
+    CrossSectionVariableCorrectLengthCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -35,7 +36,7 @@ from .checks.cross_section_definitions import (
 )
 
 # from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; ,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,;,;,;,; ,; OpenIncreasingCrossSectionVariableCheck,
-#     CrossSectionVariableCorrectLengthCheck,
+#     ,
 # )
 from .checks.factories import (
     generate_enum_checks,
@@ -2722,15 +2723,17 @@ CHECKS += [
 ]
 # TODO: fix
 # TODO: replace with check for cross_section_friction_values and cross_section_vegetation_table
-# CHECKS += [
-#     CrossSectionVariableCorrectLengthCheck(
-#         error_code=181,
-#         column=col,
-#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-#         filters=models.CrossSectionDefinition.height.is_not(None) & col.is_not(None),
-#     )
-#     for col in vegetation_parameter_columns
-# ]
+# TODO: add check for cross_section_vegetation_table
+# TODO add checks for pipe, etc
+CHECKS += [
+    CrossSectionVariableCorrectLengthCheck(
+        error_code=181,
+        column=models.CrossSectionLocation.cross_section_friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+        filters=models.CrossSectionLocation.cross_section_height.is_not(None)
+        & models.CrossSectionLocation.cross_section_friction_values.is_not(None),
+    )
+]
 
 # TODO: fix
 CHECKS += [

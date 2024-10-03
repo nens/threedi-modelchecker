@@ -568,12 +568,13 @@ def test_check_cross_section_increasing_open_with_conveyance_friction(
 
 @pytest.mark.parametrize("data, result", [["1 2", True], ["1 2 3", False]])
 def test_check_correct_length(session, data, result):
-    definition = factories.CrossSectionDefinitionFactory(
-        width="1 2 3", height="0 2 5", friction_values=data
+    factories.CrossSectionLocationFactory(
+        cross_section_width="1 2 3",
+        cross_section_height="0 2 5",
+        cross_section_friction_values=data,
     )
-    factories.CrossSectionLocationFactory(definition=definition)
     check = CrossSectionVariableCorrectLengthCheck(
-        column=models.CrossSectionDefinition.friction_values
+        column=models.CrossSectionLocation.cross_section_friction_values
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == result
