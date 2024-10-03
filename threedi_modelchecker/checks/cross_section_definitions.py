@@ -1,5 +1,4 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 
 from .base import BaseCheck
@@ -21,17 +20,20 @@ class CrossSectionBaseCheck(BaseCheck):
     def to_check(self, session):
         qs = super().to_check(session)
         if self.shapes is not None:
-            qs = qs.filter(models.CrossSectionDefinition.shape.in_(self.shapes))
-        return qs.filter(
-            models.CrossSectionDefinition.id.in_(
-                Query(models.CrossSectionLocation.definition_id).union_all(
-                    Query(models.Pipe.cross_section_definition_id),
-                    Query(models.Culvert.cross_section_definition_id),
-                    Query(models.Weir.cross_section_definition_id),
-                    Query(models.Orifice.cross_section_definition_id),
-                )
+            qs = qs.filter(
+                models.CrossSectionLocation.cross_section_shape.in_(self.shapes)
             )
-        )
+        return qs
+        # return qs.filter(
+        #     models.CrossSectionDefinition.id.in_(
+        #         Query(models.CrossSectionLocation.definition_id).union_all(
+        #             Query(models.Pipe.cross_section_definition_id),
+        #             Query(models.Culvert.cross_section_definition_id),
+        #             Query(models.Weir.cross_section_definition_id),
+        #             Query(models.Orifice.cross_section_definition_id),
+        #         )
+        #     )
+        # )
 
 
 class CrossSectionNullCheck(CrossSectionBaseCheck):
@@ -128,19 +130,21 @@ class CrossSectionEqualElementsCheck(CrossSectionBaseCheck):
     """Tabulated definitions should have equal numbers of width and height elements."""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(column=models.CrossSectionDefinition.width, *args, **kwargs)
+        super().__init__(
+            column=models.CrossSectionLocation.cross_section_width, *args, **kwargs
+        )
 
     def get_invalid(self, session):
         invalids = []
         for record in self.to_check(session).filter(
-            (models.CrossSectionDefinition.width != None)
-            & (models.CrossSectionDefinition.width != "")
-            & (models.CrossSectionDefinition.height != None)
-            & (models.CrossSectionDefinition.height != "")
+            (models.CrossSectionLocation.cross_section_width != None)
+            & (models.CrossSectionLocation.cross_section_width != "")
+            & (models.CrossSectionLocation.cross_section_height != None)
+            & (models.CrossSectionLocation.cross_section_height != "")
         ):
             try:
-                widths = [float(x) for x in record.width.split(" ")]
-                heights = [float(x) for x in record.height.split(" ")]
+                widths = [float(x) for x in record.cross_section_width.split(" ")]
+                heights = [float(x) for x in record.cross_section_height.split(" ")]
             except ValueError:
                 continue  # other check catches this
 

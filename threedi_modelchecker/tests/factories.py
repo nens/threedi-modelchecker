@@ -126,14 +126,6 @@ class PumpFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
-# class CrossSectionDefinitionFactory(factory.alchemy.SQLAlchemyModelFactory):
-#     class Meta:
-#         model = models.CrossSectionDefinition
-#         sqlalchemy_session = None
-#
-#     code = "cross-section code"
-
-
 class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.CrossSectionLocation
@@ -144,7 +136,6 @@ class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     friction_type = constants.FrictionType.CHEZY
     friction_value = 0.0
     geom = "SRID=4326;POINT(-71.064544 42.28787)"
-    # definition = factory.SubFactory(CrossSectionDefinitionFactory)
 
 
 class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):

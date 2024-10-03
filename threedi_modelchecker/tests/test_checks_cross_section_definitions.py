@@ -24,70 +24,46 @@ from threedi_modelchecker.checks.cross_section_definitions import (
 from . import factories
 
 
-pytest.skip("Skipping the entire module", allow_module_level=True)
-
-
-def test_in_use(session):
-    # should only check records in use
-    definition = factories.CrossSectionDefinitionFactory(
-        width=None, shape=constants.CrossSectionShape.CIRCLE
-    )
-
-    check = CrossSectionNullCheck(column=models.CrossSectionDefinition.width)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-    factories.CrossSectionLocationFactory(definition=definition)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
-
-
 def test_filter_shapes(session):
     # should only check records of given types
-    definition = factories.CrossSectionDefinitionFactory(
-        width=None, shape=constants.CrossSectionShape.CIRCLE
+    factories.CrossSectionLocationFactory(
+        cross_section_width=None,
+        cross_section_shape=constants.CrossSectionShape.CIRCLE,
     )
-    factories.CrossSectionLocationFactory(definition=definition)
-
     check = CrossSectionNullCheck(
-        column=models.CrossSectionDefinition.width,
+        column=models.CrossSectionLocation.cross_section_width,
         shapes=[constants.CrossSectionShape.RECTANGLE],
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
     check = CrossSectionNullCheck(
-        column=models.CrossSectionDefinition.width,
+        column=models.CrossSectionLocation.cross_section_width,
         shapes=[constants.CrossSectionShape.CIRCLE],
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
 
-@pytest.mark.parametrize("width", [None, ""])
-def test_check_null_invalid(session, width):
-    definition = factories.CrossSectionDefinitionFactory(width=width)
-    factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionNullCheck(column=models.CrossSectionDefinition.width)
+@pytest.mark.parametrize(
+    "width, is_null, is_empty",
+    [(None, True, False), ("", True, False), (" ", False, True)],
+)
+def test_check_null_check(session, width, is_null, is_empty):
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+    )
+    check = CrossSectionNullCheck(
+        column=models.CrossSectionLocation.cross_section_width
+    )
     invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
+    assert (len(invalid_rows) == 1) == is_null
 
-    check = CrossSectionExpectEmptyCheck(column=models.CrossSectionDefinition.width)
+    check = CrossSectionExpectEmptyCheck(
+        column=models.CrossSectionLocation.cross_section_width
+    )
     invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
-@pytest.mark.parametrize("width", [" "])
-def test_check_null_valid(session, width):
-    definition = factories.CrossSectionDefinitionFactory(width=width)
-    factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionNullCheck(column=models.CrossSectionDefinition.width)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-    check = CrossSectionExpectEmptyCheck(column=models.CrossSectionDefinition.width)
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
+    assert (len(invalid_rows) == 1) == is_empty
 
 
 @pytest.mark.parametrize("width", [" ", "foo", "0,1", "1e-2e8", "-0.1"])
@@ -148,11 +124,9 @@ def test_check_float_list_valid(session, width):
 
 @pytest.mark.parametrize("width", ["0", "0 1"])
 def test_check_equal_elements_invalid(session, width):
-    definition = factories.CrossSectionDefinitionFactory(
-        width=width,
-        height="0 2 5",
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width, cross_section_height="0 2 5"
     )
-    factories.CrossSectionLocationFactory(definition=definition)
     check = CrossSectionEqualElementsCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
