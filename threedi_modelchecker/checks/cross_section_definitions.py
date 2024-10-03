@@ -664,13 +664,13 @@ class OpenIncreasingCrossSectionVariableCheck(CrossSectionBaseCheck):
         for record in records:
             try:
                 # Only used for TABULATED_YZ
-                widths = [float(x) for x in record.width.split(" ")]
-                heights = [float(x) for x in record.height.split(" ")]
+                widths = [float(x) for x in record.cross_section_width.split(" ")]
+                heights = [float(x) for x in record.cross_section_height.split(" ")]
             except ValueError:
                 continue  # other check catches this
 
             _, _, configuration = cross_section_configuration(
-                shape=record.shape.value, heights=heights, widths=widths
+                shape=record.cross_section_shape.value, heights=heights, widths=widths
             )
 
             # friction with conveyance can only be used for cross-sections

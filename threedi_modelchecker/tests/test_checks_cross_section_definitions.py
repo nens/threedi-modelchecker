@@ -652,15 +652,14 @@ def test_check_friction_values_range(session, friction_types, result):
 def test_check_cross_section_increasing_open_with_variables(
     session, width, height, result
 ):
-    definition = factories.CrossSectionDefinitionFactory(
-        shape=constants.CrossSectionShape.TABULATED_YZ,
-        width=width,
-        height=height,
-        friction_values="1",
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+        cross_section_height=height,
+        cross_section_friction_values="1",
+        cross_section_shape=constants.CrossSectionShape.TABULATED_YZ,
     )
-    factories.CrossSectionLocationFactory(definition=definition)
     check = OpenIncreasingCrossSectionVariableCheck(
-        models.CrossSectionDefinition.friction_values
+        models.CrossSectionLocation.cross_section_friction_values
     )
     # this check should pass on cross-section locations which don't use conveyance,
     # regardless of their other parameters

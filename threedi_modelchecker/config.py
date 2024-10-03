@@ -34,11 +34,8 @@ from .checks.cross_section_definitions import (  # CrossSectionVariableRangeChec
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
     OpenIncreasingCrossSectionConveyanceFrictionCheck,
+    OpenIncreasingCrossSectionVariableCheck,
 )
-
-# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; ,; CrossSectionNullCheck,; ,; ,;,;,;,; ,; OpenIncreasingCrossSectionVariableCheck,
-#     ,
-# )
 from .checks.factories import (
     generate_enum_checks,
     generate_foreign_key_checks,
@@ -2842,14 +2839,13 @@ CHECKS += [
         "are defined for non-conveyance friction. Only cross_section_location.friction_value will be used",
     ),
 ]
-# CHECKS += [
-#     OpenIncreasingCrossSectionVariableCheck(
-#         error_code=186,
-#         column=col,
-#     )
-#     for col in vegetation_parameter_columns
-#     + [models.CrossSectionLocation.friction_values]
-# ]
+# TODO: add for pipe etc
+CHECKS += [
+    OpenIncreasingCrossSectionVariableCheck(
+        error_code=186,
+        column=models.CrossSectionLocation.cross_section_friction_values,
+    )
+]
 ## Friction values range
 # TODO add checks for pipe, etc
 CHECKS += [
