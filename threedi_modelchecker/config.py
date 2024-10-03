@@ -45,7 +45,8 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,; AllPresentFixedVegetationParameters,; AllPresentVariableVegetationParameters,; ChannelManholeLevelCheck,; CrossSectionSameConfigurationCheck,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,,
+from .checks.other import (  # Use0DFlowCheck,; AllPresentVariableVegetationParameters,; ChannelManholeLevelCheck,; CrossSectionSameConfigurationCheck,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,,
+    AllPresentFixedVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
     BoundaryCondition1DObjectNumberCheck,
@@ -2947,10 +2948,9 @@ CHECKS += [
 ]
 # TODO: fix
 CHECKS += [
-    # AllPresentFixedVegetationParameters(
-    #     error_code=194,
-    #     column=vegetation_parameter_columns_singular[0],
-    # ),
+    AllPresentFixedVegetationParameters(
+        error_code=194, column=models.CrossSectionLocation.vegetation_height
+    ),
     # AllPresentVariableVegetationParameters(
     #     error_code=195,
     #     column=vegetation_parameter_columns_plural[0],

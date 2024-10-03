@@ -984,18 +984,13 @@ class AllPresentFixedVegetationParameters(AllPresent):
         # Get records with valid settings for vegetation in CrossSectionLocation
         return (
             session.query(models.CrossSectionLocation)
-            .join(
-                models.CrossSectionDefinition,
-                models.CrossSectionDefinition.id
-                == models.CrossSectionLocation.definition_id,
-            )
             .filter(
                 models.CrossSectionLocation.friction_type.is_(
                     constants.FrictionType.CHEZY
                 )
             )
             .filter(
-                models.CrossSectionDefinition.shape.is_(
+                models.CrossSectionLocation.cross_section_shape.is_(
                     constants.CrossSectionShape.TABULATED_YZ
                 )
             )

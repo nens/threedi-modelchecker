@@ -690,7 +690,6 @@ def test_beta_features_in_server(threedi_db, allow_beta_features, no_checks_expe
         assert len(model_beta_checks) > 0
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 @pytest.mark.parametrize(
     "cols, shape, friction_type, result",
     [
@@ -746,13 +745,12 @@ def test_beta_features_in_server(threedi_db, allow_beta_features, no_checks_expe
 def test_all_present_fixed_vegetation_parameters(
     session, cols, shape, friction_type, result
 ):
-    definition = factories.CrossSectionDefinitionFactory(
-        shape=shape,
-        friction_values="1",
-    )
     veg_args = {col: 1 for col in cols}
     factories.CrossSectionLocationFactory(
-        definition=definition, friction_type=friction_type, **veg_args
+        cross_section_shape=shape,
+        cross_section_friction_values="1",
+        friction_type=friction_type,
+        **veg_args,
     )
     check = AllPresentFixedVegetationParameters(
         column=models.CrossSectionLocation.vegetation_height
