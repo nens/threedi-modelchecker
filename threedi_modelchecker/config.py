@@ -2933,33 +2933,28 @@ CHECKS += [
     for col in vegetation_parameter_columns_singular
 ]
 # TODO: fix
-# CHECKS += [
-#     QueryCheck(
-#         error_code=193,
-#         column=col,
-#         invalid=(
-#             Query(models.CrossSectionDefinition)
-#             .join(
-#                 models.CrossSectionLocation,
-#                 models.CrossSectionLocation.definition_id
-#                 == models.CrossSectionDefinition.id,
-#             )
-#             .filter(
-#                 models.CrossSectionLocation.friction_type.in_(
-#                     [
-#                         constants.FrictionType.MANNING,
-#                         constants.FrictionType.MANNING_CONVEYANCE,
-#                     ]
-#                 )
-#                 & col.is_not(None)
-#             )
-#         ),
-#         message=(
-#             f"{col.table.name}.{col.name} cannot be used with MANNING type friction"
-#         ),
-#     )
-#     for col in vegetation_parameter_columns_plural
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=193,
+        column=models.CrossSectionLocation.cross_section_vegetation_table,
+        invalid=(
+            Query(models.CrossSectionLocation).filter(
+                models.CrossSectionLocation.friction_type.in_(
+                    [
+                        constants.FrictionType.MANNING,
+                        constants.FrictionType.MANNING_CONVEYANCE,
+                    ]
+                )
+                & models.CrossSectionLocation.cross_section_vegetation_table.is_not(
+                    None
+                )
+            )
+        ),
+        message=(
+            "cross_section_locaiton.cross_section_vegetation_table cannot be used with MANNING type friction"
+        ),
+    )
+]
 # TODO: fix
 CHECKS += [
     # AllPresentFixedVegetationParameters(
