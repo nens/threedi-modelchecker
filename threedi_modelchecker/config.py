@@ -20,13 +20,16 @@ from .checks.base import (
 from .checks.cross_section_definitions import (
     CrossSectionEqualElementsCheck,
     CrossSectionExpectEmptyCheck,
+    CrossSectionFirstElementNonZeroCheck,
+    CrossSectionFirstElementZeroCheck,
     CrossSectionFloatCheck,
     CrossSectionFloatListCheck,
     CrossSectionGreaterZeroCheck,
+    CrossSectionIncreasingCheck,
     CrossSectionNullCheck,
 )
 
-# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; CrossSectionFirstElementNonZeroCheck,; CrossSectionFirstElementZeroCheck,; ,;,,; CrossSectionIncreasingCheck,; CrossSectionMinimumDiameterCheck,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,; CrossSectionYZCoordinateCountCheck,; CrossSectionYZHeightCheck,; CrossSectionYZIncreasingWidthIfOpenCheck,; OpenIncreasingCrossSectionConveyanceFrictionCheck,; OpenIncreasingCrossSectionVariableCheck,
+# from .checks.cross_section_definitions import (  # CrossSectionEqualElementsCheck,;,; ,; ,; ,;,,;,; CrossSectionMinimumDiameterCheck,; CrossSectionNullCheck,; CrossSectionVariableFrictionRangeCheck,; CrossSectionVariableRangeCheck,; CrossSectionYZCoordinateCountCheck,; CrossSectionYZHeightCheck,; CrossSectionYZIncreasingWidthIfOpenCheck,; OpenIncreasingCrossSectionConveyanceFrictionCheck,; OpenIncreasingCrossSectionVariableCheck,
 #     CrossSectionVariableCorrectLengthCheck,
 # )
 from .checks.factories import (
@@ -612,28 +615,28 @@ CHECKS += [
             constants.CrossSectionShape.TABULATED_YZ,
         ),
     ),
-    #     CrossSectionIncreasingCheck(
-    #         error_code=90,
-    #         column=models.CrossSectionDefinition.height,
-    #         shapes=(
-    #             constants.CrossSectionShape.TABULATED_RECTANGLE,
-    #             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-    #         ),
-    #     ),
-    #     CrossSectionFirstElementNonZeroCheck(
-    #         error_code=91,
-    #         column=models.CrossSectionDefinition.width,
-    #         shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
-    #     ),
-    #     CrossSectionFirstElementZeroCheck(
-    #         error_code=92,
-    #         level=CheckLevel.WARNING,
-    #         column=models.CrossSectionDefinition.height,
-    #         shapes=(
-    #             constants.CrossSectionShape.TABULATED_RECTANGLE,
-    #             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-    #         ),
-    #     ),
+    CrossSectionIncreasingCheck(
+        error_code=90,
+        column=models.CrossSectionLocation.cross_section_height,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
+    ),
+    CrossSectionFirstElementNonZeroCheck(
+        error_code=91,
+        column=models.CrossSectionLocation.cross_section_width,
+        shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
+    ),
+    CrossSectionFirstElementZeroCheck(
+        error_code=92,
+        level=CheckLevel.WARNING,
+        column=models.CrossSectionLocation.cross_section_height,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
+    ),
     CrossSectionExpectEmptyCheck(
         error_code=94,
         level=CheckLevel.WARNING,

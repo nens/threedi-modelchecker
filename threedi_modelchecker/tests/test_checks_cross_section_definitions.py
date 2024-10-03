@@ -148,11 +148,9 @@ def test_check_equal_elements_invalid(session, width):
 
 @pytest.mark.parametrize("width", [None, "", "3;5;7", "1 2 3"])
 def test_check_equal_elements_valid(session, width):
-    definition = factories.CrossSectionDefinitionFactory(
-        width=width,
-        height="0 2 5",
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width, cross_section_height="0 2 5"
     )
-    factories.CrossSectionLocationFactory(definition=definition)
     check = CrossSectionEqualElementsCheck()
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
@@ -160,28 +158,35 @@ def test_check_equal_elements_valid(session, width):
 
 @pytest.mark.parametrize("width", ["2 1 4"])
 def test_increasing_elements_invalid(session, width):
-    definition = factories.CrossSectionDefinitionFactory(width=width)
-    factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionIncreasingCheck(column=models.CrossSectionDefinition.width)
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+    )
+    check = CrossSectionIncreasingCheck(
+        column=models.CrossSectionLocation.cross_section_width
+    )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
 
 @pytest.mark.parametrize("width", [None, "", "3;5;7", "1 2 3"])
 def test_increasing_elements_valid(session, width):
-    definition = factories.CrossSectionDefinitionFactory(width=width)
-    factories.CrossSectionLocationFactory(definition=definition)
-    check = CrossSectionIncreasingCheck(column=models.CrossSectionDefinition.width)
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+    )
+    check = CrossSectionIncreasingCheck(
+        column=models.CrossSectionLocation.cross_section_width
+    )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
 @pytest.mark.parametrize("width", ["0 1 4"])
 def test_first_nonzero_invalid(session, width):
-    definition = factories.CrossSectionDefinitionFactory(width=width)
-    factories.CrossSectionLocationFactory(definition=definition)
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+    )
     check = CrossSectionFirstElementNonZeroCheck(
-        column=models.CrossSectionDefinition.width
+        column=models.CrossSectionLocation.cross_section_width
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
@@ -189,10 +194,11 @@ def test_first_nonzero_invalid(session, width):
 
 @pytest.mark.parametrize("width", [None, "", "3;5;7", "1 2 3"])
 def test_first_nonzero_valid(session, width):
-    definition = factories.CrossSectionDefinitionFactory(width=width)
-    factories.CrossSectionLocationFactory(definition=definition)
+    factories.CrossSectionLocationFactory(
+        cross_section_width=width,
+    )
     check = CrossSectionFirstElementNonZeroCheck(
-        column=models.CrossSectionDefinition.width
+        column=models.CrossSectionLocation.cross_section_width
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0

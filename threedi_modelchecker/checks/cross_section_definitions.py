@@ -7,6 +7,10 @@ from .base import BaseCheck
 class CrossSectionBaseCheck(BaseCheck):
     """Base class for all cross section definition checks."""
 
+    # TODO: extend to work with all tables with cross sections
+    # use self.table instead of models.CrossSectionLocation
+    # adapt config.py
+
     def __init__(self, column, *args, **kwargs):
         self.shapes = kwargs.pop("shapes", None)
         super().__init__(column, *args, **kwargs)
