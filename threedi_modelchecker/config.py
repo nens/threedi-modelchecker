@@ -29,6 +29,7 @@ from .checks.cross_section_definitions import (
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionVariableCorrectLengthCheck,
+    CrossSectionVariableRangeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -2901,15 +2902,17 @@ CHECKS += [
     )
     for col in vegetation_parameter_columns_singular
 ]
-# CHECKS += [
-#     CrossSectionVariableRangeCheck(
-#         error_code=191,
-#         min_value=0,
-#         column=col,
-#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-#     )
-#     for col in vegetation_parameter_columns_plural
-# ]
+# TODO: replace with check for cross_section_friction_values and cross_section_vegetation_table
+# TODO: add check for cross_section_vegetation_table
+# TODO add checks for pipe, etc
+CHECKS += [
+    CrossSectionVariableRangeCheck(
+        error_code=191,
+        min_value=0,
+        column=models.CrossSectionLocation.cross_section_friction_values,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    )
+]
 
 CHECKS += [
     QueryCheck(

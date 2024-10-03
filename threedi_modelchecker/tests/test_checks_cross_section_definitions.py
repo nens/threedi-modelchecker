@@ -593,10 +593,9 @@ def test_check_correct_length(session, data, result):
     ],
 )
 def test_check_var_range(session, min_value, max_value, left_incl, right_incl, result):
-    definition = factories.CrossSectionDefinitionFactory(friction_values="0 1")
-    factories.CrossSectionLocationFactory(definition=definition)
+    factories.CrossSectionLocationFactory(cross_section_friction_values="0 1")
     check = CrossSectionVariableRangeCheck(
-        column=models.CrossSectionDefinition.friction_values,
+        column=models.CrossSectionLocation.cross_section_friction_values,
         min_value=min_value,
         max_value=max_value,
         left_inclusive=left_incl,
