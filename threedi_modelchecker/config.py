@@ -122,26 +122,21 @@ CHECKS: List[BaseCheck] = []
 ## 002x: FRICTION
 ## Use same error code as other null checks
 # TODO: change - data now in objects and CrossSectionLocation
-# CHECKS += [
-#     QueryCheck(
-#         error_code=20,
-#         column=models.CrossSectionLocation.friction_value,
-#         invalid=(
-#             Query(models.CrossSectionLocation)
-#             .join(
-#                 models.CrossSectionDefinition,
-#                 models.CrossSectionLocation.definition_id
-#                 == models.CrossSectionDefinition.id,
-#             )
-#             .filter(
-#                 models.CrossSectionDefinition.shape
-#                 != constants.CrossSectionShape.TABULATED_YZ
-#             )
-#             .filter(models.CrossSectionLocation.friction_value == None)
-#         ),
-#         message="CrossSectionLocation.friction_value cannot be null or empty",
-#     )
-# ]
+CHECKS += [
+    QueryCheck(
+        error_code=20,
+        column=models.CrossSectionLocation.friction_value,
+        invalid=(
+            Query(models.CrossSectionLocation)
+            .filter(
+                models.CrossSectionLocation.cross_section_shape
+                != constants.CrossSectionShape.TABULATED_YZ
+            )
+            .filter(models.CrossSectionLocation.friction_value == None)
+        ),
+        message="CrossSectionLocation.friction_value cannot be null or empty",
+    )
+]
 CHECKS += [
     RangeCheck(
         error_code=21,
