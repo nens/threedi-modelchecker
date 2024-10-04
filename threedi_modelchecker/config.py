@@ -3004,36 +3004,14 @@ CHECKS += [
 
 
 # Tags 2xxx
+tables_with_tags = [model for model in models.DECLARED_MODELS if hasattr(model, "tags")]
 CHECKS += [
     ListOfIntsCheck(
         error_code=2001 + i,
         level=CheckLevel.WARNING,
         column=table.tags,
     )
-    for i, table in enumerate(
-        [
-            models.Surface,
-            models.SurfaceMap,
-            models.SurfaceParameter,
-            models.Lateral2D,
-            models.Lateral1d,
-            models.DryWeatherFlow,
-            models.DryWeatherFlowMap,
-            models.DryWeatherFlowDistribution,
-            models.BoundaryConditions2D,
-            models.BoundaryCondition1D,
-            models.ControlMemory,
-            models.ControlTable,
-            models.ControlMeasureLocation,
-            models.ControlMeasureMap,
-            models.DemAverageArea,
-            models.ExchangeLine,
-            models.GridRefinementArea,
-            models.GridRefinementArea,
-            models.Obstacle,
-            models.PotentialBreach,
-        ]
-    )
+    for i, table in enumerate(tables_with_tags)
 ]
 
 
@@ -3043,30 +3021,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=table.tags,
     )
-    for i, table in enumerate(
-        [
-            models.Surface,
-            models.SurfaceMap,
-            models.SurfaceParameter,
-            models.Lateral2D,
-            models.Lateral1d,
-            models.DryWeatherFlow,
-            models.DryWeatherFlowMap,
-            models.DryWeatherFlowDistribution,
-            models.BoundaryConditions2D,
-            models.BoundaryCondition1D,
-            models.ControlMemory,
-            models.ControlTable,
-            models.ControlMeasureLocation,
-            models.ControlMeasureMap,
-            models.DemAverageArea,
-            models.ExchangeLine,
-            models.GridRefinementArea,
-            models.GridRefinementArea,
-            models.Obstacle,
-            models.PotentialBreach,
-        ]
-    )
+    for i, table in enumerate(tables_with_tags)
 ]
 
 
