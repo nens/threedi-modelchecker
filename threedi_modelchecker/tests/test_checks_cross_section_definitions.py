@@ -2,11 +2,10 @@ import pytest
 from threedi_schema import constants, models
 
 from threedi_modelchecker.checks.cross_section_definitions import (
-    CrossSectionEqualElementsCheck,
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
     CrossSectionFloatCheck,
-    CrossSectionFloatListCheck,
+    CrossSectionTableCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
@@ -46,28 +45,28 @@ def test_filter_shapes(session):
 
 
 @pytest.mark.parametrize(
-    "width, is_null, is_empty",
+    "cross_section_table, is_null, is_empty",
     [(None, True, False), ("", True, False), (" ", False, True)],
 )
-def test_check_null_check(session, width, is_null, is_empty):
+def test_check_null_check(session, cross_section_table, is_null, is_empty):
     factories.CrossSectionLocationFactory(
-        cross_section_width=width,
+        cross_section_table=cross_section_table,
     )
     check = CrossSectionNullCheck(
-        column=models.CrossSectionLocation.cross_section_width
+        column=models.CrossSectionLocation.cross_section_table
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 1) == is_null
 
     check = CrossSectionExpectEmptyCheck(
-        column=models.CrossSectionLocation.cross_section_width
+        column=models.CrossSectionLocation.cross_section_table
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 1) == is_empty
 
 
-@pytest.mark.parametrize("width", [" ", "foo", "0,1", "1e-2e8", "-0.1"])
-def test_check_float_invalid(session, width):
+@pytest.mark.parametrize("width, valid", [(-1, False), (1, True)])
+def test_check_float(session, width, valid):
     factories.CrossSectionLocationFactory(
         cross_section_width=width,
     )
@@ -75,25 +74,11 @@ def test_check_float_invalid(session, width):
         column=models.CrossSectionLocation.cross_section_width
     )
     invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
+    assert (len(invalid_rows) == 0) == valid
 
 
-@pytest.mark.parametrize(
-    "width", [None, "", "2", "0.1", ".2", "7.", "1e-5", "1E+2", " 0.1"]
-)
-def test_check_float_valid(session, width):
-    factories.CrossSectionLocationFactory(
-        cross_section_width=width,
-    )
-    check = CrossSectionFloatCheck(
-        column=models.CrossSectionLocation.cross_section_width
-    )
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
-@pytest.mark.parametrize("width", ["0", " 0", "0.0", "-0", "-1.2"])
-def test_check_greater_zero_invalid(session, width):
+@pytest.mark.parametrize("width, valid", [(-1, False), (0, False), (1, True)])
+def test_check_greater_zero(session, width, valid):
     factories.CrossSectionLocationFactory(
         cross_section_width=width,
     )
@@ -101,104 +86,78 @@ def test_check_greater_zero_invalid(session, width):
         column=models.CrossSectionLocation.cross_section_width
     )
     invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
+    assert (len(invalid_rows) == 0) == valid
 
 
-@pytest.mark.parametrize("width", [None, "", "foo", "0.1", "1e-2"])
-def test_check_greater_zero_valid(session, width):
+@pytest.mark.parametrize("cross_section_table", [" ", "0 1", "3;5", "foo", "1,2,3,4", "1,2\3,", "1,2\3", ",2", ",2\3,4"])
+def test_check_table_invalid(session, cross_section_table):
     factories.CrossSectionLocationFactory(
-        cross_section_width=width,
+        cross_section_table=cross_section_table,
     )
-    check = CrossSectionGreaterZeroCheck(
-        column=models.CrossSectionLocation.cross_section_width
-    )
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
-@pytest.mark.parametrize("width", [" ", "0,1,2", "3;5;7", "foo"])
-def test_check_float_list_invalid(session, width):
-    factories.CrossSectionLocationFactory(
-        cross_section_width=width,
-    )
-    check = CrossSectionFloatListCheck(models.CrossSectionLocation.cross_section_width)
+    check = CrossSectionTableCheck(models.CrossSectionLocation.cross_section_table)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
 
-@pytest.mark.parametrize("width", [None, "", "0", "0.1", "0 1 2", "-.2 5.72 9. 1e2"])
-def test_check_float_list_valid(session, width):
+@pytest.mark.parametrize("cross_section_table", [None, "", "0,1", "0,1\n0,1"])
+def test_check_table_valid(session, cross_section_table):
     factories.CrossSectionLocationFactory(
-        cross_section_width=width,
+        cross_section_table=cross_section_table,
     )
-    check = CrossSectionFloatListCheck(models.CrossSectionLocation.cross_section_width)
+    check = CrossSectionTableCheck(models.CrossSectionLocation.cross_section_table)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.parametrize("width", ["0", "0 1"])
-def test_check_equal_elements_invalid(session, width):
+@pytest.mark.parametrize("cross_section_table", ["1,2\n1,1"])
+def test_increasing_elements_invalid(session, cross_section_table):
     factories.CrossSectionLocationFactory(
-        cross_section_width=width, cross_section_height="0 2 5"
-    )
-    check = CrossSectionEqualElementsCheck()
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 1
-
-
-@pytest.mark.parametrize("width", [None, "", "3;5;7", "1 2 3"])
-def test_check_equal_elements_valid(session, width):
-    factories.CrossSectionLocationFactory(
-        cross_section_width=width, cross_section_height="0 2 5"
-    )
-    check = CrossSectionEqualElementsCheck()
-    invalid_rows = check.get_invalid(session)
-    assert len(invalid_rows) == 0
-
-
-@pytest.mark.parametrize("width", ["2 1 4"])
-def test_increasing_elements_invalid(session, width):
-    factories.CrossSectionLocationFactory(
-        cross_section_width=width,
+        cross_section_table=cross_section_table,
     )
     check = CrossSectionIncreasingCheck(
-        column=models.CrossSectionLocation.cross_section_width
+        column=models.CrossSectionLocation.cross_section_table
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
 
-@pytest.mark.parametrize("width", [None, "", "3;5;7", "1 2 3"])
-def test_increasing_elements_valid(session, width):
+@pytest.mark.parametrize("cross_section_table", [None, "", "1,1\n1,2", "1,1"])
+def test_increasing_elements_valid(session, cross_section_table):
     factories.CrossSectionLocationFactory(
-        cross_section_width=width,
+        cross_section_table=cross_section_table,
     )
     check = CrossSectionIncreasingCheck(
-        column=models.CrossSectionLocation.cross_section_width
+        column=models.CrossSectionLocation.cross_section_table
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.parametrize("width", ["0 1 4"])
-def test_first_nonzero_invalid(session, width):
+@pytest.mark.parametrize("idx, cross_section_table", [(0, "0,1"), (1, "1,0")])
+def test_first_nonzero_invalid(session, idx, cross_section_table):
     factories.CrossSectionLocationFactory(
-        cross_section_width=width,
+        cross_section_table=cross_section_table,
     )
     check = CrossSectionFirstElementNonZeroCheck(
-        column=models.CrossSectionLocation.cross_section_width
+        column=models.CrossSectionLocation.cross_section_table,
+        idx=idx
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
 
-@pytest.mark.parametrize("width", [None, "", "3;5;7", "1 2 3"])
-def test_first_nonzero_valid(session, width):
+@pytest.mark.parametrize("idx, cross_section_table", [
+    (0, None),
+    (1, ""),
+    (0, "1,0"),
+    (1, "1,1\n2,2")])
+def test_first_nonzero_valid(session, idx, cross_section_table):
     factories.CrossSectionLocationFactory(
-        cross_section_width=width,
+        cross_section_table=cross_section_table,
     )
     check = CrossSectionFirstElementNonZeroCheck(
-        column=models.CrossSectionLocation.cross_section_width
+        column=models.CrossSectionLocation.cross_section_table,
+        idx=idx
     )
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0

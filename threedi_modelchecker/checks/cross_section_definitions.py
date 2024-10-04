@@ -77,7 +77,7 @@ class CrossSectionFloatCheck(CrossSectionBaseCheck):
             (self.column != None) & (self.column != "")
         ):
             try:
-                value = float(getattr(record, self.column.name))
+                value = getattr(record, self.column.name)
             except ValueError:
                 invalids.append(record)
             else:
@@ -99,7 +99,7 @@ class CrossSectionGreaterZeroCheck(CrossSectionBaseCheck):
             (self.column != None) & (self.column != "")
         ):
             try:
-                value = float(getattr(record, self.column.name))
+                value = getattr(record, self.column.name)
             except ValueError:
                 continue
 
@@ -111,7 +111,7 @@ class CrossSectionGreaterZeroCheck(CrossSectionBaseCheck):
         return f"{self.column_name} should be greater than zero for shapes {self.shape_msg}"
 
 
-class CrossSectionFloatListCheck(CrossSectionBaseCheck):
+class CrossSectionTableCheck(CrossSectionBaseCheck):
     """Tabulated definitions should use a space for separating the floats."""
 
     def get_invalid(self, session):
@@ -120,7 +120,13 @@ class CrossSectionFloatListCheck(CrossSectionBaseCheck):
             (self.column != None) & (self.column != "")
         ):
             try:
-                [float(x) for x in getattr(record, self.column.name).split(" ")]
+                for line in getattr(record, self.column.name).splitlines():
+                    line = line.split(',')
+                    if len(line) != 2:
+                        invalids.append(record)
+                        break
+                    for x in line:
+                        float(x)
             except ValueError:
                 invalids.append(record)
 
@@ -128,37 +134,6 @@ class CrossSectionFloatListCheck(CrossSectionBaseCheck):
 
     def description(self):
         return f"{self.column_name} should contain a space separated list of numbers for shapes {self.shape_msg}"
-
-
-class CrossSectionEqualElementsCheck(CrossSectionBaseCheck):
-    """Tabulated definitions should have equal numbers of width and height elements."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            column=models.CrossSectionLocation.cross_section_width, *args, **kwargs
-        )
-
-    def get_invalid(self, session):
-        invalids = []
-        for record in self.to_check(session).filter(
-            (models.CrossSectionLocation.cross_section_width != None)
-            & (models.CrossSectionLocation.cross_section_width != "")
-            & (models.CrossSectionLocation.cross_section_height != None)
-            & (models.CrossSectionLocation.cross_section_height != "")
-        ):
-            try:
-                widths = [float(x) for x in record.cross_section_width.split(" ")]
-                heights = [float(x) for x in record.cross_section_height.split(" ")]
-            except ValueError:
-                continue  # other check catches this
-
-            if len(widths) != len(heights):
-                invalids.append(record)
-
-        return invalids
-
-    def description(self):
-        return f"{self.table.name} width and height should an equal number of elements for shapes {self.shape_msg}"
 
 
 class CrossSectionIncreasingCheck(CrossSectionBaseCheck):
@@ -170,15 +145,10 @@ class CrossSectionIncreasingCheck(CrossSectionBaseCheck):
             (self.column != None) & (self.column != "")
         ):
             try:
-                values = [
-                    float(x) for x in getattr(record, self.column.name).split(" ")
-                ]
+                values = [float(line.split(',')[1]) for line in getattr(record, self.column.name).splitlines()]
             except ValueError:
                 continue  # other check catches this
-
-            if len(values) > 1 and any(
-                x > y for (x, y) in zip(values[:-1], values[1:])
-            ):
+            if values != sorted(values):
                 invalids.append(record)
 
         return invalids
@@ -214,15 +184,18 @@ class CrossSectionFirstElementZeroCheck(CrossSectionBaseCheck):
 class CrossSectionFirstElementNonZeroCheck(CrossSectionBaseCheck):
     """Tabulated rectangles cannot start with 0 width."""
 
+    def __init__(self, column, idx, *args, **kwargs):
+        super().__init__(column,*args, **kwargs)
+        self.idx = idx
+
+
     def get_invalid(self, session):
         invalids = []
         for record in self.to_check(session).filter(
             (self.column != None) & (self.column != "")
         ):
             try:
-                values = [
-                    float(x) for x in getattr(record, self.column.name).split(" ")
-                ]
+                values = [float(line.split(',')[self.idx]) for line in getattr(record, self.column.name).splitlines()]
             except ValueError:
                 continue  # other check catches this
 

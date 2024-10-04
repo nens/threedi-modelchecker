@@ -18,12 +18,11 @@ from .checks.base import (
     UniqueCheck,
 )
 from .checks.cross_section_definitions import (  # CrossSectionVariableRangeCheck,
-    CrossSectionEqualElementsCheck,
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
     CrossSectionFirstElementZeroCheck,
     CrossSectionFloatCheck,
-    CrossSectionFloatListCheck,
+    CrossSectionTableCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
@@ -563,40 +562,59 @@ CHECKS += [
         f"must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
     )
 ]
+
+cross_section_tables = [models.CrossSectionLocation,
+                        models.Culvert,
+                        models.Orifice,
+                        models.Pipe,
+                        models.Weir]
+
 CHECKS += [
     CrossSectionNullCheck(
         error_code=81,
-        column=models.CrossSectionLocation.cross_section_width,
+        column=table.cross_section_width,
         shapes=None,  # all shapes
-    ),
+    )
+    for table in cross_section_tables
+]
+CHECKS += [
     CrossSectionNullCheck(
         error_code=82,
-        column=models.CrossSectionLocation.cross_section_height,
+        column=table.cross_section_height,
         shapes=(
             constants.CrossSectionShape.CLOSED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
             constants.CrossSectionShape.TABULATED_YZ,
         ),
-    ),
-    CrossSectionFloatCheck(
+    )
+    for table in cross_section_tables
+]
+CHECKS += [
+CrossSectionFloatCheck(
         error_code=83,
-        column=models.CrossSectionLocation.cross_section_width,
+        column=table.cross_section_width,
         shapes=(
             constants.CrossSectionShape.RECTANGLE,
             constants.CrossSectionShape.CIRCLE,
             constants.CrossSectionShape.CLOSED_RECTANGLE,
             constants.CrossSectionShape.EGG,
         ),
-    ),
+    )
+    for table in cross_section_tables
+]
+CHECKS += [
     CrossSectionFloatCheck(
         error_code=84,
-        column=models.CrossSectionLocation.cross_section_height,
+        column=table.cross_section_height,
         shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
-    ),
+    )
+    for table in cross_section_tables
+]
+CHECKS += [
     CrossSectionGreaterZeroCheck(
         error_code=85,
-        column=models.CrossSectionLocation.cross_section_width,
+        column=table.cross_section_width,
         shapes=(
             constants.CrossSectionShape.RECTANGLE,
             constants.CrossSectionShape.CIRCLE,
@@ -604,90 +622,92 @@ CHECKS += [
             constants.CrossSectionShape.EGG,
             constants.CrossSectionShape.INVERTED_EGG,
         ),
-    ),
+    )
+    for table in cross_section_tables
+]
+CHECKS += [
     CrossSectionGreaterZeroCheck(
         error_code=86,
-        column=models.CrossSectionLocation.cross_section_height,
+        column=table.cross_section_height,
         shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
-    ),
-    CrossSectionFloatListCheck(
+    )
+    for table in cross_section_tables
+]
+CHECKS += [
+    CrossSectionTableCheck(
         error_code=87,
-        column=models.CrossSectionLocation.cross_section_width,
+        column=table.cross_section_table,
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
             constants.CrossSectionShape.TABULATED_YZ,
         ),
-    ),
-    CrossSectionFloatListCheck(
-        error_code=88,
-        column=models.CrossSectionLocation.cross_section_height,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
-    ),
-    CrossSectionEqualElementsCheck(
-        error_code=89,
-        shapes=(
-            constants.CrossSectionShape.TABULATED_RECTANGLE,
-            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-            constants.CrossSectionShape.TABULATED_YZ,
-        ),
-    ),
+    )
+    for table in cross_section_tables
+]
+CHECKS += [
     CrossSectionIncreasingCheck(
         error_code=90,
-        column=models.CrossSectionLocation.cross_section_height,
+        column=table.cross_section_height,
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
         ),
-    ),
+    )
+    for table in cross_section_tables
+]
+CHECKS += [
     CrossSectionFirstElementNonZeroCheck(
         error_code=91,
-        column=models.CrossSectionLocation.cross_section_width,
+        column=table.cross_section_table,
+        idx=0,
         shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
-    ),
+    )
+    for table in cross_section_tables
+]
+CHECKS += [
     CrossSectionFirstElementZeroCheck(
         error_code=92,
         level=CheckLevel.WARNING,
-        column=models.CrossSectionLocation.cross_section_height,
+        column=table.cross_section_height,
+        idx=1,
         shapes=(
             constants.CrossSectionShape.TABULATED_RECTANGLE,
             constants.CrossSectionShape.TABULATED_TRAPEZIUM,
         ),
-    ),
-    CrossSectionExpectEmptyCheck(
-        error_code=94,
-        level=CheckLevel.WARNING,
-        column=models.CrossSectionLocation.cross_section_height,
-        shapes=(
-            constants.CrossSectionShape.CIRCLE,
-            constants.CrossSectionShape.EGG,
-            constants.CrossSectionShape.INVERTED_EGG,
-        ),
-    ),
-    CrossSectionYZHeightCheck(
-        error_code=95,
-        column=models.CrossSectionLocation.cross_section_height,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    ),
-    CrossSectionYZCoordinateCountCheck(
-        error_code=96,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    ),
-    CrossSectionYZIncreasingWidthIfOpenCheck(
-        error_code=97,
-        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-    ),
-    CrossSectionMinimumDiameterCheck(
-        error_code=98,
-        level=CheckLevel.WARNING,
-    ),
+    )
+    for table in cross_section_tables
 ]
+#     CrossSectionExpectEmptyCheck(
+#         error_code=94,
+#         level=CheckLevel.WARNING,
+#         column=models.CrossSectionLocation.cross_section_height,
+#         shapes=(
+#             constants.CrossSectionShape.CIRCLE,
+#             constants.CrossSectionShape.EGG,
+#             constants.CrossSectionShape.INVERTED_EGG,
+#         ),
+#     ),
+#     CrossSectionYZHeightCheck(
+#         error_code=95,
+#         column=models.CrossSectionLocation.cross_section_height,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#     ),
+#     CrossSectionYZCoordinateCountCheck(
+#         error_code=96,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#     ),
+#     CrossSectionYZIncreasingWidthIfOpenCheck(
+#         error_code=97,
+#         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+#     ),
+#     CrossSectionMinimumDiameterCheck(
+#         error_code=98,
+#         level=CheckLevel.WARNING,
+#     ),
+# ]
 CHECKS += [
-    CrossSectionFloatListCheck(
+    CrossSectionTableCheck(
         error_code=87,
         column=models.CrossSectionLocation.cross_section_friction_values,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
