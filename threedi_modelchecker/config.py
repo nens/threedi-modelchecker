@@ -463,6 +463,21 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.Pump.capacity,
     ),
+    ForeignKeyCheck(
+        error_code=67,
+        column=models.Pump.connection_node_id,
+        reference_column=models.ConnectionNode.id,
+    ),
+    ForeignKeyCheck(
+        error_code=68,
+        column=models.PumpMap.connection_node_id_end,
+        reference_column=models.ConnectionNode.id,
+    ),
+    ForeignKeyCheck(
+        error_code=69,
+        column=models.PumpMap.pump_id,
+        reference_column=models.ConnectionNode.id,
+    ),
 ]
 
 ## 007x: BOUNDARY CONDITIONS
@@ -811,6 +826,14 @@ CHECKS += [
 #         level=CheckLevel.INFO, nodes_to_check="end", error_code=110
 #     ),
 # ]
+
+## Linked channels
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=110 + i, column=table.channel_id, reference_column=models.Channel.id
+    )
+    for i, table in enumerate([models.CrossSectionLocation, models.Windshielding])
+]
 
 ## 020x: Spatial checks
 
