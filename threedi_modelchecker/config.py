@@ -984,6 +984,18 @@ CHECKS += [
     ),
 ]
 
+for i, table in enumerate(
+    [models.Channel, models.Culvert, models.Orifice, models.Pipe, models.Weir]
+):
+    CHECKS += [
+        ForeignKeyCheck(
+            error_code=255 + i,
+            column=col,
+            reference_column=models.ConnectionNode.id,
+        )
+        for col in [table.connection_node_id_start, table.connection_node_id_end]
+    ]
+
 
 ## 026x: Exchange lines
 CHECKS += [

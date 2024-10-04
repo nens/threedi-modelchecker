@@ -272,7 +272,6 @@ class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
     friction_type = 2
     invert_level_start = 0.1
     invert_level_end = 1.1
-    # cross_section_definition = factory.SubFactory(CrossSectionDefinitionFactory)
     discharge_coefficient_negative = 1.0
     discharge_coefficient_positive = 1.0
 

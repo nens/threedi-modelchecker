@@ -174,7 +174,7 @@ def test_open_channels_with_nested_newton(session):
         geom="SRID=4326;POINT(-71.0645 42.287)",
     )
 
-    check = OpenChannelsWithNestedNewton()
+    check = OpenChannelsWithNestedNewton(table=models.CrossSectionLocation)
 
     errors = check.get_invalid(session)
     assert len(errors) == 2
@@ -583,7 +583,6 @@ def test_connection_node_mapped_surfaces(
     assert len(invalid) == expected_result
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 @pytest.mark.parametrize(
     "configuration,expected_result",
     [
@@ -596,11 +595,8 @@ def test_feature_closed_cross_section(session, configuration, expected_result):
         shape = constants.CrossSectionShape.CLOSED_RECTANGLE
     else:
         shape = constants.CrossSectionShape.RECTANGLE
-    cross_section_definition = factories.CrossSectionDefinitionFactory(
-        shape=shape, height=1, width=1
-    )
-    factories.CulvertFactory(cross_section_definition=cross_section_definition)
-    check = FeatureClosedCrossSectionCheck(models.Culvert.id)
+    factories.CrossSectionLocationFactory(cross_section_shape=shape, cross_section_width=1, cross_section_height=1)
+    check = FeatureClosedCrossSectionCheck(models.CrossSectionLocation.id)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 

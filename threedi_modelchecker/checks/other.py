@@ -441,9 +441,9 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     See https://github.com/nens/threeditoolbox/issues/522
     """
 
-    def __init__(self, level=CheckLevel.WARNING, *args, **kwargs):
+    def __init__(self, table, level=CheckLevel.WARNING, *args, **kwargs):
         super().__init__(
-            column=models.CrossSectionDefinition.id,
+            column=table.id,
             level=level,
             filters=Query(models.NumericalSettings)
             .filter(models.NumericalSettings.use_nested_newton == 0)
@@ -451,22 +451,12 @@ class OpenChannelsWithNestedNewton(BaseCheck):
             *args,
             **kwargs,
         )
+        self.table = table
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        definitions_in_use = self.to_check(session).filter(
-            models.CrossSectionDefinition.id.in_(
-                Query(models.CrossSectionLocation.definition_id).union_all(
-                    Query(models.Pipe.cross_section_definition_id),
-                    Query(models.Culvert.cross_section_definition_id),
-                    Query(models.Weir.cross_section_definition_id),
-                    Query(models.Orifice.cross_section_definition_id),
-                )
-            ),
-        )
-
         # closed_rectangle, circle, and egg cross-section definitions are always closed:
-        closed_definitions = definitions_in_use.filter(
-            models.CrossSectionDefinition.shape.in_(
+        closed_definitions = self.to_check(session).filter(
+            self.table.cross_section_shape.shape.in_(
                 [
                     constants.CrossSectionShape.CLOSED_RECTANGLE,
                     constants.CrossSectionShape.CIRCLE,
@@ -479,13 +469,14 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         # tabulated cross-section definitions are closed when the last element of 'width'
         # is zero
         tabulated_definitions = definitions_in_use.filter(
-            models.CrossSectionDefinition.shape.in_(
+            self.table.cross_section_shape.shape.in_(
                 [
                     constants.CrossSectionShape.TABULATED_RECTANGLE,
                     constants.CrossSectionShape.TABULATED_TRAPEZIUM,
                 ]
             )
         )
+        # TODO: use cross_section_table
         for definition in tabulated_definitions.with_session(session).all():
             try:
                 if float(definition.width.split(" ")[-1]) == 0.0:
@@ -828,37 +819,42 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
 
     def get_invalid(self, session):
         invalids = []
+        table = models.CrossSectionLocation
+        table = self.column.table.c
         for record in session.execute(
-            select(
-                self.table.c.id,
-                self.table.c.cross_section_definition_id,
-                models.CrossSectionDefinition.shape,
-                models.CrossSectionDefinition.width,
-                models.CrossSectionDefinition.height,
-            )
-            .join(
-                models.CrossSectionDefinition,
-                self.table.c.cross_section_definition_id
-                == models.CrossSectionDefinition.id,
-                isouter=True,
-            )
-            .where(
-                (models.CrossSectionDefinition.width != None)
-                & (models.CrossSectionDefinition.width != "")
-            )
+                select(
+                    table.id,
+                    table.cross_section_shape,
+                    table.cross_section_width,
+                    table.cross_section_height,
+                )
+                        .where(
+                    (table.cross_section_width != None)
+                    & (table.cross_section_width != "")
+                )
+            # select(
+            #     self.table.c.id,
+            #     self.table.c.cross_section_shape,
+            #     self.table.c.cross_section_width,
+            #     self.table.c.cross_section_height,
+            # )
+            # .where(
+            #     (self.table.c.cross_section_width != None)
+            #     & (self.table.c.cross_section_width != "")
+            # )
         ):
             try:
-                widths = [float(x) for x in record.width.split(" ")]
+                widths = [float(x) for x in record.cross_section_width.split(" ")]
                 heights = (
-                    [float(x) for x in record.height.split(" ")]
-                    if record.height not in [None, ""]
+                    [float(x) for x in record.cross_section_height.split(" ")]
+                    if record.cross_section_height not in [None, ""]
                     else []
                 )
             except ValueError:
                 continue  # other check catches this
 
             _, _, configuration = cross_section_configuration(
-                shape=record.shape.value, heights=heights, widths=widths
+                shape=record.cross_section_shape.value, heights=heights, widths=widths
             )
 
             # Pipes and culverts should generally have a closed cross-section
