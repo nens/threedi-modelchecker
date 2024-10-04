@@ -938,9 +938,21 @@ CHECKS += [
         models.Culvert,
         models.Orifice,
         models.Pipe,
-        # TODO: fix
-        # models.Pumpstation,
         models.Weir,
+    )
+]
+CHECKS += [
+    QueryCheck(
+        error_code=253,
+        column=models.Pump.connection_node_id,
+        invalid=(
+            Query(models.Pump)
+            .join(models.PumpMap, models.PumpMap.id == models.Pump.id)
+            .filter(
+                models.PumpMap.connection_node_id_end == models.Pump.connection_node_id
+            )
+        ),
+        message="a pump cannot be connected to itself (pump.connection_node_id must not equal the corresponding pump_map.connection_node_id_end)",
     )
 ]
 # TODO: add check to ensure models.PumpMap.connection_node_id_end != models.Pump.connection_node_id
