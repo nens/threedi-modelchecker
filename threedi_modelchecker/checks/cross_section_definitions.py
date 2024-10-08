@@ -269,7 +269,27 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
         return f"{self.column_name} should be strictly increasing for open YZ profiles. Perhaps this is actually a closed profile?"
 
 
-def cross_section_configuration(shape, width, height):
+def cross_section_configuration_for_record(record):
+    # TODO add test
+    if record.cross_section_shape.is_tabulated:
+        widths = parse_cross_section_table(
+            record.cross_section_table, TableColumn.width
+        )
+        heights = parse_cross_section_table(
+            record.cross_section_table, TableColumn.height
+        )
+        return cross_section_configuration_tabulated(
+            shape=record.cross_section_shape, widths=widths, heights=heights
+        )
+    else:
+        return cross_section_configuration_not_tabulated(
+            shape=record.cross_section_shape,
+            width=record.cross_section_width,
+            height=record.cross_section_height,
+        )
+
+
+def cross_section_configuration_not_tabulated(shape, width, height):
     """
     Calculate maximum width, maximum heigth  and open/closed configuration for cross-sections.
     If the heights or widths list is empty, but will be called, it is set to [] to avoid ValueErrors.
@@ -340,26 +360,11 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
     def get_invalid(self, session):
         invalids = []
         for record in self.to_check(session):
-            if record.cross_section_shape.is_tabulated:
-                widths = parse_cross_section_table(
-                    record.cross_section_table, TableColumn.width
-                )
-                heights = parse_cross_section_table(
-                    record.cross_section_table, TableColumn.height
-                )
-                (
-                    max_width,
-                    max_height,
-                    configuration,
-                ) = cross_section_configuration_tabulated(
-                    shape=record.cross_section_shape, widths=widths, heights=heights
-                )
-            else:
-                max_width, max_height, configuration = cross_section_configuration(
-                    shape=record.cross_section_shape,
-                    width=record.cross_section_width,
-                    height=record.cross_section_height,
-                )
+            (
+                max_width,
+                max_height,
+                configuration,
+            ) = cross_section_configuration_for_record(record)
             # See nens/threedi-modelchecker#251
             minimum_diameter = 0.1
             if configuration == "closed":
@@ -396,30 +401,16 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
             # friction with conveyance can only be used for cross-sections
             # which are open *and* have a monotonically increasing width
             if record.cross_section_shape.is_tabulated:
-                try:
-                    widths = parse_cross_section_table(
-                        record.cross_section_table, TableColumn.width
-                    )
-                    heights = parse_cross_section_table(
-                        record.cross_section_table, TableColumn.height
-                    )
-                except ValueError:
-                    continue  # other check catches this
+                widths = parse_cross_section_table(
+                    record.cross_section_table, TableColumn.width
+                )
                 if any(
                     next_width < previous_width
                     for (previous_width, next_width) in zip(widths[:-1], widths[1:])
                 ):
                     invalids.append(record)
                     continue
-                _, _, configuration = cross_section_configuration_tabulated(
-                    shape=record.cross_section_shape, widths=widths, heights=heights
-                )
-            else:
-                _, _, configuration = cross_section_configuration(
-                    shape=record.cross_section_shape,
-                    width=record.cross_section_width,
-                    height=record.cross_section_height,
-                )
+            _, _, configuration = cross_section_configuration_for_record(record)
             if configuration == "closed":
                 invalids.append(record)
 
@@ -575,25 +566,13 @@ class OpenIncreasingCrossSectionVariableCheck(CrossSectionBaseCheck):
                 widths = parse_cross_section_table(
                     record.cross_section_table, TableColumn.width
                 )
-                heights = parse_cross_section_table(
-                    record.cross_section_table, TableColumn.height
-                )
-                _, _, configuration = cross_section_configuration_tabulated(
-                    shape=record.cross_section_shape, widths=widths, heights=heights
-                )
                 if any(
                     next_width < previous_width
                     for (previous_width, next_width) in zip(widths[:-1], widths[1:])
                 ):
                     invalids.append(record)
                     continue
-            else:
-                _, _, configuration = cross_section_configuration(
-                    shape=record.cross_section_shape,
-                    width=record.cross_section_width,
-                    height=record.cross_section_height,
-                )
-
+            _, _, configuration = cross_section_configuration_for_record(record)
             if configuration == "closed":
                 invalids.append(record)
 

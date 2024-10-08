@@ -8,7 +8,7 @@ from sqlalchemy.orm import aliased, Query, Session
 from threedi_schema.domain import constants, models
 
 from .base import BaseCheck, CheckLevel
-from .cross_section_definitions import cross_section_configuration
+from .cross_section_definitions import cross_section_configuration_not_tabulated
 from .geo_query import distance, length, transform
 
 
@@ -841,16 +841,6 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
             ).where(
                 (table.cross_section_width != None) & (table.cross_section_width != "")
             )
-            # select(
-            #     self.table.c.id,
-            #     self.table.c.cross_section_shape,
-            #     self.table.c.cross_section_width,
-            #     self.table.c.cross_section_height,
-            # )
-            # .where(
-            #     (self.table.c.cross_section_width != None)
-            #     & (self.table.c.cross_section_width != "")
-            # )
         ):
             try:
                 widths = [float(x) for x in record.cross_section_width.split(" ")]
@@ -862,7 +852,7 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
             except ValueError:
                 continue  # other check catches this
 
-            _, _, configuration = cross_section_configuration(
+            _, _, configuration = cross_section_configuration_not_tabulated(
                 shape=record.cross_section_shape.value, width=widths, height=heights
             )
 

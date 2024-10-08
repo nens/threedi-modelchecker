@@ -2,7 +2,8 @@ import pytest
 from threedi_schema import constants, models
 
 from threedi_modelchecker.checks.cross_section_definitions import (
-    cross_section_configuration,
+    cross_section_configuration_for_record,
+    cross_section_configuration_not_tabulated,
     cross_section_configuration_tabulated,
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
@@ -535,8 +536,8 @@ def test_check_cross_section_increasing_open_with_variables(
         (constants.CrossSectionShape.EGG, None, 2, (0, 0, "closed")),
     ],
 )
-def test_cross_section_configuration(shape, width, height, expected):
-    assert cross_section_configuration(shape, width, height) == expected
+def test_cross_section_configuration_not_tabulated(shape, width, height, expected):
+    assert cross_section_configuration_not_tabulated(shape, width, height) == expected
 
 
 @pytest.mark.parametrize(
@@ -577,3 +578,39 @@ def test_cross_section_configuration(shape, width, height, expected):
 )
 def test_cross_section_configuration_tabulated(shape, widths, heights, expected):
     assert cross_section_configuration_tabulated(shape, widths, heights) == expected
+
+
+def test_cross_section_configuration_tabulated_raise():
+    with pytest.raises(ValueError):
+        cross_section_configuration_tabulated(
+            shape=constants.CrossSectionShape.RECTANGLE, widths=None, heights=None
+        )
+
+
+def test_cross_section_configuration_not_tabulated_raise():
+    with pytest.raises(ValueError):
+        cross_section_configuration_not_tabulated(
+            shape=constants.CrossSectionShape.TABULATED_YZ, width=None, height=None
+        )
+
+
+@pytest.mark.parametrize(
+    "shape,kwargs, expected",
+    [
+        (
+            constants.CrossSectionShape.TABULATED_YZ,
+            {"cross_section_table": "0,1\n1,2\n2,3\n0,4"},
+            (2, 3, "open"),
+        ),
+        (
+            constants.CrossSectionShape.CLOSED_RECTANGLE,
+            {"cross_section_width": 1, "cross_section_height": 2},
+            (1, 2, "closed"),
+        ),
+    ],
+)
+def test_cross_section_configuration_for_record(session, shape, kwargs, expected):
+    factories.CrossSectionLocationFactory(cross_section_shape=shape, **kwargs)
+    check = CrossSectionNullCheck(models.CrossSectionLocation.id)
+    records = list(check.to_check(session))
+    assert cross_section_configuration_for_record(records[0]) == expected
