@@ -584,17 +584,13 @@ def test_connection_node_mapped_surfaces(
 
 
 @pytest.mark.parametrize(
-    "configuration,expected_result",
+    "shape,expected_result",
     [
-        ("closed", 0),
-        ("open", 1),
+        (constants.CrossSectionShape.CLOSED_RECTANGLE, 0),
+        (constants.CrossSectionShape.RECTANGLE, 1),
     ],
 )
-def test_feature_closed_cross_section(session, configuration, expected_result):
-    if configuration == "closed":
-        shape = constants.CrossSectionShape.CLOSED_RECTANGLE
-    else:
-        shape = constants.CrossSectionShape.RECTANGLE
+def test_feature_closed_cross_section(session, shape, expected_result):
     factories.CrossSectionLocationFactory(
         cross_section_shape=shape, cross_section_width=1, cross_section_height=1
     )

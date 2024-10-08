@@ -44,7 +44,7 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,,; ChannelManholeLevelCheck,; ,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,,; CrossSectionSameConfigurationCheck,
+from .checks.other import (  # Use0DFlowCheck,,; ChannelManholeLevelCheck,; ,; ,; OpenChannelsWithNestedNewton,,; CrossSectionSameConfigurationCheck,
     AllPresentFixedVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
@@ -54,6 +54,7 @@ from .checks.other import (  # Use0DFlowCheck,,; ChannelManholeLevelCheck,; ,; F
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     DefinedAreaCheck,
+    FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
     MaxOneRecordCheck,
@@ -407,12 +408,12 @@ CHECKS += [
     # ),
 ]
 # TODO: fix
-# CHECKS += [
-#     FeatureClosedCrossSectionCheck(
-#         error_code=57, level=CheckLevel.INFO, column=table.id
-#     )
-#     for table in [models.Pipe, models.Culvert]
-# ]
+CHECKS += [
+    FeatureClosedCrossSectionCheck(
+        error_code=57, level=CheckLevel.INFO, column=table.id
+    )
+    for table in [models.Pipe, models.Culvert]
+]
 
 ## 006x: PUMPSTATIONS
 # TODO: fix

@@ -8,7 +8,7 @@ from sqlalchemy.orm import aliased, Query, Session
 from threedi_schema.domain import constants, models
 
 from .base import BaseCheck, CheckLevel
-from .cross_section_definitions import cross_section_configuration_not_tabulated
+from .cross_section_definitions import cross_section_configuration_for_record
 from .geo_query import distance, length, transform
 
 
@@ -830,31 +830,8 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
 
     def get_invalid(self, session):
         invalids = []
-        table = models.CrossSectionLocation
-        table = self.column.table.c
-        for record in session.execute(
-            select(
-                table.id,
-                table.cross_section_shape,
-                table.cross_section_width,
-                table.cross_section_height,
-            ).where(
-                (table.cross_section_width != None) & (table.cross_section_width != "")
-            )
-        ):
-            try:
-                widths = [float(x) for x in record.cross_section_width.split(" ")]
-                heights = (
-                    [float(x) for x in record.cross_section_height.split(" ")]
-                    if record.cross_section_height not in [None, ""]
-                    else []
-                )
-            except ValueError:
-                continue  # other check catches this
-
-            _, _, configuration = cross_section_configuration_not_tabulated(
-                shape=record.cross_section_shape.value, width=widths, height=heights
-            )
+        for record in self.to_check(session):
+            _, _, configuration = cross_section_configuration_for_record(record)
 
             # Pipes and culverts should generally have a closed cross-section
             if configuration == "open":
