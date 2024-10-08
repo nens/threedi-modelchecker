@@ -491,7 +491,7 @@ def test_check_var_range(session, min_value, max_value, left_incl, right_incl, r
 )
 def test_check_friction_values_range(session, friction_types, result):
     factories.CrossSectionLocationFactory(
-        cross_section_friction_values="0 1",
+        cross_section_friction_values="0,1",
         friction_type=constants.FrictionType.MANNING,
     )
     check = CrossSectionVariableFrictionRangeCheck(

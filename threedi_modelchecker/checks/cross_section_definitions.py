@@ -491,7 +491,7 @@ class CrossSectionVariableRangeCheck(CrossSectionBaseCheck):
         ):
             try:
                 values = [
-                    float(x) for x in getattr(record, self.column.name).split(" ")
+                    float(x) for x in getattr(record, self.column.name).split(",")
                 ]
             except ValueError:
                 invalids.append(record)
@@ -518,32 +518,11 @@ class CrossSectionVariableFrictionRangeCheck(CrossSectionVariableRangeCheck):
         self.friction_types = friction_types
         super().__init__(*args, **kwargs)
 
-    def get_invalid(self, session):
-        invalids = []
-        records = set(
-            self.to_check(session)
-            .filter(
-                models.CrossSectionLocation.friction_type.in_(self.friction_types)
-                & models.CrossSectionLocation.cross_section_friction_values.is_not(None)
-            )
-            .filter((self.column != None) & (self.column != ""))
-            .all()
+    def to_check(self, session):
+        return super.to_check().filter(
+            models.CrossSectionLocation.friction_type.in_(self.friction_types)
+            & models.CrossSectionLocation.cross_section_friction_values.is_not(None)
         )
-        for record in records:
-            try:
-                values = [
-                    float(x) for x in getattr(record, self.column.name).split(" ")
-                ]
-            except ValueError:
-                continue
-            if not self.min_valid(min(values)):
-                invalids.append(record)
-            elif not self.max_valid(max(values)):
-                invalids.append(record)
-        return invalids
-
-    def description(self):
-        return f"some values in {self.column_name} are {self.range_str}, which is not allowed for friction type(s) {self.friction_types}"
 
 
 class OpenIncreasingCrossSectionVariableCheck(CrossSectionBaseCheck):
