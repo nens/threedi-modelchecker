@@ -853,9 +853,8 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
             except ValueError:
                 continue  # other check catches this
 
-            _, _, configuration = cross_section_configuration(
-                shape=record.cross_section_shape.value, heights=heights, widths=widths
-            )
+            _, _, configuration = cross_section_configuration(shape=record.cross_section_shape.value, width=widths,
+                                                              height=heights)
 
             # Pipes and culverts should generally have a closed cross-section
             if configuration == "open":
