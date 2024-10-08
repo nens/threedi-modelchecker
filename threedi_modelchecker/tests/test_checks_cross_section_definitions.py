@@ -487,31 +487,27 @@ def test_check_friction_values_range(session, friction_types, result):
 
 
 @pytest.mark.parametrize(
-    "width,height,result",
+    "cross_section_table,result",
     [
         (
-            "0.01 0.11",
-            "0.11 0.21",
+            "0.01,0.11\n0.11,0.21",
             True,
         ),  # open tabulated yz, increasing width, pass
         (
-            "0.11 0.01",
-            "0.11 0.20",
+            "0.11,0.11\n0.01,0.20",
             False,
         ),  # open tabulated yz, decreasing width, fail
         (
-            "0.01 0.11 0.01",
-            "0.11 0.21 0.11",
+            "0.01,0.11\n0.11,0.21\n0.01,0.11",
             False,
         ),  # closed tabulated yz,  fail
     ],
 )
 def test_check_cross_section_increasing_open_with_variables(
-    session, width, height, result
+    session, cross_section_table, result
 ):
     factories.CrossSectionLocationFactory(
-        cross_section_width=width,
-        cross_section_height=height,
+        cross_section_table=cross_section_table,
         cross_section_friction_values="1",
         cross_section_shape=constants.CrossSectionShape.TABULATED_YZ,
     )

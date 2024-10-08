@@ -2881,12 +2881,12 @@ CHECKS += [
         "are defined for non-conveyance friction. Only cross_section_location.friction_value will be used",
     ),
 ]
-# TODO: add for pipe etc
 CHECKS += [
     OpenIncreasingCrossSectionVariableCheck(
         error_code=186,
-        column=models.CrossSectionLocation.cross_section_friction_values,
+        column=table.id,
     )
+    for table in cross_section_tables
 ]
 ## Friction values range
 # TODO add checks for pipe, etc
