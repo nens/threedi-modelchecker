@@ -822,16 +822,14 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
         table = models.CrossSectionLocation
         table = self.column.table.c
         for record in session.execute(
-                select(
-                    table.id,
-                    table.cross_section_shape,
-                    table.cross_section_width,
-                    table.cross_section_height,
-                )
-                        .where(
-                    (table.cross_section_width != None)
-                    & (table.cross_section_width != "")
-                )
+            select(
+                table.id,
+                table.cross_section_shape,
+                table.cross_section_width,
+                table.cross_section_height,
+            ).where(
+                (table.cross_section_width != None) & (table.cross_section_width != "")
+            )
             # select(
             #     self.table.c.id,
             #     self.table.c.cross_section_shape,
@@ -853,8 +851,9 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
             except ValueError:
                 continue  # other check catches this
 
-            _, _, configuration = cross_section_configuration(shape=record.cross_section_shape.value, width=widths,
-                                                              height=heights)
+            _, _, configuration = cross_section_configuration(
+                shape=record.cross_section_shape.value, width=widths, height=heights
+            )
 
             # Pipes and culverts should generally have a closed cross-section
             if configuration == "open":

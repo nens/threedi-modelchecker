@@ -2,15 +2,17 @@ import pytest
 from threedi_schema import constants, models
 
 from threedi_modelchecker.checks.cross_section_definitions import (
+    cross_section_configuration,
+    cross_section_configuration_tabulated,
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
     CrossSectionFirstElementZeroCheck,
     CrossSectionFloatCheck,
-    CrossSectionTableCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
+    CrossSectionTableCheck,
     CrossSectionVariableCorrectLengthCheck,
     CrossSectionVariableFrictionRangeCheck,
     CrossSectionVariableRangeCheck,
@@ -20,27 +22,50 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     OpenIncreasingCrossSectionConveyanceFrictionCheck,
     OpenIncreasingCrossSectionVariableCheck,
     TableColumn,
-    cross_section_configuration,
-    cross_section_configuration_tabulated
 )
 
 from . import factories
 
 
-@pytest.mark.parametrize("cross_section_table, column, expected",
-                         [
-                             ("0,0\n2,1\n4,2", TableColumn.width, [0, 2, 4]),
-                             ("0,0\n2,1\n4,2", TableColumn.height, [0, 1, 2]),
-                             ("0,0\n2,1\n4,2", TableColumn.both, ([0,2,4], [0,1,2])),
-                             ("0,1", TableColumn.width, [0, ]),
-                             ("0,1", TableColumn.height, [1, ]),
-                             ("0,1", TableColumn.both, ([0, ], [1, ])),
-                             ("0\n1", TableColumn.width, [0, 1]),
-                             ("0\n1", TableColumn.height, []),
-                             ("foo", TableColumn.height, []),
-                             ("0", TableColumn.width, [0]),
-                             ("0", TableColumn.height, []),
-                         ])
+@pytest.mark.parametrize(
+    "cross_section_table, column, expected",
+    [
+        ("0,0\n2,1\n4,2", TableColumn.width, [0, 2, 4]),
+        ("0,0\n2,1\n4,2", TableColumn.height, [0, 1, 2]),
+        ("0,0\n2,1\n4,2", TableColumn.both, ([0, 2, 4], [0, 1, 2])),
+        (
+            "0,1",
+            TableColumn.width,
+            [
+                0,
+            ],
+        ),
+        (
+            "0,1",
+            TableColumn.height,
+            [
+                1,
+            ],
+        ),
+        (
+            "0,1",
+            TableColumn.both,
+            (
+                [
+                    0,
+                ],
+                [
+                    1,
+                ],
+            ),
+        ),
+        ("0\n1", TableColumn.width, [0, 1]),
+        ("0\n1", TableColumn.height, []),
+        ("foo", TableColumn.height, []),
+        ("0", TableColumn.width, [0]),
+        ("0", TableColumn.height, []),
+    ],
+)
 def test_parse_cross_section_table(session, cross_section_table, column, expected):
     factories.CrossSectionLocationFactory(
         cross_section_table=cross_section_table,
@@ -54,7 +79,6 @@ def test_parse_cross_section_table(session, cross_section_table, column, expecte
         assert values[0][1] == expected
     else:
         assert not values
-
 
 
 def test_filter_shapes(session):
@@ -123,7 +147,10 @@ def test_check_greater_zero(session, width, valid):
     assert (len(invalid_rows) == 0) == valid
 
 
-@pytest.mark.parametrize("cross_section_table", [" ", "0 1", "3;5", "foo", "1,2,3,4", "1,2\3,", "1,2\3", ",2", ",2\3,4"])
+@pytest.mark.parametrize(
+    "cross_section_table",
+    [" ", "0 1", "3;5", "foo", "1,2,3,4", "1,2\3,", "1,2\3", ",2", ",2\3,4"],
+)
 def test_check_table_invalid(session, cross_section_table):
     factories.CrossSectionLocationFactory(
         cross_section_table=cross_section_table,
@@ -143,8 +170,9 @@ def test_check_table_valid(session, cross_section_table):
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.parametrize("cross_section_table, valid", [("1,2\n1,1", False),
-                                                        ("1,1\n1,2", True)])
+@pytest.mark.parametrize(
+    "cross_section_table, valid", [("1,2\n1,1", False), ("1,1\n1,2", True)]
+)
 def test_increasing_elements(session, cross_section_table, valid):
     factories.CrossSectionLocationFactory(
         cross_section_table=cross_section_table,
@@ -156,8 +184,9 @@ def test_increasing_elements(session, cross_section_table, valid):
     assert (len(invalid_rows) == 0) == valid
 
 
-@pytest.mark.parametrize("cross_section_table, valid", [("1,2\n1,1", False),
-                                                        ("1,0\n1,2", True)])
+@pytest.mark.parametrize(
+    "cross_section_table, valid", [("1,2\n1,1", False), ("1,0\n1,2", True)]
+)
 def test_first_element_zero_check(session, cross_section_table, valid):
     factories.CrossSectionLocationFactory(
         cross_section_table=cross_section_table,
@@ -181,12 +210,15 @@ def test_first_nonzero(session, valid, cross_section_table):
     assert (len(invalid_rows) == 0) == valid
 
 
-@pytest.mark.parametrize("cross_section_table, valid", [
-    ("0,0\n0,1\n,0,2", True),
-    ("0,0",True),
-    ("0,1\n0,2\n0,3", False),
-    ("0,0\n0,-1\n0,1", False)
-])
+@pytest.mark.parametrize(
+    "cross_section_table, valid",
+    [
+        ("0,0\n0,1\n,0,2", True),
+        ("0,0", True),
+        ("0,1\n0,2\n0,3", False),
+        ("0,0\n0,-1\n0,1", False),
+    ],
+)
 def test_check_yz_height(session, cross_section_table, valid):
     factories.CrossSectionLocationFactory(
         cross_section_table=cross_section_table,
@@ -197,14 +229,15 @@ def test_check_yz_height(session, cross_section_table, valid):
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == valid
 
+
 @pytest.mark.parametrize(
     "cross_section_table, valid",
     [
         ("0,0.5\n0.5,0", False),
         ("0,0.5\n0.5,0\n0,0.5", False),
         ("0,0.5\n0.5,0\n1,0\n1.5,0.5", True),
-        ("0.5,0\n0,1\n0.5,2\n1.5,2\n1.5,0\n0.5,0", True)
-    ]
+        ("0.5,0\n0,1\n0.5,2\n1.5,2\n1.5,0\n0.5,0", True),
+    ],
 )
 def test_check_yz_coord_count(session, cross_section_table, valid):
     factories.CrossSectionLocationFactory(
@@ -223,7 +256,7 @@ def test_check_yz_coord_count(session, cross_section_table, valid):
         ("0,0.5\n0.5,0\n1,0\n1,0.5", False),
         ("0.5,0\n0,1\n0.5,2\n1.5,2\n1.5,0\n0.5,1", False),
         ("0,0.5\n0.5,0\n1,0\n1.5,0.5", True),
-        ("0.5,0\n0,1\n0.5,2\n1.5,2\n1.5,0\n0.5,0", True)
+        ("0.5,0\n0,1\n0.5,2\n1.5,2\n1.5,0\n0.5,0", True),
     ],
 )
 def test_check_yz_increasing_if_open(session, cross_section_table, valid):
@@ -240,11 +273,32 @@ def test_check_yz_increasing_if_open(session, cross_section_table, valid):
 @pytest.mark.parametrize(
     "shape,width,height,expected_result",
     [
-        (constants.CrossSectionShape.RECTANGLE, "0.1", "0.2", 0),  # closed rectangle, sufficient width and height, pass
-        (constants.CrossSectionShape.CLOSED_RECTANGLE, "0.05", "0.2", 1),  # closed rectangle, insufficient width, fail
-        (constants.CrossSectionShape.CLOSED_RECTANGLE, "0.1", "0.03", 1),  # closed rectangle, insufficient height, fail
-        (constants.CrossSectionShape.RECTANGLE, "0.1", None, 0),  # open rectangle, sufficient width, no height, pass
-    ])
+        (
+            constants.CrossSectionShape.RECTANGLE,
+            "0.1",
+            "0.2",
+            0,
+        ),  # closed rectangle, sufficient width and height, pass
+        (
+            constants.CrossSectionShape.CLOSED_RECTANGLE,
+            "0.05",
+            "0.2",
+            1,
+        ),  # closed rectangle, insufficient width, fail
+        (
+            constants.CrossSectionShape.CLOSED_RECTANGLE,
+            "0.1",
+            "0.03",
+            1,
+        ),  # closed rectangle, insufficient height, fail
+        (
+            constants.CrossSectionShape.RECTANGLE,
+            "0.1",
+            None,
+            0,
+        ),  # open rectangle, sufficient width, no height, pass
+    ],
+)
 def test_check_cross_section_minimum_diameter(
     session, shape, width, height, expected_result
 ):
@@ -253,13 +307,9 @@ def test_check_cross_section_minimum_diameter(
         cross_section_height=height,
         cross_section_shape=shape,
     )
-    check = CrossSectionMinimumDiameterCheck(
-        column=models.CrossSectionLocation.id
-    )
+    check = CrossSectionMinimumDiameterCheck(column=models.CrossSectionLocation.id)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
-
-
 
 
 @pytest.mark.parametrize(
@@ -269,7 +319,8 @@ def test_check_cross_section_minimum_diameter(
         (constants.CrossSectionShape.TABULATED_RECTANGLE, "0.04,0.06\n0.05,0.2", 1),
         (constants.CrossSectionShape.TABULATED_RECTANGLE, "0.04,0.06\n0.1,0.03", 0),
         (constants.CrossSectionShape.TABULATED_RECTANGLE, "0.04,0.06\n0.1,0.2", 0),
-    ])
+    ],
+)
 def test_check_cross_section_minimum_diameter_tabulated(
     session, shape, cross_section_table, expected_result
 ):
@@ -277,9 +328,7 @@ def test_check_cross_section_minimum_diameter_tabulated(
         cross_section_table=cross_section_table,
         cross_section_shape=shape,
     )
-    check = CrossSectionMinimumDiameterCheck(
-        column=models.CrossSectionLocation.id
-    )
+    check = CrossSectionMinimumDiameterCheck(column=models.CrossSectionLocation.id)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == expected_result
 
@@ -287,81 +336,8 @@ def test_check_cross_section_minimum_diameter_tabulated(
 @pytest.mark.parametrize(
     "shape,width,height,expected_result",
     [
-        (0, "0.1", "0.2", 1),  # closed rectangle, fail
-        (1, "0.1", None, 0),  # open rectangle, pass
-        (
-            5,
-            "0.04 0.1",
-            "0.06 0.2",
-            0,
-        ),  # open tabulated rectangle, increasing width, pass
-        (
-            5,
-            "0.04 0.1 0.1",
-            "0.06 0.2 0.3",
-            0,
-        ),  # open tabulated rectangle, equal width segments, pass
-        (
-            5,
-            "0.2 0.1",
-            "0.06 0.2",
-            1,
-        ),  # open tabulated rectangle, decreasing width, fail
-        (
-            5,
-            "0.04 0.1 0",
-            "0.06 0.2",
-            1,
-        ),  # closed tabulated rectangle, fail
-        (
-            6,
-            "0.04 0.1",
-            "0.06 0.2",
-            0,
-        ),  # open tabulated trapezium, increasing width, pass
-        (
-            6,
-            "0.04 0.1 0.1",
-            "0.06 0.2 0.3",
-            0,
-        ),  # open tabulated trapezium, equal width segments, pass
-        (
-            6,
-            "0.2 0.1",
-            "0.06 0.3",
-            1,
-        ),  # open tabulated trapezium, decreasing width, fail
-        (
-            6,
-            "0.04 0.1 0",
-            "0.06 0.2",
-            1,
-        ),  # closed tabulated trapezium, fail
-        (
-            7,
-            "0.01 0.11",
-            "0.11 0.21",
-            0,
-        ),  # open tabulated yz, increasing width, pass
-        (
-            7,
-            "0.01 0.10 0.10",
-            "0.11 0.21 0.31",
-            0,
-        ),  # open tabulated yz, equal width segments, pass
-        (
-            7,
-            "0.11 0.01",
-            "0.11 0.20",
-            1,
-        ),  # open tabulated yz, decreasing width, fail
-        (
-            7,
-            "0.01 0.11 0.01",
-            "0.11 0.21 0.11",
-            1,
-        ),  # closed tabulated yz,  fail
-        (0, "foo", "", 0),  # bad data, pass
+        (constants.CrossSectionShape.CLOSED_RECTANGLE, "0.1", "0.2", 1),  # closed rectangle, fail
+        (constants.CrossSectionShape.RECTANGLE, "0.1", None, 0),  # open rectangle, pass
     ],
 )
 @pytest.mark.parametrize(
@@ -382,7 +358,54 @@ def test_check_cross_section_increasing_open_with_conveyance_friction(
         cross_section_shape=shape,
         friction_type=friction_type,
     )
-    check = OpenIncreasingCrossSectionConveyanceFrictionCheck()
+    check = OpenIncreasingCrossSectionConveyanceFrictionCheck(column=models.CrossSectionLocation.id)
+    # this check should pass on cross-section locations which don't use conveyance,
+    # regardless of their other parameters
+    if not conveyance:
+        expected_result = 0
+    invalid_rows = check.get_invalid(session)
+    assert len(invalid_rows) == expected_result
+
+
+@pytest.mark.parametrize(
+    "cross_section_table,expected_result",
+    [
+        (
+            "0.04,0.06\n0.1,0.2",
+            0,
+        ),  # open tabulated rectangle, increasing width, pass
+        (
+            "0.04,0.06\n0.1,0.2\n0.1,0.3",
+            0,
+        ),  # open tabulated rectangle, equal width segments, pass
+        (
+            "0.2,0.06\n0.1,0.2",
+            1,
+        ),  # open tabulated rectangle, decreasing width, fail
+        (
+            "0.04,0.06\n0.1,0.2\n0,0",
+            1,
+        ),  # closed tabulated rectangle, fail
+    ],
+)
+@pytest.mark.parametrize(
+    "friction_type,conveyance",
+    [
+        (constants.FrictionType.CHEZY, False),
+        (constants.FrictionType.MANNING, False),
+        (constants.FrictionType.CHEZY_CONVEYANCE, True),
+        (constants.FrictionType.MANNING_CONVEYANCE, True),
+    ],
+)
+def test_check_cross_section_increasing_open_with_conveyance_friction_tabulated(
+    session, cross_section_table, expected_result, friction_type, conveyance
+):
+    factories.CrossSectionLocationFactory(
+        cross_section_table=cross_section_table,
+        cross_section_shape=constants.CrossSectionShape.TABULATED_RECTANGLE,
+        friction_type=friction_type,
+    )
+    check = OpenIncreasingCrossSectionConveyanceFrictionCheck(column=models.CrossSectionLocation.id)
     # this check should pass on cross-section locations which don't use conveyance,
     # regardless of their other parameters
     if not conveyance:
@@ -492,31 +515,60 @@ def test_check_cross_section_increasing_open_with_variables(
     assert (len(invalid_rows) == 0) == result
 
 
-@pytest.mark.parametrize("shape,width,height,expected",
-                         [
-                             (constants.CrossSectionShape.CLOSED_RECTANGLE, 1, 2, (1, 2, "closed")),
-                             (constants.CrossSectionShape.CLOSED_RECTANGLE, None, None, (0, 0, "closed")),
-                             (constants.CrossSectionShape.RECTANGLE, 1, 2, (1, 2, "open")),
-                             (constants.CrossSectionShape.RECTANGLE, None, None, (0, None, "open")),
-                             (constants.CrossSectionShape.CIRCLE, 1, 2, (1, 1, "closed")),
-                             (constants.CrossSectionShape.CIRCLE, None, None, (0, 0, "closed")),
-                             (constants.CrossSectionShape.CIRCLE, None, 2, (0, 0, "closed")),
-                             (constants.CrossSectionShape.INVERTED_EGG, 1, 2, (1, 1.5, "closed")),
-                             (constants.CrossSectionShape.EGG, None, None, (0, 0, "closed")),
-                             (constants.CrossSectionShape.EGG, None, 2, (0, 0, "closed")),
-                         ])
+@pytest.mark.parametrize(
+    "shape,width,height,expected",
+    [
+        (constants.CrossSectionShape.CLOSED_RECTANGLE, 1, 2, (1, 2, "closed")),
+        (constants.CrossSectionShape.CLOSED_RECTANGLE, None, None, (0, 0, "closed")),
+        (constants.CrossSectionShape.RECTANGLE, 1, 2, (1, 2, "open")),
+        (constants.CrossSectionShape.RECTANGLE, None, None, (0, None, "open")),
+        (constants.CrossSectionShape.CIRCLE, 1, 2, (1, 1, "closed")),
+        (constants.CrossSectionShape.CIRCLE, None, None, (0, 0, "closed")),
+        (constants.CrossSectionShape.CIRCLE, None, 2, (0, 0, "closed")),
+        (constants.CrossSectionShape.INVERTED_EGG, 1, 2, (1, 1.5, "closed")),
+        (constants.CrossSectionShape.EGG, None, None, (0, 0, "closed")),
+        (constants.CrossSectionShape.EGG, None, 2, (0, 0, "closed")),
+    ],
+)
 def test_cross_section_configuration(shape, width, height, expected):
     assert cross_section_configuration(shape, width, height) == expected
 
 
-@pytest.mark.parametrize("shape,widths,heights,expected",
-                         [
-                             (constants.CrossSectionShape.TABULATED_RECTANGLE, None, None, (0, 0, "closed") ),
-                             (constants.CrossSectionShape.TABULATED_TRAPEZIUM, [1,2,3], [1,2,4], (3, 4, "open")),
-                             (constants.CrossSectionShape.TABULATED_TRAPEZIUM, [1, 2, 0], [1, 2, 4], (2, 4, "closed")),
-                             (constants.CrossSectionShape.TABULATED_TRAPEZIUM, [1, 2, 3], [1, 2, 0], (3, 2, "open")),
-                             (constants.CrossSectionShape.TABULATED_YZ, [0, 1, 2, 0], [1, 2, 3, 4], (2, 3, "open")),
-                             (constants.CrossSectionShape.TABULATED_YZ, [0, 1, 2, 0], [0, 2, 3, 0], (2, 3, "closed"))
-                         ])
+@pytest.mark.parametrize(
+    "shape,widths,heights,expected",
+    [
+        (constants.CrossSectionShape.TABULATED_RECTANGLE, None, None, (0, 0, "closed")),
+        (
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            [1, 2, 3],
+            [1, 2, 4],
+            (3, 4, "open"),
+        ),
+        (
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            [1, 2, 0],
+            [1, 2, 4],
+            (2, 4, "closed"),
+        ),
+        (
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+            [1, 2, 3],
+            [1, 2, 0],
+            (3, 2, "open"),
+        ),
+        (
+            constants.CrossSectionShape.TABULATED_YZ,
+            [0, 1, 2, 0],
+            [1, 2, 3, 4],
+            (2, 3, "open"),
+        ),
+        (
+            constants.CrossSectionShape.TABULATED_YZ,
+            [0, 1, 2, 0],
+            [0, 2, 3, 0],
+            (2, 3, "closed"),
+        ),
+    ],
+)
 def test_cross_section_configuration_tabulated(shape, widths, heights, expected):
     assert cross_section_configuration_tabulated(shape, widths, heights) == expected

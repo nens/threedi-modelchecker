@@ -363,60 +363,43 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
     are open and monotonically increasing in width
     """
 
-    # TODO: modify for other tables - use column from arguments
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(column=models.CrossSectionLocation.id, *args, **kwargs)
-
     def get_invalid(self, session):
         invalids = []
-        # todo: make generic (for some reason self.table.c results in failing tests)
-        for record in session.execute(
-            select(
-                models.CrossSectionLocation.id,
-                models.CrossSectionLocation.friction_type,
-                models.CrossSectionLocation.cross_section_shape,
-                models.CrossSectionLocation.cross_section_width,
-                models.CrossSectionLocation.cross_section_height,
-            ).where(
-                    self.table.c.friction_type.in_(
-                        [
-                            constants.FrictionType.CHEZY_CONVEYANCE,
-                            constants.FrictionType.MANNING_CONVEYANCE,
-                        ]
-                    )
-                )
-            )
-        ):
-            try:
-                widths = [float(x) for x in record.cross_section_width.split(" ")]
-                heights = (
-                    [float(x) for x in record.cross_section_height.split(" ")]
-                    if record.cross_section_height not in [None, ""]
-                    else []
-                )
-            except ValueError:
-                continue  # other check catches this
-
-            _, _, configuration = cross_section_configuration(shape=record.cross_section_shape.value, width=widths,
-                                                              height=heights)
-
+        records = self.to_check(session).where(self.table.c.friction_type.in_(
+            [constants.FrictionType.CHEZY_CONVEYANCE,
+             constants.FrictionType.MANNING_CONVEYANCE,]
+        ))
+        for record in records:
             # friction with conveyance can only be used for cross-sections
             # which are open *and* have a monotonically increasing width
-            if configuration == "closed" or (
-                len(widths) > 1
-                and any(
-                    next_width < previous_width
-                    for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+            if record.cross_section_shape.is_tabulated:
+                try:
+                    widths = parse_cross_section_table(record.cross_section_table, TableColumn.width)
+                    heights = parse_cross_section_table(record.cross_section_table, TableColumn.height)
+                except ValueError:
+                    continue  # other check catches this
+                if any(next_width < previous_width for (previous_width, next_width) in zip(widths[:-1], widths[1:])):
+                    invalids.append(record)
+                    continue
+                _, _, configuration = cross_section_configuration_tabulated(
+                    shape=record.cross_section_shape,
+                    widths=widths,
+                    heights=heights
                 )
-            ):
+            else:
+                _, _, configuration = cross_section_configuration(
+                    shape=record.cross_section_shape,
+                    width=record.cross_section_width,
+                    height=record.cross_section_height
+                )
+            if (configuration == "closed"):
                 invalids.append(record)
 
         return invalids
 
     def description(self):
         return (
-            "v2_cross_section_location.friction_type can only "
+            f"{self.table.__tablename__}.friction_type can only "
             "have conveyance if the associated definition is "
             "an open shape, and its width is monotonically increasing"
         )

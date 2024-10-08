@@ -22,11 +22,11 @@ from .checks.cross_section_definitions import (  # CrossSectionVariableRangeChec
     CrossSectionFirstElementNonZeroCheck,
     CrossSectionFirstElementZeroCheck,
     CrossSectionFloatCheck,
-    CrossSectionTableCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
+    CrossSectionTableCheck,
     CrossSectionVariableCorrectLengthCheck,
     CrossSectionVariableFrictionRangeCheck,
     CrossSectionYZCoordinateCountCheck,
@@ -132,11 +132,13 @@ CONDITIONS = {
 
 nr_grid_levels = Query(models.ModelSettings.nr_grid_levels).scalar_subquery()
 
-cross_section_tables = [models.CrossSectionLocation,
-                        models.Culvert,
-                        models.Orifice,
-                        models.Pipe,
-                        models.Weir]
+cross_section_tables = [
+    models.CrossSectionLocation,
+    models.Culvert,
+    models.Orifice,
+    models.Pipe,
+    models.Weir,
+]
 
 CHECKS: List[BaseCheck] = []
 
@@ -290,6 +292,7 @@ CHECKS += [
 CHECKS += [
     OpenIncreasingCrossSectionConveyanceFrictionCheck(
         error_code=28,
+        column=table.id
     )
     for table in cross_section_tables
 ]
