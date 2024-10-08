@@ -188,7 +188,6 @@ channel_manhole_level_testdata = [
 ]
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 @pytest.mark.parametrize(
     "manhole_location,starting_reference_level,ending_reference_level,manhole_level,errors_number",
     channel_manhole_level_testdata,
@@ -206,33 +205,33 @@ def test_channel_manhole_level_check(
     # use nested factories for channel and connectionNode
     starting_coordinates = "4.718300 52.696686"
     ending_coordinates = "4.718255 52.696709"
-    start_node = factories.ConnectionNodeFactory(
-        geom=f"SRID=4326;POINT({starting_coordinates})"
+    factories.ConnectionNodeFactory(
+        id=1,
+        geom=f"SRID=4326;POINT({starting_coordinates})",
+        manhole_bottom_level=manhole_level,
     )
-    end_node = factories.ConnectionNodeFactory(
-        geom=f"SRID=4326;POINT({ending_coordinates})"
+    factories.ConnectionNodeFactory(
+        id=2,
+        geom=f"SRID=4326;POINT({ending_coordinates})",
+        manhole_bottom_level=manhole_level,
     )
-    channel = factories.ChannelFactory(
+    factories.ChannelFactory(
+        id=1,
         geom=f"SRID=4326;LINESTRING({starting_coordinates}, {ending_coordinates})",
-        connection_node_start=start_node,
-        connection_node_end=end_node,
+        connection_node_id_start=1,
+        connection_node_id_end=2,
     )
     # starting cross-section location
     factories.CrossSectionLocationFactory(
         geom="SRID=4326;POINT(4.718278 52.696697)",
         reference_level=starting_reference_level,
-        channel=channel,
+        channel_id=1,
     )
     # ending cross-section location
     factories.CrossSectionLocationFactory(
         geom="SRID=4326;POINT(4.718264 52.696704)",
         reference_level=ending_reference_level,
-        channel=channel,
-    )
-    # manhole
-    factories.ManholeFactory(
-        connection_node=end_node if manhole_location == "end" else start_node,
-        bottom_level=manhole_level,
+        channel_id=1,
     )
     check = ChannelManholeLevelCheck(nodes_to_check=manhole_location)
     errors = check.get_invalid(session)

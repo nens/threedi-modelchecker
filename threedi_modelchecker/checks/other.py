@@ -413,15 +413,20 @@ class ChannelManholeLevelCheck(BaseCheck):
                     )
                 ),
             )
-            .join(models.Channel, isouter=True)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.channel_id == models.Channel.id,
+            )
             .group_by(models.Channel.id)
         )
+
         channels_with_manholes = channels_with_cs_locations.join(
-            models.Manhole,
-            connection_node_id_col == models.Manhole.connection_node_id,
+            models.ConnectionNode, models.ConnectionNode.id == connection_node_id_col
         )
+
         channels_manholes_level_checked = channels_with_manholes.having(
-            models.CrossSectionLocation.reference_level < models.Manhole.bottom_level
+            models.CrossSectionLocation.reference_level
+            < models.ConnectionNode.manhole_bottom_level
         )
 
         return channels_manholes_level_checked.all()

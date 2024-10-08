@@ -519,9 +519,13 @@ class CrossSectionVariableFrictionRangeCheck(CrossSectionVariableRangeCheck):
         super().__init__(*args, **kwargs)
 
     def to_check(self, session):
-        return super.to_check().filter(
-            models.CrossSectionLocation.friction_type.in_(self.friction_types)
-            & models.CrossSectionLocation.cross_section_friction_values.is_not(None)
+        return (
+            super()
+            .to_check(session)
+            .filter(
+                models.CrossSectionLocation.friction_type.in_(self.friction_types)
+                & models.CrossSectionLocation.cross_section_friction_values.is_not(None)
+            )
         )
 
 

@@ -44,11 +44,12 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,,; ChannelManholeLevelCheck,; ,; ,; OpenChannelsWithNestedNewton,,; CrossSectionSameConfigurationCheck,
+from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; OpenChannelsWithNestedNewton,,; CrossSectionSameConfigurationCheck,
     AllPresentFixedVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
     BoundaryCondition1DObjectNumberCheck,
+    ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
     CorrectAggregationSettingsExist,
@@ -812,14 +813,14 @@ CHECKS += [
     )
     for table in [models.Weir, models.Orifice]
 ]
-# CHECKS += [
-#     ChannelManholeLevelCheck(
-#         level=CheckLevel.INFO, nodes_to_check="start", error_code=109
-#     ),
-#     ChannelManholeLevelCheck(
-#         level=CheckLevel.INFO, nodes_to_check="end", error_code=110
-#     ),
-# ]
+CHECKS += [
+    ChannelManholeLevelCheck(
+        level=CheckLevel.INFO, nodes_to_check="start", error_code=109
+    ),
+    ChannelManholeLevelCheck(
+        level=CheckLevel.INFO, nodes_to_check="end", error_code=110
+    ),
+]
 
 ## Linked channels
 CHECKS += [
