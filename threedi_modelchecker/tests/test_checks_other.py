@@ -137,44 +137,35 @@ def test_connection_nodes_length_missing_end_node(session):
     assert len(errors) == 0
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_open_channels_with_nested_newton(session):
     factories.NumericalSettingsFactory(use_nested_newton=0)
     factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(-71.064544 42.28787)")
     factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(-71.0645 42.287)")
-    channel = factories.ChannelFactory(
+    factories.ChannelFactory(
+        id=1,
         connection_node_id_start=1,
         connection_node_id_end=2,
         geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
-    open_definition = factories.CrossSectionDefinitionFactory(
-        shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM, width="1 0"
-    )
     factories.CrossSectionLocationFactory(
-        channel=channel,
-        definition=open_definition,
+        channel_id=1,
+        cross_section_shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        cross_section_table="1,0\n0,1",
         geom="SRID=4326;POINT(-71.0645 42.287)",
     )
-
-    channel2 = factories.ChannelFactory(
-        connection_node_start=factories.ConnectionNodeFactory(
-            geom="SRID=4326;POINT(-71.064544 42.28787)"
-        ),
-        connection_node_end=factories.ConnectionNodeFactory(
-            geom="SRID=4326;POINT(-71.0645 42.287)"
-        ),
+    factories.ChannelFactory(
+        id=2,
+        connection_node_id_start=1,
+        connection_node_id_end=2,
         geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
-    open_definition_egg = factories.CrossSectionDefinitionFactory(
-        shape=constants.CrossSectionShape.EGG,
-    )
     factories.CrossSectionLocationFactory(
-        channel=channel2,
-        definition=open_definition_egg,
+        channel_id=2,
         geom="SRID=4326;POINT(-71.0645 42.287)",
+        cross_section_shape=constants.CrossSectionShape.EGG,
     )
 
-    check = OpenChannelsWithNestedNewton(table=models.CrossSectionLocation)
+    check = OpenChannelsWithNestedNewton(column=models.CrossSectionLocation.id)
 
     errors = check.get_invalid(session)
     assert len(errors) == 2

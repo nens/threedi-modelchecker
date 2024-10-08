@@ -446,9 +446,10 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     See https://github.com/nens/threeditoolbox/issues/522
     """
 
-    def __init__(self, table, level=CheckLevel.WARNING, *args, **kwargs):
+    def __init__(self, column, level=CheckLevel.WARNING, *args, **kwargs):
         super().__init__(
-            column=table.id,
+            # column=table.id,
+            column=column,
             level=level,
             filters=Query(models.NumericalSettings)
             .filter(models.NumericalSettings.use_nested_newton == 0)
@@ -456,52 +457,16 @@ class OpenChannelsWithNestedNewton(BaseCheck):
             *args,
             **kwargs,
         )
-        self.table = table
+        # self.table = table
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        definitions_in_use = self.to_check(session).filter(
-            models.CrossSectionDefinition.id.in_(
-                Query(models.CrossSectionLocation.definition_id).union_all(
-                    Query(models.Pipe.cross_section_definition_id),
-                    Query(models.Culvert.cross_section_definition_id),
-                    Query(models.Weir.cross_section_definition_id),
-                    Query(models.Orifice.cross_section_definition_id),
-                )
-            ),
-        )
+        invalids = []
+        for record in self.to_check(session):
+            _, _, configuration = cross_section_configuration_for_record(record)
 
-        # closed_rectangle, circle, and egg cross-section definitions are always closed:
-        closed_definitions = self.to_check(session).filter(
-            self.table.cross_section_shape.shape.in_(
-                [
-                    constants.CrossSectionShape.CLOSED_RECTANGLE,
-                    constants.CrossSectionShape.CIRCLE,
-                    constants.CrossSectionShape.EGG,
-                ]
-            )
-        )
-        result = list(closed_definitions.with_session(session).all())
-
-        # tabulated cross-section definitions are closed when the last element of 'width'
-        # is zero
-        tabulated_definitions = definitions_in_use.filter(
-            self.table.cross_section_shape.shape.in_(
-                [
-                    constants.CrossSectionShape.TABULATED_RECTANGLE,
-                    constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-                ]
-            )
-        )
-        # TODO: use cross_section_table
-        for definition in tabulated_definitions.with_session(session).all():
-            try:
-                if float(definition.width.split(" ")[-1]) == 0.0:
-                    # Closed channel
-                    result.append(definition)
-            except Exception:
-                # Many things can go wrong, these are caught elsewhere
-                pass
-        return result
+            if configuration == "closed":
+                invalids.append(record)
+        return invalids
 
     def description(self) -> str:
         return (

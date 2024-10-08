@@ -44,7 +44,7 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; OpenChannelsWithNestedNewton,,; CrossSectionSameConfigurationCheck,
+from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; CrossSectionSameConfigurationCheck,
     AllPresentFixedVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
@@ -60,6 +60,7 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; OpenChannelsWithNestedN
     LinestringLocationCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
+    OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
@@ -374,11 +375,14 @@ CHECKS += [
 ## 005x: CROSS SECTIONS
 
 CHECKS += [
+    OpenChannelsWithNestedNewton(error_code=53, column=table.id)
+    for table in cross_section_tables
+]
+
+CHECKS += [
     CrossSectionLocationCheck(
         level=CheckLevel.WARNING, max_distance=TOLERANCE_M, error_code=52
     ),
-    # TODO: fix
-    # OpenChannelsWithNestedNewton(error_code=53),
     QueryCheck(
         error_code=54,
         level=CheckLevel.WARNING,
