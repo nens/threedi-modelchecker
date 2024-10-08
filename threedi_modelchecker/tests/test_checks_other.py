@@ -595,7 +595,9 @@ def test_feature_closed_cross_section(session, configuration, expected_result):
         shape = constants.CrossSectionShape.CLOSED_RECTANGLE
     else:
         shape = constants.CrossSectionShape.RECTANGLE
-    factories.CrossSectionLocationFactory(cross_section_shape=shape, cross_section_width=1, cross_section_height=1)
+    factories.CrossSectionLocationFactory(
+        cross_section_shape=shape, cross_section_width=1, cross_section_height=1
+    )
     check = FeatureClosedCrossSectionCheck(models.CrossSectionLocation.id)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result

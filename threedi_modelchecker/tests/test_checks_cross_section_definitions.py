@@ -336,7 +336,12 @@ def test_check_cross_section_minimum_diameter_tabulated(
 @pytest.mark.parametrize(
     "shape,width,height,expected_result",
     [
-        (constants.CrossSectionShape.CLOSED_RECTANGLE, "0.1", "0.2", 1),  # closed rectangle, fail
+        (
+            constants.CrossSectionShape.CLOSED_RECTANGLE,
+            "0.1",
+            "0.2",
+            1,
+        ),  # closed rectangle, fail
         (constants.CrossSectionShape.RECTANGLE, "0.1", None, 0),  # open rectangle, pass
     ],
 )
@@ -358,7 +363,9 @@ def test_check_cross_section_increasing_open_with_conveyance_friction(
         cross_section_shape=shape,
         friction_type=friction_type,
     )
-    check = OpenIncreasingCrossSectionConveyanceFrictionCheck(column=models.CrossSectionLocation.id)
+    check = OpenIncreasingCrossSectionConveyanceFrictionCheck(
+        column=models.CrossSectionLocation.id
+    )
     # this check should pass on cross-section locations which don't use conveyance,
     # regardless of their other parameters
     if not conveyance:
@@ -405,7 +412,9 @@ def test_check_cross_section_increasing_open_with_conveyance_friction_tabulated(
         cross_section_shape=constants.CrossSectionShape.TABULATED_RECTANGLE,
         friction_type=friction_type,
     )
-    check = OpenIncreasingCrossSectionConveyanceFrictionCheck(column=models.CrossSectionLocation.id)
+    check = OpenIncreasingCrossSectionConveyanceFrictionCheck(
+        column=models.CrossSectionLocation.id
+    )
     # this check should pass on cross-section locations which don't use conveyance,
     # regardless of their other parameters
     if not conveyance:

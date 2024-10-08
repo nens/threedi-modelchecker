@@ -454,6 +454,17 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         self.table = table
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
+        definitions_in_use = self.to_check(session).filter(
+            models.CrossSectionDefinition.id.in_(
+                Query(models.CrossSectionLocation.definition_id).union_all(
+                    Query(models.Pipe.cross_section_definition_id),
+                    Query(models.Culvert.cross_section_definition_id),
+                    Query(models.Weir.cross_section_definition_id),
+                    Query(models.Orifice.cross_section_definition_id),
+                )
+            ),
+        )
+
         # closed_rectangle, circle, and egg cross-section definitions are always closed:
         closed_definitions = self.to_check(session).filter(
             self.table.cross_section_shape.shape.in_(

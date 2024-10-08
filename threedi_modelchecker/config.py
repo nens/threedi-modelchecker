@@ -44,7 +44,7 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,,; ChannelManholeLevelCheck,; ,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,,
+from .checks.other import (  # Use0DFlowCheck,,; ChannelManholeLevelCheck,; ,; FeatureClosedCrossSectionCheck,; OpenChannelsWithNestedNewton,,; CrossSectionSameConfigurationCheck,
     AllPresentFixedVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
@@ -53,7 +53,6 @@ from .checks.other import (  # Use0DFlowCheck,,; ChannelManholeLevelCheck,; ,; F
     ConnectionNodesLength,
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
-    CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
@@ -290,10 +289,7 @@ CHECKS += [
 ]
 # TODO: fix
 CHECKS += [
-    OpenIncreasingCrossSectionConveyanceFrictionCheck(
-        error_code=28,
-        column=table.id
-    )
+    OpenIncreasingCrossSectionConveyanceFrictionCheck(error_code=28, column=table.id)
     for table in cross_section_tables
 ]
 
