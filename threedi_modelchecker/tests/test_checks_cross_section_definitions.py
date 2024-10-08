@@ -14,6 +14,7 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionTableCheck,
+    CrossSectionTableColumnIdx,
     CrossSectionVariableCorrectLengthCheck,
     CrossSectionVariableFrictionRangeCheck,
     CrossSectionVariableRangeCheck,
@@ -22,35 +23,34 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionYZIncreasingWidthIfOpenCheck,
     OpenIncreasingCrossSectionConveyanceFrictionCheck,
     OpenIncreasingCrossSectionVariableCheck,
-    TableColumn,
 )
 
 from . import factories
 
 
 @pytest.mark.parametrize(
-    "cross_section_table, column, expected",
+    "cross_section_table, col_idx, expected",
     [
-        ("0,0\n2,1\n4,2", TableColumn.width, [0, 2, 4]),
-        ("0,0\n2,1\n4,2", TableColumn.height, [0, 1, 2]),
-        ("0,0\n2,1\n4,2", TableColumn.both, ([0, 2, 4], [0, 1, 2])),
+        ("0,0\n2,1\n4,2", CrossSectionTableColumnIdx.width, [0, 2, 4]),
+        ("0,0\n2,1\n4,2", CrossSectionTableColumnIdx.height, [0, 1, 2]),
+        ("0,0\n2,1\n4,2", CrossSectionTableColumnIdx.all, ([0, 2, 4], [0, 1, 2])),
         (
             "0,1",
-            TableColumn.width,
+            CrossSectionTableColumnIdx.width,
             [
                 0,
             ],
         ),
         (
             "0,1",
-            TableColumn.height,
+            CrossSectionTableColumnIdx.height,
             [
                 1,
             ],
         ),
         (
             "0,1",
-            TableColumn.both,
+            CrossSectionTableColumnIdx.all,
             (
                 [
                     0,
@@ -60,14 +60,14 @@ from . import factories
                 ],
             ),
         ),
-        ("0\n1", TableColumn.width, [0, 1]),
-        ("0\n1", TableColumn.height, []),
-        ("foo", TableColumn.height, []),
-        ("0", TableColumn.width, [0]),
-        ("0", TableColumn.height, []),
+        ("0\n1", CrossSectionTableColumnIdx.width, [0, 1]),
+        ("0\n1", CrossSectionTableColumnIdx.height, []),
+        ("foo", CrossSectionTableColumnIdx.height, []),
+        ("0", CrossSectionTableColumnIdx.width, [0]),
+        ("0", CrossSectionTableColumnIdx.height, []),
     ],
 )
-def test_parse_cross_section_table(session, cross_section_table, column, expected):
+def test_parse_cross_section_table(session, cross_section_table, col_idx, expected):
     factories.CrossSectionLocationFactory(
         cross_section_table=cross_section_table,
     )
@@ -75,11 +75,31 @@ def test_parse_cross_section_table(session, cross_section_table, column, expecte
     check = CrossSectionFloatCheck(
         column=models.CrossSectionLocation.cross_section_table
     )
-    values = list(check.parse_cross_section_table(session, column))
+    values = list(check.parse_cross_section_table(session=session, col_idx=col_idx))
     if expected:
         assert values[0][1] == expected
     else:
         assert not values
+
+
+def test_parse_cross_section_table_generator(session):
+    tables = ["0,0\n2,1\n4,2", "0,0\n1,2\n2,4"]
+    expected = [[0, 2, 4], [0, 1, 2]]
+    for cross_section_table in tables:
+        factories.CrossSectionLocationFactory(
+            cross_section_table=cross_section_table,
+        )
+    # can use any class here!
+    check = CrossSectionFloatCheck(
+        column=models.CrossSectionLocation.cross_section_table
+    )
+    for i, (record, values) in enumerate(
+        check.parse_cross_section_table(
+            session=session, col_idx=CrossSectionTableColumnIdx.width
+        )
+    ):
+        if expected:
+            assert values == expected[i]
 
 
 def test_filter_shapes(session):
@@ -424,11 +444,10 @@ def test_check_cross_section_increasing_open_with_conveyance_friction_tabulated(
     assert len(invalid_rows) == expected_result
 
 
-@pytest.mark.parametrize("data, result", [["1 2", True], ["1 2 3", False]])
-def test_check_correct_length(session, data, result):
+@pytest.mark.parametrize("data, result", [["1,2", True], ["1,2,3", False]])
+def test_check_correct_lengthtest_check_correct_length(session, data, result):
     factories.CrossSectionLocationFactory(
-        cross_section_width="1 2 3",
-        cross_section_height="0 2 5",
+        cross_section_table="1,0\n2,2\n3,5",
         cross_section_friction_values=data,
     )
     check = CrossSectionVariableCorrectLengthCheck(

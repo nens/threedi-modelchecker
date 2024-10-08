@@ -2771,7 +2771,7 @@ CHECKS += [
         error_code=181,
         column=models.CrossSectionLocation.cross_section_friction_values,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-        filters=models.CrossSectionLocation.cross_section_height.is_not(None)
+        filters=models.CrossSectionLocation.cross_section_table.is_not(None)
         & models.CrossSectionLocation.cross_section_friction_values.is_not(None),
     )
 ]
