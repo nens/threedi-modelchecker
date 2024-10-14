@@ -52,6 +52,7 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; CrossSectionSameCon
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
+    ControlHasSingleMeasureVariable,
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
     DefinedAreaCheck,
@@ -2703,14 +2704,19 @@ CHECKS += [
 CHECKS += [
     ForeignKeyCheck(
         error_code=1228,
-        column=models.ControlMeasureMap.control_measure_location_id,
+        column=models.ControlMeasureMap.measure_location_id,
         reference_column=models.ControlMeasureLocation.id,
     )
 ]
 
+CHECKS += [
+    ControlHasSingleMeasureVariable(error_code=1229, control_model=table)
+    for table in [models.ControlTable, models.ControlMemory]
+]
+
+
 # 1230 - 1242
 not_null_cols = [
-    models.ControlMemory.measure_variable,
     models.ControlMemory.action_type,
     models.ControlMemory.action_value_1,
     models.ControlMemory.action_value_2,
@@ -2718,11 +2724,11 @@ not_null_cols = [
     models.ControlMemory.target_id,
     models.ControlTable.action_table,
     models.ControlTable.action_type,
-    models.ControlTable.measure_variable,
     models.ControlTable.target_type,
     models.ControlMeasureMap.weight,
-    models.ControlMeasureMap.control_measure_location_id,
+    models.ControlMeasureMap.measure_location_id,
     models.ControlMeasureLocation.connection_node_id,
+    models.ControlMeasureLocation.measure_variable,
 ]
 CHECKS += [
     NotNullCheck(error_code=1230 + i, column=col) for i, col in enumerate(not_null_cols)

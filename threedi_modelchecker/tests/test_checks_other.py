@@ -13,6 +13,7 @@ from threedi_modelchecker.checks.other import (
     ChannelManholeLevelCheck,
     ConnectionNodesDistance,
     ConnectionNodesLength,
+    ControlHasSingleMeasureVariable,
     ControlTableActionTableCheckDefault,
     ControlTableActionTableCheckDischargeCoefficients,
     CorrectAggregationSettingsExist,
@@ -852,3 +853,31 @@ def test_control_table_action_table_check_discharge_coefficients(
     )
     check = ControlTableActionTableCheckDischargeCoefficients()
     assert (len(check.get_invalid(session)) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "measure_variables, valid",
+    [
+        (
+            [
+                constants.MeasureVariables.waterlevel,
+                constants.MeasureVariables.waterlevel,
+            ],
+            True,
+        ),
+        (
+            [constants.MeasureVariables.waterlevel, constants.MeasureVariables.volume],
+            False,
+        ),
+    ],
+)
+def test_control_has_single_measure_variable(session, measure_variables, valid):
+    factories.ControlTableFactory(id=1)
+    for i, measure_variable in enumerate(measure_variables, 1):
+        factories.ControlMeasureMapFactory(
+            control_id=1, measure_location_id=i, control_type="table"
+        )
+        factories.ControlMeasureLocationFactory(id=i, measure_variable=measure_variable)
+    check = ControlHasSingleMeasureVariable(control_model=models.ControlTable)
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid

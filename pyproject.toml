@@ -21,6 +21,7 @@ dependencies = [
     "SQLAlchemy>=1.4",
 #    "threedi-schema==0.226.*"
     "threedi-schema @ git+https://github.com/nens/threedi-schema.git@margriet_89_schema_300_1D"
+
 ]
 
 [project.optional-dependencies]

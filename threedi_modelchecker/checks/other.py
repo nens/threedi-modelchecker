@@ -1086,3 +1086,41 @@ class ControlTableActionTableCheckDischargeCoefficients(TableStrCheck):
             f"{self.table.name}.{self.column} is not properly formatted."
             f"Expected one or more rows of: 'number, number'"
         )
+
+
+class ControlHasSingleMeasureVariable(BaseCheck):
+    def __init__(self, control_model, level=CheckLevel.ERROR, error_code=0):
+        control_type_map = {
+            models.ControlTable: "table",
+            models.ControlMemory: "memory",
+        }
+        self.control_type_name = control_type_map[control_model]
+        super().__init__(
+            column=control_model.id,
+            level=level,
+            error_code=error_code,
+        )
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalid = []
+        for record in self.to_check(session):
+            res = (
+                session.query(models.ControlMeasureMap)
+                .filter(
+                    models.ControlMeasureMap.control_type == self.control_type_name,
+                    models.ControlMeasureMap.control_id == record.id,
+                )
+                .join(
+                    models.ControlMeasureLocation,
+                    models.ControlMeasureMap.measure_location_id
+                    == models.ControlMeasureLocation.id,
+                )
+                .with_entities(models.ControlMeasureLocation.measure_variable)
+            ).all()
+            first_measure_variable = res[0].measure_variable
+            if not all(item[0] == first_measure_variable for item in res):
+                invalid.append(record)
+        return invalid
+
+    def description(self) -> str:
+        return f"{self.table.name} is mapped to measure locations with different measure variables"
