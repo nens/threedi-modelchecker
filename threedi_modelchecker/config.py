@@ -379,6 +379,7 @@ CHECKS += [
     for table in cross_section_tables
 ]
 
+# TODO: run for all tables with cross sections (?)
 CHECKS += [
     CrossSectionLocationCheck(
         level=CheckLevel.WARNING, max_distance=TOLERANCE_M, error_code=52

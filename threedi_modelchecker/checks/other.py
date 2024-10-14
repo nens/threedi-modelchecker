@@ -138,19 +138,18 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
                 models.CrossSectionLocation.id.label("cross_section_id"),
                 models.CrossSectionLocation.channel_id,
                 models.CrossSectionLocation.cross_section_shape,
-                models.CrossSectionLocation.cross_section_width,
-                models.CrossSectionLocation.cross_section_height,
+                models.CrossSectionLocation.cross_section_table,
                 self.first_number_in_spaced_string(
-                    models.CrossSectionLocation.cross_section_width
+                    models.CrossSectionLocation.cross_section_table
                 ).label("first_width"),
                 self.first_number_in_spaced_string(
-                    models.CrossSectionLocation.cross_section_height
+                    models.CrossSectionLocation.cross_section_table
                 ).label("first_height"),
                 self.last_number_in_spaced_string(
-                    models.CrossSectionLocation.cross_section_width
+                    models.CrossSectionLocation.cross_section_table
                 ).label("last_width"),
                 self.last_number_in_spaced_string(
-                    models.CrossSectionLocation.cross_section_height
+                    models.CrossSectionLocation.cross_section_table
                 ).label("last_height"),
             )
             .select_from(models.CrossSectionLocation)
