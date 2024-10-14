@@ -7,6 +7,8 @@ Changelog of threedi-modelchecker
 -------------------
 
 - Add GDAL 3.6 test to workflow matrix.
+- Modify tests for schema 0.227
+- Add test to ensure that only one type of measure_variable is associated to a single control
 
 
 2.12.0 (2024-09-10)
