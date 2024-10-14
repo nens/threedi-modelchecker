@@ -3,7 +3,7 @@ Changelog of threedi-modelchecker
 
 
 
-2.12.1 (unreleased)
+2.13.0 (2024-10-14)
 -------------------
 
 - Add GDAL 3.6 test to workflow matrix.
