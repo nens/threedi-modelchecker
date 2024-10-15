@@ -242,14 +242,13 @@ def test_run_spatial_function(session):
     q.first()
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_type_check(session):
     if session.bind.name == "postgresql":
         pytest.skip("type checks not working on postgres")
-    factories.ManholeFactory(zoom_category=123)
-    factories.ManholeFactory(zoom_category=456)
+    factories.ChannelFactory(exchange_type=123)
+    factories.ChannelFactory(exchange_type=456)
 
-    type_check = TypeCheck(models.Manhole.zoom_category)
+    type_check = TypeCheck(models.Channel.exchange_type)
     invalid_rows = type_check.get_invalid(session)
 
     assert len(invalid_rows) == 0
