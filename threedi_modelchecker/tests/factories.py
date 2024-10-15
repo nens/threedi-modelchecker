@@ -56,7 +56,7 @@ class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     display_name = Faker("name")
-    code = "code"
+    code = Faker("name")
     exchange_type = constants.CalculationType.CONNECTED
     geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
 

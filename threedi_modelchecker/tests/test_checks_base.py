@@ -87,11 +87,9 @@ def test_fk_check_missing_fk(session):
     assert invalid_rows[0].id == missing_fk.id
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_unique_check(session):
-    factories.ManholeFactory.create_batch(5)
-
-    unique_check = UniqueCheck(models.Manhole.code)
+    factories.ChannelFactory.create_batch(5)
+    unique_check = UniqueCheck(models.Channel.code)
     invalid_rows = unique_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
