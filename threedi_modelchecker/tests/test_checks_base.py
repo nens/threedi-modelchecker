@@ -254,16 +254,15 @@ def test_type_check(session):
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_type_check_integer(session):
     if session.bind.name == "postgresql":
         pytest.skip("type checks not working on postgres")
-    factories.ManholeFactory(zoom_category=123)
-    factories.ManholeFactory(zoom_category=None)
-    m1 = factories.ManholeFactory(zoom_category="abc")
-    m2 = factories.ManholeFactory(zoom_category=1.23)
+    factories.ChannelFactory(exchange_type=123)
+    factories.ChannelFactory(exchange_type=None)
+    m1 = factories.ChannelFactory(exchange_type="abc")
+    m2 = factories.ChannelFactory(exchange_type=1.23)
 
-    type_check = TypeCheck(models.Manhole.zoom_category)
+    type_check = TypeCheck(models.Channel.exchange_type)
     invalid_rows = type_check.get_invalid(session)
 
     assert len(invalid_rows) == 2
