@@ -11,8 +11,12 @@ class CrossSectionTableColumnIdx(IntEnum):
     all = 2
 
 
-def parse_csv_table(str_data, idx):
+def parse_csv_table_col(str_data, idx):
     return [float(line.split(",")[idx]) for line in str_data.splitlines()]
+
+
+def parse_csv_table(str_data):
+    return [[float(item) for item in line.split(",")] for line in str_data.splitlines()]
 
 
 class CrossSectionBaseCheck(BaseCheck):
@@ -38,6 +42,20 @@ class CrossSectionBaseCheck(BaseCheck):
             qs = qs.filter(self.table.c.cross_section_shape.in_(self.shapes))
         return qs
 
+    def parse_cross_section_vegetation_table(self, session):
+        column = models.CrossSectionLocation.cross_section_vegetation_table
+        records = self.to_check(session).filter((column != None) & (column != ""))
+        for record in records:
+            try:
+                table = parse_csv_table(getattr(record, column.name))
+                if len(table[0]) != 4:
+                    raise ValueError(
+                        "cross_section_vegetation_table must have 4 columns"
+                    )
+                yield (record, table)
+            except (IndexError, ValueError):
+                continue  # Skip records with errors
+
     def parse_cross_section_table(self, session, col_idx: CrossSectionTableColumnIdx):
         column = self.table.c.cross_section_table
         records = self.to_check(session).filter((column != None) & (column != ""))
@@ -47,13 +65,13 @@ class CrossSectionBaseCheck(BaseCheck):
                     str = getattr(record, column.name)
                     values = tuple(
                         [
-                            parse_csv_table(str, _col_idx.value)
+                            parse_csv_table_col(str, _col_idx.value)
                             for _col_idx in type(col_idx)
                             if _col_idx != col_idx
                         ]
                     )
                 else:
-                    values = parse_csv_table(
+                    values = parse_csv_table_col(
                         getattr(record, column.name), col_idx.value
                     )
                 yield (record, values)  # Yield the parsed values as a generator
@@ -272,10 +290,10 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
 def cross_section_configuration_for_record(record):
     # TODO add test
     if record.cross_section_shape.is_tabulated:
-        widths = parse_csv_table(
+        widths = parse_csv_table_col(
             record.cross_section_table, CrossSectionTableColumnIdx.width
         )
-        heights = parse_csv_table(
+        heights = parse_csv_table_col(
             record.cross_section_table, CrossSectionTableColumnIdx.height
         )
         return cross_section_configuration_tabulated(
@@ -401,7 +419,7 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
             # friction with conveyance can only be used for cross-sections
             # which are open *and* have a monotonically increasing width
             if record.cross_section_shape.is_tabulated:
-                widths = parse_csv_table(
+                widths = parse_csv_table_col(
                     record.cross_section_table, CrossSectionTableColumnIdx.width
                 )
                 if any(
@@ -446,6 +464,20 @@ class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
 
     def description(self):
         return f"{self.column_name} should contain 1 value for each element; len({self.column_name}) = len(width)-1"
+
+
+class CrossSectionVegetationTableNotNegativeCheck(CrossSectionBaseCheck):
+    """Check for negative valuesin cross_section_vegetation_table"""
+
+    def get_invalid(self, session):
+        invalids = []
+        for record, table in self.parse_cross_section_vegetation_table(session):
+            if any(item < 0 for row in table for item in row):
+                invalids.append(record)
+        return invalids
+
+    def description(self):
+        return f"All values in {self.table.__tablename__}.{self.column_name} should be equal to or larger than 0"
 
 
 class CrossSectionVariableRangeCheck(CrossSectionBaseCheck):
@@ -508,25 +540,72 @@ class CrossSectionVariableRangeCheck(CrossSectionBaseCheck):
             return self.message
 
 
-class CrossSectionVariableFrictionRangeCheck(CrossSectionVariableRangeCheck):
+class CrossSectionVariableFrictionRangeCheck(CrossSectionBaseCheck):
     def __init__(
         self,
         friction_types,
+        min_value=None,
+        max_value=None,
+        left_inclusive=True,
+        right_inclusive=True,
+        message=None,
         *args,
         **kwargs,
     ):
         self.friction_types = friction_types
+        if min_value is None and max_value is None:
+            raise ValueError("Please supply at least one of {min_value, max_value}.")
+        str_parts = []
+        if min_value is None:
+            self.min_valid = lambda x: True
+        else:
+            self.min_valid = (
+                (lambda x: x >= min_value)
+                if left_inclusive
+                else (lambda x: x > min_value)
+            )
+            str_parts.append(f"{'< ' if left_inclusive else '<= '}{min_value}")
+        if max_value is None:
+            self.max_valid = lambda x: True
+        else:
+            self.max_valid = (
+                (lambda x: x <= max_value)
+                if right_inclusive
+                else (lambda x: x < max_value)
+            )
+            str_parts.append(f"{'> ' if right_inclusive else '>= '}{max_value}")
+        self.range_str = " and/or ".join(str_parts)
+        self.message = message
         super().__init__(*args, **kwargs)
 
-    def to_check(self, session):
-        return (
-            super()
-            .to_check(session)
+    def get_invalid(self, session):
+        invalids = []
+        records = (
+            self.to_check(session)
+            .filter((self.column != None) & (self.column != ""))
             .filter(
                 models.CrossSectionLocation.friction_type.in_(self.friction_types)
                 & models.CrossSectionLocation.cross_section_friction_values.is_not(None)
             )
         )
+        for record in records:
+            try:
+                values = [
+                    float(x) for x in getattr(record, self.column.name).split(",")
+                ]
+            except ValueError:
+                invalids.append(record)
+            if not self.min_valid(min(values)):
+                invalids.append(record)
+            elif not self.max_valid(max(values)):
+                invalids.append(record)
+        return invalids
+
+    def description(self):
+        if self.message is None:
+            return f"some values in {self.column_name} are {self.range_str}"
+        else:
+            return self.message
 
 
 class OpenIncreasingCrossSectionVariableCheck(CrossSectionBaseCheck):
@@ -546,7 +625,7 @@ class OpenIncreasingCrossSectionVariableCheck(CrossSectionBaseCheck):
             # friction with conveyance can only be used for cross-sections
             # which are open *and* have a monotonically increasing width
             if record.cross_section_shape.is_tabulated:
-                widths = parse_csv_table(
+                widths = parse_csv_table_col(
                     record.cross_section_table, CrossSectionTableColumnIdx.width
                 )
                 if any(

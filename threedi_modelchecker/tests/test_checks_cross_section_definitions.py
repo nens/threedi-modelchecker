@@ -18,6 +18,7 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionVariableCorrectLengthCheck,
     CrossSectionVariableFrictionRangeCheck,
     CrossSectionVariableRangeCheck,
+    CrossSectionVegetationTableNotNegativeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -82,6 +83,29 @@ def test_parse_cross_section_table(session, cross_section_table, col_idx, expect
         assert not values
 
 
+@pytest.mark.parametrize(
+    "vegetation_table, expected",
+    [
+        ("0,0,0,0", [[0.0, 0.0, 0.0, 0.0]]),
+        ("0,0", None),
+        ("0,0,0,0\n1,2,3,4", [[0.0, 0.0, 0.0, 0.0], [1.0, 2.0, 3.0, 4.0]]),
+    ],
+)
+def test_parse_cross_section_vegetation_table(session, vegetation_table, expected):
+    factories.CrossSectionLocationFactory(
+        cross_section_vegetation_table=vegetation_table,
+    )
+    check = CrossSectionFloatCheck(
+        column=models.CrossSectionLocation.cross_section_vegetation_table
+    )
+    values = list(check.parse_cross_section_vegetation_table(session=session))
+    if expected:
+        assert values[0][1] == expected
+    else:
+        assert not values
+
+
+# TODO: remove (?)
 def test_parse_cross_section_table_generator(session):
     tables = ["0,0\n2,1\n4,2", "0,0\n1,2\n2,4"]
     expected = [[0, 2, 4], [0, 1, 2]]
@@ -455,6 +479,18 @@ def test_check_correct_lengthtest_check_correct_length(session, data, result):
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == result
+
+
+@pytest.mark.parametrize(
+    "table, valid", [("0,0,0,0", True), ("1,2,3,4", True), ("0,0,0,-1", False)]
+)
+def test_cross_section_vegetation_table_not_negative_check(session, table, valid):
+    factories.CrossSectionLocationFactory(cross_section_vegetation_table=table)
+    check = CrossSectionVegetationTableNotNegativeCheck(
+        column=models.CrossSectionLocation.cross_section_vegetation_table
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == valid
 
 
 @pytest.mark.parametrize(

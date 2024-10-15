@@ -29,6 +29,7 @@ from .checks.cross_section_definitions import (  # CrossSectionVariableRangeChec
     CrossSectionTableCheck,
     CrossSectionVariableCorrectLengthCheck,
     CrossSectionVariableFrictionRangeCheck,
+    CrossSectionVegetationTableNotNegativeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
@@ -2957,6 +2958,14 @@ CHECKS += [
 ]
 # TODO: replace with check for cross_section_friction_values and cross_section_vegetation_table
 # TODO: add CrossSectionVariableRangeCheck for cross_section_vegetation_table
+
+CHECKS += [
+    CrossSectionVegetationTableNotNegativeCheck(
+        error_code=191,
+        column=models.CrossSectionLocation.cross_section_vegetation_table,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    )
+]
 
 CHECKS += [
     QueryCheck(
