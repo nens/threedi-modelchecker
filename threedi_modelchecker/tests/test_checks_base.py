@@ -75,13 +75,13 @@ def test_fk_check_null_fk(session):
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_fk_check_missing_fk(session):
     conn_node = factories.ConnectionNodeFactory()
-    factories.ManholeFactory.create_batch(5, visualisation=conn_node.id)
-    missing_fk = factories.ManholeFactory(visualisation=-1)
-
-    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Manhole.visualisation)
+    factories.ChannelFactory(connection_node_id_start=conn_node.id)
+    missing_fk = factories.ChannelFactory(connection_node_id_start=-1)
+    fk_check = ForeignKeyCheck(
+        models.ConnectionNode.id, models.Channel.connection_node_id_start
+    )
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 1
     assert invalid_rows[0].id == missing_fk.id
