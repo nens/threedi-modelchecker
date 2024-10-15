@@ -403,22 +403,13 @@ def test_conditional_checks(session):
     assert invalids_querycheck[0].id == global_settings1.id
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_conditional_check_storage_area(session):
     # if connection node is a manhole, then the storage area of the
     # connection_node must be > 0
-    factories.ConnectionNodeFactory(storage_area=5)
-    factories.ConnectionNodeFactory(storage_area=-3)
-    conn_node_manhole_valid = factories.ConnectionNodeFactory(storage_area=4)
+    factories.ConnectionNodeFactory(storage_area=4)
     conn_node_manhole_invalid = factories.ConnectionNodeFactory(storage_area=-5)
-    factories.ManholeFactory(connection_node=conn_node_manhole_valid)
-    factories.ManholeFactory(connection_node=conn_node_manhole_invalid)
 
-    query = (
-        Query(models.ConnectionNode)
-        .join(models.Manhole)
-        .filter(models.ConnectionNode.storage_area <= 0)
-    )
+    query = Query(models.ConnectionNode).filter(models.ConnectionNode.storage_area <= 0)
     query_check = QueryCheck(
         column=models.ConnectionNode.storage_area, invalid=query, message=""
     )
@@ -428,35 +419,29 @@ def test_conditional_check_storage_area(session):
     assert invalids[0].id == conn_node_manhole_invalid.id
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_query_check_with_joins(session):
-    connection_node1 = factories.ConnectionNodeFactory()
-    connection_node2 = factories.ConnectionNodeFactory()
-    factories.ManholeFactory(connection_node=connection_node1, bottom_level=1.0)
-    factories.ManholeFactory(connection_node=connection_node2, bottom_level=-1.0)
-    pump1 = factories.PumpstationFactory(
-        connection_node_start=connection_node1, lower_stop_level=0.0
+    connection_node1 = factories.ConnectionNodeFactory(id=1, manhole_bottom_level=1.0)
+    connection_node2 = factories.ConnectionNodeFactory(id=2, manhole_bottom_level=-1.0)
+    pump1 = factories.PumpFactory(
+        connection_node_id=connection_node1.id, lower_stop_level=0.0
     )
-    factories.PumpstationFactory(
-        connection_node_start=connection_node2, lower_stop_level=2.0
-    )
-
+    factories.PumpFactory(connection_node_id=connection_node2.id, lower_stop_level=0.0)
+    factories.PumpFactory(connection_node_id=connection_node2.id, lower_stop_level=2.0)
     query = (
-        Query(models.Pumpstation)
+        Query(models.Pump)
         .join(
             models.ConnectionNode,
-            models.Pumpstation.connection_node_id_start == models.ConnectionNode.id,
+            models.Pump.connection_node_id == models.ConnectionNode.id,
         )
-        .join(models.Manhole)
         .filter(
-            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+            models.Pump.lower_stop_level <= models.ConnectionNode.manhole_bottom_level,
         )
     )
     check = QueryCheck(
-        column=models.Pumpstation.lower_stop_level,
+        column=models.Pump.lower_stop_level,
         invalid=query,
-        message="Pumpstation.lower_stop_level should be higher than "
-        "Manhole.bottom_level",
+        message="Pump.lower_stop_level should be higher than "
+        "ConnectionNode.manhole_bottom_level",
     )
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
