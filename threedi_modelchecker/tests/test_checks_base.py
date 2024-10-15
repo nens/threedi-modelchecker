@@ -449,45 +449,6 @@ def test_query_check_with_joins(session):
 
 
 @pytest.mark.skip(reason="Needs fixing for schema 227")
-def test_query_check_on_pumpstation(session):
-    connection_node1 = factories.ConnectionNodeFactory()
-    connection_node2 = factories.ConnectionNodeFactory()
-    factories.ManholeFactory(connection_node=connection_node1, bottom_level=1.0)
-    factories.ManholeFactory(connection_node=connection_node2, bottom_level=-1.0)
-    pumpstation_wrong = factories.PumpstationFactory(
-        connection_node_start=connection_node1, lower_stop_level=0.0
-    )
-    factories.PumpstationFactory(
-        connection_node_start=connection_node2, lower_stop_level=2.0
-    )
-
-    query = (
-        Query(models.Pumpstation)
-        .join(
-            models.ConnectionNode,
-            models.Pumpstation.connection_node_id_start
-            == models.ConnectionNode.id,  # noqa: E501
-        )
-        .join(
-            models.Manhole,
-            models.Manhole.connection_node_id == models.ConnectionNode.id,
-        )
-        .filter(
-            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
-        )
-    )
-    check = QueryCheck(
-        column=models.Pumpstation.lower_stop_level,
-        invalid=query,
-        message="Pumpstation lower_stop_level should be higher than Manhole "
-        "bottom_level",
-    )
-    invalids = check.get_invalid(session)
-    assert len(invalids) == 1
-    assert invalids[0].id == pumpstation_wrong.id
-
-
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_query_check_manhole_drain_level_calc_type_2(session):
     # manhole.drain_level can be null, but if manhole.exchange_type == 2 (Connected)
     # then manhole.drain_level >= manhole.bottom_level
