@@ -184,37 +184,30 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
         )
 
     def get_invalid(self, session):
-        # get all channels with more than 1 cross section location
-        cross_sections_tab = (
-            select(
-                models.CrossSectionLocation.id.label("cross_section_id"),
-                models.CrossSectionLocation.channel_id,
-                models.CrossSectionLocation.cross_section_shape,
-                models.CrossSectionLocation.cross_section_table,
-                self.first_row_width().label("first_width"),
-                self.first_row_height().label("first_height"),
-                self.last_row_width().label("last_width"),
-                self.last_row_height().label("last_height"),
-            )
-            .filter(models.CrossSectionLocation.cross_section_shape.in_([5, 6, 7]))
-            .select_from(models.CrossSectionLocation)
-        )
-        cross_sections_notab = (
-            select(
-                models.CrossSectionLocation.id.label("cross_section_id"),
-                models.CrossSectionLocation.channel_id,
-                models.CrossSectionLocation.cross_section_shape,
-                models.CrossSectionLocation.cross_section_table,
-                models.CrossSectionLocation.cross_section_width.label("first_width"),
-                models.CrossSectionLocation.cross_section_height.label("first_height"),
-                models.CrossSectionLocation.cross_section_width.label("last_width"),
-                models.CrossSectionLocation.cross_section_height.label("last_height"),
-            )
-            .filter(~models.CrossSectionLocation.cross_section_shape.in_([5, 6, 7]))
-            .select_from(models.CrossSectionLocation)
-        )
-        cross_sections = union_all(cross_sections_tab, cross_sections_notab)
-
+        # find all tabulated cross sections
+        cross_sections_tab = select(
+            models.CrossSectionLocation.id.label("cross_section_id"),
+            models.CrossSectionLocation.channel_id,
+            models.CrossSectionLocation.cross_section_shape,
+            models.CrossSectionLocation.cross_section_table,
+            self.first_row_width().label("first_width"),
+            self.first_row_height().label("first_height"),
+            self.last_row_width().label("last_width"),
+            self.last_row_height().label("last_height"),
+        ).where(models.CrossSectionLocation.cross_section_shape.in_([5, 6, 7]))
+        # find all non tabulated cross sections
+        cross_sections_notab = select(
+            models.CrossSectionLocation.id.label("cross_section_id"),
+            models.CrossSectionLocation.channel_id,
+            models.CrossSectionLocation.cross_section_shape,
+            models.CrossSectionLocation.cross_section_table,
+            models.CrossSectionLocation.cross_section_width.label("first_width"),
+            models.CrossSectionLocation.cross_section_height.label("first_height"),
+            models.CrossSectionLocation.cross_section_width.label("last_width"),
+            models.CrossSectionLocation.cross_section_height.label("last_height"),
+        ).where(~models.CrossSectionLocation.cross_section_shape.in_([5, 6, 7]))
+        # combine the above two queries to get all cross sections
+        cross_sections = union_all(cross_sections_tab, cross_sections_notab).subquery()
         cross_sections_with_configuration = select(
             cross_sections.c.cross_section_id,
             cross_sections.c.cross_section_shape,
@@ -228,6 +221,7 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
                 last_height=cross_sections.c.last_height,
             ).label("configuration"),
         ).subquery()
+
         filtered_cross_sections = (
             select(cross_sections_with_configuration)
             .group_by(cross_sections_with_configuration.c.channel_id)
@@ -237,10 +231,6 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             )
             .subquery()
         )
-
-        # only run the check if all the cross-section definitions have a parsable width and height
-        # otherwise sqlalchemy will throw an exception
-        # this is also checked in checks 87 and 88 (CrossSectionFloatListCheck), where it gives an error to the user
         return (
             self.to_check(session)
             .filter(self.column == filtered_cross_sections.c.channel_id)
