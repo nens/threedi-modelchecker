@@ -47,10 +47,9 @@ def test_base_extra_filters_err(session):
 
 @pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_fk_check(session):
-    factories.ManholeFactory.create_batch(5)
-    fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id, models.Manhole.connection_node_id
-    )
+    factories.ConnectionNodeFactory(id=1)
+    factories.PumpFactory(connection_node_id=1)
+    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Pump.connection_node_id)
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -448,49 +447,49 @@ def test_query_check_with_joins(session):
     assert invalids[0].id == pump1.id
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_query_check_manhole_drain_level_calc_type_2(session):
-    # manhole.drain_level can be null, but if manhole.exchange_type == 2 (Connected)
-    # then manhole.drain_level >= manhole.bottom_level
-    factories.ManholeFactory(drain_level=None)
-    factories.ManholeFactory(drain_level=1)
-    m3_error = factories.ManholeFactory(
-        drain_level=None, exchange_type=constants.CalculationTypeNode.CONNECTED
-    )  # drain_level cannot be null when exchange_type is CONNECTED
-    m4_error = factories.ManholeFactory(
-        drain_level=1,
-        bottom_level=2,
+    # ConnectionNodeFactory.exchange_level can be null, but if ConnectionNodeFactory.exchange_type == 2 (Connected)
+    # then ConnectionNodeFactory.exchange_level >= ConnectionNodeFactory.bottom_level
+    factories.ConnectionNodeFactory(exchange_level=None)
+    factories.ConnectionNodeFactory(exchange_level=1)
+    m3_error = factories.ConnectionNodeFactory(
+        exchange_level=None, exchange_type=constants.CalculationTypeNode.CONNECTED
+    )
+    m4_error = factories.ConnectionNodeFactory(
+        exchange_level=1,
+        manhole_bottom_level=2,
         exchange_type=constants.CalculationTypeNode.CONNECTED,
     )  # bottom_level  >= drain_level when exchange_type is CONNECTED
-    factories.ManholeFactory(
-        drain_level=1,
-        bottom_level=0,
+    factories.ConnectionNodeFactory(
+        exchange_level=1,
+        manhole_bottom_level=0,
         exchange_type=constants.CalculationTypeNode.CONNECTED,
     )
-    factories.ManholeFactory(
-        drain_level=None,
-        bottom_level=0,
+    factories.ConnectionNodeFactory(
+        exchange_level=None,
+        manhole_bottom_level=0,
         exchange_type=constants.CalculationTypeNode.EMBEDDED,
     )
 
-    query_drn_lvl_st_bttm_lvl = Query(models.Manhole).filter(
-        models.Manhole.drain_level < models.Manhole.bottom_level,
-        models.Manhole.exchange_type == constants.CalculationTypeNode.CONNECTED,
+    query_drn_lvl_st_bttm_lvl = Query(models.ConnectionNode).filter(
+        models.ConnectionNode.exchange_level
+        < models.ConnectionNode.manhole_bottom_level,
+        models.ConnectionNode.exchange_type == constants.CalculationTypeNode.CONNECTED,
     )
-    query_invalid_not_null = Query(models.Manhole).filter(
-        models.Manhole.exchange_type == constants.CalculationTypeNode.CONNECTED,
-        models.Manhole.drain_level == None,
+    query_invalid_not_null = Query(models.ConnectionNode).filter(
+        models.ConnectionNode.exchange_type == constants.CalculationTypeNode.CONNECTED,
+        models.ConnectionNode.exchange_level == None,
     )
     check_drn_lvl_gt_bttm_lvl = QueryCheck(
-        column=models.Manhole.bottom_level,
+        column=models.ConnectionNode.manhole_bottom_level,
         invalid=query_drn_lvl_st_bttm_lvl,
-        message="Manhole.drain_level >= Manhole.bottom_level when "
-        "Manhole.exchange_type is CONNECTED",
+        message="ConnectionNode.exhange_level >= ConnectionNode.manhole_bottom_level when "
+        "ConnectionNode.exchange_type is CONNECTED",
     )
     check_invalid_not_null = QueryCheck(
-        column=models.Manhole.drain_level,
+        column=models.ConnectionNode.exchange_level,
         invalid=query_invalid_not_null,
-        message="Manhole.drain_level cannot be null when Manhole.exchange_type is "
+        message="ConnectionNode.exchange_level cannot be null when ConnectionNode.exchange_type is "
         "CONNECTED",
     )
     errors1 = check_drn_lvl_gt_bttm_lvl.get_invalid(session)
