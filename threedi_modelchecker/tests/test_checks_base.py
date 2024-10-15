@@ -94,22 +94,19 @@ def test_unique_check(session):
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_unique_check_duplicate_value(session):
-    manholes = factories.ManholeFactory.create_batch(
-        5, zoom_category=factory.Sequence(lambda n: n)
+    channels = factories.ChannelFactory.create_batch(
+        5, exchange_type=factory.Sequence(lambda n: n)
     )
-    duplicate_manhole = factories.ManholeFactory(
-        zoom_category=manholes[0].zoom_category
-    )
+    dup_channel = factories.ChannelFactory(exchange_type=channels[0].exchange_type)
 
-    unique_check = UniqueCheck(models.Manhole.zoom_category)
+    unique_check = UniqueCheck(models.Channel.exchange_type)
     invalid_rows = unique_check.get_invalid(session)
 
     assert len(invalid_rows) == 2
     invalid_ids = [invalid.id for invalid in invalid_rows]
-    assert manholes[0].id in invalid_ids
-    assert duplicate_manhole.id in invalid_ids
+    assert channels[0].id in invalid_ids
+    assert dup_channel.id in invalid_ids
 
 
 @pytest.mark.skip(reason="Needs fixing for schema 227")
