@@ -289,14 +289,13 @@ def test_type_check_float_can_store_integer(session):
     assert m1.id in invalid_ids
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_type_check_varchar(session):
     if session.bind.name == "postgresql":
         pytest.skip("type checks not working on postgres")
-    factories.ManholeFactory(code="abc")
-    factories.ManholeFactory(code=123)
+    factories.ChannelFactory(code="abc")
+    factories.ChannelFactory(code=123)
 
-    type_check = TypeCheck(models.Manhole.code)
+    type_check = TypeCheck(models.Channel.code)
     invalid_rows = type_check.get_invalid(session)
 
     assert len(invalid_rows) == 0
