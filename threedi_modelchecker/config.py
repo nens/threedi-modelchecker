@@ -260,7 +260,6 @@ CHECKS += [
 ]
 # Friction with conveyance should only be used on
 # tabulated rectangle, tabulated trapezium, or tabulated yz shapes
-# TODO: fix
 CHECKS += [
     QueryCheck(
         error_code=27,
@@ -293,7 +292,6 @@ CHECKS += [
         ),
     )
 ]
-# TODO: fix
 CHECKS += [
     OpenIncreasingCrossSectionConveyanceFrictionCheck(error_code=28, column=table.id)
     for table in cross_section_tables
@@ -382,7 +380,6 @@ CHECKS += [
     for table in cross_section_tables
 ]
 
-# TODO: run for all tables with cross sections (?)
 CHECKS += [
     CrossSectionLocationCheck(
         level=CheckLevel.WARNING, max_distance=TOLERANCE_M, error_code=52
@@ -397,7 +394,6 @@ CHECKS += [
         ),
         message="v2_cross_section_location.bank_level will be ignored if it is below the reference_level",
     ),
-    # TODO fix
     QueryCheck(
         error_code=55,
         column=models.Channel.id,
@@ -409,14 +405,13 @@ CHECKS += [
         .filter(models.CrossSectionLocation.channel_id == None),
         message="v2_channel has no cross section locations",
     ),
-    # TODO fix
     CrossSectionSameConfigurationCheck(
         error_code=56,
         level=CheckLevel.ERROR,
         column=models.Channel.id,
     ),
 ]
-# TODO: fix
+
 CHECKS += [
     FeatureClosedCrossSectionCheck(
         error_code=57, level=CheckLevel.INFO, column=table.id
@@ -425,7 +420,6 @@ CHECKS += [
 ]
 
 ## 006x: PUMPSTATIONS
-# TODO: fix
 CHECKS += [
     QueryCheck(
         error_code=61,
@@ -555,7 +549,6 @@ CHECKS += [
 ]
 
 ## 008x: CROSS SECTION DEFINITIONS
-# TODO: fix
 CHECKS += [
     QueryCheck(
         error_code=80,
@@ -698,7 +691,6 @@ CHECKS += [
 ]
 
 ## 01xx: LEVEL CHECKS
-# TODO: fix -> moved to ConnectionNode
 CHECKS += [
     QueryCheck(
         level=CheckLevel.WARNING,
@@ -892,7 +884,6 @@ CHECKS += [
 
 
 ## 025x: Connectivity
-# TODO: fix -> moved to ConnectionNode
 
 CHECKS += [
     QueryCheck(
@@ -981,7 +972,6 @@ CHECKS += [
         message="a pump cannot be connected to itself (pump.connection_node_id must not equal the corresponding pump_map.connection_node_id_end)",
     )
 ]
-# TODO: add check to ensure models.PumpMap.connection_node_id_end != models.Pump.connection_node_id
 CHECKS += [
     QueryCheck(
         error_code=255,
@@ -994,7 +984,6 @@ CHECKS += [
         message="a pump cannot be connected to itself (pump.connection_node_id must not equal pumpmap.connection_node_id_end)",
     )
 ]
-# TODO: fix -> moved to ConnectionNode
 CHECKS += [
     QueryCheck(
         error_code=254,
@@ -1760,7 +1749,6 @@ CHECKS += [
         ),
         message="groundwater.groundwater_hydraulic_conductivity is recommended as fallback value when using a groundwater_hydraulic_conductivity_file.",
     ),
-    # TODO: fix -> moved to ConnectionNode
     RangeCheck(
         error_code=429,
         column=models.ConnectionNode.exchange_thickness,
@@ -2089,7 +2077,6 @@ CHECKS += [
         error_code=700, level=CheckLevel.WARNING, column=models.ModelSettings.dem_file
     )
 ]
-# TODO: check this check
 CHECKS += [
     RasterExistsCheck(
         error_code=701 + i,
@@ -2755,7 +2742,6 @@ CHECKS += [
 
 
 ## 018x cross section parameters (continues 008x)
-# TODO: fix
 CHECKS += [
     QueryCheck(
         error_code=180,
@@ -2776,10 +2762,7 @@ CHECKS += [
         models.CrossSectionLocation.cross_section_vegetation_table,
     ]
 ]
-# TODO: fix
-# TODO: replace with check for cross_section_friction_values and cross_section_vegetation_table
-# TODO: add check for cross_section_vegetation_table
-# TODO add checks for pipe, etc
+
 CHECKS += [
     CrossSectionVariableCorrectLengthCheck(
         error_code=181,
@@ -2790,7 +2773,6 @@ CHECKS += [
     )
 ]
 
-# TODO: fix
 CHECKS += [
     QueryCheck(
         error_code=182,
@@ -2816,7 +2798,7 @@ CHECKS += [
         models.CrossSectionLocation.vegetation_stem_density,
     ]
 ]
-# TODO: fix
+
 CHECKS += [
     QueryCheck(
         error_code=183,
@@ -2844,8 +2826,7 @@ CHECKS += [
         models.CrossSectionLocation.vegetation_stem_density,
     ]
 ]
-# TODO: fix
-#
+
 CHECKS += [
     QueryCheck(
         error_code=184,
@@ -2904,7 +2885,6 @@ CHECKS += [
     for table in cross_section_tables
 ]
 ## Friction values range
-# TODO add checks for pipe, etc
 CHECKS += [
     CrossSectionVariableFrictionRangeCheck(
         min_value=0,
@@ -2919,7 +2899,6 @@ CHECKS += [
         ],
     )
 ]
-# TODO add checks for pipe, etc
 CHECKS += [
     CrossSectionVariableFrictionRangeCheck(
         min_value=0,
@@ -2940,13 +2919,7 @@ vegetation_parameter_columns_singular = [
     models.CrossSectionLocation.vegetation_stem_diameter,
     models.CrossSectionLocation.vegetation_stem_density,
 ]
-# TODO: fix this
-# vegetation_parameter_columns_plural = [
-#     models.CrossSectionLocation.vegetation_drag_coefficients,
-#     models.CrossSectionLocation.vegetation_heights,
-#     models.CrossSectionLocation.vegetation_stem_diameters,
-#     models.CrossSectionLocation.vegetation_stem_densities,
-# ]
+
 
 CHECKS += [
     RangeCheck(
@@ -2956,7 +2929,8 @@ CHECKS += [
     )
     for col in vegetation_parameter_columns_singular
 ]
-# TODO: replace with check for cross_section_friction_values and cross_section_vegetation_table
+# TODO: add check for formatting cross_section_vegetation_table
+# TODO: add check for number of rows for cross_section_vegetation_table
 
 CHECKS += [
     CrossSectionVegetationTableNotNegativeCheck(
@@ -2986,7 +2960,6 @@ CHECKS += [
     )
     for col in vegetation_parameter_columns_singular
 ]
-# TODO: fix
 CHECKS += [
     QueryCheck(
         error_code=193,
@@ -3005,11 +2978,10 @@ CHECKS += [
             )
         ),
         message=(
-            "cross_section_locaiton.cross_section_vegetation_table cannot be used with MANNING type friction"
+            "cross_section_location.cross_section_vegetation_table cannot be used with MANNING type friction"
         ),
     )
 ]
-# TODO: fix
 CHECKS += [
     AllPresentFixedVegetationParameters(
         error_code=194, column=models.CrossSectionLocation.vegetation_height
@@ -3048,7 +3020,6 @@ CHECKS += [
         models.Weir,
     ]
 ]
-# TODO: fix
 CHECKS += [
     CrossSectionVariableFrictionRangeCheck(
         min_value=1,

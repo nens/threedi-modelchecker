@@ -104,27 +104,6 @@ def test_parse_cross_section_vegetation_table(session, vegetation_table, expecte
         assert not values
 
 
-# TODO: remove (?)
-def test_parse_cross_section_table_generator(session):
-    tables = ["0,0\n2,1\n4,2", "0,0\n1,2\n2,4"]
-    expected = [[0, 2, 4], [0, 1, 2]]
-    for cross_section_table in tables:
-        factories.CrossSectionLocationFactory(
-            cross_section_table=cross_section_table,
-        )
-    # can use any class here!
-    check = CrossSectionFloatCheck(
-        column=models.CrossSectionLocation.cross_section_table
-    )
-    for i, (record, values) in enumerate(
-        check.parse_cross_section_table(
-            session=session, col_idx=CrossSectionTableColumnIdx.width
-        )
-    ):
-        if expected:
-            assert values == expected[i]
-
-
 def test_filter_shapes(session):
     # should only check records of given types
     factories.CrossSectionLocationFactory(

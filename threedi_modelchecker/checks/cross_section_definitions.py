@@ -22,7 +22,6 @@ def parse_csv_table(str_data):
 class CrossSectionBaseCheck(BaseCheck):
     """Base class for all cross section definition checks."""
 
-    # TODO: extend to work with all tables with cross sections
     # use self.table instead of models.CrossSectionLocation
     # adapt config.py
 
@@ -288,7 +287,6 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
 
 
 def cross_section_configuration_for_record(record):
-    # TODO add test
     if record.cross_section_shape.is_tabulated:
         widths = parse_csv_table_col(
             record.cross_section_table, CrossSectionTableColumnIdx.width
@@ -309,9 +307,8 @@ def cross_section_configuration_for_record(record):
 
 def cross_section_configuration_not_tabulated(shape, width, height):
     """
-    Calculate maximum width, maximum heigth  and open/closed configuration for cross-sections.
-    If the heights or widths list is empty, but will be called, it is set to [] to avoid ValueErrors.
-    A different checks will error on the empty list instead so the user knows to fix it.
+    Retrieve maximum width, maximum height  and open/closed configuration for not tabulated
+    cross-sections.
     """
     if shape.is_tabulated:
         raise ValueError("cross_section_configuration cannot handle tabulated shaptes")
@@ -333,15 +330,12 @@ def cross_section_configuration_not_tabulated(shape, width, height):
 
 def cross_section_configuration_tabulated(shape, widths, heights):
     """
-    Calculate maximum width, maximum heigth  and open/closed configuration for cross-sections.
-    If the heights or widths list is empty, but will be called, it is set to [] to avoid ValueErrors.
-    A different checks will error on the empty list instead so the user knows to fix it.
+    Retrieve maximum width, maximum height  and open/closed configuration for tabulated cross-sections.
     """
     if not shape.is_tabulated:
         raise ValueError(
             "cross_section_configuration_tabulated can only handle tabulated shaptes"
         )
-    # TODO: update docstring
     if not widths:
         widths = [0]
     if not heights:
