@@ -11,29 +11,26 @@ from threedi_modelchecker.checks.factories import (
 )
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_gen_foreign_key_checks():
-    foreign_key_checks = generate_foreign_key_checks(models.Manhole.__table__)
+    foreign_key_checks = generate_foreign_key_checks(models.Surface.__table__)
     assert len(foreign_key_checks) == 1
     fk_check = foreign_key_checks[0]
-    assert models.Manhole.connection_node_id == fk_check.column
-    assert models.ConnectionNode.id == fk_check.reference_column
+    assert models.Surface.surface_parameters_id == fk_check.column
+    assert models.SurfaceParameter.id == fk_check.reference_column
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_gen_not_unique_checks():
-    not_unique_checks = generate_unique_checks(models.Manhole.__table__)
-    assert len(not_unique_checks) == 2
-    assert models.Manhole.id == not_unique_checks[0].column
-    assert models.Manhole.connection_node_id == not_unique_checks[1].column
+    not_unique_checks = generate_unique_checks(models.Channel.__table__)
+    assert len(not_unique_checks) == 1
+    assert models.Channel.id == not_unique_checks[0].column
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_gen_not_null_checks():
-    not_null_checks = generate_not_null_checks(models.Manhole.__table__)
-    assert len(not_null_checks) == 3
+    not_null_checks = generate_not_null_checks(models.Channel.__table__)
+    assert len(not_null_checks) == 2
     not_null_check_columns = [check.column for check in not_null_checks]
-    assert models.Manhole.id in not_null_check_columns
+    assert models.Channel.id in not_null_check_columns
+    assert models.Channel.geom in not_null_check_columns
 
 
 def test_gen_geometry_check():

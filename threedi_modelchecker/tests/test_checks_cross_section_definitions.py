@@ -533,7 +533,6 @@ def test_check_friction_values_range(session, friction_types, result):
         ),  # closed tabulated yz,  fail
     ],
 )
-@pytest.mark.skip(reason="broken")
 def test_check_cross_section_increasing_open_with_variables(
     session, cross_section_table, result
 ):
