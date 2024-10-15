@@ -45,7 +45,6 @@ def test_base_extra_filters_err(session):
     assert len(invalid_rows) == 1
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_fk_check(session):
     factories.ConnectionNodeFactory(id=1)
     factories.PumpFactory(connection_node_id=1)
@@ -54,22 +53,18 @@ def test_fk_check(session):
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_fk_check_no_entries(session):
-    fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id, models.Manhole.connection_node_id
-    )
+    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Pump.connection_node_id)
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_fk_check_null_fk(session):
-    conn_node = factories.ConnectionNodeFactory()
-    factories.ManholeFactory.create_batch(5, visualisation=conn_node.id)
-    factories.ManholeFactory(visualisation=None)
+    conn_node = factories.ConnectionNodeFactory(id=1)
+    factories.PumpFactory.create_batch(5, connection_node_id=conn_node.id)
+    factories.PumpFactory(connection_node_id=None)
 
-    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Manhole.visualisation)
+    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Pump.connection_node_id)
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
