@@ -44,7 +44,7 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; CrossSectionSameConfigurationCheck,
+from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
     AllPresentFixedVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
@@ -55,6 +55,7 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; CrossSectionSameCon
     ControlHasSingleMeasureVariable,
     CorrectAggregationSettingsExist,
     CrossSectionLocationCheck,
+    CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
@@ -408,11 +409,11 @@ CHECKS += [
         message="v2_channel has no cross section locations",
     ),
     # TODO fix
-    # CrossSectionSameConfigurationCheck(
-    #     error_code=56,
-    #     level=CheckLevel.ERROR,
-    #     column=models.Channel.id,
-    # ),
+    CrossSectionSameConfigurationCheck(
+        error_code=56,
+        level=CheckLevel.ERROR,
+        column=models.Channel.id,
+    ),
 ]
 # TODO: fix
 CHECKS += [

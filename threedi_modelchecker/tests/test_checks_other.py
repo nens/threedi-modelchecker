@@ -1,7 +1,7 @@
 from unittest import mock
 
 import pytest
-from sqlalchemy import func, text
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import aliased, Query
 from threedi_schema import constants, models, ThreediDatabase
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
@@ -320,59 +320,127 @@ def test_cross_section_location(session):
     assert len(errors) == 1
 
 
+class TestCrossSectionSameConfiguration:
+    @pytest.mark.parametrize("sep, expected", [(",", "1"), ("\n", "1,2")])
+    def test_get_first_in_str(self, session, sep, expected):
+        factories.CrossSectionLocationFactory(
+            cross_section_table="1,2\n3,4",
+        )
+        check = CrossSectionSameConfigurationCheck(models.CrossSectionLocation.id)
+        result = check.get_first_in_str(
+            models.CrossSectionLocation.cross_section_table, sep=sep
+        )
+        assert session.execute(select(result)).fetchall()[0][0] == expected
+
+    @pytest.mark.parametrize("sep, expected", [(",", "4"), ("\n", "3,4")])
+    def test_get_last_in_str(self, session, sep, expected):
+        factories.CrossSectionLocationFactory(
+            cross_section_table="1,2\n3,4",
+        )
+        check = CrossSectionSameConfigurationCheck(models.CrossSectionLocation.id)
+        result = check.get_last_in_str(
+            models.CrossSectionLocation.cross_section_table, sep=sep
+        )
+        assert session.execute(select(result)).fetchall()[0][0] == expected
+
+    @pytest.mark.parametrize(
+        "method_name, expected",
+        [
+            ("first_row_width", 1.0),
+            ("first_row_height", 2.0),
+            ("last_row_width", 3.0),
+            ("last_row_height", 4.0),
+        ],
+    )
+    def test_row_values(self, session, method_name, expected):
+        factories.CrossSectionLocationFactory(
+            cross_section_table="1,2\n3,4",
+        )
+        check = CrossSectionSameConfigurationCheck(models.CrossSectionLocation.id)
+        result = getattr(check, method_name)()
+        assert session.execute(select(result)).fetchall()[0][0] == expected
+
+    @pytest.mark.parametrize(
+        "shape, table, expected",
+        [
+            (0, "3,4\n3,4", "closed"),
+            (1, "3,4\n3,4", "open"),
+            (2, "3,4\n3,4", "closed"),
+            (3, "3,4\n3,4", "closed"),
+            (4, "3,4\n3,4", "open"),
+            (5, "3,4\n0,1", "closed"),
+            (6, "3,4\n3,4", "open"),
+            (7, "3,4\n3,4", "closed"),
+            (7, "1,3\n1,4", "open"),
+            (8, "3,4\n3,4", "closed"),
+        ],
+    )
+    def test_configuration_type(self, session, shape, table, expected):
+        factories.CrossSectionLocationFactory(
+            cross_section_shape=shape,
+            cross_section_table=table,
+        )
+        check = CrossSectionSameConfigurationCheck(models.CrossSectionLocation.id)
+
+        cross_sections = (
+            select(
+                models.CrossSectionLocation.cross_section_shape,
+                check.first_row_width().label("first_width"),
+                check.first_row_height().label("first_height"),
+                check.last_row_width().label("last_width"),
+                check.last_row_height().label("last_height"),
+            )
+            .select_from(models.CrossSectionLocation)
+            .subquery()  # Added this line
+        )
+        # Without this, there is nothing that check.configuration_type can use
+        session.execute(select(cross_sections))
+        config_types = select(
+            check.configuration_type(
+                shape=cross_sections.c.cross_section_shape,
+                first_width=cross_sections.c.first_width,
+                last_width=cross_sections.c.last_width,
+                first_height=cross_sections.c.first_height,
+                last_height=cross_sections.c.last_height,
+            ).label("configuration"),
+        )
+        assert session.execute(config_types).fetchall()[0][0] == expected
+
+
+# cases to test: tabulated and non tabulated, everything else is covered above
 @pytest.mark.parametrize(
-    "shape, width, height, same_channels, ok",
+    "shape, width, height, table, same_channels, ok",
     [
         # --- closed cross-sections ---
         # shapes 0, 2, 3 and 8 are always closed
-        (0, "3", "4", True, False),
-        *[(i, "3", None, True, False) for i in [2, 3, 8]],
-        # shapes 5 and 6 are closed if the width at the highest increment (last number in the width string) is 0
-        *[
-            (
-                i,
-                "0 4.142 5.143 5.143 5.869 0",
-                "0 0.174 0.348 0.522 0.696 0.87",
-                True,
-                False,
-            )
-            for i in [5, 6]
-        ],
+        (0, 3, 4, None, True, False),
         # shape 7 is closed if the first and last (width, height) coordinates are the same
-        (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 3", True, False),
-        #
-        # --- open cross-sections ---
-        # shape 1 is always open
-        (1, "3", "4", True, True),
-        # shapes 5 and 6 are open if the width at the highest increment (last number in the width string) is > 0
-        *[
-            (
-                i,
-                "0 4.142 5.143 5.143 5.869 1",
-                "0 0.174 0.348 0.522 0.696 0.87",
-                True,
-                True,
-            )
-            for i in [5, 6]
-        ],
+        (
+            7,
+            None,
+            None,
+            "2,3\n4.142,0.174\n5.143,0.348\n5.143,0.522\n5.869,0.696\n2,3",
+            True,
+            False,
+        ),
         # shape 7 is open if the first and last (width, height) coordinates are not the same
-        # different width
-        (7, "2 4.142 5.143 5.143 5.869 3", "4 0.174 0.348 0.522 0.696 4", True, True),
-        # different height
-        (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 4", True, True),
-        # different height and width
-        (7, "2 4.142 5.143 5.143 5.869 3", "4 0.174 0.348 0.522 0.696 5", True, True),
-        #
-        # Bad data, should silently fail, returning no invalid rows. The data is checked in other checks.
-        (7, "foo", "bar", True, True),
-        #
+        (
+            7,
+            None,
+            None,
+            "2,4\n4.142,0.174\n5.143,0.348\n5.143,0.522\n5.869,0.696\n3,4",
+            True,
+            True,
+        ),
+        # Bad data, could result in false positive but the real issue is covered by other checks
+        (7, None, None, "foo", True, False),
         # Check on different channels
         # this should fail if the cross-sections are on the same channel, but pass on different channels
-        (0, "3", "4", False, True),
+        (0, 3, 4, None, False, True),
     ],
 )
 def test_cross_section_same_configuration(
-    session, shape, width, height, same_channels, ok
+    session, shape, width, height, table, same_channels, ok
 ):
     """
     This test checks two cross-sections on a channel against each other; they should both be open or both be closed.
@@ -392,8 +460,8 @@ def test_cross_section_same_configuration(
         channel_id=1,
         geom="SRID=4326;POINT(4.718278 52.696697)",
         cross_section_shape=1,
-        cross_section_width="3",
-        cross_section_height="4",
+        cross_section_width=3,
+        cross_section_height=4,
     )
     # the second one is parametrised
     factories.CrossSectionLocationFactory(
@@ -402,8 +470,11 @@ def test_cross_section_same_configuration(
         cross_section_shape=shape,
         cross_section_width=width,
         cross_section_height=height,
+        cross_section_table=table,
     )
-    errors = CrossSectionSameConfigurationCheck(models.Channel.id).get_invalid(session)
+    errors = CrossSectionSameConfigurationCheck(column=models.Channel.id).get_invalid(
+        session
+    )
     assert len(errors) == (0 if ok else 1)
 
 

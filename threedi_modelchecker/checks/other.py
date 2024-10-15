@@ -3,7 +3,18 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
-from sqlalchemy import and_, case, cast, distinct, func, not_, REAL, select, text
+from sqlalchemy import (
+    and_,
+    case,
+    cast,
+    distinct,
+    func,
+    not_,
+    REAL,
+    select,
+    text,
+    union_all,
+)
 from sqlalchemy.orm import aliased, Query, Session
 from threedi_schema.domain import constants, models
 
@@ -101,6 +112,47 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             REAL,
         )
 
+    def get_first_in_str(self, col, sep):
+        return func.substr(
+            col,
+            1,
+            func.instr(col, sep) - 1,
+        )
+
+    def get_last_in_str(self, col, sep):
+        return func.replace(
+            col,
+            func.rtrim(
+                col,
+                func.replace(col, sep, ""),
+            ),
+            "",
+        )
+
+    def first_row_width(self):
+        first_row = self.get_first_in_str(
+            models.CrossSectionLocation.cross_section_table, "\n"
+        )
+        return cast(self.get_first_in_str(first_row, ","), REAL)
+
+    def first_row_height(self):
+        first_row = self.get_first_in_str(
+            models.CrossSectionLocation.cross_section_table, "\n"
+        )
+        return cast(self.get_last_in_str(first_row, ","), REAL)
+
+    def last_row_width(self):
+        last_row = self.get_last_in_str(
+            models.CrossSectionLocation.cross_section_table, "\n"
+        )
+        return cast(self.get_first_in_str(last_row, ","), REAL)
+
+    def last_row_height(self):
+        last_row = self.get_last_in_str(
+            models.CrossSectionLocation.cross_section_table, "\n"
+        )
+        return cast(self.get_last_in_str(last_row, ","), REAL)
+
     def configuration_type(
         self, shape, first_width, last_width, first_height, last_height
     ):
@@ -133,28 +185,36 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
 
     def get_invalid(self, session):
         # get all channels with more than 1 cross section location
-        cross_sections = (
+        cross_sections_tab = (
             select(
                 models.CrossSectionLocation.id.label("cross_section_id"),
                 models.CrossSectionLocation.channel_id,
                 models.CrossSectionLocation.cross_section_shape,
                 models.CrossSectionLocation.cross_section_table,
-                self.first_number_in_spaced_string(
-                    models.CrossSectionLocation.cross_section_table
-                ).label("first_width"),
-                self.first_number_in_spaced_string(
-                    models.CrossSectionLocation.cross_section_table
-                ).label("first_height"),
-                self.last_number_in_spaced_string(
-                    models.CrossSectionLocation.cross_section_table
-                ).label("last_width"),
-                self.last_number_in_spaced_string(
-                    models.CrossSectionLocation.cross_section_table
-                ).label("last_height"),
+                self.first_row_width().label("first_width"),
+                self.first_row_height().label("first_height"),
+                self.last_row_width().label("last_width"),
+                self.last_row_height().label("last_height"),
             )
+            .filter(models.CrossSectionLocation.cross_section_shape.in_([5, 6, 7]))
             .select_from(models.CrossSectionLocation)
-            .subquery()
         )
+        cross_sections_notab = (
+            select(
+                models.CrossSectionLocation.id.label("cross_section_id"),
+                models.CrossSectionLocation.channel_id,
+                models.CrossSectionLocation.cross_section_shape,
+                models.CrossSectionLocation.cross_section_table,
+                models.CrossSectionLocation.cross_section_width.label("first_width"),
+                models.CrossSectionLocation.cross_section_height.label("first_height"),
+                models.CrossSectionLocation.cross_section_width.label("last_width"),
+                models.CrossSectionLocation.cross_section_height.label("last_height"),
+            )
+            .filter(~models.CrossSectionLocation.cross_section_shape.in_([5, 6, 7]))
+            .select_from(models.CrossSectionLocation)
+        )
+        cross_sections = union_all(cross_sections_tab, cross_sections_notab)
+
         cross_sections_with_configuration = select(
             cross_sections.c.cross_section_id,
             cross_sections.c.cross_section_shape,
@@ -178,44 +238,14 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             .subquery()
         )
 
-        def is_valid_series(input):
-            try:
-                [float(i) for i in input.split(" ")]
-                return True
-            except ValueError:
-                return False
-
-        def is_valid_value(input):
-            if input in ["", None] or is_valid_series(input):
-                return True
-            else:
-                return False
-
-        all_cross_sections = session.execute(
-            select(
-                models.CrossSectionLocation.cross_section_width,
-                models.CrossSectionLocation.cross_section_height,
-            )
-        )
-
-        error_in_cross_sections = False
-
-        for row in all_cross_sections.all():
-            if not is_valid_value(row[0]) or not is_valid_value(row[1]):
-                error_in_cross_sections = True
-                break  # no need to continue checking; one error is enough to not run the check
-
         # only run the check if all the cross-section definitions have a parsable width and height
         # otherwise sqlalchemy will throw an exception
         # this is also checked in checks 87 and 88 (CrossSectionFloatListCheck), where it gives an error to the user
-        if not error_in_cross_sections:
-            return (
-                self.to_check(session)
-                .filter(self.column == filtered_cross_sections.c.channel_id)
-                .all()
-            )
-        else:
-            return []
+        return (
+            self.to_check(session)
+            .filter(self.column == filtered_cross_sections.c.channel_id)
+            .all()
+        )
 
     def description(self):
         return f"{self.column_name} has both open and closed cross-sections along its length. All cross-sections on a {self.column_name} object must be either open or closed."
