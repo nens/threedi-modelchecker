@@ -552,7 +552,7 @@ def test_length_geom_linestring_in_4326(session):
     check_length_linestring = QueryCheck(
         column=models.Channel.geom,
         invalid=q,
-        message="Length of the v2_channel is too short, should be at least 0.05m",
+        message="Length of the channel is too short, should be at least 0.05m",
     )
 
     errors = check_length_linestring.get_invalid(session)
@@ -578,7 +578,7 @@ def test_length_geom_linestring_missing_epsg_from_global_settings(session):
     check_length_linestring = QueryCheck(
         column=models.Channel.geom,
         invalid=q,
-        message="Length of the v2_channel is too short, should be at least 0.05m",
+        message="Length of the channel is too short, should be at least 0.05m",
     )
 
     errors = check_length_linestring.get_invalid(session)

@@ -79,7 +79,7 @@ class CrossSectionLocationCheck(BaseCheck):
 
     def description(self):
         return (
-            f"v2_cross_section_location.geom is invalid: the cross-section location "
+            f"cross_section_location.geom is invalid: the cross-section location "
             f"should be located on the channel geometry (tolerance = {self.max_distance} m)"
         )
 
@@ -452,8 +452,8 @@ class ChannelManholeLevelCheck(BaseCheck):
 
     def description(self) -> str:
         return (
-            f"The v2_manhole.bottom_level at the {self.nodes_to_check} of this v2_channel is higher than the "
-            "v2_cross_section_location.reference_level closest to the manhole. This will be "
+            f"The connection_node.manhole_bottom_level at the {self.nodes_to_check} of this channel is higher than the "
+            "cross_section_location.reference_level closest to the manhole. This will be "
             "automatically fixed in threedigrid-builder."
         )
 

@@ -253,7 +253,7 @@ CHECKS += [
         ),
         message=(
             "Friction with conveyance, such as chezy_conveyance and "
-            "manning_conveyance, may only be used with v2_cross_section_location"
+            "manning_conveyance, may only be used with cross_section_location"
         ),
     )
     for table in [models.Pipe, models.Culvert, models.Weir, models.Orifice]
@@ -284,7 +284,7 @@ CHECKS += [
             )
         ),
         message=(
-            "in v2_cross_section_location, friction with "
+            "in cross_section_location, friction with "
             "conveyance, such as chezy_conveyance and "
             "manning_conveyance, may only be used with "
             "tabulated rectangle (5), tabulated trapezium (6), "
@@ -313,7 +313,7 @@ CHECKS += [
                 ]
             ),
         ),
-        message=f"v2_channel.exchange_type cannot be "
+        message=f"channel.exchange_type cannot be "
         f"{constants.CalculationType.EMBEDDED}, "
         f"{constants.CalculationType.CONNECTED} or "
         f"{constants.CalculationType.DOUBLE_CONNECTED} when "
@@ -392,7 +392,7 @@ CHECKS += [
             models.CrossSectionLocation.reference_level
             > models.CrossSectionLocation.bank_level,
         ),
-        message="v2_cross_section_location.bank_level will be ignored if it is below the reference_level",
+        message="cross_section_location.bank_level will be ignored if it is below the reference_level",
     ),
     QueryCheck(
         error_code=55,
@@ -403,7 +403,7 @@ CHECKS += [
             models.Channel.id == models.CrossSectionLocation.channel_id,
         )
         .filter(models.CrossSectionLocation.channel_id == None),
-        message="v2_channel has no cross section locations",
+        message="channel has no cross section locations",
     ),
     CrossSectionSameConfigurationCheck(
         error_code=56,
@@ -1040,7 +1040,7 @@ CHECKS += [
                 }
             )
         ),
-        message="v2_channel can only have an exchange_line if it has "
+        message="channel can only have an exchange_line if it has "
         "a (double) connected (102 or 105) calculation type",
     ),
     QueryCheck(
@@ -1054,7 +1054,7 @@ CHECKS += [
         )
         .group_by(models.ExchangeLine.channel_id)
         .having(func.count(models.ExchangeLine.id) > 1),
-        message="v2_channel can have max 1 exchange_line if it has "
+        message="channel can have max 1 exchange_line if it has "
         "connected (102) calculation type",
     ),
     QueryCheck(
@@ -1068,7 +1068,7 @@ CHECKS += [
         )
         .group_by(models.ExchangeLine.channel_id)
         .having(func.count(models.ExchangeLine.id) > 2),
-        message="v2_channel can have max 2 exchange_line if it has "
+        message="channel can have max 2 exchange_line if it has "
         "double connected (105) calculation type",
     ),
     QueryCheck(
@@ -1145,7 +1145,7 @@ CHECKS += [
             func.PointN(models.PotentialBreach.geom, 1),
         )
         .having(func.count(models.PotentialBreach.id) > 1),
-        message="v2_channel can have max 1 potential_breach at the same position "
+        message="channel can have max 1 potential_breach at the same position "
         "on a channel of connected (102) calculation type",
     ),
     QueryCheck(
@@ -1162,7 +1162,7 @@ CHECKS += [
             func.PointN(models.PotentialBreach.geom, 1),
         )
         .having(func.count(models.PotentialBreach.id) > 2),
-        message="v2_channel can have max 2 potential_breach at the same position "
+        message="channel can have max 2 potential_breach at the same position "
         "on a channel of double connected (105) calculation type",
     ),
     QueryCheck(
@@ -2525,7 +2525,7 @@ CHECKS += [
             models.AggregationSettings.interval
             < models.TimeStepSettings.output_time_step
         ),
-        message="v2_aggregation_settings.timestep is smaller than v2_global_settings.output_time_step",
+        message="aggregation_settings.timestep is smaller than time_step_settings.output_time_step",
     ),
 ]
 CHECKS += [
@@ -3122,9 +3122,8 @@ class Config:
                 model.__table__,
                 error_code=7,
                 custom_level_map={
-                    "*.zoom_category": "INFO",
-                    "v2_pipe.sewerage_type": "INFO",
-                    "v2_pipe.material": "INFO",
+                    "pipe.sewerage_type": "INFO",
+                    "pipe.material": "INFO",
                 },
             )
             self.checks += [
