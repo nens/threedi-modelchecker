@@ -109,14 +109,13 @@ def test_unique_check_duplicate_value(session):
     assert dup_channel.id in invalid_ids
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_unique_check_null_values(session):
-    factories.ManholeFactory.create_batch(
-        5, zoom_category=factory.Sequence(lambda n: n)
+    factories.ChannelFactory.create_batch(
+        5, exchange_type=factory.Sequence(lambda n: n)
     )
-    factories.ManholeFactory.create_batch(3, zoom_category=None)
+    factories.ChannelFactory.create_batch(3, exchange_type=None)
 
-    unique_check = UniqueCheck(models.ConnectionNode.id)
+    unique_check = UniqueCheck(models.Channel.exchange_type)
     invalid_rows = unique_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
