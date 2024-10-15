@@ -17,7 +17,6 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     CrossSectionTableColumnIdx,
     CrossSectionVariableCorrectLengthCheck,
     CrossSectionVariableFrictionRangeCheck,
-    CrossSectionVariableRangeCheck,
     CrossSectionVegetationTableNotNegativeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
@@ -491,31 +490,6 @@ def test_cross_section_vegetation_table_not_negative_check(session, table, valid
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == valid
-
-
-@pytest.mark.parametrize(
-    "min_value, max_value, left_incl, right_incl, result",
-    [
-        [0, 1, True, True, True],
-        [0, 0.5, True, True, False],
-        [0.5, 1, True, True, False],
-        [0, 1, False, True, False],
-        [0, 1, True, False, False],
-        [0, None, True, True, True],
-        [None, 1, True, True, True],
-    ],
-)
-def test_check_var_range(session, min_value, max_value, left_incl, right_incl, result):
-    factories.CrossSectionLocationFactory(cross_section_friction_values="0 1")
-    check = CrossSectionVariableRangeCheck(
-        column=models.CrossSectionLocation.cross_section_friction_values,
-        min_value=min_value,
-        max_value=max_value,
-        left_inclusive=left_incl,
-        right_inclusive=right_incl,
-    )
-    invalid_rows = check.get_invalid(session)
-    assert (len(invalid_rows) == 0) == result
 
 
 @pytest.mark.parametrize(

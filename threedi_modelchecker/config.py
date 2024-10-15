@@ -17,7 +17,7 @@ from .checks.base import (
     RangeCheck,
     UniqueCheck,
 )
-from .checks.cross_section_definitions import (  # CrossSectionVariableRangeCheck,
+from .checks.cross_section_definitions import (
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
     CrossSectionFirstElementZeroCheck,
@@ -2957,7 +2957,6 @@ CHECKS += [
     for col in vegetation_parameter_columns_singular
 ]
 # TODO: replace with check for cross_section_friction_values and cross_section_vegetation_table
-# TODO: add CrossSectionVariableRangeCheck for cross_section_vegetation_table
 
 CHECKS += [
     CrossSectionVegetationTableNotNegativeCheck(

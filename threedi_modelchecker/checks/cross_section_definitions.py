@@ -480,66 +480,6 @@ class CrossSectionVegetationTableNotNegativeCheck(CrossSectionBaseCheck):
         return f"All values in {self.table.__tablename__}.{self.column_name} should be equal to or larger than 0"
 
 
-class CrossSectionVariableRangeCheck(CrossSectionBaseCheck):
-    def __init__(
-        self,
-        min_value=None,
-        max_value=None,
-        left_inclusive=True,
-        right_inclusive=True,
-        message=None,
-        *args,
-        **kwargs,
-    ):
-        if min_value is None and max_value is None:
-            raise ValueError("Please supply at least one of {min_value, max_value}.")
-        str_parts = []
-        if min_value is None:
-            self.min_valid = lambda x: True
-        else:
-            self.min_valid = (
-                (lambda x: x >= min_value)
-                if left_inclusive
-                else (lambda x: x > min_value)
-            )
-            str_parts.append(f"{'< ' if left_inclusive else '<= '}{min_value}")
-        if max_value is None:
-            self.max_valid = lambda x: True
-        else:
-            self.max_valid = (
-                (lambda x: x <= max_value)
-                if right_inclusive
-                else (lambda x: x < max_value)
-            )
-            str_parts.append(f"{'> ' if right_inclusive else '>= '}{max_value}")
-        self.range_str = " and/or ".join(str_parts)
-        self.message = message
-        super().__init__(*args, **kwargs)
-
-    def get_invalid(self, session):
-        invalids = []
-        for record in self.to_check(session).filter(
-            (self.column != None) & (self.column != "")
-        ):
-            try:
-                values = [
-                    float(x) for x in getattr(record, self.column.name).split(",")
-                ]
-            except ValueError:
-                invalids.append(record)
-            if not self.min_valid(min(values)):
-                invalids.append(record)
-            elif not self.max_valid(max(values)):
-                invalids.append(record)
-        return invalids
-
-    def description(self):
-        if self.message is None:
-            return f"some values in {self.column_name} are {self.range_str}"
-        else:
-            return self.message
-
-
 class CrossSectionVariableFrictionRangeCheck(CrossSectionBaseCheck):
     def __init__(
         self,
