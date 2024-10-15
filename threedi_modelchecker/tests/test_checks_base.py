@@ -225,12 +225,11 @@ def test_null_check_with_null_value(session):
     assert invalid_rows[0].id == null_node.id
 
 
-@pytest.mark.skip(reason="Needs fixing for schema 227")
 def test_threedi_db_and_factories(session):
     """Test to ensure that the threedi_db and factories use the same
     session object."""
-    factories.ManholeFactory()
-    q = session.query(models.Manhole)
+    factories.ChannelFactory()
+    q = session.query(models.Channel)
     assert q.count() == 1
 
 
