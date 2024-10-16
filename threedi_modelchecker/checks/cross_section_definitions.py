@@ -393,23 +393,10 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
         return f"{self.table.__tablename__}.cross_section_width and/or cross_section_height should be at least 0.1m"
 
 
-class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
-    """
-    Check if cross sections used with friction with conveyance
-    are open and monotonically increasing in width
-    """
-
+class OpenIncreasingCrossSectionCheck(CrossSectionBaseCheck):
     def get_invalid(self, session):
         invalids = []
-        records = self.to_check(session).where(
-            self.table.c.friction_type.in_(
-                [
-                    constants.FrictionType.CHEZY_CONVEYANCE,
-                    constants.FrictionType.MANNING_CONVEYANCE,
-                ]
-            )
-        )
-        for record in records:
+        for record in self.to_check(session):
             # friction with conveyance can only be used for cross-sections
             # which are open *and* have a monotonically increasing width
             if record.cross_section_shape.is_tabulated:
@@ -429,11 +416,52 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
+        return f"{self.column_name} can only be used in an open channel with monotonically increasing width values"
+
+
+class OpenIncreasingCrossSectionConveyanceFrictionCheck(
+    OpenIncreasingCrossSectionCheck
+):
+    """
+    Check if cross sections used with friction with conveyance
+    are open and monotonically increasing in width
+    """
+
+    def to_check(self, session):
+        return (
+            super()
+            .to_check(session)
+            .where(
+                self.table.c.friction_type.in_(
+                    [
+                        constants.FrictionType.CHEZY_CONVEYANCE,
+                        constants.FrictionType.MANNING_CONVEYANCE,
+                    ]
+                )
+            )
+        )
+
+    def description(self):
         return (
             f"{self.table.__tablename__}.friction_type can only "
             "have conveyance if the associated definition is "
             "an open shape, and its width is monotonically increasing"
         )
+
+
+class OpenIncreasingCrossSectionVariableCheck(OpenIncreasingCrossSectionCheck):
+    """
+    Check if cross sections used with friction with conveyance
+    are open and monotonically increasing in width
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            shapes=(constants.CrossSectionShape.TABULATED_YZ,), *args, **kwargs
+        )
+
+    def description(self):
+        return f"{self.column_name} can only be used in an open channel with monotonically increasing width values"
 
 
 class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
@@ -540,39 +568,3 @@ class CrossSectionVariableFrictionRangeCheck(CrossSectionBaseCheck):
             return f"some values in {self.column_name} are {self.range_str}"
         else:
             return self.message
-
-
-class OpenIncreasingCrossSectionVariableCheck(CrossSectionBaseCheck):
-    """
-    Check if cross sections used with friction with conveyance
-    are open and monotonically increasing in width
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            shapes=(constants.CrossSectionShape.TABULATED_YZ,), *args, **kwargs
-        )
-
-    def get_invalid(self, session):
-        invalids = []
-        for record in self.to_check(session):
-            # friction with conveyance can only be used for cross-sections
-            # which are open *and* have a monotonically increasing width
-            if record.cross_section_shape.is_tabulated:
-                widths = parse_csv_table_col(
-                    record.cross_section_table, CrossSectionTableColumnIdx.width
-                )
-                if any(
-                    next_width < previous_width
-                    for (previous_width, next_width) in zip(widths[:-1], widths[1:])
-                ):
-                    invalids.append(record)
-                    continue
-            _, _, configuration = cross_section_configuration_for_record(record)
-            if configuration == "closed":
-                invalids.append(record)
-
-        return invalids
-
-    def description(self):
-        return f"{self.column_name} can only be used in an open channel with monotonically increasing width values"
