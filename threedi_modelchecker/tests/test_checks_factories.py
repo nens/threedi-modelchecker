@@ -25,12 +25,22 @@ def test_gen_not_unique_checks():
     assert models.Channel.id == not_unique_checks[0].column
 
 
-def test_gen_not_null_checks():
-    not_null_checks = generate_not_null_checks(models.Channel.__table__)
-    assert len(not_null_checks) == 2
+@pytest.mark.parametrize(
+    "extra_columns", [None, [], [models.Channel.connection_node_id_end]]
+)
+def test_gen_not_null_checks(extra_columns):
+    not_null_checks = generate_not_null_checks(
+        models.Channel.__table__, extra_not_null_columns=extra_columns
+    )
+    if extra_columns is None:
+        extra_columns = []
+    assert len(not_null_checks) == 2 + len(extra_columns)
     not_null_check_columns = [check.column for check in not_null_checks]
     assert models.Channel.id in not_null_check_columns
     assert models.Channel.geom in not_null_check_columns
+    for col in extra_columns:
+        assert col in not_null_check_columns
+    assert models.Channel.code not in not_null_check_columns
 
 
 def test_gen_geometry_check():

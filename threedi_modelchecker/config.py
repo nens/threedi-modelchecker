@@ -2704,25 +2704,6 @@ CHECKS += [
 ]
 
 
-# 1230 - 1242
-not_null_cols = [
-    models.ControlMemory.action_type,
-    models.ControlMemory.action_value_1,
-    models.ControlMemory.action_value_2,
-    models.ControlMemory.target_type,
-    models.ControlMemory.target_id,
-    models.ControlTable.action_table,
-    models.ControlTable.action_type,
-    models.ControlTable.target_type,
-    models.ControlMeasureMap.weight,
-    models.ControlMeasureMap.measure_location_id,
-    models.ControlMeasureLocation.connection_node_id,
-    models.ControlMeasureLocation.measure_variable,
-]
-CHECKS += [
-    NotNullCheck(error_code=1230 + i, column=col) for i, col in enumerate(not_null_cols)
-]
-
 # 124x laterals
 CHECKS += [
     QueryCheck(
@@ -3080,6 +3061,62 @@ for pair in BETA_VALUES:
     ]
 
 
+# columns that cannot be NULL in a valid schematisations
+not_null_columns = [
+    models.Channel.exchange_type,
+    models.Channel.connection_node_id_start,
+    models.Channel.connection_node_id_end,
+    models.ControlMeasureMap.weight,
+    models.ControlMeasureMap.measure_location_id,
+    models.ControlMeasureLocation.connection_node_id,
+    models.ControlMeasureLocation.measure_variable,
+    models.ControlMemory.action_type,
+    models.ControlMemory.action_value_1,
+    models.ControlMemory.action_value_2,
+    models.ControlMemory.target_type,
+    models.ControlMemory.target_id,
+    models.ControlTable.action_table,
+    models.ControlTable.action_type,
+    models.ControlTable.target_type,
+    models.CrossSectionLocation.channel_id,
+    models.CrossSectionLocation.friction_type,
+    models.CrossSectionLocation.reference_level,
+    models.Culvert.connection_node_id_start,
+    models.Culvert.connection_node_id_end,
+    models.Culvert.material_id,
+    models.Culvert.friction_type,
+    models.Culvert.friction_value,
+    models.Culvert.invert_level_start,
+    models.Culvert.invert_level_end,
+    models.ConnectionNode.manhole_bottom_level,
+    models.Orifice.connection_node_id_start,
+    models.Orifice.connection_node_id_end,
+    models.Orifice.material_id,
+    models.Orifice.crest_level,
+    models.Orifice.crest_type,
+    models.Pipe.connection_node_id_start,
+    models.Pipe.connection_node_id_end,
+    models.Pipe.material_id,
+    models.Pipe.exchange_type,
+    models.Pipe.friction_type,
+    models.Pipe.friction_value,
+    models.Pipe.invert_level_end,
+    models.Pipe.invert_level_start,
+    models.Pump.connection_node_id,
+    models.Pump.capacity,
+    models.Pump.lower_stop_level,
+    models.Pump.start_level,
+    models.Pump.type_,
+    models.PumpMap.pump_id,
+    models.PumpMap.connection_node_id_end,
+    models.Weir.connection_node_id_start,
+    models.Weir.connection_node_id_end,
+    models.Weir.crest_level,
+    models.Weir.crest_type,
+    models.Windshielding.channel_id,
+]
+
+
 class Config:
     """Collection of checks
 
@@ -3101,7 +3138,9 @@ class Config:
                 error_code=1,
             )
             self.checks += generate_unique_checks(model.__table__, error_code=2)
-            self.checks += generate_not_null_checks(model.__table__, error_code=3)
+            self.checks += generate_not_null_checks(
+                model.__table__, error_code=3, extra_not_null_columns=not_null_columns
+            )
             self.checks += generate_type_checks(model.__table__, error_code=4)
             self.checks += generate_geometry_checks(
                 model.__table__,
