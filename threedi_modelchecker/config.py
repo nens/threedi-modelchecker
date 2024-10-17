@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import func, true
+from sqlalchemy import func, or_, select, true
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
@@ -21,14 +21,15 @@ from .checks.cross_section_definitions import (
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
     CrossSectionFirstElementZeroCheck,
-    CrossSectionFloatCheck,
+    CrossSectionFrictionCorrectLengthCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
+    CrossSectionListCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionTableCheck,
-    CrossSectionVariableCorrectLengthCheck,
     CrossSectionVariableFrictionRangeCheck,
+    CrossSectionVegetationCorrectLengthCheck,
     CrossSectionVegetationTableNotNegativeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
@@ -46,7 +47,7 @@ from .checks.factories import (
     generate_unique_checks,
 )
 from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
-    AllPresentFixedVegetationParameters,
+    AllPresentVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
     BoundaryCondition1DObjectNumberCheck,
@@ -149,7 +150,6 @@ CHECKS: List[BaseCheck] = []
 
 ## 002x: FRICTION
 ## Use same error code as other null checks
-# TODO: change - data now in objects and CrossSectionLocation
 CHECKS += [
     QueryCheck(
         error_code=20,
@@ -567,7 +567,7 @@ CHECKS += [
         ),
         message=f"Either {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
         f"or {models.CrossSectionLocation.cross_section_friction_values.table.name}.{models.CrossSectionLocation.cross_section_friction_values.name}"
-        f"must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
+        f" must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
     )
 ]
 
@@ -577,32 +577,27 @@ for table in cross_section_tables:
         CrossSectionNullCheck(
             error_code=81,
             column=table.cross_section_width,
-            shapes=None,  # all shapes
+            shapes=(
+                constants.CrossSectionShape.CLOSED_RECTANGLE,
+                constants.CrossSectionShape.RECTANGLE,
+                constants.CrossSectionShape.CIRCLE,
+                constants.CrossSectionShape.EGG,
+                constants.CrossSectionShape.INVERTED_EGG,
+            ),
         ),
         CrossSectionNullCheck(
             error_code=82,
             column=table.cross_section_height,
+            shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE),
+        ),
+        CrossSectionNullCheck(
+            error_code=83,
+            column=table.cross_section_table,
             shapes=(
-                constants.CrossSectionShape.CLOSED_RECTANGLE,
                 constants.CrossSectionShape.TABULATED_RECTANGLE,
                 constants.CrossSectionShape.TABULATED_TRAPEZIUM,
                 constants.CrossSectionShape.TABULATED_YZ,
             ),
-        ),
-        CrossSectionFloatCheck(
-            error_code=83,
-            column=table.cross_section_width,
-            shapes=(
-                constants.CrossSectionShape.RECTANGLE,
-                constants.CrossSectionShape.CIRCLE,
-                constants.CrossSectionShape.CLOSED_RECTANGLE,
-                constants.CrossSectionShape.EGG,
-            ),
-        ),
-        CrossSectionFloatCheck(
-            error_code=84,
-            column=table.cross_section_height,
-            shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
         ),
         CrossSectionGreaterZeroCheck(
             error_code=85,
@@ -623,6 +618,7 @@ for table in cross_section_tables:
         CrossSectionTableCheck(
             error_code=87,
             column=table.cross_section_table,
+            ncol=2,
             shapes=(
                 constants.CrossSectionShape.TABULATED_RECTANGLE,
                 constants.CrossSectionShape.TABULATED_TRAPEZIUM,
@@ -682,8 +678,9 @@ for table in cross_section_tables:
             level=CheckLevel.WARNING,
         ),
     ]
+
 CHECKS += [
-    CrossSectionTableCheck(
+    CrossSectionListCheck(
         error_code=87,
         column=models.CrossSectionLocation.cross_section_friction_values,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
@@ -2745,7 +2742,7 @@ CHECKS += [
 ]
 
 CHECKS += [
-    CrossSectionVariableCorrectLengthCheck(
+    CrossSectionFrictionCorrectLengthCheck(
         error_code=181,
         column=models.CrossSectionLocation.cross_section_friction_values,
         shapes=(constants.CrossSectionShape.TABULATED_YZ,),
@@ -2900,6 +2897,23 @@ vegetation_parameter_columns_singular = [
     models.CrossSectionLocation.vegetation_stem_diameter,
     models.CrossSectionLocation.vegetation_stem_density,
 ]
+#
+# CHECKS += [
+#     QueryCheck(
+#         error_code=190,
+#         column=col,
+#         invalid=(
+#             Query(models.CrossSectionLocation)
+#             .filter(
+#                 models.CrossSectionLocation.cross_section_shape != constants.CrossSectionShape.TABULATED_YZ)
+#             .filter(col is not None)
+#         )
+#         message=(
+#             f"{col.table.name}.{col.name} cannot be used with Manning type friction"
+#         )
+#     )
+#     for col in vegetation_parameter_columns_singular
+# ]
 
 
 CHECKS += [
@@ -2910,8 +2924,6 @@ CHECKS += [
     )
     for col in vegetation_parameter_columns_singular
 ]
-# TODO: add check for formatting cross_section_vegetation_table
-# TODO: add check for number of rows for cross_section_vegetation_table
 
 CHECKS += [
     CrossSectionVegetationTableNotNegativeCheck(
@@ -2964,11 +2976,33 @@ CHECKS += [
     )
 ]
 CHECKS += [
-    AllPresentFixedVegetationParameters(
-        error_code=194, column=models.CrossSectionLocation.vegetation_height
+    AllPresentVegetationParameters(
+        error_code=194,
+        column=models.CrossSectionLocation.vegetation_height,
     ),
-    # TODO: add check for cross_section_vegetation_table based on AllPresentVariableVegetationParameters
 ]
+CHECKS += [
+    CrossSectionTableCheck(
+        column=models.CrossSectionLocation.cross_section_vegetation_table,
+        error_code=195,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
+        ncol=4,
+    ),
+    CrossSectionVegetationCorrectLengthCheck(
+        column=models.CrossSectionLocation.cross_section_vegetation_table,
+        error_code=196,
+        shapes=(
+            constants.CrossSectionShape.TABULATED_YZ,
+            constants.CrossSectionShape.TABULATED_RECTANGLE,
+            constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        ),
+    ),
+]
+
 
 # Checks for nonsensical Chezy friction values
 CHECKS += [
@@ -3014,6 +3048,60 @@ CHECKS += [
         ],
         message="Some values in cross_section_location.cross_section_friction_values are less than 1 while CHEZY friction is selected. This may cause nonsensical results.",
     )
+]
+
+# Checks for material
+material_ref_tables = [models.Pipe, models.Culvert, models.Weir, models.Orifice]
+CHECKS += [
+    ForeignKeyCheck(
+        error_code=1600,
+        column=table.material_id,
+        reference_column=models.Material.id,
+    )
+    for table in material_ref_tables
+]
+
+conditions = [
+    models.Material.id.in_(select(table.material_id)) for table in material_ref_tables
+]
+CHECKS += [
+    NotNullCheck(
+        error_code=1601,
+        column=models.Material.friction_coefficient,
+        filters=or_(*conditions),
+    ),
+    NotNullCheck(
+        error_code=1602,
+        column=models.Material.friction_type,
+        filters=or_(*conditions),
+    ),
+    # extend 21 for Materials.friction_value
+    RangeCheck(
+        error_code=1603,
+        column=models.Material.friction_coefficient,
+        min_value=0,
+        filters=or_(*conditions),
+    ),
+    # extend 22 for Materials.friction_value
+    RangeCheck(
+        error_code=1604,
+        level=CheckLevel.WARNING,
+        column=models.Material.friction_coefficient,
+        filters=(models.Material.friction_type == constants.FrictionType.MANNING.value)
+        & or_(*conditions),
+        max_value=1,
+        right_inclusive=False,  # 1 is not allowed
+        message="material.friction_coefficient is not less than 1 while MANNING friction is selected. CHEZY friction will be used instead. In the future this will lead to an error.",
+    ),
+    RangeCheck(
+        error_code=1605,
+        level=CheckLevel.WARNING,
+        column=models.Material.friction_coefficient,
+        filters=(models.Material.friction_type == constants.FrictionType.CHEZY.value)
+        & or_(*conditions),
+        min_value=1,
+        message="material.friction_coefficient is less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
+    ),
 ]
 
 

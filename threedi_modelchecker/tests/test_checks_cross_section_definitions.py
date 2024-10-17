@@ -5,18 +5,20 @@ from threedi_modelchecker.checks.cross_section_definitions import (
     cross_section_configuration_for_record,
     cross_section_configuration_not_tabulated,
     cross_section_configuration_tabulated,
+    CrossSectionCSVFormatCheck,
     CrossSectionExpectEmptyCheck,
     CrossSectionFirstElementNonZeroCheck,
     CrossSectionFirstElementZeroCheck,
-    CrossSectionFloatCheck,
+    CrossSectionFrictionCorrectLengthCheck,
     CrossSectionGreaterZeroCheck,
     CrossSectionIncreasingCheck,
+    CrossSectionListCheck,
     CrossSectionMinimumDiameterCheck,
     CrossSectionNullCheck,
     CrossSectionTableCheck,
     CrossSectionTableColumnIdx,
-    CrossSectionVariableCorrectLengthCheck,
     CrossSectionVariableFrictionRangeCheck,
+    CrossSectionVegetationCorrectLengthCheck,
     CrossSectionVegetationTableNotNegativeCheck,
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
@@ -72,7 +74,7 @@ def test_parse_cross_section_table(session, cross_section_table, col_idx, expect
         cross_section_table=cross_section_table,
     )
     # can use any class here!
-    check = CrossSectionFloatCheck(
+    check = CrossSectionNullCheck(
         column=models.CrossSectionLocation.cross_section_table
     )
     values = list(check.parse_cross_section_table(session=session, col_idx=col_idx))
@@ -94,7 +96,7 @@ def test_parse_cross_section_vegetation_table(session, vegetation_table, expecte
     factories.CrossSectionLocationFactory(
         cross_section_vegetation_table=vegetation_table,
     )
-    check = CrossSectionFloatCheck(
+    check = CrossSectionNullCheck(
         column=models.CrossSectionLocation.cross_section_vegetation_table
     )
     values = list(check.parse_cross_section_vegetation_table(session=session))
@@ -146,18 +148,6 @@ def test_check_null_check(session, cross_section_height, is_null, is_empty):
     assert (len(invalid_rows) == 1) == is_empty
 
 
-@pytest.mark.parametrize("width, valid", [(-1, False), (1, True)])
-def test_check_float(session, width, valid):
-    factories.CrossSectionLocationFactory(
-        cross_section_width=width,
-    )
-    check = CrossSectionFloatCheck(
-        column=models.CrossSectionLocation.cross_section_width
-    )
-    invalid_rows = check.get_invalid(session)
-    assert (len(invalid_rows) == 0) == valid
-
-
 @pytest.mark.parametrize("width, valid", [(-1, False), (0, False), (1, True)])
 def test_check_greater_zero(session, width, valid):
     factories.CrossSectionLocationFactory(
@@ -172,25 +162,52 @@ def test_check_greater_zero(session, width, valid):
 
 @pytest.mark.parametrize(
     "cross_section_table",
-    [" ", "0 1", "3;5", "foo", "1,2,3,4", "1,2\3,", "1,2\3", ",2", ",2\3,4"],
+    [" ", "0 1", "3;5", "foo", "1,2\n3,", ",2", ",2\n3,4"],
 )
-def test_check_table_invalid(session, cross_section_table):
+def test_csv_format_check_invalid(session, cross_section_table):
     factories.CrossSectionLocationFactory(
         cross_section_table=cross_section_table,
     )
-    check = CrossSectionTableCheck(models.CrossSectionLocation.cross_section_table)
+    check = CrossSectionCSVFormatCheck(models.CrossSectionLocation.cross_section_table)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
 
 @pytest.mark.parametrize("cross_section_table", [None, "", "0,1", "0,1\n0,1"])
-def test_check_table_valid(session, cross_section_table):
+def test_csv_format_check_valid(session, cross_section_table):
     factories.CrossSectionLocationFactory(
         cross_section_table=cross_section_table,
     )
-    check = CrossSectionTableCheck(models.CrossSectionLocation.cross_section_table)
+    check = CrossSectionCSVFormatCheck(models.CrossSectionLocation.cross_section_table)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
+
+
+@pytest.mark.parametrize(
+    "table, ncol, valid",
+    [("1,2\n3,4", 2, True), ("1,2\n3,4", 3, False), ("1,2\n3,", 2, False)],
+)
+def test_table_check(session, table, ncol, valid):
+    factories.CrossSectionLocationFactory(
+        cross_section_table=table,
+    )
+    check = CrossSectionTableCheck(
+        column=models.CrossSectionLocation.cross_section_table, ncol=ncol
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == valid
+
+
+@pytest.mark.parametrize("table, valid", [("1,2\n3,4", False), ("1,2,4,5", True)])
+def test_list_check(session, table, valid):
+    factories.CrossSectionLocationFactory(
+        cross_section_table=table,
+    )
+    check = CrossSectionListCheck(
+        column=models.CrossSectionLocation.cross_section_table
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == valid
 
 
 @pytest.mark.parametrize(
@@ -447,13 +464,26 @@ def test_check_cross_section_increasing_open_with_conveyance_friction_tabulated(
 
 
 @pytest.mark.parametrize("data, result", [["1,2", True], ["1,2,3", False]])
-def test_check_correct_lengthtest_check_correct_length(session, data, result):
+def test_check_correct_length_friction(session, data, result):
     factories.CrossSectionLocationFactory(
         cross_section_table="1,0\n2,2\n3,5",
         cross_section_friction_values=data,
     )
-    check = CrossSectionVariableCorrectLengthCheck(
+    check = CrossSectionFrictionCorrectLengthCheck(
         column=models.CrossSectionLocation.cross_section_friction_values
+    )
+    invalid_rows = check.get_invalid(session)
+    assert (len(invalid_rows) == 0) == result
+
+
+@pytest.mark.parametrize("nrows, result", [[2, True], [3, False]])
+def test_check_correct_lengthtest_check_vegetation(session, nrows, result):
+    factories.CrossSectionLocationFactory(
+        cross_section_table="1,0\n2,2\n3,5",
+        cross_section_vegetation_table="\n".join(nrows * ["1,2,3,4"]),
+    )
+    check = CrossSectionVegetationCorrectLengthCheck(
+        column=models.CrossSectionLocation.cross_section_vegetation_table
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == result

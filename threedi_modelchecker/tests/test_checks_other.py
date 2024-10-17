@@ -7,7 +7,7 @@ from threedi_schema import constants, models, ThreediDatabase
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
 from threedi_modelchecker.checks.other import (
-    AllPresentFixedVegetationParameters,
+    AllPresentVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
     ChannelManholeLevelCheck,
@@ -806,7 +806,7 @@ def test_all_present_fixed_vegetation_parameters(
         friction_type=friction_type,
         **veg_args,
     )
-    check = AllPresentFixedVegetationParameters(
+    check = AllPresentVegetationParameters(
         column=models.CrossSectionLocation.vegetation_height
     )
     invalid_rows = check.get_invalid(session)

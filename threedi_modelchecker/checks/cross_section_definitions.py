@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from enum import IntEnum
 
 from threedi_schema import constants, models
@@ -106,28 +107,6 @@ class CrossSectionExpectEmptyCheck(CrossSectionBaseCheck):
         return f"{self.column_name} should be null or empty for shapes {self.shape_msg}"
 
 
-class CrossSectionFloatCheck(CrossSectionBaseCheck):
-    """Check that width / height is a valid non-negative float"""
-
-    def get_invalid(self, session):
-        invalids = []
-        for record in self.to_check(session).filter(
-            (self.column != None) & (self.column != "")
-        ):
-            try:
-                value = getattr(record, self.column.name)
-            except ValueError:
-                invalids.append(record)
-            else:
-                if value < 0:
-                    invalids.append(record)
-
-        return invalids
-
-    def description(self):
-        return f"{self.column_name} should be a positive number for shapes {self.shape_msg}"
-
-
 class CrossSectionGreaterZeroCheck(CrossSectionBaseCheck):
     """Check that width / height is larger than 0"""
 
@@ -149,8 +128,11 @@ class CrossSectionGreaterZeroCheck(CrossSectionBaseCheck):
         return f"{self.column_name} should be greater than zero for shapes {self.shape_msg}"
 
 
-class CrossSectionTableCheck(CrossSectionBaseCheck):
-    """Tabulated definitions should use a space for separating the floats."""
+class CrossSectionCSVFormatCheck(CrossSectionBaseCheck):
+    """Check whether each row in the string can be converted to a list of floats"""
+
+    ncol = None
+    nrow = None
 
     def get_invalid(self, session):
         invalids = []
@@ -158,9 +140,13 @@ class CrossSectionTableCheck(CrossSectionBaseCheck):
             (self.column != None) & (self.column != "")
         ):
             try:
-                for line in getattr(record, self.column.name).splitlines():
+                lines = getattr(record, self.column.name).splitlines()
+                if self.nrow is not None and len(lines) != self.nrow:
+                    invalids.append(record)
+                    continue
+                for line in lines:
                     line = line.split(",")
-                    if len(line) != 2:
+                    if self.ncol is not None and len(line) != self.ncol:
                         invalids.append(record)
                         break
                     for x in line:
@@ -171,7 +157,34 @@ class CrossSectionTableCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
-        return f"{self.column_name} should contain a space separated list of numbers for shapes {self.shape_msg}"
+        return (
+            f"{self.table.__tablename__}.{self.column_name} should contain one or more lines of "
+            "comma separated values"
+        )
+
+
+class CrossSectionListCheck(CrossSectionCSVFormatCheck):
+    nrow = 1
+
+    def description(self):
+        return (
+            f"{self.table.__tablename__}.{self.column_name} should contain comma separated floats "
+            f"for shapes {self.shape_msg}"
+        )
+
+
+class CrossSectionTableCheck(CrossSectionCSVFormatCheck):
+    """Check whether each row in the table contains a list of ncols comma separated floats"""
+
+    def __init__(self, ncol, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ncol = ncol
+
+    def description(self):
+        return (
+            f"{self.table.__tablename__}.{self.column_name} should contain a csv table containing "
+            f"{self.ncol} columns with floats for shapes {self.shape_msg}"
+        )
 
 
 class CrossSectionIncreasingCheck(CrossSectionBaseCheck):
@@ -464,8 +477,12 @@ class OpenIncreasingCrossSectionVariableCheck(OpenIncreasingCrossSectionCheck):
         return f"{self.column_name} can only be used in an open channel with monotonically increasing width values"
 
 
-class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
+class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck, ABC):
     """Variable friction and vegetation properties should contain 1 value for each element; len(var_property) = len(width)-1"""
+
+    @abstractmethod
+    def parse_str_value(self, variable):
+        return
 
     def get_invalid(self, session):
         invalids = []
@@ -474,10 +491,8 @@ class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
             session, col_idx=CrossSectionTableColumnIdx.width
         ):
             try:
-                # TODO: make sure that there is a check that takes care of the table formatting!!
-                values = [
-                    float(item) for item in getattr(record, self.column.name).split(",")
-                ]
+                values = self.parse_str_value(getattr(record, self.column.name))
+
             except ValueError:
                 continue  # other check catches this
             if not (len(widths) - 1 == len(values)):
@@ -486,6 +501,16 @@ class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck):
 
     def description(self):
         return f"{self.column_name} should contain 1 value for each element; len({self.column_name}) = len(width)-1"
+
+
+class CrossSectionFrictionCorrectLengthCheck(CrossSectionVariableCorrectLengthCheck):
+    def parse_str_value(self, str_value):
+        return [float(item) for item in str_value.split(",")]
+
+
+class CrossSectionVegetationCorrectLengthCheck(CrossSectionVariableCorrectLengthCheck):
+    def parse_str_value(self, str_value):
+        return list(str_value.splitlines())
 
 
 class CrossSectionVegetationTableNotNegativeCheck(CrossSectionBaseCheck):
