@@ -484,7 +484,7 @@ CHECKS += [
     ForeignKeyCheck(
         error_code=69,
         column=models.PumpMap.pump_id,
-        reference_column=models.ConnectionNode.id,
+        reference_column=models.Pump.id,
     ),
 ]
 
@@ -588,7 +588,7 @@ for table in cross_section_tables:
         CrossSectionNullCheck(
             error_code=82,
             column=table.cross_section_height,
-            shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE),
+            shapes=(constants.CrossSectionShape.CLOSED_RECTANGLE,),
         ),
         CrossSectionNullCheck(
             error_code=83,
@@ -2995,6 +2995,7 @@ CHECKS += [
     CrossSectionVegetationCorrectLengthCheck(
         column=models.CrossSectionLocation.cross_section_vegetation_table,
         error_code=196,
+        filters=models.CrossSectionLocation.cross_section_vegetation_table.is_not(None),
         shapes=(
             constants.CrossSectionShape.TABULATED_YZ,
             constants.CrossSectionShape.TABULATED_RECTANGLE,
@@ -3171,20 +3172,16 @@ not_null_columns = [
     models.CrossSectionLocation.reference_level,
     models.Culvert.connection_node_id_start,
     models.Culvert.connection_node_id_end,
-    models.Culvert.material_id,
     models.Culvert.friction_type,
     models.Culvert.friction_value,
     models.Culvert.invert_level_start,
     models.Culvert.invert_level_end,
-    models.ConnectionNode.manhole_bottom_level,
     models.Orifice.connection_node_id_start,
     models.Orifice.connection_node_id_end,
-    models.Orifice.material_id,
     models.Orifice.crest_level,
     models.Orifice.crest_type,
     models.Pipe.connection_node_id_start,
     models.Pipe.connection_node_id_end,
-    models.Pipe.material_id,
     models.Pipe.exchange_type,
     models.Pipe.friction_type,
     models.Pipe.friction_value,

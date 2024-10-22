@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import IntEnum
+from typing import Union
 
 from threedi_schema import constants, models
 
@@ -7,8 +8,14 @@ from .base import BaseCheck
 
 
 class CrossSectionTableColumnIdx(IntEnum):
-    width = 0
-    height = 1
+    height = 0
+    width = 1
+    all = 2
+
+
+class CrossSectionTableXYColumnIdx(IntEnum):
+    Y = 0
+    Z = 1
     all = 2
 
 
@@ -56,7 +63,11 @@ class CrossSectionBaseCheck(BaseCheck):
             except (IndexError, ValueError):
                 continue  # Skip records with errors
 
-    def parse_cross_section_table(self, session, col_idx: CrossSectionTableColumnIdx):
+    def parse_cross_section_table(
+        self,
+        session,
+        col_idx: Union[CrossSectionTableColumnIdx, CrossSectionTableXYColumnIdx],
+    ):
         column = self.table.c.cross_section_table
         records = self.to_check(session).filter((column != None) & (column != ""))
         for record in records:
@@ -239,14 +250,14 @@ class CrossSectionFirstElementNonZeroCheck(CrossSectionBaseCheck):
 
 
 class CrossSectionYZHeightCheck(CrossSectionBaseCheck):
-    """The height of an yz profile should include 0 and should not have negative
+    """The height of a yz profile should include 0 and should not have negative
     elements.
     """
 
     def get_invalid(self, session):
         invalids = []
         for record, values in self.parse_cross_section_table(
-            session, col_idx=CrossSectionTableColumnIdx.height
+            session, col_idx=CrossSectionTableXYColumnIdx.Z
         ):
             if any(x < 0 for x in values) or not any(x == 0 for x in values):
                 invalids.append(record)
@@ -262,13 +273,13 @@ class CrossSectionYZCoordinateCountCheck(CrossSectionBaseCheck):
 
     def get_invalid(self, session):
         invalids = []
-        for record, (widths, heights) in self.parse_cross_section_table(
-            session, col_idx=CrossSectionTableColumnIdx.all
+        for record, (Y, Z) in self.parse_cross_section_table(
+            session, col_idx=CrossSectionTableXYColumnIdx.all
         ):
-            if len(widths) == 0 or len(widths) != len(heights):
+            if len(Y) == 0 or len(Y) != len(Z):
                 continue
-            is_closed = widths[0] == widths[-1] and heights[0] == heights[-1]
-            if len(heights) < (4 if is_closed else 3):
+            is_closed = Z[0] == Z[-1] and Y[0] == Y[-1]
+            if len(Z) < (4 if is_closed else 3):
                 invalids.append(record)
 
         return invalids
@@ -282,14 +293,14 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
 
     def get_invalid(self, session):
         invalids = []
-        for record, (widths, heights) in self.parse_cross_section_table(
-            session, col_idx=CrossSectionTableColumnIdx.all
+        for record, (Y, Z) in self.parse_cross_section_table(
+            session, col_idx=CrossSectionTableXYColumnIdx.all
         ):
-            if widths[0] == widths[-1] and heights[0] == heights[-1]:
+            if Y[0] == Y[-1] and Z[0] == Z[-1]:
                 continue
-            elif len(widths) > 1 and any(
+            elif len(Y) > 1 and any(
                 previous_width >= next_width
-                for (previous_width, next_width) in zip(widths[:-1], widths[1:])
+                for (previous_width, next_width) in zip(Y[:-1], Y[1:])
             ):
                 invalids.append(record)
 
@@ -299,14 +310,31 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
         return f"{self.column_name} should be strictly increasing for open YZ profiles. Perhaps this is actually a closed profile?"
 
 
-def cross_section_configuration_for_record(record):
-    if record.cross_section_shape.is_tabulated:
+def get_widths_heights_for_tabulated_record(record):
+    if not record.cross_section_shape.is_tabulated:
+        raise ValueError(
+            "get_widths_heighs_for_tabulated_record cannot handle tabulated shaptes"
+        )
+    if record.cross_section_shape == constants.CrossSectionShape.TABULATED_YZ:
+        widths = parse_csv_table_col(
+            record.cross_section_table, CrossSectionTableXYColumnIdx.Y
+        )
+        heights = parse_csv_table_col(
+            record.cross_section_table, CrossSectionTableXYColumnIdx.Z
+        )
+    else:
         widths = parse_csv_table_col(
             record.cross_section_table, CrossSectionTableColumnIdx.width
         )
         heights = parse_csv_table_col(
             record.cross_section_table, CrossSectionTableColumnIdx.height
         )
+    return widths, heights
+
+
+def cross_section_configuration_for_record(record):
+    if record.cross_section_shape.is_tabulated:
+        widths, heights = get_widths_heights_for_tabulated_record(record)
         return cross_section_configuration_tabulated(
             shape=record.cross_section_shape, widths=widths, heights=heights
         )
@@ -364,6 +392,8 @@ def cross_section_configuration_tabulated(shape, widths, heights):
             configuration = "closed"
         elif last_width > 0:
             configuration = "open"
+        else:
+            breakpoint()
     elif shape == constants.CrossSectionShape.TABULATED_YZ:
         # without the rounding, floating-point errors occur
         max_width = round((max(widths) - min(widths)), 9)
@@ -376,6 +406,8 @@ def cross_section_configuration_tabulated(shape, widths, heights):
             configuration = "closed"
         else:
             configuration = "open"
+    else:
+        breakpoint()
     return max_width, max_height, configuration
 
 
@@ -413,9 +445,17 @@ class OpenIncreasingCrossSectionCheck(CrossSectionBaseCheck):
             # friction with conveyance can only be used for cross-sections
             # which are open *and* have a monotonically increasing width
             if record.cross_section_shape.is_tabulated:
-                widths = parse_csv_table_col(
-                    record.cross_section_table, CrossSectionTableColumnIdx.width
-                )
+                if (
+                    record.cross_section_shape
+                    == constants.CrossSectionShape.TABULATED_YZ
+                ):
+                    widths = parse_csv_table_col(
+                        record.cross_section_table, CrossSectionTableXYColumnIdx.Y.value
+                    )
+                else:
+                    widths = parse_csv_table_col(
+                        record.cross_section_table, CrossSectionTableColumnIdx.width
+                    )
                 if any(
                     next_width < previous_width
                     for (previous_width, next_width) in zip(widths[:-1], widths[1:])
@@ -486,7 +526,6 @@ class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck, ABC):
 
     def get_invalid(self, session):
         invalids = []
-        # for record in self.to_check(session):
         for record, widths in self.parse_cross_section_table(
             session, col_idx=CrossSectionTableColumnIdx.width
         ):

@@ -151,7 +151,7 @@ def test_open_channels_with_nested_newton(session):
     factories.CrossSectionLocationFactory(
         channel_id=1,
         cross_section_shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-        cross_section_table="1,0\n0,1",
+        cross_section_table="0,1\n1,0",
         geom="SRID=4326;POINT(-71.0645 42.287)",
     )
     factories.ChannelFactory(
