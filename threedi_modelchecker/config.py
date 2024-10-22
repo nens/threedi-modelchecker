@@ -360,10 +360,20 @@ CHECKS += [
         message="connection_nodes.storage_area for manhole connection node should greater than or equal to 0",
     ),
 ]
-
+CHECKS += [
+    RangeCheck(
+        error_code=44,
+        level=CheckLevel.WARNING,
+        column=table.calculation_point_distance,
+        min_value=5,
+        left_inclusive=True,
+        message=f"{table.__tablename__}.calculation_point_distance should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
+    )
+    for table in [models.Channel, models.Pipe, models.Culvert]
+]
 CHECKS += [
     QueryCheck(
-        error_code=44,
+        error_code=45,
         level=CheckLevel.ERROR,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
@@ -391,18 +401,188 @@ CHECKS += [
         message="connection_nodes.storage_area for an isolated node should be defined and greater than 0",
     )
 ]
+
 CHECKS += [
-    RangeCheck(
-        error_code=45,
-        level=CheckLevel.WARNING,
-        column=table.calculation_point_distance,
-        min_value=5,
-        left_inclusive=True,
-        message=f"{table.__tablename__}.calculation_point_distance should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
+    QueryCheck(
+        error_code=46,
+        level=CheckLevel.ERROR,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .filter(models.ConnectionNode.manhole_bottom_level.is_(None))
+        .filter(
+            models.ConnectionNode.id.notin_(
+                Query(models.Pipe.connection_node_id_start).union_all(
+                    Query(models.Pipe.connection_node_id_end),
+                    Query(models.Channel.connection_node_id_start),
+                    Query(models.Channel.connection_node_id_end),
+                    Query(models.Culvert.connection_node_id_start),
+                    Query(models.Culvert.connection_node_id_end),
+                    Query(models.Weir.connection_node_id_start),
+                    Query(models.Weir.connection_node_id_end),
+                    Query(models.Orifice.connection_node_id_start),
+                    Query(models.Orifice.connection_node_id_end),
+                )
+            ),
+        ),
+        message="A connection node that is not connected to a pipe, "
+        "channel, culvert, weir, or orifice must have a defined bottom_level.",
+    ),
+]
+CHECKS += [
+    QueryCheck(
+        error_code=47,
+        level=CheckLevel.ERROR,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .filter(
+            models.ConnectionNode.exchange_type.in_(
+                [
+                    constants.CalculationTypeNode.CONNECTED,
+                    constants.CalculationTypeNode.ISOLATED,
+                ]
+            )
+        )
+        .filter(
+            or_(
+                models.ConnectionNode.storage_area.is_(None),
+                models.ConnectionNode.storage_area < 0,
+            )
+        )
+        .filter(
+            models.ConnectionNode.id.notin_(
+                Query(models.Pipe.connection_node_id_start).union_all(
+                    Query(models.Pipe.connection_node_id_end),
+                    Query(models.Channel.connection_node_id_start),
+                    Query(models.Channel.connection_node_id_end),
+                    Query(models.Culvert.connection_node_id_start),
+                    Query(models.Culvert.connection_node_id_end),
+                )
+            ),
+        )
+        .filter(
+            models.ConnectionNode.id.in_(
+                Query(models.Weir.connection_node_id_start).union_all(
+                    Query(models.Weir.connection_node_id_end),
+                    Query(models.Orifice.connection_node_id_start),
+                    Query(models.Orifice.connection_node_id_end),
+                )
+            ),
+        ),
+        message=(
+            "connection_nodes.storage_area for a node that is connected to a weir or an orifice, "
+            "and that has exchange type CONNECTED or ISOLATED should be defined and greater than 0"
+        ),
     )
-    for table in [models.Channel, models.Pipe, models.Culvert]
 ]
 
+CHECKS += [
+    QueryCheck(
+        error_code=48,
+        level=CheckLevel.ERROR,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .filter(
+            models.ConnectionNode.exchange_type.in_(
+                [
+                    constants.CalculationTypeNode.CONNECTED,
+                    constants.CalculationTypeNode.ISOLATED,
+                ]
+            )
+        )
+        .filter(models.ConnectionNode.manhole_bottom_level.is_(None))
+        .filter(
+            models.ConnectionNode.id.notin_(
+                Query(models.Pipe.connection_node_id_start).union_all(
+                    Query(models.Pipe.connection_node_id_end),
+                    Query(models.Channel.connection_node_id_start),
+                    Query(models.Channel.connection_node_id_end),
+                    Query(models.Culvert.connection_node_id_start),
+                    Query(models.Culvert.connection_node_id_end),
+                )
+            ),
+        )
+        .filter(
+            models.ConnectionNode.id.in_(
+                Query(models.Weir.connection_node_id_start).union_all(
+                    Query(models.Weir.connection_node_id_end),
+                    Query(models.Orifice.connection_node_id_start),
+                    Query(models.Orifice.connection_node_id_end),
+                )
+            ),
+        ),
+        message=(
+            "connection_nodes.manhole_bottom_level for a node that is connected to a weir or an orifice, "
+            "and that has exchange type CONNECTED or ISOLATED should be defined"
+        ),
+    )
+]
+
+CHECKS += [
+    QueryCheck(
+        error_code=49,
+        level=CheckLevel.WARNING,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .filter(models.ConnectionNode.manhole_bottom_level.is_(None))
+        .filter(
+            models.ConnectionNode.id.not_in(
+                Query(models.Channel.connection_node_id_start).union_all(
+                    Query(models.Channel.connection_node_id_end)
+                ),
+            )
+        )
+        .filter(
+            models.ConnectionNode.id.in_(
+                Query(models.Pipe.connection_node_id_start).union_all(
+                    Query(models.Pipe.connection_node_id_end),
+                    Query(models.Culvert.connection_node_id_start),
+                    Query(models.Culvert.connection_node_id_end),
+                )
+            ),
+        ),
+        message=(
+            "connection_nodes.manhole_bottom_level for a node that is connected to a pipe or a culvert, "
+            "and that is not connected to a channel should be defined. "
+            "In the future, this will lead to an error."
+        ),
+    )
+]
+
+CHECKS += [
+    QueryCheck(
+        error_code=50,
+        level=CheckLevel.WARNING,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .filter(
+            or_(
+                models.ConnectionNode.storage_area.is_(None),
+                models.ConnectionNode.storage_area < 0,
+            )
+        )
+        .filter(
+            models.ConnectionNode.id.not_in(
+                Query(models.Channel.connection_node_id_start).union_all(
+                    Query(models.Channel.connection_node_id_end)
+                ),
+            )
+        )
+        .filter(
+            models.ConnectionNode.id.in_(
+                Query(models.Pipe.connection_node_id_start).union_all(
+                    Query(models.Pipe.connection_node_id_end),
+                    Query(models.Culvert.connection_node_id_start),
+                    Query(models.Culvert.connection_node_id_end),
+                )
+            ),
+        ),
+        message=(
+            "connection_nodes.storage_area for a node that is connected to a pipe or a culvert, "
+            "and that is not connected to a channel should be defined and greater than 0"
+            "In the future, this will lead to an error."
+        ),
+    )
+]
 
 ## 005x: CROSS SECTIONS
 
@@ -1012,32 +1192,7 @@ CHECKS += [
         message="a pump cannot be connected to itself (pump.connection_node_id must not equal pumpmap.connection_node_id_end)",
     )
 ]
-CHECKS += [
-    QueryCheck(
-        error_code=254,
-        level=CheckLevel.ERROR,
-        column=models.ConnectionNode.id,
-        invalid=Query(models.ConnectionNode)
-        .filter(models.ConnectionNode.manhole_bottom_level.is_(None))
-        .filter(
-            models.ConnectionNode.id.notin_(
-                Query(models.Pipe.connection_node_id_start).union_all(
-                    Query(models.Pipe.connection_node_id_end),
-                    Query(models.Channel.connection_node_id_start),
-                    Query(models.Channel.connection_node_id_end),
-                    Query(models.Culvert.connection_node_id_start),
-                    Query(models.Culvert.connection_node_id_end),
-                    Query(models.Weir.connection_node_id_start),
-                    Query(models.Weir.connection_node_id_end),
-                    Query(models.Orifice.connection_node_id_start),
-                    Query(models.Orifice.connection_node_id_end),
-                )
-            ),
-        ),
-        message="A connection node that is not connected to a pipe, "
-        "channel, culvert, weir, or orifice must have a defined bottom_level.",
-    ),
-]
+
 
 for i, table in enumerate(
     [models.Channel, models.Culvert, models.Orifice, models.Pipe, models.Weir]
