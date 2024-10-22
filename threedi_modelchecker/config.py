@@ -360,6 +360,37 @@ CHECKS += [
         message="connection_nodes.storage_area for manhole connection node should greater than or equal to 0",
     ),
 ]
+
+CHECKS += [
+    QueryCheck(
+        error_code=44,
+        level=CheckLevel.ERROR,
+        column=models.ConnectionNode.id,
+        invalid=Query(models.ConnectionNode)
+        .filter(
+            or_(
+                models.ConnectionNode.storage_area.is_(None),
+                models.ConnectionNode.storage_area < 0,
+            )
+        )
+        .filter(
+            models.ConnectionNode.id.notin_(
+                Query(models.Pipe.connection_node_id_start).union_all(
+                    Query(models.Pipe.connection_node_id_end),
+                    Query(models.Channel.connection_node_id_start),
+                    Query(models.Channel.connection_node_id_end),
+                    Query(models.Culvert.connection_node_id_start),
+                    Query(models.Culvert.connection_node_id_end),
+                    Query(models.Weir.connection_node_id_start),
+                    Query(models.Weir.connection_node_id_end),
+                    Query(models.Orifice.connection_node_id_start),
+                    Query(models.Orifice.connection_node_id_end),
+                )
+            ),
+        ),
+        message="connection_nodes.storage_area for an isolated node should be defined and greater than 0",
+    )
+]
 CHECKS += [
     RangeCheck(
         error_code=45,
@@ -987,7 +1018,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
-        .filter(models.ConnectionNode.manhole_bottom_level != None)
+        .filter(models.ConnectionNode.manhole_bottom_level.is_(None))
         .filter(
             models.ConnectionNode.id.notin_(
                 Query(models.Pipe.connection_node_id_start).union_all(
@@ -1004,7 +1035,7 @@ CHECKS += [
             ),
         ),
         message="A connection node that is not connected to a pipe, "
-        "channel, culvert, weir, or orifice must have a manhole with a bottom_level.",
+        "channel, culvert, weir, or orifice must have a defined bottom_level.",
     ),
 ]
 
