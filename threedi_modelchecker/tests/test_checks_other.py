@@ -1,14 +1,13 @@
 from unittest import mock
 
 import pytest
-from sqlalchemy import func, text
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import aliased, Query
 from threedi_schema import constants, models, ThreediDatabase
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
 from threedi_modelchecker.checks.other import (
-    AllPresentFixedVegetationParameters,
-    AllPresentVariableVegetationParameters,
+    AllPresentVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
     ChannelManholeLevelCheck,
@@ -73,27 +72,27 @@ def test_aggregation_settings(
 
 def test_connection_nodes_length(session):
     factories.ModelSettingsFactory(epsg_code=28992)
+    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(-71.064544 42.28787)")
+    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(-71.0645 42.287)")
+    factories.ConnectionNodeFactory(
+        id=3, geom="SRID=4326;POINT(-0.38222938832999598 -0.13872236685816669)"
+    ),
+    factories.ConnectionNodeFactory(
+        id=4, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
+    ),
     factories.WeirFactory(
-        connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-0.38222995634060702 -0.13872239147499893)"
-        ),
-        connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-0.3822292515698168 -0.1387223869163263)"
-        ),
+        connection_node_id_start=1,
+        connection_node_id_end=2,
     )
     weir_too_short = factories.WeirFactory(
-        connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-0.38222938832999598 -0.13872236685816669)"
-        ),
-        connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-        ),
+        connection_node_id_start=3,
+        connection_node_id_end=4,
     )
 
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
-        start_node=models.Weir.connection_node_start,
-        end_node=models.Weir.connection_node_end,
+        start_node=models.Weir.connection_node_id_start,
+        end_node=models.Weir.connection_node_id_end,
         min_distance=0.05,
     )
 
@@ -104,17 +103,14 @@ def test_connection_nodes_length(session):
 
 def test_connection_nodes_length_missing_start_node(session):
     factories.ModelSettingsFactory(epsg_code=28992)
-    factories.WeirFactory(
-        connection_node_start_id=9999,
-        connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-        ),
+    factories.WeirFactory(connection_node_id_start=1, connection_node_id_end=2)
+    factories.ConnectionNodeFactory(
+        id=2, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
     )
-
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
-        start_node=models.Weir.connection_node_start,
-        end_node=models.Weir.connection_node_end,
+        start_node=models.Weir.connection_node_id_start,
+        end_node=models.Weir.connection_node_id_end,
         min_distance=0.05,
     )
 
@@ -126,17 +122,15 @@ def test_connection_nodes_length_missing_end_node(session):
     if session.bind.name == "postgresql":
         pytest.skip("Postgres only accepts coords in epsg 4326")
     factories.ModelSettingsFactory(epsg_code=28992)
-    factories.WeirFactory(
-        connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-        ),
-        connection_node_end_id=9999,
+    factories.WeirFactory(connection_node_id_start=1, connection_node_id_end=2)
+    factories.ConnectionNodeFactory(
+        id=1, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
     )
 
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
-        start_node=models.Weir.connection_node_start,
-        end_node=models.Weir.connection_node_end,
+        start_node=models.Weir.connection_node_id_start,
+        end_node=models.Weir.connection_node_id_end,
         min_distance=0.05,
     )
 
@@ -146,43 +140,33 @@ def test_connection_nodes_length_missing_end_node(session):
 
 def test_open_channels_with_nested_newton(session):
     factories.NumericalSettingsFactory(use_nested_newton=0)
-    channel = factories.ChannelFactory(
-        connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-71.064544 42.28787)"
-        ),
-        connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-71.0645 42.287)"
-        ),
-        the_geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
-    )
-    open_definition = factories.CrossSectionDefinitionFactory(
-        shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM, width="1 0"
+    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(-71.064544 42.28787)")
+    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(-71.0645 42.287)")
+    factories.ChannelFactory(
+        id=1,
+        connection_node_id_start=1,
+        connection_node_id_end=2,
+        geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
     factories.CrossSectionLocationFactory(
-        channel=channel,
-        definition=open_definition,
-        the_geom="SRID=4326;POINT(-71.0645 42.287)",
+        channel_id=1,
+        cross_section_shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM,
+        cross_section_table="0,1\n1,0",
+        geom="SRID=4326;POINT(-71.0645 42.287)",
     )
-
-    channel2 = factories.ChannelFactory(
-        connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-71.064544 42.28787)"
-        ),
-        connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(-71.0645 42.287)"
-        ),
-        the_geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
-    )
-    open_definition_egg = factories.CrossSectionDefinitionFactory(
-        shape=constants.CrossSectionShape.EGG,
+    factories.ChannelFactory(
+        id=2,
+        connection_node_id_start=1,
+        connection_node_id_end=2,
+        geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
     )
     factories.CrossSectionLocationFactory(
-        channel=channel2,
-        definition=open_definition_egg,
-        the_geom="SRID=4326;POINT(-71.0645 42.287)",
+        channel_id=2,
+        geom="SRID=4326;POINT(-71.0645 42.287)",
+        cross_section_shape=constants.CrossSectionShape.EGG,
     )
 
-    check = OpenChannelsWithNestedNewton()
+    check = OpenChannelsWithNestedNewton(column=models.CrossSectionLocation.id)
 
     errors = check.get_invalid(session)
     assert len(errors) == 2
@@ -213,33 +197,33 @@ def test_channel_manhole_level_check(
     # use nested factories for channel and connectionNode
     starting_coordinates = "4.718300 52.696686"
     ending_coordinates = "4.718255 52.696709"
-    start_node = factories.ConnectionNodeFactory(
-        the_geom=f"SRID=4326;POINT({starting_coordinates})"
+    factories.ConnectionNodeFactory(
+        id=1,
+        geom=f"SRID=4326;POINT({starting_coordinates})",
+        bottom_level=manhole_level,
     )
-    end_node = factories.ConnectionNodeFactory(
-        the_geom=f"SRID=4326;POINT({ending_coordinates})"
+    factories.ConnectionNodeFactory(
+        id=2,
+        geom=f"SRID=4326;POINT({ending_coordinates})",
+        bottom_level=manhole_level,
     )
-    channel = factories.ChannelFactory(
-        the_geom=f"SRID=4326;LINESTRING({starting_coordinates}, {ending_coordinates})",
-        connection_node_start=start_node,
-        connection_node_end=end_node,
+    factories.ChannelFactory(
+        id=1,
+        geom=f"SRID=4326;LINESTRING({starting_coordinates}, {ending_coordinates})",
+        connection_node_id_start=1,
+        connection_node_id_end=2,
     )
     # starting cross-section location
     factories.CrossSectionLocationFactory(
-        the_geom="SRID=4326;POINT(4.718278 52.696697)",
+        geom="SRID=4326;POINT(4.718278 52.696697)",
         reference_level=starting_reference_level,
-        channel=channel,
+        channel_id=1,
     )
     # ending cross-section location
     factories.CrossSectionLocationFactory(
-        the_geom="SRID=4326;POINT(4.718264 52.696704)",
+        geom="SRID=4326;POINT(4.718264 52.696704)",
         reference_level=ending_reference_level,
-        channel=channel,
-    )
-    # manhole
-    factories.ManholeFactory(
-        connection_node=end_node if manhole_location == "end" else start_node,
-        bottom_level=manhole_level,
+        channel_id=1,
     )
     check = ChannelManholeLevelCheck(nodes_to_check=manhole_location)
     errors = check.get_invalid(session)
@@ -248,22 +232,22 @@ def test_channel_manhole_level_check(
 
 def test_node_distance(session):
     con1_too_close = factories.ConnectionNodeFactory(
-        the_geom="SRID=4326;POINT(4.728282 52.64579283592512)"
+        geom="SRID=4326;POINT(4.728282 52.64579283592512)"
     )
     con2_too_close = factories.ConnectionNodeFactory(
-        the_geom="SRID=4326;POINT(4.72828 52.64579283592512)"
+        geom="SRID=4326;POINT(4.72828 52.64579283592512)"
     )
     # Good distance
     factories.ConnectionNodeFactory(
-        the_geom="SRID=4326;POINT(4.726838755789598 52.64514133594995)"
+        geom="SRID=4326;POINT(4.726838755789598 52.64514133594995)"
     )
 
     # sanity check to see the distances between the nodes
     node_a = aliased(models.ConnectionNode)
     node_b = aliased(models.ConnectionNode)
-    distances_query = Query(
-        func.ST_Distance(node_a.the_geom, node_b.the_geom, 1)
-    ).filter(node_a.id != node_b.id)
+    distances_query = Query(func.ST_Distance(node_a.geom, node_b.geom, 1)).filter(
+        node_a.id != node_b.id
+    )
     # Shows the distances between all 3 nodes: node 1 and 2 are too close
     distances_query.with_session(session).all()
 
@@ -285,18 +269,16 @@ def test_node_distance(session):
     ],
 )
 def test_channels_location_check(session, channel_geom):
+    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
+    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
     factories.ChannelFactory(
-        connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(5.387204 52.155172)"
-        ),
-        connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(5.387204 52.155262)"
-        ),
-        the_geom=f"SRID=4326;{channel_geom}",
+        connection_node_id_start=1,
+        connection_node_id_end=2,
+        geom=f"SRID=4326;{channel_geom}",
     )
 
     errors = LinestringLocationCheck(
-        column=models.Channel.the_geom, max_distance=1.01
+        column=models.Channel.geom, max_distance=1.01
     ).get_invalid(session)
     assert len(errors) == 0
 
@@ -309,135 +291,203 @@ def test_channels_location_check(session, channel_geom):
     ],
 )
 def test_channels_location_check_invalid(session, channel_geom):
+    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
+    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
     factories.ChannelFactory(
-        connection_node_start=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(5.387204 52.155172)"
-        ),
-        connection_node_end=factories.ConnectionNodeFactory(
-            the_geom="SRID=4326;POINT(5.387204 52.155262)"
-        ),
-        the_geom=f"SRID=4326;{channel_geom}",
+        connection_node_id_start=1,
+        connection_node_id_end=2,
+        geom=f"SRID=4326;{channel_geom}",
     )
 
     errors = LinestringLocationCheck(
-        column=models.Channel.the_geom, max_distance=1.01
+        column=models.Channel.geom, max_distance=1.01
     ).get_invalid(session)
     assert len(errors) == 1
 
 
 def test_cross_section_location(session):
-    channel = factories.ChannelFactory(
-        the_geom="SRID=4326;LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
+    factories.ChannelFactory(
+        id=1,
+        geom="SRID=4326;LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
     )
     factories.CrossSectionLocationFactory(
-        channel=channel, the_geom="SRID=4326;POINT(5.387204 52.155200)"
+        channel_id=1, geom="SRID=4326;POINT(5.387204 52.155200)"
     )
     factories.CrossSectionLocationFactory(
-        channel=channel, the_geom="SRID=4326;POINT(5.387218 52.155244)"
+        channel_id=1, geom="SRID=4326;POINT(5.387218 52.155244)"
     )
     errors = CrossSectionLocationCheck(0.1).get_invalid(session)
     assert len(errors) == 1
 
 
+class TestCrossSectionSameConfiguration:
+    @pytest.mark.parametrize("sep, expected", [(",", "1"), ("\n", "1,2")])
+    def test_get_first_in_str(self, session, sep, expected):
+        factories.CrossSectionLocationFactory(
+            cross_section_table="1,2\n3,4",
+        )
+        check = CrossSectionSameConfigurationCheck(models.CrossSectionLocation.id)
+        result = check.get_first_in_str(
+            models.CrossSectionLocation.cross_section_table, sep=sep
+        )
+        assert session.execute(select(result)).fetchall()[0][0] == expected
+
+    @pytest.mark.parametrize("sep, expected", [(",", "4"), ("\n", "3,4")])
+    def test_get_last_in_str(self, session, sep, expected):
+        factories.CrossSectionLocationFactory(
+            cross_section_table="1,2\n3,4",
+        )
+        check = CrossSectionSameConfigurationCheck(models.CrossSectionLocation.id)
+        result = check.get_last_in_str(
+            models.CrossSectionLocation.cross_section_table, sep=sep
+        )
+        assert session.execute(select(result)).fetchall()[0][0] == expected
+
+    @pytest.mark.parametrize(
+        "method_name, expected",
+        [
+            ("first_row_width", 1.0),
+            ("first_row_height", 2.0),
+            ("last_row_width", 3.0),
+            ("last_row_height", 4.0),
+        ],
+    )
+    def test_row_values(self, session, method_name, expected):
+        factories.CrossSectionLocationFactory(
+            cross_section_table="1,2\n3,4",
+        )
+        check = CrossSectionSameConfigurationCheck(models.CrossSectionLocation.id)
+        result = getattr(check, method_name)()
+        assert session.execute(select(result)).fetchall()[0][0] == expected
+
+    @pytest.mark.parametrize(
+        "shape, table, expected",
+        [
+            (0, "3,4\n3,4", "closed"),
+            (1, "3,4\n3,4", "open"),
+            (2, "3,4\n3,4", "closed"),
+            (3, "3,4\n3,4", "closed"),
+            (4, "3,4\n3,4", "open"),
+            (5, "3,4\n0,1", "closed"),
+            (6, "3,4\n3,4", "open"),
+            (7, "3,4\n3,4", "closed"),
+            (7, "1,3\n1,4", "open"),
+            (8, "3,4\n3,4", "closed"),
+        ],
+    )
+    def test_configuration_type(self, session, shape, table, expected):
+        factories.CrossSectionLocationFactory(
+            cross_section_shape=shape,
+            cross_section_table=table,
+        )
+        check = CrossSectionSameConfigurationCheck(models.CrossSectionLocation.id)
+
+        cross_sections = (
+            select(
+                models.CrossSectionLocation.cross_section_shape,
+                check.first_row_width().label("first_width"),
+                check.first_row_height().label("first_height"),
+                check.last_row_width().label("last_width"),
+                check.last_row_height().label("last_height"),
+            )
+            .select_from(models.CrossSectionLocation)
+            .subquery()  # Added this line
+        )
+        # Without this, there is nothing that check.configuration_type can use
+        session.execute(select(cross_sections))
+        config_types = select(
+            check.configuration_type(
+                shape=cross_sections.c.cross_section_shape,
+                first_width=cross_sections.c.first_width,
+                last_width=cross_sections.c.last_width,
+                first_height=cross_sections.c.first_height,
+                last_height=cross_sections.c.last_height,
+            ).label("configuration"),
+        )
+        assert session.execute(config_types).fetchall()[0][0] == expected
+
+
+# cases to test: tabulated and non tabulated, everything else is covered above
 @pytest.mark.parametrize(
-    "shape, width, height, same_channels, ok",
+    "shape, width, height, table, same_channels, ok",
     [
         # --- closed cross-sections ---
         # shapes 0, 2, 3 and 8 are always closed
-        (0, "3", "4", True, False),
-        *[(i, "3", None, True, False) for i in [2, 3, 8]],
-        # shapes 5 and 6 are closed if the width at the highest increment (last number in the width string) is 0
-        *[
-            (
-                i,
-                "0 4.142 5.143 5.143 5.869 0",
-                "0 0.174 0.348 0.522 0.696 0.87",
-                True,
-                False,
-            )
-            for i in [5, 6]
-        ],
+        (0, 3, 4, None, True, False),
         # shape 7 is closed if the first and last (width, height) coordinates are the same
-        (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 3", True, False),
-        #
-        # --- open cross-sections ---
-        # shape 1 is always open
-        (1, "3", "4", True, True),
-        # shapes 5 and 6 are open if the width at the highest increment (last number in the width string) is > 0
-        *[
-            (
-                i,
-                "0 4.142 5.143 5.143 5.869 1",
-                "0 0.174 0.348 0.522 0.696 0.87",
-                True,
-                True,
-            )
-            for i in [5, 6]
-        ],
+        (
+            7,
+            None,
+            None,
+            "2,3\n4.142,0.174\n5.143,0.348\n5.143,0.522\n5.869,0.696\n2,3",
+            True,
+            False,
+        ),
         # shape 7 is open if the first and last (width, height) coordinates are not the same
-        # different width
-        (7, "2 4.142 5.143 5.143 5.869 3", "4 0.174 0.348 0.522 0.696 4", True, True),
-        # different height
-        (7, "2 4.142 5.143 5.143 5.869 2", "3 0.174 0.348 0.522 0.696 4", True, True),
-        # different height and width
-        (7, "2 4.142 5.143 5.143 5.869 3", "4 0.174 0.348 0.522 0.696 5", True, True),
-        #
-        # Bad data, should silently fail, returning no invalid rows. The data is checked in other checks.
-        (7, "foo", "bar", True, True),
-        #
+        (
+            7,
+            None,
+            None,
+            "2,4\n4.142,0.174\n5.143,0.348\n5.143,0.522\n5.869,0.696\n3,4",
+            True,
+            True,
+        ),
+        # Bad data, could result in false positive but the real issue is covered by other checks
+        (7, None, None, "foo", True, False),
         # Check on different channels
         # this should fail if the cross-sections are on the same channel, but pass on different channels
-        (0, "3", "4", False, True),
+        (0, 3, 4, None, False, True),
     ],
 )
 def test_cross_section_same_configuration(
-    session, shape, width, height, same_channels, ok
+    session, shape, width, height, table, same_channels, ok
 ):
     """
     This test checks two cross-sections on a channel against each other; they should both be open or both be closed.
     In this test, the first cross-section has been set to always be open.
     Therefore, the channel should be invalid when the second cross-section is closed, and valid when it is open.
     """
-    first_channel = factories.ChannelFactory(
-        the_geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
+    factories.ChannelFactory(
+        id=1,
+        geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
     )
-    second_channel = factories.ChannelFactory(
-        the_geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
+    factories.ChannelFactory(
+        id=2,
+        geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
     )
     # shape 1 is always open
-    open_definition = factories.CrossSectionDefinitionFactory(
-        id=1, shape=1, width="3", height="4"
-    )
     factories.CrossSectionLocationFactory(
-        channel=first_channel,
-        the_geom="SRID=4326;POINT(4.718278 52.696697)",
-        definition=open_definition,
-    )
-    testing_definition = factories.CrossSectionDefinitionFactory(
-        id=2, width=width, height=height, shape=shape
+        channel_id=1,
+        geom="SRID=4326;POINT(4.718278 52.696697)",
+        cross_section_shape=1,
+        cross_section_width=3,
+        cross_section_height=4,
     )
     # the second one is parametrised
     factories.CrossSectionLocationFactory(
-        channel=first_channel if same_channels else second_channel,
-        the_geom="SRID=4326;POINT(4.718265 52.696704)",
-        definition=testing_definition,
+        channel_id=1 if same_channels else 2,
+        geom="SRID=4326;POINT(4.718265 52.696704)",
+        cross_section_shape=shape,
+        cross_section_width=width,
+        cross_section_height=height,
+        cross_section_table=table,
     )
-    errors = CrossSectionSameConfigurationCheck(models.Channel.id).get_invalid(session)
+    errors = CrossSectionSameConfigurationCheck(column=models.Channel.id).get_invalid(
+        session
+    )
     assert len(errors) == (0 if ok else 1)
 
 
 def test_spatial_index_ok(session):
-    check = SpatialIndexCheck(models.ConnectionNode.the_geom)
+    check = SpatialIndexCheck(models.ConnectionNode.geom)
     invalid = check.get_invalid(session)
     assert len(invalid) == 0
 
 
 def test_spatial_index_disabled(empty_sqlite_v4):
     session = empty_sqlite_v4.get_session()
-    session.execute(
-        text("SELECT DisableSpatialIndex('v2_connection_nodes', 'the_geom')")
-    )
-    check = SpatialIndexCheck(models.ConnectionNode.the_geom)
+    session.execute(text("SELECT DisableSpatialIndex('connection_nodes', 'geom')"))
+    check = SpatialIndexCheck(models.ConnectionNode.geom)
     invalid = check.get_invalid(session)
     assert len(invalid) == 1
 
@@ -522,15 +572,15 @@ def test_potential_breach_interdistance_other_channel(session):
 def test_pumpstation_storage_timestep(
     session, storage_area, time_step, expected_result, capacity
 ):
-    connection_node = factories.ConnectionNodeFactory(storage_area=storage_area)
-    factories.PumpstationFactory(
-        connection_node_start=connection_node,
+    factories.ConnectionNodeFactory(storage_area=storage_area, id=1)
+    factories.PumpFactory(
+        connection_node_id=1,
         start_level=-4,
         lower_stop_level=-4.78,
         capacity=capacity,
     )
     factories.TimeStepSettingsFactory(time_step=time_step)
-    check = PumpStorageTimestepCheck(models.Pumpstation.capacity)
+    check = PumpStorageTimestepCheck(models.Pump.capacity)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
@@ -596,22 +646,17 @@ def test_connection_node_mapped_surfaces(
 
 
 @pytest.mark.parametrize(
-    "configuration,expected_result",
+    "shape,expected_result",
     [
-        ("closed", 0),
-        ("open", 1),
+        (constants.CrossSectionShape.CLOSED_RECTANGLE, 0),
+        (constants.CrossSectionShape.RECTANGLE, 1),
     ],
 )
-def test_feature_closed_cross_section(session, configuration, expected_result):
-    if configuration == "closed":
-        shape = constants.CrossSectionShape.CLOSED_RECTANGLE
-    else:
-        shape = constants.CrossSectionShape.RECTANGLE
-    cross_section_definition = factories.CrossSectionDefinitionFactory(
-        shape=shape, height=1, width=1
+def test_feature_closed_cross_section(session, shape, expected_result):
+    factories.CrossSectionLocationFactory(
+        cross_section_shape=shape, cross_section_width=1, cross_section_height=1
     )
-    factories.CulvertFactory(cross_section_definition=cross_section_definition)
-    check = FeatureClosedCrossSectionCheck(models.Culvert.id)
+    check = FeatureClosedCrossSectionCheck(models.CrossSectionLocation.id)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 
@@ -754,91 +799,15 @@ def test_beta_features_in_server(threedi_db, allow_beta_features, no_checks_expe
 def test_all_present_fixed_vegetation_parameters(
     session, cols, shape, friction_type, result
 ):
-    definition = factories.CrossSectionDefinitionFactory(
-        shape=shape,
-        friction_values="1",
-    )
     veg_args = {col: 1 for col in cols}
     factories.CrossSectionLocationFactory(
-        definition=definition, friction_type=friction_type, **veg_args
+        cross_section_shape=shape,
+        cross_section_friction_values="1",
+        friction_type=friction_type,
+        **veg_args,
     )
-    check = AllPresentFixedVegetationParameters(
+    check = AllPresentVegetationParameters(
         column=models.CrossSectionLocation.vegetation_height
-    )
-    invalid_rows = check.get_invalid(session)
-    assert (len(invalid_rows) == 0) == result
-
-
-@pytest.mark.parametrize(
-    "cols, val, shape, friction_type, result",
-    [
-        # single column defined: should fail
-        (
-            ["vegetation_heights"],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            False,
-        ),
-        # both columns defined, but one empty: should fail
-        (
-            ["vegetation_heights", "vegetation_stem_diameters"],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            False,
-        ),
-        # no columns defined: should pass
-        (
-            [],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            True,
-        ),
-        # both columns defined: should pass
-        (
-            [
-                "vegetation_drag_coefficients",
-                "vegetation_heights",
-                "vegetation_stem_diameters",
-                "vegetation_stem_densities",
-            ],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            True,
-        ),
-        # shape is not included in check: should pass
-        (
-            ["vegetation_heights"],
-            "1 2",
-            constants.CrossSectionShape.RECTANGLE,
-            constants.FrictionType.CHEZY_CONVEYANCE,
-            True,
-        ),
-        # friction type in not included in check: should pass
-        (
-            ["vegetation_heights"],
-            "1 2",
-            constants.CrossSectionShape.TABULATED_YZ,
-            constants.FrictionType.MANNING,
-            True,
-        ),
-    ],
-)
-def test_all_present_variable_vegetation_parameters(
-    session, cols, val, shape, friction_type, result
-):
-    veg_args = {col: val for col in cols}
-    definition = factories.CrossSectionDefinitionFactory(
-        shape=shape, friction_values="1 2", **veg_args
-    )
-    factories.CrossSectionLocationFactory(
-        definition=definition, friction_type=friction_type
-    )
-    check = AllPresentVariableVegetationParameters(
-        column=models.CrossSectionDefinition.vegetation_heights
     )
     invalid_rows = check.get_invalid(session)
     assert (len(invalid_rows) == 0) == result

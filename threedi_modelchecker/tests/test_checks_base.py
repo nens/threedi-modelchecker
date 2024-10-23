@@ -46,41 +46,35 @@ def test_base_extra_filters_err(session):
 
 
 def test_fk_check(session):
-    factories.ManholeFactory.create_batch(5)
-    fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id, models.Manhole.connection_node_id
-    )
+    factories.ConnectionNodeFactory(id=1)
+    factories.PumpFactory(connection_node_id=1)
+    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Pump.connection_node_id)
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
 def test_fk_check_no_entries(session):
-    fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id, models.Manhole.connection_node_id
-    )
+    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Pump.connection_node_id)
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
 def test_fk_check_null_fk(session):
-    conn_node = factories.ConnectionNodeFactory()
-    factories.ManholeFactory.create_batch(5, manhole_indicator=conn_node.id)
-    factories.ManholeFactory(manhole_indicator=None)
+    conn_node = factories.ConnectionNodeFactory(id=1)
+    factories.PumpFactory.create_batch(5, connection_node_id=conn_node.id)
+    factories.PumpFactory(connection_node_id=None)
 
-    fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id, models.Manhole.manhole_indicator
-    )
+    fk_check = ForeignKeyCheck(models.ConnectionNode.id, models.Pump.connection_node_id)
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
 def test_fk_check_missing_fk(session):
     conn_node = factories.ConnectionNodeFactory()
-    factories.ManholeFactory.create_batch(5, manhole_indicator=conn_node.id)
-    missing_fk = factories.ManholeFactory(manhole_indicator=-1)
-
+    factories.ChannelFactory(connection_node_id_start=conn_node.id)
+    missing_fk = factories.ChannelFactory(connection_node_id_start=-1)
     fk_check = ForeignKeyCheck(
-        models.ConnectionNode.id, models.Manhole.manhole_indicator
+        models.ConnectionNode.id, models.Channel.connection_node_id_start
     )
     invalid_rows = fk_check.get_invalid(session)
     assert len(invalid_rows) == 1
@@ -88,37 +82,34 @@ def test_fk_check_missing_fk(session):
 
 
 def test_unique_check(session):
-    factories.ManholeFactory.create_batch(5)
-
-    unique_check = UniqueCheck(models.Manhole.code)
+    factories.ChannelFactory.create_batch(5)
+    unique_check = UniqueCheck(models.Channel.code)
     invalid_rows = unique_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
 
 def test_unique_check_duplicate_value(session):
-    manholes = factories.ManholeFactory.create_batch(
-        5, zoom_category=factory.Sequence(lambda n: n)
+    channels = factories.ChannelFactory.create_batch(
+        5, exchange_type=factory.Sequence(lambda n: n)
     )
-    duplicate_manhole = factories.ManholeFactory(
-        zoom_category=manholes[0].zoom_category
-    )
+    dup_channel = factories.ChannelFactory(exchange_type=channels[0].exchange_type)
 
-    unique_check = UniqueCheck(models.Manhole.zoom_category)
+    unique_check = UniqueCheck(models.Channel.exchange_type)
     invalid_rows = unique_check.get_invalid(session)
 
     assert len(invalid_rows) == 2
     invalid_ids = [invalid.id for invalid in invalid_rows]
-    assert manholes[0].id in invalid_ids
-    assert duplicate_manhole.id in invalid_ids
+    assert channels[0].id in invalid_ids
+    assert dup_channel.id in invalid_ids
 
 
 def test_unique_check_null_values(session):
-    factories.ManholeFactory.create_batch(
-        5, zoom_category=factory.Sequence(lambda n: n)
+    factories.ChannelFactory.create_batch(
+        5, exchange_type=factory.Sequence(lambda n: n)
     )
-    factories.ManholeFactory.create_batch(3, zoom_category=None)
+    factories.ChannelFactory.create_batch(3, exchange_type=None)
 
-    unique_check = UniqueCheck(models.ConnectionNode.id)
+    unique_check = UniqueCheck(models.Channel.exchange_type)
     invalid_rows = unique_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -231,8 +222,8 @@ def test_null_check_with_null_value(session):
 def test_threedi_db_and_factories(session):
     """Test to ensure that the threedi_db and factories use the same
     session object."""
-    factories.ManholeFactory()
-    q = session.query(models.Manhole)
+    factories.ChannelFactory()
+    q = session.query(models.Channel)
     assert q.count() == 1
 
 
@@ -241,17 +232,17 @@ def test_run_spatial_function(session):
 
     Works on postgis and spatialite"""
     factories.ConnectionNodeFactory()
-    q = session.query(func.ST_AsGeoJSON(models.ConnectionNode.the_geom))
+    q = session.query(func.ST_AsGeoJSON(models.ConnectionNode.geom))
     q.first()
 
 
 def test_type_check(session):
     if session.bind.name == "postgresql":
         pytest.skip("type checks not working on postgres")
-    factories.ManholeFactory(zoom_category=123)
-    factories.ManholeFactory(zoom_category=456)
+    factories.ChannelFactory(exchange_type=123)
+    factories.ChannelFactory(exchange_type=456)
 
-    type_check = TypeCheck(models.Manhole.zoom_category)
+    type_check = TypeCheck(models.Channel.exchange_type)
     invalid_rows = type_check.get_invalid(session)
 
     assert len(invalid_rows) == 0
@@ -260,12 +251,12 @@ def test_type_check(session):
 def test_type_check_integer(session):
     if session.bind.name == "postgresql":
         pytest.skip("type checks not working on postgres")
-    factories.ManholeFactory(zoom_category=123)
-    factories.ManholeFactory(zoom_category=None)
-    m1 = factories.ManholeFactory(zoom_category="abc")
-    m2 = factories.ManholeFactory(zoom_category=1.23)
+    factories.ChannelFactory(exchange_type=123)
+    factories.ChannelFactory(exchange_type=None)
+    m1 = factories.ChannelFactory(exchange_type="abc")
+    m2 = factories.ChannelFactory(exchange_type=1.23)
 
-    type_check = TypeCheck(models.Manhole.zoom_category)
+    type_check = TypeCheck(models.Channel.exchange_type)
     invalid_rows = type_check.get_invalid(session)
 
     assert len(invalid_rows) == 2
@@ -277,12 +268,12 @@ def test_type_check_integer(session):
 def test_type_check_float_can_store_integer(session):
     if session.bind.name == "postgresql":
         pytest.skip("type checks not working on postgres")
-    factories.ManholeFactory(surface_level=1.3)
-    factories.ManholeFactory(surface_level=None)
-    factories.ManholeFactory(surface_level=1)
-    m1 = factories.ManholeFactory(zoom_category="abc")
+    factories.ChannelFactory(calculation_point_distance=1.3)
+    factories.ChannelFactory(calculation_point_distance=None)
+    factories.ChannelFactory(calculation_point_distance=1)
+    m1 = factories.ChannelFactory(exchange_type="abc")
 
-    type_check = TypeCheck(models.Manhole.zoom_category)
+    type_check = TypeCheck(models.Channel.exchange_type)
     invalid_rows = type_check.get_invalid(session)
     valid_rows = type_check.get_valid(session)
 
@@ -295,10 +286,10 @@ def test_type_check_float_can_store_integer(session):
 def test_type_check_varchar(session):
     if session.bind.name == "postgresql":
         pytest.skip("type checks not working on postgres")
-    factories.ManholeFactory(code="abc")
-    factories.ManholeFactory(code=123)
+    factories.ChannelFactory(code="abc")
+    factories.ChannelFactory(code=123)
 
-    type_check = TypeCheck(models.Manhole.code)
+    type_check = TypeCheck(models.Channel.code)
     invalid_rows = type_check.get_invalid(session)
 
     assert len(invalid_rows) == 0
@@ -319,9 +310,9 @@ def test_type_check_boolean(session):
 
 
 def test_geometry_check(session):
-    factories.ConnectionNodeFactory(the_geom="SRID=4326;POINT(-371.064544 42.28787)")
+    factories.ConnectionNodeFactory(geom="SRID=4326;POINT(-371.064544 42.28787)")
 
-    geometry_check = GeometryCheck(models.ConnectionNode.the_geom)
+    geometry_check = GeometryCheck(models.ConnectionNode.geom)
     invalid_rows = geometry_check.get_invalid(session)
 
     assert len(invalid_rows) == 0
@@ -329,10 +320,10 @@ def test_geometry_check(session):
 
 def test_geometry_type_check(session):
     factories.ConnectionNodeFactory.create_batch(
-        2, the_geom="SRID=4326;POINT(-71.064544 42.28787)"
+        2, geom="SRID=4326;POINT(-71.064544 42.28787)"
     )
 
-    geometry_type_check = GeometryTypeCheck(models.ConnectionNode.the_geom)
+    geometry_type_check = GeometryTypeCheck(models.ConnectionNode.geom)
     invalid_rows = geometry_type_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -346,9 +337,9 @@ def test_enum_check(session):
 
 
 def test_enum_check_with_null_values(session):
-    factories.CulvertFactory(calculation_type=None)
+    factories.CulvertFactory(exchange_type=None)
 
-    enum_check = EnumCheck(models.Culvert.calculation_type)
+    enum_check = EnumCheck(models.Culvert.exchange_type)
     invalid_rows = enum_check.get_invalid(session)
     assert len(invalid_rows) == 0
 
@@ -409,18 +400,10 @@ def test_conditional_checks(session):
 def test_conditional_check_storage_area(session):
     # if connection node is a manhole, then the storage area of the
     # connection_node must be > 0
-    factories.ConnectionNodeFactory(storage_area=5)
-    factories.ConnectionNodeFactory(storage_area=-3)
-    conn_node_manhole_valid = factories.ConnectionNodeFactory(storage_area=4)
+    factories.ConnectionNodeFactory(storage_area=4)
     conn_node_manhole_invalid = factories.ConnectionNodeFactory(storage_area=-5)
-    factories.ManholeFactory(connection_node=conn_node_manhole_valid)
-    factories.ManholeFactory(connection_node=conn_node_manhole_invalid)
 
-    query = (
-        Query(models.ConnectionNode)
-        .join(models.Manhole)
-        .filter(models.ConnectionNode.storage_area <= 0)
-    )
+    query = Query(models.ConnectionNode).filter(models.ConnectionNode.storage_area <= 0)
     query_check = QueryCheck(
         column=models.ConnectionNode.storage_area, invalid=query, message=""
     )
@@ -431,119 +414,76 @@ def test_conditional_check_storage_area(session):
 
 
 def test_query_check_with_joins(session):
-    connection_node1 = factories.ConnectionNodeFactory()
-    connection_node2 = factories.ConnectionNodeFactory()
-    factories.ManholeFactory(connection_node=connection_node1, bottom_level=1.0)
-    factories.ManholeFactory(connection_node=connection_node2, bottom_level=-1.0)
-    pump1 = factories.PumpstationFactory(
-        connection_node_start=connection_node1, lower_stop_level=0.0
+    connection_node1 = factories.ConnectionNodeFactory(id=1, bottom_level=1.0)
+    connection_node2 = factories.ConnectionNodeFactory(id=2, bottom_level=-1.0)
+    pump1 = factories.PumpFactory(
+        connection_node_id=connection_node1.id, lower_stop_level=0.0
     )
-    factories.PumpstationFactory(
-        connection_node_start=connection_node2, lower_stop_level=2.0
-    )
-
+    factories.PumpFactory(connection_node_id=connection_node2.id, lower_stop_level=0.0)
+    factories.PumpFactory(connection_node_id=connection_node2.id, lower_stop_level=2.0)
     query = (
-        Query(models.Pumpstation)
+        Query(models.Pump)
         .join(
             models.ConnectionNode,
-            models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+            models.Pump.connection_node_id == models.ConnectionNode.id,
         )
-        .join(models.Manhole)
         .filter(
-            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
+            models.Pump.lower_stop_level <= models.ConnectionNode.bottom_level,
         )
     )
     check = QueryCheck(
-        column=models.Pumpstation.lower_stop_level,
+        column=models.Pump.lower_stop_level,
         invalid=query,
-        message="Pumpstation.lower_stop_level should be higher than "
-        "Manhole.bottom_level",
+        message="Pump.lower_stop_level should be higher than "
+        "ConnectionNode.bottom_level",
     )
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
     assert invalids[0].id == pump1.id
 
 
-def test_query_check_on_pumpstation(session):
-    connection_node1 = factories.ConnectionNodeFactory()
-    connection_node2 = factories.ConnectionNodeFactory()
-    factories.ManholeFactory(connection_node=connection_node1, bottom_level=1.0)
-    factories.ManholeFactory(connection_node=connection_node2, bottom_level=-1.0)
-    pumpstation_wrong = factories.PumpstationFactory(
-        connection_node_start=connection_node1, lower_stop_level=0.0
-    )
-    factories.PumpstationFactory(
-        connection_node_start=connection_node2, lower_stop_level=2.0
-    )
-
-    query = (
-        Query(models.Pumpstation)
-        .join(
-            models.ConnectionNode,
-            models.Pumpstation.connection_node_start_id
-            == models.ConnectionNode.id,  # noqa: E501
-        )
-        .join(
-            models.Manhole,
-            models.Manhole.connection_node_id == models.ConnectionNode.id,
-        )
-        .filter(
-            models.Pumpstation.lower_stop_level <= models.Manhole.bottom_level,
-        )
-    )
-    check = QueryCheck(
-        column=models.Pumpstation.lower_stop_level,
-        invalid=query,
-        message="Pumpstation lower_stop_level should be higher than Manhole "
-        "bottom_level",
-    )
-    invalids = check.get_invalid(session)
-    assert len(invalids) == 1
-    assert invalids[0].id == pumpstation_wrong.id
-
-
 def test_query_check_manhole_drain_level_calc_type_2(session):
-    # manhole.drain_level can be null, but if manhole.calculation_type == 2 (Connected)
-    # then manhole.drain_level >= manhole.bottom_level
-    factories.ManholeFactory(drain_level=None)
-    factories.ManholeFactory(drain_level=1)
-    m3_error = factories.ManholeFactory(
-        drain_level=None, calculation_type=constants.CalculationTypeNode.CONNECTED
-    )  # drain_level cannot be null when calculation_type is CONNECTED
-    m4_error = factories.ManholeFactory(
-        drain_level=1,
-        bottom_level=2,
-        calculation_type=constants.CalculationTypeNode.CONNECTED,
-    )  # bottom_level  >= drain_level when calculation_type is CONNECTED
-    factories.ManholeFactory(
-        drain_level=1,
-        bottom_level=0,
-        calculation_type=constants.CalculationTypeNode.CONNECTED,
+    # ConnectionNodeFactory.exchange_level can be null, but if ConnectionNodeFactory.exchange_type == 2 (Connected)
+    # then ConnectionNodeFactory.exchange_level >= ConnectionNodeFactory.bottom_level
+    factories.ConnectionNodeFactory(exchange_level=None)
+    factories.ConnectionNodeFactory(exchange_level=1)
+    m3_error = factories.ConnectionNodeFactory(
+        exchange_level=None, exchange_type=constants.CalculationTypeNode.CONNECTED
     )
-    factories.ManholeFactory(
-        drain_level=None,
+    m4_error = factories.ConnectionNodeFactory(
+        exchange_level=1,
+        bottom_level=2,
+        exchange_type=constants.CalculationTypeNode.CONNECTED,
+    )  # bottom_level  >= drain_level when exchange_type is CONNECTED
+    factories.ConnectionNodeFactory(
+        exchange_level=1,
         bottom_level=0,
-        calculation_type=constants.CalculationTypeNode.EMBEDDED,
+        exchange_type=constants.CalculationTypeNode.CONNECTED,
+    )
+    factories.ConnectionNodeFactory(
+        exchange_level=None,
+        bottom_level=0,
+        exchange_type=constants.CalculationTypeNode.EMBEDDED,
     )
 
-    query_drn_lvl_st_bttm_lvl = Query(models.Manhole).filter(
-        models.Manhole.drain_level < models.Manhole.bottom_level,
-        models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED,
+    query_drn_lvl_st_bttm_lvl = Query(models.ConnectionNode).filter(
+        models.ConnectionNode.exchange_level < models.ConnectionNode.bottom_level,
+        models.ConnectionNode.exchange_type == constants.CalculationTypeNode.CONNECTED,
     )
-    query_invalid_not_null = Query(models.Manhole).filter(
-        models.Manhole.calculation_type == constants.CalculationTypeNode.CONNECTED,
-        models.Manhole.drain_level == None,
+    query_invalid_not_null = Query(models.ConnectionNode).filter(
+        models.ConnectionNode.exchange_type == constants.CalculationTypeNode.CONNECTED,
+        models.ConnectionNode.exchange_level == None,
     )
     check_drn_lvl_gt_bttm_lvl = QueryCheck(
-        column=models.Manhole.bottom_level,
+        column=models.ConnectionNode.bottom_level,
         invalid=query_drn_lvl_st_bttm_lvl,
-        message="Manhole.drain_level >= Manhole.bottom_level when "
-        "Manhole.calculation_type is CONNECTED",
+        message="ConnectionNode.exhange_level >= ConnectionNode.bottom_level when "
+        "ConnectionNode.exchange_type is CONNECTED",
     )
     check_invalid_not_null = QueryCheck(
-        column=models.Manhole.drain_level,
+        column=models.ConnectionNode.exchange_level,
         invalid=query_invalid_not_null,
-        message="Manhole.drain_level cannot be null when Manhole.calculation_type is "
+        message="ConnectionNode.exchange_level cannot be null when ConnectionNode.exchange_type is "
         "CONNECTED",
     )
     errors1 = check_drn_lvl_gt_bttm_lvl.get_invalid(session)
@@ -595,23 +535,23 @@ def test_global_settings_use_1d_flow_and_no_1d_elements(session):
 def test_length_geom_linestring_in_4326(session):
     factories.ModelSettingsFactory(epsg_code=28992)
     channel_too_short = factories.ChannelFactory(
-        the_geom="SRID=4326;LINESTRING("
+        geom="SRID=4326;LINESTRING("
         "-0.38222938832999598 -0.13872236685816669, "
         "-0.38222930900909202 -0.13872236685816669)",
     )
     factories.ChannelFactory(
-        the_geom="SRID=4326;LINESTRING("
+        geom="SRID=4326;LINESTRING("
         "-0.38222938468305784 -0.13872235682908687, "
         "-0.38222931083256106 -0.13872235591735235, "
         "-0.38222930992082654 -0.13872207236791409, "
         "-0.38222940929989008 -0.13872235591735235)",
     )
 
-    q = Query(models.Channel).filter(geo_query.length(models.Channel.the_geom) < 0.05)
+    q = Query(models.Channel).filter(geo_query.length(models.Channel.geom) < 0.05)
     check_length_linestring = QueryCheck(
-        column=models.Channel.the_geom,
+        column=models.Channel.geom,
         invalid=q,
-        message="Length of the v2_channel is too short, should be at least 0.05m",
+        message="Length of the channel is too short, should be at least 0.05m",
     )
 
     errors = check_length_linestring.get_invalid(session)
@@ -621,23 +561,23 @@ def test_length_geom_linestring_in_4326(session):
 
 def test_length_geom_linestring_missing_epsg_from_global_settings(session):
     factories.ChannelFactory(
-        the_geom="SRID=4326;LINESTRING("
+        geom="SRID=4326;LINESTRING("
         "-0.38222938832999598 -0.13872236685816669, "
         "-0.38222930900909202 -0.13872236685816669)",
     )
     factories.ChannelFactory(
-        the_geom="SRID=4326;LINESTRING("
+        geom="SRID=4326;LINESTRING("
         "-0.38222938468305784 -0.13872235682908687, "
         "-0.38222931083256106 -0.13872235591735235, "
         "-0.38222930992082654 -0.13872207236791409, "
         "-0.38222940929989008 -0.13872235591735235)",
     )
 
-    q = Query(models.Channel).filter(geo_query.length(models.Channel.the_geom) < 0.05)
+    q = Query(models.Channel).filter(geo_query.length(models.Channel.geom) < 0.05)
     check_length_linestring = QueryCheck(
-        column=models.Channel.the_geom,
+        column=models.Channel.geom,
         invalid=q,
-        message="Length of the v2_channel is too short, should be at least 0.05m",
+        message="Length of the channel is too short, should be at least 0.05m",
     )
 
     errors = check_length_linestring.get_invalid(session)
@@ -694,7 +634,7 @@ def test_range_check_invalid(
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 1
 
-    assert check.description() == msg.format("v2_connection_nodes.storage_area")
+    assert check.description() == msg.format("connection_node.storage_area")
 
 
 @pytest.mark.parametrize(
