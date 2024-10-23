@@ -414,8 +414,8 @@ def test_conditional_check_storage_area(session):
 
 
 def test_query_check_with_joins(session):
-    connection_node1 = factories.ConnectionNodeFactory(id=1, manhole_bottom_level=1.0)
-    connection_node2 = factories.ConnectionNodeFactory(id=2, manhole_bottom_level=-1.0)
+    connection_node1 = factories.ConnectionNodeFactory(id=1, bottom_level=1.0)
+    connection_node2 = factories.ConnectionNodeFactory(id=2, bottom_level=-1.0)
     pump1 = factories.PumpFactory(
         connection_node_id=connection_node1.id, lower_stop_level=0.0
     )
@@ -428,14 +428,14 @@ def test_query_check_with_joins(session):
             models.Pump.connection_node_id == models.ConnectionNode.id,
         )
         .filter(
-            models.Pump.lower_stop_level <= models.ConnectionNode.manhole_bottom_level,
+            models.Pump.lower_stop_level <= models.ConnectionNode.bottom_level,
         )
     )
     check = QueryCheck(
         column=models.Pump.lower_stop_level,
         invalid=query,
         message="Pump.lower_stop_level should be higher than "
-        "ConnectionNode.manhole_bottom_level",
+        "ConnectionNode.bottom_level",
     )
     invalids = check.get_invalid(session)
     assert len(invalids) == 1
@@ -452,23 +452,22 @@ def test_query_check_manhole_drain_level_calc_type_2(session):
     )
     m4_error = factories.ConnectionNodeFactory(
         exchange_level=1,
-        manhole_bottom_level=2,
+        bottom_level=2,
         exchange_type=constants.CalculationTypeNode.CONNECTED,
     )  # bottom_level  >= drain_level when exchange_type is CONNECTED
     factories.ConnectionNodeFactory(
         exchange_level=1,
-        manhole_bottom_level=0,
+        bottom_level=0,
         exchange_type=constants.CalculationTypeNode.CONNECTED,
     )
     factories.ConnectionNodeFactory(
         exchange_level=None,
-        manhole_bottom_level=0,
+        bottom_level=0,
         exchange_type=constants.CalculationTypeNode.EMBEDDED,
     )
 
     query_drn_lvl_st_bttm_lvl = Query(models.ConnectionNode).filter(
-        models.ConnectionNode.exchange_level
-        < models.ConnectionNode.manhole_bottom_level,
+        models.ConnectionNode.exchange_level < models.ConnectionNode.bottom_level,
         models.ConnectionNode.exchange_type == constants.CalculationTypeNode.CONNECTED,
     )
     query_invalid_not_null = Query(models.ConnectionNode).filter(
@@ -476,9 +475,9 @@ def test_query_check_manhole_drain_level_calc_type_2(session):
         models.ConnectionNode.exchange_level == None,
     )
     check_drn_lvl_gt_bttm_lvl = QueryCheck(
-        column=models.ConnectionNode.manhole_bottom_level,
+        column=models.ConnectionNode.bottom_level,
         invalid=query_drn_lvl_st_bttm_lvl,
-        message="ConnectionNode.exhange_level >= ConnectionNode.manhole_bottom_level when "
+        message="ConnectionNode.exhange_level >= ConnectionNode.bottom_level when "
         "ConnectionNode.exchange_type is CONNECTED",
     )
     check_invalid_not_null = QueryCheck(

@@ -444,14 +444,14 @@ class ChannelManholeLevelCheck(BaseCheck):
 
         channels_manholes_level_checked = channels_with_manholes.having(
             models.CrossSectionLocation.reference_level
-            < models.ConnectionNode.manhole_bottom_level
+            < models.ConnectionNode.bottom_level
         )
 
         return channels_manholes_level_checked.all()
 
     def description(self) -> str:
         return (
-            f"The connection_node.manhole_bottom_level at the {self.nodes_to_check} of this channel is higher than the "
+            f"The connection_node.bottom_level at the {self.nodes_to_check} of this channel is higher than the "
             "cross_section_location.reference_level closest to the manhole. This will be "
             "automatically fixed in threedigrid-builder."
         )

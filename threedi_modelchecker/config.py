@@ -408,7 +408,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
-        .filter(models.ConnectionNode.manhole_bottom_level.is_(None))
+        .filter(models.ConnectionNode.bottom_level.is_(None))
         .filter(
             models.ConnectionNode.id.notin_(
                 Query(models.Pipe.connection_node_id_start).union_all(
@@ -489,7 +489,7 @@ CHECKS += [
                 ]
             )
         )
-        .filter(models.ConnectionNode.manhole_bottom_level.is_(None))
+        .filter(models.ConnectionNode.bottom_level.is_(None))
         .filter(
             models.ConnectionNode.id.notin_(
                 Query(models.Pipe.connection_node_id_start).union_all(
@@ -511,7 +511,7 @@ CHECKS += [
             ),
         ),
         message=(
-            "connection_nodes.manhole_bottom_level for a node that is connected to a weir or an orifice, "
+            "connection_nodes.bottom_level for a node that is connected to a weir or an orifice, "
             "and that has exchange type CONNECTED or ISOLATED should be defined"
         ),
     )
@@ -523,7 +523,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
-        .filter(models.ConnectionNode.manhole_bottom_level.is_(None))
+        .filter(models.ConnectionNode.bottom_level.is_(None))
         .filter(
             models.ConnectionNode.id.not_in(
                 Query(models.Channel.connection_node_id_start).union_all(
@@ -541,7 +541,7 @@ CHECKS += [
             ),
         ),
         message=(
-            "connection_nodes.manhole_bottom_level for a node that is connected to a pipe or a culvert, "
+            "connection_nodes.bottom_level for a node that is connected to a pipe or a culvert, "
             "and that is not connected to a channel should be defined. "
             "In the future, this will lead to an error."
         ),
@@ -911,9 +911,9 @@ CHECKS += [
         )
         .filter(models.ConnectionNode.visualisation != None)
         .filter(
-            table.invert_level_start < models.ConnectionNode.manhole_bottom_level,
+            table.invert_level_start < models.ConnectionNode.bottom_level,
         ),
-        message=f"{table.__tablename__}.invert_level_start should be higher than or equal to connection_node.manhole_bottom_level. In the future, this will lead to an error.",
+        message=f"{table.__tablename__}.invert_level_start should be higher than or equal to connection_node.bottom_level. In the future, this will lead to an error.",
     )
     for table in [models.Pipe, models.Culvert]
 ]
@@ -929,7 +929,7 @@ CHECKS += [
         )
         .filter(models.ConnectionNode.visualisation != None)
         .filter(
-            table.invert_level_end < models.ConnectionNode.manhole_bottom_level,
+            table.invert_level_end < models.ConnectionNode.bottom_level,
         ),
         message=f"{table.__tablename__}.invert_level_end should be higher than or equal to connection_node.bottom_level. In the future, this will lead to an error.",
     )
@@ -948,10 +948,10 @@ CHECKS += [
         .filter(models.ConnectionNode.visualisation != None)
         .filter(
             models.Pump.type_ == constants.PumpType.SUCTION_SIDE,
-            models.Pump.lower_stop_level <= models.ConnectionNode.manhole_bottom_level,
+            models.Pump.lower_stop_level <= models.ConnectionNode.bottom_level,
         ),
         message="pump.lower_stop_level should be higher than "
-        "connection_node.manhole_bottom_level. In the future, this will lead to an error.",
+        "connection_node.bottom_level. In the future, this will lead to an error.",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
@@ -965,15 +965,15 @@ CHECKS += [
         .filter(models.ConnectionNode.visualisation != None)
         .filter(
             models.Pump.type_ == constants.PumpType.DELIVERY_SIDE,
-            models.Pump.lower_stop_level <= models.ConnectionNode.manhole_bottom_level,
+            models.Pump.lower_stop_level <= models.ConnectionNode.bottom_level,
         ),
         message="pump.lower_stop_level should be higher than "
-        "connection_node.manhole_bottom_level. In the future, this will lead to an error.",
+        "connection_node.bottom_level. In the future, this will lead to an error.",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
         error_code=106,
-        column=models.ConnectionNode.manhole_bottom_level,
+        column=models.ConnectionNode.bottom_level,
         invalid=Query(models.ConnectionNode)
         .filter(models.ConnectionNode.visualisation != None)
         .filter(
@@ -982,10 +982,9 @@ CHECKS += [
             )
         )
         .filter(
-            models.ConnectionNode.exchange_level
-            < models.ConnectionNode.manhole_bottom_level
+            models.ConnectionNode.exchange_level < models.ConnectionNode.bottom_level
         ),
-        message="connection_node.exchange_level >= connection_node.manhole_bottom_level when "
+        message="connection_node.exchange_level >= connection_node.bottom_level when "
         "connection_node.exchange_type is CONNECTED. In the future, this will lead to an error.",
     ),
     QueryCheck(
@@ -1015,9 +1014,9 @@ CHECKS += [
             (table.connection_node_id_start == models.ConnectionNode.id)
             | (table.connection_node_id_end == models.ConnectionNode.id),
         )
-        .filter(models.ConnectionNode.manhole_bottom_level != None)
-        .filter(table.crest_level < models.ConnectionNode.manhole_bottom_level),
-        message=f"{table.__tablename__}.crest_level should be higher than or equal to connection_node.manhole_bottom_level for all the connected manholes.",
+        .filter(models.ConnectionNode.bottom_level != None)
+        .filter(table.crest_level < models.ConnectionNode.bottom_level),
+        message=f"{table.__tablename__}.crest_level should be higher than or equal to connection_node.bottom_level for all the connected manholes.",
     )
     for table in [models.Weir, models.Orifice]
 ]
@@ -1099,7 +1098,7 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
-        .filter(models.ConnectionNode.manhole_bottom_level != None)
+        .filter(models.ConnectionNode.bottom_level != None)
         .filter(
             models.ConnectionNode.exchange_type
             == constants.CalculationTypeNode.ISOLATED,

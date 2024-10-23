@@ -200,12 +200,12 @@ def test_channel_manhole_level_check(
     factories.ConnectionNodeFactory(
         id=1,
         geom=f"SRID=4326;POINT({starting_coordinates})",
-        manhole_bottom_level=manhole_level,
+        bottom_level=manhole_level,
     )
     factories.ConnectionNodeFactory(
         id=2,
         geom=f"SRID=4326;POINT({ending_coordinates})",
-        manhole_bottom_level=manhole_level,
+        bottom_level=manhole_level,
     )
     factories.ChannelFactory(
         id=1,
