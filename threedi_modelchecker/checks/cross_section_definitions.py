@@ -393,7 +393,7 @@ def cross_section_configuration_tabulated(shape, widths, heights):
         elif last_width > 0:
             configuration = "open"
         else:
-            breakpoint()
+            raise
     elif shape == constants.CrossSectionShape.TABULATED_YZ:
         # without the rounding, floating-point errors occur
         max_width = round((max(widths) - min(widths)), 9)
@@ -407,7 +407,7 @@ def cross_section_configuration_tabulated(shape, widths, heights):
         else:
             configuration = "open"
     else:
-        breakpoint()
+        raise
     return max_width, max_height, configuration
 
 
