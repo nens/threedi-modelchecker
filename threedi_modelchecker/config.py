@@ -3082,24 +3082,6 @@ vegetation_parameter_columns_singular = [
     models.CrossSectionLocation.vegetation_stem_diameter,
     models.CrossSectionLocation.vegetation_stem_density,
 ]
-#
-# CHECKS += [
-#     QueryCheck(
-#         error_code=190,
-#         column=col,
-#         invalid=(
-#             Query(models.CrossSectionLocation)
-#             .filter(
-#                 models.CrossSectionLocation.cross_section_shape != constants.CrossSectionShape.TABULATED_YZ)
-#             .filter(col is not None)
-#         )
-#         message=(
-#             f"{col.table.name}.{col.name} cannot be used with Manning type friction"
-#         )
-#     )
-#     for col in vegetation_parameter_columns_singular
-# ]
-
 
 CHECKS += [
     RangeCheck(

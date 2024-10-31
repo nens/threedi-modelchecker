@@ -51,7 +51,6 @@ def generate_not_null_checks(
     if extra_not_null_columns is None:
         extra_not_null_columns = []
     for column in table.columns:
-        # breakpoint()
         if not column.nullable or any(
             col.compare(column) for col in extra_not_null_columns
         ):

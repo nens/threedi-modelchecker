@@ -61,17 +61,6 @@ class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
 
 
-# class ManholeFactory(factory.alchemy.SQLAlchemyModelFactory):
-#     class Meta:
-#         model = models.Manhole
-#         sqlalchemy_session = None
-#
-#     code = Faker("name")
-#     display_name = Faker("name")
-#     bottom_level = 0.0
-#     connection_node = factory.SubFactory(ConnectionNodeFactory)
-
-
 class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Weir
