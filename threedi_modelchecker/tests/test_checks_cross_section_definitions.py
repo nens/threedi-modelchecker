@@ -132,25 +132,25 @@ def test_filter_shapes(session):
     assert len(invalid_rows) == 1
 
 
-@pytest.mark.parametrize(
-    "cross_section_height, is_null, is_empty",
-    [(None, True, False)],
-)
-def test_check_null_check(session, cross_section_height, is_null, is_empty):
-    factories.CrossSectionLocationFactory(
-        cross_section_height=cross_section_height,
-    )
+@pytest.mark.parametrize("val, is_valid", [(None, False), (1, True)])
+def test_check_null_check(session, val, is_valid):
+    factories.CrossSectionLocationFactory(cross_section_height=val)
+    # Check if the invalid row is identified
     check = CrossSectionNullCheck(
         column=models.CrossSectionLocation.cross_section_height
     )
     invalid_rows = check.get_invalid(session)
-    assert (len(invalid_rows) == 1) == is_null
+    assert (len(invalid_rows) == 0) == is_valid
 
+
+@pytest.mark.parametrize("val, is_valid", [(None, True), (1, False)])
+def test_check_expect_empty_check(session, val, is_valid):
+    factories.CrossSectionLocationFactory(cross_section_height=val)
     check = CrossSectionExpectEmptyCheck(
         column=models.CrossSectionLocation.cross_section_height
     )
     invalid_rows = check.get_invalid(session)
-    assert (len(invalid_rows) == 1) == is_empty
+    assert (len(invalid_rows) == 0) == is_valid
 
 
 @pytest.mark.parametrize("width, valid", [(-1, False), (0, False), (1, True)])
