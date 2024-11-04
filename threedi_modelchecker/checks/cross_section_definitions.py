@@ -30,9 +30,6 @@ def parse_csv_table(str_data):
 class CrossSectionBaseCheck(BaseCheck):
     """Base class for all cross section definition checks."""
 
-    # use self.table instead of models.CrossSectionLocation
-    # adapt config.py
-
     def __init__(self, column, *args, **kwargs):
         self.shapes = kwargs.pop("shapes", None)
         super().__init__(column, *args, **kwargs)
