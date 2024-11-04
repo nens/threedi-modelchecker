@@ -393,7 +393,9 @@ def cross_section_configuration_tabulated(shape, widths, heights):
         elif last_width > 0:
             configuration = "open"
         else:
-            raise
+            raise ValueError(
+                "A tabulated rectangle or trapezium cannot have a negative last width"
+            )
     elif shape == constants.CrossSectionShape.TABULATED_YZ:
         # without the rounding, floating-point errors occur
         max_width = round((max(widths) - min(widths)), 9)
@@ -407,7 +409,10 @@ def cross_section_configuration_tabulated(shape, widths, heights):
         else:
             configuration = "open"
     else:
-        raise
+        raise ValueError(
+            "cross_section_configuration_tabulated was called for a tabulated shape other "
+            "than TABULATED_YZ, TABULATED_RECTANGLE or TABULATED_TRAPEZIUM"
+        )
     return max_width, max_height, configuration
 
 
