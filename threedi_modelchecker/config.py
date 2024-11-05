@@ -3366,6 +3366,7 @@ not_null_columns = [
     models.Weir.crest_level,
     models.Weir.crest_type,
     models.Windshielding.channel_id,
+    models.ModelSettings.node_open_water_detection,
 ]
 
 
