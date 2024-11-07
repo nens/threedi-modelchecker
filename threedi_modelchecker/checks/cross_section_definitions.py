@@ -487,12 +487,13 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(
             super()
             .to_check(session)
             .where(
+                self.table.c.cross_section_shape.isnot(None),
                 self.table.c.friction_type.in_(
                     [
                         constants.FrictionType.CHEZY_CONVEYANCE,
                         constants.FrictionType.MANNING_CONVEYANCE,
                     ]
-                )
+                ),
             )
         )
 

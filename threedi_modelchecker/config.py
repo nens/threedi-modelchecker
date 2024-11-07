@@ -882,7 +882,7 @@ for table in cross_section_tables:
         CrossSectionExpectEmptyCheck(
             error_code=94,
             level=CheckLevel.WARNING,
-            column=models.CrossSectionLocation.cross_section_height,
+            column=table.cross_section_height,
             shapes=(
                 constants.CrossSectionShape.CIRCLE,
                 constants.CrossSectionShape.EGG,
@@ -891,23 +891,24 @@ for table in cross_section_tables:
         ),
         CrossSectionYZHeightCheck(
             error_code=95,
-            column=models.CrossSectionLocation.cross_section_table,
+            column=table.cross_section_table,
             shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         ),
         CrossSectionYZCoordinateCountCheck(
-            column=models.CrossSectionLocation.cross_section_table,
+            column=table.cross_section_table,
             error_code=96,
             shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         ),
         CrossSectionYZIncreasingWidthIfOpenCheck(
-            column=models.CrossSectionLocation.cross_section_table,
+            column=table.cross_section_table,
             error_code=97,
             shapes=(constants.CrossSectionShape.TABULATED_YZ,),
         ),
         CrossSectionMinimumDiameterCheck(
-            column=models.CrossSectionLocation.id,
+            column=table.id,
             error_code=98,
             level=CheckLevel.WARNING,
+            filters=table.cross_section_shape.isnot(None),
         ),
     ]
 
@@ -3065,6 +3066,7 @@ CHECKS += [
     OpenIncreasingCrossSectionVariableCheck(
         error_code=186,
         column=table.id,
+        filters=table.cross_section_shape.isnot(None),
     )
     for table in cross_section_tables
 ]
