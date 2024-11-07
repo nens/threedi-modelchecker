@@ -233,6 +233,12 @@ CHECKS += [
 ]
 CHECKS += [
     NotNullCheck(
+        error_code=24, column=table.friction_value, filters=table.material_id.is_(None)
+    )
+    for table in [models.Culvert, models.Pipe]
+]
+CHECKS += [
+    NotNullCheck(
         error_code=25,
         column=table.friction_type,
         filters=(
@@ -242,6 +248,16 @@ CHECKS += [
     )
     for table in [models.Orifice, models.Weir]
 ]
+CHECKS += [
+    NotNullCheck(
+        error_code=25,
+        column=table.friction_type,
+        filters=table.material_id.is_(None),
+    )
+    for table in [models.Culvert, models.Pipe]
+]
+
+
 # Friction with conveyance should raise an error when used
 # on a column other than models.CrossSectionLocation
 
@@ -317,6 +333,7 @@ CHECKS += [
     OpenIncreasingCrossSectionConveyanceFrictionCheck(error_code=28, column=table.id)
     for table in cross_section_tables
 ]
+
 
 ## 003x: CALCULATION TYPE
 
@@ -3367,8 +3384,6 @@ not_null_columns = [
     models.CrossSectionLocation.reference_level,
     models.Culvert.connection_node_id_start,
     models.Culvert.connection_node_id_end,
-    models.Culvert.friction_type,
-    models.Culvert.friction_value,
     models.Culvert.invert_level_start,
     models.Culvert.invert_level_end,
     models.Orifice.connection_node_id_start,
@@ -3378,8 +3393,6 @@ not_null_columns = [
     models.Pipe.connection_node_id_start,
     models.Pipe.connection_node_id_end,
     models.Pipe.exchange_type,
-    models.Pipe.friction_type,
-    models.Pipe.friction_value,
     models.Pipe.invert_level_end,
     models.Pipe.invert_level_start,
     models.Pump.connection_node_id,
