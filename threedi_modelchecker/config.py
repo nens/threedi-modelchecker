@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import func, or_, select, true
+from sqlalchemy import and_, func, or_, select, true
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
@@ -149,7 +149,6 @@ cross_section_tables = [
 CHECKS: List[BaseCheck] = []
 
 ## 002x: FRICTION
-## Use same error code as other null checks
 CHECKS += [
     QueryCheck(
         error_code=20,
@@ -225,7 +224,10 @@ CHECKS += [
     NotNullCheck(
         error_code=24,
         column=table.friction_value,
-        filters=table.crest_type == constants.CrestType.BROAD_CRESTED.value,
+        filters=(
+            (table.crest_type == constants.CrestType.BROAD_CRESTED.value)
+            & (table.material_id.is_(None))
+        ),
     )
     for table in [models.Orifice, models.Weir]
 ]
@@ -233,23 +235,40 @@ CHECKS += [
     NotNullCheck(
         error_code=25,
         column=table.friction_type,
-        filters=table.crest_type == constants.CrestType.BROAD_CRESTED.value,
+        filters=(
+            (table.crest_type == constants.CrestType.BROAD_CRESTED.value)
+            & (table.material_id.is_(None))
+        ),
     )
     for table in [models.Orifice, models.Weir]
 ]
 # Friction with conveyance should raise an error when used
 # on a column other than models.CrossSectionLocation
+
 CHECKS += [
     QueryCheck(
         error_code=26,
         column=table.friction_type,
-        invalid=Query(table).filter(
-            table.friction_type.in_(
-                [
-                    constants.FrictionType.CHEZY_CONVEYANCE,
-                    constants.FrictionType.MANNING_CONVEYANCE,
-                ]
-            ),
+        invalid=Query(table)
+        .outerjoin(models.Material, table.material_id == models.Material.id)
+        .filter(
+            or_(
+                table.friction_type.in_(
+                    [
+                        constants.FrictionType.CHEZY_CONVEYANCE,
+                        constants.FrictionType.MANNING_CONVEYANCE,
+                    ]
+                ),
+                and_(
+                    table.friction_type == None,
+                    models.Material.friction_type.in_(
+                        [
+                            constants.FrictionType.CHEZY_CONVEYANCE,
+                            constants.FrictionType.MANNING_CONVEYANCE,
+                        ]
+                    ),
+                ),
+            )
         ),
         message=(
             "Friction with conveyance, such as chezy_conveyance and "
@@ -258,6 +277,8 @@ CHECKS += [
     )
     for table in [models.Pipe, models.Culvert, models.Weir, models.Orifice]
 ]
+
+
 # Friction with conveyance should only be used on
 # tabulated rectangle, tabulated trapezium, or tabulated yz shapes
 CHECKS += [
@@ -1142,7 +1163,7 @@ CHECKS += [
             )
             .filter(
                 models.Pipe.exchange_type == constants.PipeCalculationType.ISOLATED,
-                models.ConnectionNode.storage_area.is_(None),
+                models.ConnectionNode.storage_area,
             )
         ),
         message="When connecting two isolated pipes, it is recommended to add storage to the connection node.",
