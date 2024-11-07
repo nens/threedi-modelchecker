@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from typing import Union
 
+from sqlalchemy import func
 from threedi_schema import constants, models
 
 from .base import BaseCheck
@@ -540,6 +541,37 @@ class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck, ABC):
             if not (len(widths) - 1 == len(values)):
                 invalids.append(record)
         return invalids
+
+    def description(self):
+        return f"{self.column_name} should contain 1 value for each element; len({self.column_name}) = len(width)-1"
+
+
+class OpenIncreasingCrossSectionConveyanceFrictionCheckWithMaterial(
+    OpenIncreasingCrossSectionCheck
+):
+    """
+    Check if cross sections used with friction with conveyance
+    are open and monotonically increasing in width
+    """
+
+    def to_check(self, session):
+        return (
+            super()
+            .to_check(session)
+            .outerjoin(models.Material, self.table.c.material_id == models.Material.id)
+            .where(
+                self.table.c.cross_section_shape.isnot(None),
+                # take value from table if present, otherwise value from Material
+                func.coalesce(
+                    self.table.c.friction_type, models.Material.friction_type
+                ).in_(
+                    [
+                        constants.FrictionType.CHEZY_CONVEYANCE,
+                        constants.FrictionType.MANNING_CONVEYANCE,
+                    ]
+                ),
+            )
+        )
 
     def description(self):
         return f"{self.column_name} should contain 1 value for each element; len({self.column_name}) = len(width)-1"

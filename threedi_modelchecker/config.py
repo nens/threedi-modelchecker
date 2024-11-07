@@ -35,6 +35,7 @@ from .checks.cross_section_definitions import (
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
     OpenIncreasingCrossSectionConveyanceFrictionCheck,
+    OpenIncreasingCrossSectionConveyanceFrictionCheckWithMaterial,
     OpenIncreasingCrossSectionVariableCheck,
 )
 from .checks.factories import (
@@ -330,8 +331,14 @@ CHECKS += [
     )
 ]
 CHECKS += [
-    OpenIncreasingCrossSectionConveyanceFrictionCheck(error_code=28, column=table.id)
-    for table in cross_section_tables
+    OpenIncreasingCrossSectionConveyanceFrictionCheckWithMaterial(
+        error_code=28, column=table.id
+    )
+    for table in [models.Pipe, models.Weir, models.Orifice, models.Culvert]
+] + [
+    OpenIncreasingCrossSectionConveyanceFrictionCheck(
+        error_code=28, column=models.CrossSectionLocation.id
+    )
 ]
 
 
