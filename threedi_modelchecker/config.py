@@ -1188,7 +1188,7 @@ CHECKS += [
             )
             .filter(
                 models.Pipe.exchange_type == constants.PipeCalculationType.ISOLATED,
-                models.ConnectionNode.storage_area,
+                models.ConnectionNode.storage_area.is_(None),
             )
         ),
         message="When connecting two isolated pipes, it is recommended to add storage to the connection node.",
