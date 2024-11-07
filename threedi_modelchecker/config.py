@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import and_, func, or_, select, true
+from sqlalchemy import and_, func, or_, true
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
@@ -3253,7 +3253,12 @@ CHECKS += [
 ]
 
 conditions = [
-    models.Material.id.in_(select(table.material_id)) for table in material_ref_tables
+    and_(
+        table.material_id == models.Material.id,
+        table.friction_value.is_(None),
+        table.friction_type.is_(None),
+    )
+    for table in material_ref_tables
 ]
 CHECKS += [
     NotNullCheck(
