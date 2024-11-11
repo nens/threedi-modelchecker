@@ -227,14 +227,16 @@ CHECKS += [
         column=table.friction_value,
         filters=(
             (table.crest_type == constants.CrestType.BROAD_CRESTED.value)
-            & (table.material_id.is_(None))
+            & ((table.material_id.is_(None)) | (table.friction_type.isnot(None)))
         ),
     )
     for table in [models.Orifice, models.Weir]
 ]
 CHECKS += [
     NotNullCheck(
-        error_code=24, column=table.friction_value, filters=table.material_id.is_(None)
+        error_code=24,
+        column=table.friction_value,
+        filters=((table.material_id.is_(None)) | (table.friction_type.isnot(None))),
     )
     for table in [models.Culvert, models.Pipe]
 ]
@@ -244,7 +246,7 @@ CHECKS += [
         column=table.friction_type,
         filters=(
             (table.crest_type == constants.CrestType.BROAD_CRESTED.value)
-            & (table.material_id.is_(None))
+            & ((table.material_id.is_(None)) | (table.friction_value.isnot(None)))
         ),
     )
     for table in [models.Orifice, models.Weir]
@@ -253,7 +255,7 @@ CHECKS += [
     NotNullCheck(
         error_code=25,
         column=table.friction_type,
-        filters=table.material_id.is_(None),
+        filters=((table.material_id.is_(None)) | (table.friction_value.isnot(None))),
     )
     for table in [models.Culvert, models.Pipe]
 ]
