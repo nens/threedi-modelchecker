@@ -404,7 +404,7 @@ CHECKS += [
             models.ConnectionNode.visualisation != None,
             models.ConnectionNode.storage_area < 0,
         ),
-        message="connection_nodes.storage_area for manhole connection node should greater than or equal to 0",
+        message="connection_node.storage_area for manhole connection node should greater than or equal to 0",
     ),
 ]
 CHECKS += [
@@ -445,7 +445,8 @@ CHECKS += [
                 )
             ),
         ),
-        message="connection_nodes.storage_area for an isolated node should be defined and greater than 0",
+        message="connection_node.storage_area should be defined and greater than 0 if the connection nodes "
+        "has no connections to channels, culverts, pipes, weirs, or orifices0",
     )
 ]
 
@@ -516,7 +517,7 @@ CHECKS += [
             ),
         ),
         message=(
-            "connection_nodes.storage_area for a node that is connected to a weir or an orifice, "
+            "connection_node.storage_area for a node that is connected to a weir or an orifice, "
             "and that has exchange type CONNECTED or ISOLATED should be defined and greater than 0"
         ),
     )
@@ -558,7 +559,7 @@ CHECKS += [
             ),
         ),
         message=(
-            "connection_nodes.bottom_level for a node that is connected to a weir or an orifice, "
+            "connection_node.bottom_level for a node that is connected to a weir or an orifice, "
             "and that has exchange type CONNECTED or ISOLATED should be defined"
         ),
     )
@@ -588,7 +589,7 @@ CHECKS += [
             ),
         ),
         message=(
-            "connection_nodes.bottom_level for a node that is connected to a pipe or a culvert, "
+            "connection_node.bottom_level for a node that is connected to a pipe or a culvert, "
             "and that is not connected to a channel should be defined. "
             "In the future, this will lead to an error."
         ),
@@ -624,7 +625,7 @@ CHECKS += [
             ),
         ),
         message=(
-            "connection_nodes.storage_area for a node that is connected to a pipe or a culvert, "
+            "connection_node.storage_area for a node that is connected to a pipe or a culvert, "
             "and that is not connected to a channel should be defined and greater than 0"
             "In the future, this will lead to an error."
         ),
@@ -1166,8 +1167,7 @@ CHECKS += [
                 )
             ),
         ),
-        message="This is an isolated connection node without connections. Connect it to either a pipe, "
-        "channel, culvert, weir, orifice or pumpstation.",
+        message="This connection node is not connected to a pipe, channel, culvert, weir, orifice or pumpstation.",
     ),
     QueryCheck(
         level=CheckLevel.WARNING,
