@@ -421,7 +421,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=45,
-        level=CheckLevel.ERROR,
+        level=CheckLevel.FUTURE_ERROR,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
         .filter(
@@ -446,7 +446,8 @@ CHECKS += [
             ),
         ),
         message="connection_node.storage_area should be defined and greater than 0 if the connection nodes "
-        "has no connections to channels, culverts, pipes, weirs, or orifices0",
+        "has no connections to channels, culverts, pipes, weirs, or orifices0. "
+        "From September 2025 onwards, this will be an ERROR.",
     )
 ]
 
@@ -479,7 +480,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=47,
-        level=CheckLevel.ERROR,
+        level=CheckLevel.FUTURE_ERROR,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
         .filter(
@@ -518,7 +519,8 @@ CHECKS += [
         ),
         message=(
             "connection_node.storage_area for a node that is connected to a weir or an orifice, "
-            "and that has exchange type CONNECTED or ISOLATED should be defined and greater than 0"
+            "and that has exchange type CONNECTED or ISOLATED should be defined and greater than 0. "
+            "From September 2025 onwards, this will be an ERROR."
         ),
     )
 ]
