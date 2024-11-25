@@ -6,7 +6,7 @@ Changelog of threedi-modelchecker
 2.14.2 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add test for check descriptions.
 
 
 2.14.1 (2024-11-25)
