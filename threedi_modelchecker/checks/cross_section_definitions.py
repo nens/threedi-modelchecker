@@ -167,7 +167,7 @@ class CrossSectionCSVFormatCheck(CrossSectionBaseCheck):
 
     def description(self):
         return (
-            f"{self.table.__tablename__}.{self.column_name} should contain one or more lines of "
+            f"{self.table.name}.{self.column_name} should contain one or more lines of "
             "comma separated values"
         )
 
@@ -177,7 +177,7 @@ class CrossSectionListCheck(CrossSectionCSVFormatCheck):
 
     def description(self):
         return (
-            f"{self.table.__tablename__}.{self.column_name} should contain comma separated floats "
+            f"{self.table.name}.{self.column_name} should contain comma separated floats "
             f"for shapes {self.shape_msg}"
         )
 
@@ -191,7 +191,7 @@ class CrossSectionTableCheck(CrossSectionCSVFormatCheck):
 
     def description(self):
         return (
-            f"{self.table.__tablename__}.{self.column_name} should contain a csv table containing "
+            f"{self.table.name}.{self.column_name} should contain a csv table containing "
             f"{self.ncol} columns with floats for shapes {self.shape_msg}"
         )
 
@@ -438,7 +438,7 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
-        return f"{self.table.__tablename__}.cross_section_width and/or cross_section_height should be at least 0.1m"
+        return f"{self.table.name}.cross_section_width and/or cross_section_height should be at least 0.1m"
 
 
 class OpenIncreasingCrossSectionCheck(CrossSectionBaseCheck):
@@ -500,7 +500,7 @@ class OpenIncreasingCrossSectionConveyanceFrictionCheck(
 
     def description(self):
         return (
-            f"{self.table.__tablename__}.friction_type can only "
+            f"{self.table.name}.friction_type can only "
             "have conveyance if the associated definition is "
             "an open shape, and its width is monotonically increasing"
         )
@@ -598,7 +598,7 @@ class CrossSectionVegetationTableNotNegativeCheck(CrossSectionBaseCheck):
         return invalids
 
     def description(self):
-        return f"All values in {self.table.__tablename__}.{self.column_name} should be equal to or larger than 0"
+        return f"All values in {self.table.name}.{self.column_name} should be equal to or larger than 0"
 
 
 class CrossSectionVariableFrictionRangeCheck(CrossSectionBaseCheck):
