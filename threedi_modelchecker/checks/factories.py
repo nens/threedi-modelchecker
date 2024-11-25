@@ -43,11 +43,17 @@ def generate_unique_checks(table, custom_level_map=None, **kwargs):
     return unique_checks
 
 
-def generate_not_null_checks(table, custom_level_map=None, **kwargs):
+def generate_not_null_checks(
+    table, custom_level_map=None, extra_not_null_columns=None, **kwargs
+):
     custom_level_map = custom_level_map or {}
     not_null_checks = []
+    if extra_not_null_columns is None:
+        extra_not_null_columns = []
     for column in table.columns:
-        if not column.nullable:
+        if not column.nullable or any(
+            col.compare(column) for col in extra_not_null_columns
+        ):
             level = get_level(table, column, custom_level_map)
             not_null_checks.append(NotNullCheck(column, level=level, **kwargs))
     return not_null_checks

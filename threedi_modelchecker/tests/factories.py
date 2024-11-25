@@ -47,7 +47,7 @@ class ConnectionNodeFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     code = Faker("name")
-    the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
 class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -56,22 +56,9 @@ class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     display_name = Faker("name")
-    code = "code"
-    calculation_type = constants.CalculationType.CONNECTED
-    the_geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
-    connection_node_start = factory.SubFactory(ConnectionNodeFactory)
-    connection_node_end = factory.SubFactory(ConnectionNodeFactory)
-
-
-class ManholeFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.Manhole
-        sqlalchemy_session = None
-
     code = Faker("name")
-    display_name = Faker("name")
-    bottom_level = 0.0
-    connection_node = factory.SubFactory(ConnectionNodeFactory)
+    exchange_type = constants.CalculationType.CONNECTED
+    geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
 
 
 class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -86,9 +73,9 @@ class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
     friction_value = 2.0
     friction_type = constants.FrictionType.CHEZY
     sewerage = False
-    cross_section_definition_id = 1
-    connection_node_start_id = 1
-    connection_node_end_id = 1
+    connection_node_id_start = 1
+    connection_node_id_end = 1
+    geom = "SRID=4326;LINESTRING(4.885534714757985 52.38513158257129,4.88552805617346 52.38573773758626)"
 
 
 class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -113,9 +100,9 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
-class PumpstationFactory(factory.alchemy.SQLAlchemyModelFactory):
+class PumpFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.Pumpstation
+        model = models.Pump
         sqlalchemy_session = None
 
     code = "code"
@@ -125,15 +112,7 @@ class PumpstationFactory(factory.alchemy.SQLAlchemyModelFactory):
     start_level = 1.0
     lower_stop_level = 0.0
     capacity = 5.0
-    connection_node_start = factory.SubFactory(ConnectionNodeFactory)
-
-
-class CrossSectionDefinitionFactory(factory.alchemy.SQLAlchemyModelFactory):
-    class Meta:
-        model = models.CrossSectionDefinition
-        sqlalchemy_session = None
-
-    code = "cross-section code"
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
 class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -145,9 +124,7 @@ class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     reference_level = 0.0
     friction_type = constants.FrictionType.CHEZY
     friction_value = 0.0
-    the_geom = "SRID=4326;POINT(-71.064544 42.28787)"
-    channel = factory.SubFactory(ChannelFactory)
-    definition = factory.SubFactory(CrossSectionDefinitionFactory)
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
 class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -293,15 +270,12 @@ class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     code = "code"
     display_name = Faker("name")
-    calculation_type = constants.CalculationTypeCulvert.ISOLATED_NODE
-    the_geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
-    connection_node_start = factory.SubFactory(ConnectionNodeFactory)
-    connection_node_end = factory.SubFactory(ConnectionNodeFactory)
+    exchange_type = constants.CalculationTypeCulvert.ISOLATED_NODE
+    geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
     friction_value = 0.03
     friction_type = 2
-    invert_level_start_point = 0.1
-    invert_level_end_point = 1.1
-    cross_section_definition = factory.SubFactory(CrossSectionDefinitionFactory)
+    invert_level_start = 0.1
+    invert_level_end = 1.1
     discharge_coefficient_negative = 1.0
     discharge_coefficient_positive = 1.0
 

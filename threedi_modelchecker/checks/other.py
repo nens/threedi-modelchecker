@@ -1,14 +1,24 @@
 import re
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
-from sqlalchemy import and_, case, cast, distinct, func, not_, REAL, select, text
+from sqlalchemy import (
+    and_,
+    case,
+    cast,
+    distinct,
+    func,
+    not_,
+    REAL,
+    select,
+    text,
+    union_all,
+)
 from sqlalchemy.orm import aliased, Query, Session
 from threedi_schema.domain import constants, models
 
 from .base import BaseCheck, CheckLevel
-from .cross_section_definitions import cross_section_configuration
+from .cross_section_definitions import cross_section_configuration_for_record
 from .geo_query import distance, length, transform
 
 
@@ -48,16 +58,19 @@ class CrossSectionLocationCheck(BaseCheck):
     """Check if cross section locations are within {max_distance} of their channel."""
 
     def __init__(self, max_distance, *args, **kwargs):
-        super().__init__(column=models.CrossSectionLocation.the_geom, *args, **kwargs)
+        super().__init__(column=models.CrossSectionLocation.geom, *args, **kwargs)
         self.max_distance = max_distance
 
     def get_invalid(self, session):
         # get all channels with more than 1 cross section location
         return (
             self.to_check(session)
-            .join(models.Channel)
+            .join(
+                models.Channel,
+                models.Channel.id == models.CrossSectionLocation.channel_id,
+            )
             .filter(
-                distance(models.CrossSectionLocation.the_geom, models.Channel.the_geom)
+                distance(models.CrossSectionLocation.geom, models.Channel.geom)
                 > self.max_distance
             )
             .all()
@@ -65,7 +78,7 @@ class CrossSectionLocationCheck(BaseCheck):
 
     def description(self):
         return (
-            f"v2_cross_section_location.the_geom is invalid: the cross-section location "
+            f"cross_section_location.geom is invalid: the cross-section location "
             f"should be located on the channel geometry (tolerance = {self.max_distance} m)"
         )
 
@@ -98,6 +111,47 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             REAL,
         )
 
+    def get_first_in_str(self, col, sep):
+        return func.substr(
+            col,
+            1,
+            func.instr(col, sep) - 1,
+        )
+
+    def get_last_in_str(self, col, sep):
+        return func.replace(
+            col,
+            func.rtrim(
+                col,
+                func.replace(col, sep, ""),
+            ),
+            "",
+        )
+
+    def first_row_width(self):
+        first_row = self.get_first_in_str(
+            models.CrossSectionLocation.cross_section_table, "\n"
+        )
+        return cast(self.get_first_in_str(first_row, ","), REAL)
+
+    def first_row_height(self):
+        first_row = self.get_first_in_str(
+            models.CrossSectionLocation.cross_section_table, "\n"
+        )
+        return cast(self.get_last_in_str(first_row, ","), REAL)
+
+    def last_row_width(self):
+        last_row = self.get_last_in_str(
+            models.CrossSectionLocation.cross_section_table, "\n"
+        )
+        return cast(self.get_first_in_str(last_row, ","), REAL)
+
+    def last_row_height(self):
+        last_row = self.get_last_in_str(
+            models.CrossSectionLocation.cross_section_table, "\n"
+        )
+        return cast(self.get_last_in_str(last_row, ","), REAL)
+
     def configuration_type(
         self, shape, first_width, last_width, first_height, last_height
     ):
@@ -129,48 +183,44 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
         )
 
     def get_invalid(self, session):
-        # get all channels with more than 1 cross section location
-        cross_sections = (
-            select(
-                models.CrossSectionLocation.id.label("cross_section_id"),
-                models.CrossSectionLocation.channel_id,
-                models.CrossSectionDefinition.shape,
-                models.CrossSectionDefinition.width,
-                models.CrossSectionDefinition.height,
-                self.first_number_in_spaced_string(
-                    models.CrossSectionDefinition.width
-                ).label("first_width"),
-                self.first_number_in_spaced_string(
-                    models.CrossSectionDefinition.height
-                ).label("first_height"),
-                self.last_number_in_spaced_string(
-                    models.CrossSectionDefinition.width
-                ).label("last_width"),
-                self.last_number_in_spaced_string(
-                    models.CrossSectionDefinition.height
-                ).label("last_height"),
-            )
-            .select_from(models.CrossSectionLocation)
-            .join(
-                models.CrossSectionDefinition,
-                models.CrossSectionLocation.definition_id
-                == models.CrossSectionDefinition.id,
-            )
-            .subquery()
-        )
+        # find all tabulated cross sections
+        cross_sections_tab = select(
+            models.CrossSectionLocation.id.label("cross_section_id"),
+            models.CrossSectionLocation.channel_id,
+            models.CrossSectionLocation.cross_section_shape,
+            models.CrossSectionLocation.cross_section_table,
+            self.first_row_width().label("first_width"),
+            self.first_row_height().label("first_height"),
+            self.last_row_width().label("last_width"),
+            self.last_row_height().label("last_height"),
+        ).where(models.CrossSectionLocation.cross_section_shape.in_([5, 6, 7]))
+        # find all non tabulated cross sections
+        cross_sections_notab = select(
+            models.CrossSectionLocation.id.label("cross_section_id"),
+            models.CrossSectionLocation.channel_id,
+            models.CrossSectionLocation.cross_section_shape,
+            models.CrossSectionLocation.cross_section_table,
+            models.CrossSectionLocation.cross_section_width.label("first_width"),
+            models.CrossSectionLocation.cross_section_height.label("first_height"),
+            models.CrossSectionLocation.cross_section_width.label("last_width"),
+            models.CrossSectionLocation.cross_section_height.label("last_height"),
+        ).where(~models.CrossSectionLocation.cross_section_shape.in_([5, 6, 7]))
+        # combine the above two queries to get all cross sections
+        cross_sections = union_all(cross_sections_tab, cross_sections_notab).subquery()
         cross_sections_with_configuration = select(
             cross_sections.c.cross_section_id,
-            cross_sections.c.shape,
+            cross_sections.c.cross_section_shape,
             cross_sections.c.last_width,
             cross_sections.c.channel_id,
             self.configuration_type(
-                shape=cross_sections.c.shape,
+                shape=cross_sections.c.cross_section_shape,
                 first_width=cross_sections.c.first_width,
                 last_width=cross_sections.c.last_width,
                 first_height=cross_sections.c.first_height,
                 last_height=cross_sections.c.last_height,
             ).label("configuration"),
         ).subquery()
+
         filtered_cross_sections = (
             select(cross_sections_with_configuration)
             .group_by(cross_sections_with_configuration.c.channel_id)
@@ -180,45 +230,11 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             )
             .subquery()
         )
-
-        def is_valid_series(input):
-            try:
-                [float(i) for i in input.split(" ")]
-                return True
-            except ValueError:
-                return False
-
-        def is_valid_value(input):
-            if input in ["", None] or is_valid_series(input):
-                return True
-            else:
-                return False
-
-        all_cross_sections = session.execute(
-            select(
-                models.CrossSectionDefinition.width,
-                models.CrossSectionDefinition.height,
-            )
+        return (
+            self.to_check(session)
+            .filter(self.column == filtered_cross_sections.c.channel_id)
+            .all()
         )
-
-        error_in_cross_sections = False
-
-        for row in all_cross_sections.all():
-            if not is_valid_value(row[0]) or not is_valid_value(row[1]):
-                error_in_cross_sections = True
-                break  # no need to continue checking; one error is enough to not run the check
-
-        # only run the check if all the cross-section definitions have a parsable width and height
-        # otherwise sqlalchemy will throw an exception
-        # this is also checked in checks 87 and 88 (CrossSectionFloatListCheck), where it gives an error to the user
-        if not error_in_cross_sections:
-            return (
-                self.to_check(session)
-                .filter(self.column == filtered_cross_sections.c.channel_id)
-                .all()
-            )
-        else:
-            return []
 
     def description(self):
         return f"{self.column_name} has both open and closed cross-sections along its length. All cross-sections on a {self.column_name} object must be either open or closed."
@@ -301,11 +317,9 @@ class ConnectionNodesLength(BaseCheck):
         end_node = aliased(models.ConnectionNode)
         q = (
             self.to_check(session)
-            .join(start_node, self.start_node)
-            .join(end_node, self.end_node)
-            .filter(
-                distance(start_node.the_geom, end_node.the_geom) < self.min_distance
-            )
+            .join(start_node, start_node.id == self.start_node)
+            .join(end_node, end_node.id == self.end_node)
+            .filter(distance(start_node.geom, end_node.geom) < self.min_distance)
         )
         return list(q.with_session(session).all())
 
@@ -337,16 +351,16 @@ class ConnectionNodesDistance(BaseCheck):
         """
         query = text(
             f"""SELECT *
-               FROM v2_connection_nodes AS cn1, v2_connection_nodes AS cn2
+               FROM connection_node AS cn1, connection_node AS cn2
                WHERE
-                   distance(cn1.the_geom, cn2.the_geom, 1) < :min_distance
+                   distance(cn1.geom, cn2.geom, 1) < :min_distance
                    AND cn1.ROWID != cn2.ROWID
                    AND cn2.ROWID IN (
                      SELECT ROWID
                      FROM SpatialIndex
                      WHERE (
-                       f_table_name = "v2_connection_nodes"
-                       AND search_frame = Buffer(cn1.the_geom, {self.minimum_distance / 2})));
+                       f_table_name = "connection_node"
+                       AND search_frame = Buffer(cn1.geom, {self.minimum_distance / 2})));
             """
         )
         results = (
@@ -402,10 +416,10 @@ class ChannelManholeLevelCheck(BaseCheck):
         """
         if self.nodes_to_check == "start":
             func_agg = func.MIN
-            connection_node_id_col = models.Channel.connection_node_start_id
+            connection_node_id_col = models.Channel.connection_node_id_start
         else:
             func_agg = func.MAX
-            connection_node_id_col = models.Channel.connection_node_end_id
+            connection_node_id_col = models.Channel.connection_node_id_end
 
         channels_with_cs_locations = (
             session.query(
@@ -413,27 +427,32 @@ class ChannelManholeLevelCheck(BaseCheck):
                 models.CrossSectionLocation,
                 func_agg(
                     func.Line_Locate_Point(
-                        models.Channel.the_geom, models.CrossSectionLocation.the_geom
+                        models.Channel.geom, models.CrossSectionLocation.geom
                     )
                 ),
             )
-            .join(models.Channel, isouter=True)
+            .join(
+                models.CrossSectionLocation,
+                models.CrossSectionLocation.channel_id == models.Channel.id,
+            )
             .group_by(models.Channel.id)
         )
+
         channels_with_manholes = channels_with_cs_locations.join(
-            models.Manhole,
-            connection_node_id_col == models.Manhole.connection_node_id,
+            models.ConnectionNode, models.ConnectionNode.id == connection_node_id_col
         )
+
         channels_manholes_level_checked = channels_with_manholes.having(
-            models.CrossSectionLocation.reference_level < models.Manhole.bottom_level
+            models.CrossSectionLocation.reference_level
+            < models.ConnectionNode.bottom_level
         )
 
         return channels_manholes_level_checked.all()
 
     def description(self) -> str:
         return (
-            f"The v2_manhole.bottom_level at the {self.nodes_to_check} of this v2_channel is higher than the "
-            "v2_cross_section_location.reference_level closest to the manhole. This will be "
+            f"The connection_node.bottom_level at the {self.nodes_to_check} of this channel is higher than the "
+            "cross_section_location.reference_level closest to the manhole. This will be "
             "automatically fixed in threedigrid-builder."
         )
 
@@ -445,9 +464,10 @@ class OpenChannelsWithNestedNewton(BaseCheck):
     See https://github.com/nens/threeditoolbox/issues/522
     """
 
-    def __init__(self, level=CheckLevel.WARNING, *args, **kwargs):
+    def __init__(self, column, level=CheckLevel.WARNING, *args, **kwargs):
         super().__init__(
-            column=models.CrossSectionDefinition.id,
+            # column=table.id,
+            column=column,
             level=level,
             filters=Query(models.NumericalSettings)
             .filter(models.NumericalSettings.use_nested_newton == 0)
@@ -455,50 +475,16 @@ class OpenChannelsWithNestedNewton(BaseCheck):
             *args,
             **kwargs,
         )
+        # self.table = table
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        definitions_in_use = self.to_check(session).filter(
-            models.CrossSectionDefinition.id.in_(
-                Query(models.CrossSectionLocation.definition_id).union_all(
-                    Query(models.Pipe.cross_section_definition_id),
-                    Query(models.Culvert.cross_section_definition_id),
-                    Query(models.Weir.cross_section_definition_id),
-                    Query(models.Orifice.cross_section_definition_id),
-                )
-            ),
-        )
+        invalids = []
+        for record in self.to_check(session):
+            _, _, configuration = cross_section_configuration_for_record(record)
 
-        # closed_rectangle, circle, and egg cross-section definitions are always closed:
-        closed_definitions = definitions_in_use.filter(
-            models.CrossSectionDefinition.shape.in_(
-                [
-                    constants.CrossSectionShape.CLOSED_RECTANGLE,
-                    constants.CrossSectionShape.CIRCLE,
-                    constants.CrossSectionShape.EGG,
-                ]
-            )
-        )
-        result = list(closed_definitions.with_session(session).all())
-
-        # tabulated cross-section definitions are closed when the last element of 'width'
-        # is zero
-        tabulated_definitions = definitions_in_use.filter(
-            models.CrossSectionDefinition.shape.in_(
-                [
-                    constants.CrossSectionShape.TABULATED_RECTANGLE,
-                    constants.CrossSectionShape.TABULATED_TRAPEZIUM,
-                ]
-            )
-        )
-        for definition in tabulated_definitions.with_session(session).all():
-            try:
-                if float(definition.width.split(" ")[-1]) == 0.0:
-                    # Closed channel
-                    result.append(definition)
-            except Exception:
-                # Many things can go wrong, these are caught elsewhere
-                pass
-        return result
+            if configuration == "closed":
+                invalids.append(record)
+        return invalids
 
     def description(self) -> str:
         return (
@@ -527,14 +513,14 @@ class LinestringLocationCheck(BaseCheck):
         start_point = func.ST_PointN(self.column, 1)
         end_point = func.ST_PointN(self.column, func.ST_NPoints(self.column))
 
-        start_ok = distance(start_point, start_node.the_geom) <= tol
-        end_ok = distance(end_point, end_node.the_geom) <= tol
-        start_ok_if_reversed = distance(end_point, start_node.the_geom) <= tol
-        end_ok_if_reversed = distance(start_point, end_node.the_geom) <= tol
+        start_ok = distance(start_point, start_node.geom) <= tol
+        end_ok = distance(end_point, end_node.geom) <= tol
+        start_ok_if_reversed = distance(end_point, start_node.geom) <= tol
+        end_ok_if_reversed = distance(start_point, end_node.geom) <= tol
         return (
             self.to_check(session)
-            .join(start_node, start_node.id == self.table.c.connection_node_start_id)
-            .join(end_node, end_node.id == self.table.c.connection_node_end_id)
+            .join(start_node, start_node.id == self.table.c.connection_node_id_start)
+            .join(end_node, end_node.id == self.table.c.connection_node_id_end)
             .filter(
                 ~(start_ok & end_ok),
                 ~(start_ok_if_reversed & end_ok_if_reversed),
@@ -567,12 +553,12 @@ class BoundaryCondition1DObjectNumberCheck(BaseCheck):
             ]:
                 total_objects += (
                     session.query(table)
-                    .filter(table.connection_node_start_id == bc.connection_node_id)
+                    .filter(table.connection_node_id_start == bc.connection_node_id)
                     .count()
                 )
                 total_objects += (
                     session.query(table)
-                    .filter(table.connection_node_end_id == bc.connection_node_id)
+                    .filter(table.connection_node_id_end == bc.connection_node_id)
                     .count()
                 )
             if total_objects != 1:
@@ -626,7 +612,7 @@ class PotentialBreachStartEndCheck(BaseCheck):
         super().__init__(*args, **kwargs)
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        linestring = models.Channel.the_geom
+        linestring = models.Channel.geom
         tol = self.min_distance
         breach_point = func.Line_Locate_Point(
             transform(linestring), transform(func.ST_PointN(self.column, 1))
@@ -664,9 +650,7 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
             return (breach_point * length(linestring)).label("position")
 
         potential_breaches = sorted(
-            session.query(
-                self.table, get_position(self.column, models.Channel.the_geom)
-            )
+            session.query(self.table, get_position(self.column, models.Channel.geom))
             .join(models.Channel, self.table.c.channel_id == models.Channel.id)
             .all(),
             key=lambda x: (x.channel_id, x[-1]),
@@ -694,10 +678,10 @@ class PumpStorageTimestepCheck(BaseCheck):
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         return (
-            session.query(models.Pumpstation)
+            session.query(models.Pump)
             .join(
                 models.ConnectionNode,
-                models.Pumpstation.connection_node_start_id == models.ConnectionNode.id,
+                models.Pump.connection_node_id == models.ConnectionNode.id,
             )
             .filter(
                 (models.ConnectionNode.storage_area != None)
@@ -709,13 +693,10 @@ class PumpStorageTimestepCheck(BaseCheck):
                             # conditional type cast, no invalid results would be returned
                             # even if the storage_area was set to None.
                             models.ConnectionNode.storage_area
-                            * (
-                                models.Pumpstation.start_level
-                                - models.Pumpstation.lower_stop_level
-                            )
+                            * (models.Pump.start_level - models.Pump.lower_stop_level)
                         )
                     )
-                    / (models.Pumpstation.capacity / 1000)
+                    / (models.Pump.capacity / 1000)
                     < Query(models.TimeStepSettings.time_step).scalar_subquery()
                 )
             )
@@ -837,38 +818,8 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
 
     def get_invalid(self, session):
         invalids = []
-        for record in session.execute(
-            select(
-                self.table.c.id,
-                self.table.c.cross_section_definition_id,
-                models.CrossSectionDefinition.shape,
-                models.CrossSectionDefinition.width,
-                models.CrossSectionDefinition.height,
-            )
-            .join(
-                models.CrossSectionDefinition,
-                self.table.c.cross_section_definition_id
-                == models.CrossSectionDefinition.id,
-                isouter=True,
-            )
-            .where(
-                (models.CrossSectionDefinition.width != None)
-                & (models.CrossSectionDefinition.width != "")
-            )
-        ):
-            try:
-                widths = [float(x) for x in record.width.split(" ")]
-                heights = (
-                    [float(x) for x in record.height.split(" ")]
-                    if record.height not in [None, ""]
-                    else []
-                )
-            except ValueError:
-                continue  # other check catches this
-
-            _, _, configuration = cross_section_configuration(
-                shape=record.shape.value, heights=heights, widths=widths
-            )
+        for record in self.to_check(session):
+            _, _, configuration = cross_section_configuration_for_record(record)
 
             # Pipes and culverts should generally have a closed cross-section
             if configuration == "open":
@@ -881,7 +832,7 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
 
 
 class DefinedAreaCheck(BaseCheck):
-    """Check if the value in the 'area' column matches the surface area of 'the_geom'"""
+    """Check if the value in the 'area' column matches the surface area of 'geom'"""
 
     def __init__(self, *args, max_difference=1, **kwargs):
         super().__init__(*args, **kwargs)
@@ -938,16 +889,17 @@ class BetaValuesCheck(BaseCheck):
         return f"The value you have used for {self.column_name} is still in beta; please do not use it yet."
 
 
-class AllPresent(BaseCheck, ABC):
-    """Base class to check if all or none values are present for a list of columns"""
+class AllPresentVegetationParameters(BaseCheck):
+    """Check if all or none vegetation values are defined in the CrossSectionLocation table"""
 
-    def __init__(self, columns, *args, **kwargs):
-        self.columns = columns
+    def __init__(self, *args, **kwargs):
+        self.columns = [
+            models.CrossSectionLocation.vegetation_drag_coefficient,
+            models.CrossSectionLocation.vegetation_height,
+            models.CrossSectionLocation.vegetation_stem_diameter,
+            models.CrossSectionLocation.vegetation_stem_density,
+        ]
         super().__init__(*args, **kwargs)
-
-    @abstractmethod
-    def _get_records(self, session):
-        pass
 
     def get_invalid(self, session):
         # Create filters that find all rows where all or none of the values are present
@@ -958,83 +910,24 @@ class AllPresent(BaseCheck, ABC):
             *[(col == None) | (col == "") for col in self.columns]
         )
         # Return all rows where neither all or none values are present
-        return (
-            self._get_records(session)
-            .filter(not_(filter_condition_all))
-            .filter(not_(filter_condition_none))
-            .all()
-        )
-
-    def description(self):
-        column_string = ",".join(
-            [f"{column.table.name}.{column.name}" for column in self.columns]
-        )
-        return f"All of these columns must be defined: {column_string}"
-
-
-class AllPresentFixedVegetationParameters(AllPresent):
-    """Check if all or none vegetation values are defined in the CrossSectionLocation table"""
-
-    def __init__(self, *args, **kwargs):
-        columns = [
-            models.CrossSectionLocation.vegetation_drag_coefficient,
-            models.CrossSectionLocation.vegetation_height,
-            models.CrossSectionLocation.vegetation_stem_diameter,
-            models.CrossSectionLocation.vegetation_stem_density,
-        ]
-        super().__init__(columns, *args, **kwargs)
-
-    def _get_records(self, session):
-        # Get records with valid settings for vegetation in CrossSectionLocation
-        return (
+        records = (
             session.query(models.CrossSectionLocation)
-            .join(
-                models.CrossSectionDefinition,
-                models.CrossSectionDefinition.id
-                == models.CrossSectionLocation.definition_id,
-            )
             .filter(
                 models.CrossSectionLocation.friction_type.is_(
                     constants.FrictionType.CHEZY
                 )
             )
             .filter(
-                models.CrossSectionDefinition.shape.is_(
+                models.CrossSectionLocation.cross_section_shape.is_(
                     constants.CrossSectionShape.TABULATED_YZ
                 )
             )
         )
 
-
-class AllPresentVariableVegetationParameters(AllPresent):
-    def __init__(self, *args, **kwargs):
-        columns = [
-            models.CrossSectionDefinition.vegetation_drag_coefficients,
-            models.CrossSectionDefinition.vegetation_heights,
-            models.CrossSectionDefinition.vegetation_stem_diameters,
-            models.CrossSectionDefinition.vegetation_stem_densities,
-        ]
-        super().__init__(columns, *args, **kwargs)
-
-    def _get_records(self, session):
-        # Get records with valid settings for vegetation in CrossSectionDefinition
         return (
-            session.query(models.CrossSectionDefinition)
-            .join(
-                models.CrossSectionLocation,
-                models.CrossSectionDefinition.id
-                == models.CrossSectionLocation.definition_id,
-            )
-            .filter(
-                models.CrossSectionLocation.friction_type.is_(
-                    constants.FrictionType.CHEZY_CONVEYANCE
-                )
-            )
-            .filter(
-                models.CrossSectionDefinition.shape.is_(
-                    constants.CrossSectionShape.TABULATED_YZ
-                )
-            )
+            records.filter(not_(filter_condition_all))
+            .filter(not_(filter_condition_none))
+            .all()
         )
 
 

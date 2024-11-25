@@ -9,6 +9,7 @@ from threedi_schema.domain import custom_types
 
 class CheckLevel(IntEnum):
     ERROR = 40
+    FUTURE_ERROR = 39
     WARNING = 30
     INFO = 20
 
