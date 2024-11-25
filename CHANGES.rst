@@ -3,7 +3,7 @@ Changelog of threedi-modelchecker
 
 
 
-2.13.1 (unreleased)
+2.14.0 (2024-11-25)
 -------------------
 
 - Modify existing checks to work with schema changes for 1D
