@@ -5,7 +5,7 @@ from threedi_modelchecker.config import Config
 checks = Config(models=DECLARED_MODELS).checks
 
 
-def test_error_description():
+def test_check_descriptions():
     for check in checks:
         check_code = str(check.error_code).zfill(4)
         try:
