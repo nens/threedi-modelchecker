@@ -1005,7 +1005,7 @@ class TagsValidCheck(BaseCheck):
             (self.column != None) & (self.column != "")
         ):
             query = (
-                f"SELECT id FROM tags WHERE id IN ({getattr(record, self.column.name)})"
+                f"SELECT id FROM tag WHERE id IN ({getattr(record, self.column.name)})"
             )
             match_rows = session.connection().execute(text(query)).fetchall()
             found_idx = {row[0] for row in match_rows}
