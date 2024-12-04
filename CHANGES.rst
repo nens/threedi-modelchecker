@@ -7,6 +7,7 @@ Changelog of threedi-modelchecker
 -------------------
 
 - Add test for check descriptions.
+- Bump minimal python version to 3.9
 
 
 2.14.1 (2024-11-25)
