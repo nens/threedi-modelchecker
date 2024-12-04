@@ -682,7 +682,7 @@ def test_defined_area(session, defined_area, max_difference, expected_result):
     "value,expected_result",
     [
         (None, 0),  # column not set, valid result
-        (5, 1),  # column set, invalid result
+        (True, 1),  # column set, invalid result
     ],
 )
 def test_beta_columns(session, value, expected_result):
@@ -853,15 +853,15 @@ def test_used_settings_present_check_single_table(session, use_setting, add_sett
 @pytest.mark.parametrize("add_surface", [True, False])
 @pytest.mark.parametrize("add_dwf", [True, False])
 def test_used_settings_present_check(session, use_setting, add_surface, add_dwf):
-    nof_invalid_expected = 1 if use_setting and (add_surface or add_dwf) else 0
+    nof_invalid_expected = 1 if use_setting and not (add_surface and add_dwf) else 0
     factories.SimulationTemplateSettingsFactory(use_0d_inflow=use_setting)
     if add_surface:
         factories.SurfaceFactory()
     if add_dwf:
         factories.DryWeatherFlowFactory()
     check = UsedSettingsPresentCheck(
-        column=models.ModelSettings.use_vegetation_drag_2d,
-        settings_table=[models.Surface, models.DryWeatherFlow],
+        column=models.SimulationTemplateSettings.use_0d_inflow,
+        settings_tables=[models.Surface, models.DryWeatherFlow],
     )
     assert len(check.get_invalid(session)) == nof_invalid_expected
 
