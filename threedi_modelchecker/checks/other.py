@@ -935,24 +935,46 @@ class UsedSettingsPresentCheck(BaseCheck):
     def __init__(
         self,
         column,
-        settings_table,
+        settings_tables,
         filters=None,
         level=CheckLevel.ERROR,
         error_code=0,
     ):
         super().__init__(column, filters, level, error_code)
-        self.settings_table = settings_table
+        self.settings_tables = settings_tables
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         # more than 1 row should be caught by another check
         all_results = self.to_check(session).filter(self.column == True).all()
         use_cols = len(all_results) > 0
-        if use_cols and session.query(self.settings_table).count() == 0:
-            return all_results
+        for table in self.settings_tables:
+            if use_cols and session.query(table).count() == 0:
+                return all_results
         return []
 
     def description(self) -> str:
-        return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.__tablename__} is empty"
+        msg = f"{self.column_name} in {self.table.name} is set to True but "
+        if len(self.settings_tables) == 1:
+            msg += "{self.settings_tables[0].__tablename__} is empty"
+        else:
+            msg += (
+                "["
+                + ",".join(table.__tablename__ for table in self.settings_tables)
+                + "] are empty"
+            )
+        return msg
+
+
+class UsedSettingsPresentCheckSingleTable(UsedSettingsPresentCheck):
+    def __init__(
+        self,
+        column,
+        settings_table,
+        filters=None,
+        level=CheckLevel.ERROR,
+        error_code=0,
+    ):
+        super().__init__(column, [settings_table], filters, level, error_code)
 
 
 class MaxOneRecordCheck(BaseCheck):

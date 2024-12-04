@@ -74,6 +74,7 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
     TagsValidCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
+    UsedSettingsPresentCheckSingleTable,
 )
 from .checks.raster import (
     GDALAvailableCheck,
@@ -1610,7 +1611,7 @@ CHECKS += [
 ]
 
 CHECKS += [
-    UsedSettingsPresentCheck(
+    UsedSettingsPresentCheckSingleTable(
         error_code=326, level=CheckLevel.ERROR, column=use_col, settings_table=table
     )
     for table, use_col in (
@@ -1663,6 +1664,22 @@ CHECKS += [
         min_value=5.0,
         left_inclusive=True,  # 0 itself is not allowed
         message="model_settings.calculation_point_distance_1d should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
+    )
+]
+
+CHECKS += [
+    UsedSettingsPresentCheck(
+        error_code=329, level=CheckLevel.ERROR, column=use_col, settings_tables=tables
+    )
+    for tables, use_col in (
+        (
+            [models.Surface, models.DryWeatherFlow],
+            models.SimulationTemplateSettings.use_0d_inflow,
+        ),
+        (
+            [models.ControlTable, models.ControlMemory],
+            models.SimulationTemplateSettings.use_structure_control,
+        ),
     )
 ]
 
