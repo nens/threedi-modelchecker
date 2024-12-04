@@ -6,7 +6,8 @@ Changelog of threedi-modelchecker
 2.14.2 (unreleased)
 -------------------
 
-- Add test for check descriptions.
+- Check if tables related to use_* settings in model_settings and simulation_template settings are populated
+- Warn if tables related to use_* settings in model_settings and simulation_template settings are populated while use_* settings is false
 
 
 2.14.1 (2024-11-25)
