@@ -681,7 +681,7 @@ def test_defined_area(session, defined_area, max_difference, expected_result):
     "value,expected_result",
     [
         (None, 0),  # column not set, valid result
-        (5, 1),  # column set, invalid result
+        (True, 1),  # column set, invalid result
     ],
 )
 def test_beta_columns(session, value, expected_result):
