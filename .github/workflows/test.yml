@@ -15,10 +15,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # 2019
-          - python: 3.8
-            pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
-            display_name: "2019"
           # 2021
           - python: 3.9
             pins: "sqlalchemy==1.4.44 alembic==1.8.* geoalchemy2==0.14.*"
