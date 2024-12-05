@@ -10,7 +10,6 @@ from .checks.base import (
     AllEqualCheck,
     BaseCheck,
     CheckLevel,
-    ForeignKeyCheck,
     ListOfIntsCheck,
     NotNullCheck,
     QueryCheck,
@@ -39,6 +38,7 @@ from .checks.cross_section_definitions import (
     OpenIncreasingCrossSectionVariableCheck,
 )
 from .checks.factories import (
+    ForeignKeyCheckSetting,
     generate_enum_checks,
     generate_foreign_key_checks,
     generate_geometry_checks,
@@ -732,21 +732,6 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.Pump.capacity,
     ),
-    ForeignKeyCheck(
-        error_code=67,
-        column=models.Pump.connection_node_id,
-        reference_column=models.ConnectionNode.id,
-    ),
-    ForeignKeyCheck(
-        error_code=68,
-        column=models.PumpMap.connection_node_id_end,
-        reference_column=models.ConnectionNode.id,
-    ),
-    ForeignKeyCheck(
-        error_code=69,
-        column=models.PumpMap.pump_id,
-        reference_column=models.Pump.id,
-    ),
 ]
 
 ## 007x: BOUNDARY CONDITIONS
@@ -1080,13 +1065,6 @@ CHECKS += [
     ),
 ]
 
-## Linked channels
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=110 + i, column=table.channel_id, reference_column=models.Channel.id
-    )
-    for i, table in enumerate([models.CrossSectionLocation, models.Windshielding])
-]
 
 ## 020x: Spatial checks
 
@@ -1241,19 +1219,6 @@ CHECKS += [
         message="a pump cannot be connected to itself (pump.connection_node_id must not equal pumpmap.connection_node_id_end)",
     )
 ]
-
-
-for i, table in enumerate(
-    [models.Channel, models.Culvert, models.Orifice, models.Pipe, models.Weir]
-):
-    CHECKS += [
-        ForeignKeyCheck(
-            error_code=255 + i,
-            column=col,
-            reference_column=models.ConnectionNode.id,
-        )
-        for col in [table.connection_node_id_start, table.connection_node_id_end]
-    ]
 
 
 ## 026x: Exchange lines
@@ -2861,44 +2826,6 @@ CHECKS += [
 ]
 CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 
-## 12xx Structure controls
-
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1220,
-        column=models.ControlMeasureLocation.connection_node_id,
-        reference_column=models.ConnectionNode.id,
-    )
-]
-
-# 1221 - 1226
-ref_cols = [
-    models.Channel.id,
-    models.Pipe.id,
-    models.Orifice.id,
-    models.Culvert.id,
-    models.Weir.id,
-    models.Pump.id,
-]
-target_types = [
-    "channel",
-    "pipe",
-    "orifice",
-    "culvert",
-    "weir",
-    "pump",
-]
-for i, (ref_col, target_type) in enumerate(zip(ref_cols, target_types)):
-    for control_table in (models.ControlMemory, models.ControlTable):
-        CHECKS += [
-            ForeignKeyCheck(
-                error_code=1221 + i,
-                column=control_table.target_id,
-                reference_column=ref_col,
-                filters=control_table.target_type == target_type,
-            )
-        ]
-
 
 CHECKS += [
     QueryCheck(
@@ -2919,14 +2846,6 @@ CHECKS += [
             )
         ),
         message="control_measure_map.control_id references an id in memory_control or table_control, but the table it references does not contain an entry with that id.",
-    )
-]
-
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1228,
-        column=models.ControlMeasureMap.measure_location_id,
-        reference_column=models.ControlMeasureLocation.id,
     )
 ]
 
@@ -3271,15 +3190,6 @@ CHECKS += [
 
 # Checks for material
 material_ref_tables = [models.Pipe, models.Culvert, models.Weir, models.Orifice]
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1600,
-        column=table.material_id,
-        reference_column=models.Material.id,
-    )
-    for table in material_ref_tables
-]
-
 conditions = [
     and_(
         table.material_id == models.Material.id,
@@ -3421,6 +3331,70 @@ not_null_columns = [
     models.ModelSettings.node_open_water_detection,
 ]
 
+# Foreign key check settings
+fk_settings = [
+    ForeignKeyCheckSetting(models.PumpMap.pump_id, models.Pump.id),
+    ForeignKeyCheckSetting(models.CrossSectionLocation.channel_id, models.Channel.id),
+    ForeignKeyCheckSetting(models.Windshielding.channel_id, models.Channel.id),
+    ForeignKeyCheckSetting(
+        models.ControlMeasureMap.measure_location_id, models.ControlMeasureLocation.id
+    ),
+    ForeignKeyCheckSetting(models.SurfaceMap.surface_id, models.Surface.id),
+    ForeignKeyCheckSetting(
+        models.Surface.surface_parameters_id, models.SurfaceParameter.id
+    ),
+]
+connection_node_fk = [
+    models.Pump.connection_node_id,
+    models.PumpMap.connection_node_id_end,
+    models.ControlMeasureLocation.connection_node_id,
+    models.Channel.connection_node_id_start,
+    models.Channel.connection_node_id_end,
+    models.Culvert.connection_node_id_start,
+    models.Culvert.connection_node_id_end,
+    models.Orifice.connection_node_id_start,
+    models.Orifice.connection_node_id_end,
+    models.Pipe.connection_node_id_start,
+    models.Pipe.connection_node_id_end,
+    models.Weir.connection_node_id_start,
+    models.Weir.connection_node_id_end,
+]
+fk_settings += [
+    ForeignKeyCheckSetting(col, models.ConnectionNode.id) for col in connection_node_fk
+]
+material_fk = [
+    models.Pipe.material_id,
+    models.Culvert.material_id,
+    models.Weir.material_id,
+    models.Orifice.material_id,
+]
+fk_settings += [ForeignKeyCheckSetting(col, models.Material.id) for col in material_fk]
+
+control_tables = [models.ControlMemory, models.ControlTable]
+target_cols = [
+    models.Channel.id,
+    models.Pipe.id,
+    models.Orifice.id,
+    models.Culvert.id,
+    models.Weir.id,
+    models.Pump.id,
+]
+target_types = [
+    "channel",
+    "pipe",
+    "orifice",
+    "culvert",
+    "weir",
+    "pump",
+]
+fk_settings += [
+    ForeignKeyCheckSetting(
+        control_table.target_id, ref_col, control_table.target_type == target_type
+    )
+    for control_table in control_tables
+    for ref_col, target_type in zip(target_cols, target_types)
+]
+
 
 class Config:
     """Collection of checks
@@ -3439,8 +3413,7 @@ class Config:
         # Error codes 1 to 9: factories
         for model in self.models:
             self.checks += generate_foreign_key_checks(
-                model.__table__,
-                error_code=1,
+                model.__table__, error_code=1, fk_settings=fk_settings
             )
             self.checks += generate_unique_checks(model.__table__, error_code=2)
             self.checks += generate_not_null_checks(
