@@ -3357,6 +3357,8 @@ level_map_fk_check = {
     "surface_map.surface_id": CheckLevel.WARNING,
 }
 
+unique_columns = [models.BoundaryCondition1D.connection_node_id]
+
 
 class Config:
     """Collection of checks
@@ -3380,7 +3382,9 @@ class Config:
                 fk_settings=fk_settings,
                 custom_level_map=level_map_fk_check,
             )
-            self.checks += generate_unique_checks(model.__table__, error_code=2)
+            self.checks += generate_unique_checks(
+                model.__table__, error_code=2, extra_unique_columns=unique_columns
+            )
             self.checks += generate_not_null_checks(
                 model.__table__, error_code=3, extra_not_null_columns=not_null_columns
             )

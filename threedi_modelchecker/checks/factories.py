@@ -51,11 +51,19 @@ def generate_foreign_key_checks(table, fk_settings, custom_level_map=None, **kwa
     return foreign_key_checks
 
 
-def generate_unique_checks(table, custom_level_map=None, **kwargs):
+def generate_unique_checks(
+    table, custom_level_map=None, extra_unique_columns=None, **kwargs
+):
     custom_level_map = custom_level_map or {}
     unique_checks = []
+    if extra_unique_columns is None:
+        extra_unique_columns = []
     for column in table.columns:
-        if column.unique or column.primary_key:
+        if (
+            column.unique
+            or column.primary_key
+            or any(col.compare(column) for col in extra_unique_columns)
+        ):
             level = get_level(table, column, custom_level_map)
             unique_checks.append(UniqueCheck(column, level=level, **kwargs))
     return unique_checks
