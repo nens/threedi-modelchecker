@@ -1083,6 +1083,8 @@ class ControlHasSingleMeasureVariable(BaseCheck):
                 )
                 .with_entities(models.ControlMeasureLocation.measure_variable)
             ).all()
+            if len(res) == 0:
+                continue
             first_measure_variable = res[0].measure_variable
             if not all(item[0] == first_measure_variable for item in res):
                 invalid.append(record)

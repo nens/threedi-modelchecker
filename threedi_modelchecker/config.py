@@ -779,19 +779,6 @@ CHECKS += [
         ),
         message=("boundary_condition_1d cannot have a groundwater type"),
     ),
-    QueryCheck(
-        error_code=75,
-        column=models.BoundaryCondition1D.connection_node_id,
-        invalid=Query(models.BoundaryCondition1D)
-        .outerjoin(
-            models.ConnectionNode,
-            models.BoundaryCondition1D.connection_node_id == models.ConnectionNode.id,
-        )
-        .filter(models.ConnectionNode.id == None),
-        message=(
-            "boundary_condition_1d.connection_node_id must point to an existing connection_node.id"
-        ),
-    ),
 ]
 
 ## 008x: CROSS SECTION DEFINITIONS
@@ -1300,14 +1287,6 @@ CHECKS += [
         min_value=-9998.0,
         max_value=8848.0,
     ),
-    QueryCheck(
-        error_code=266,
-        column=models.ExchangeLine.channel_id,
-        invalid=Query(models.ExchangeLine).filter(
-            models.ExchangeLine.channel_id.not_in(Query(models.Channel.id))
-        ),
-        message="exchange_line.channel_id references to non existing channel.id",
-    ),
 ]
 
 ## 027x: Potential breaches
@@ -1400,14 +1379,6 @@ CHECKS += [
         min_value=-9998.0,
         max_value=8848.0,
         left_inclusive=False,
-    ),
-    QueryCheck(
-        error_code=278,
-        column=models.PotentialBreach.channel_id,
-        invalid=Query(models.PotentialBreach).filter(
-            models.PotentialBreach.channel_id.not_in(Query(models.Channel.id))
-        ),
-        message="potential_breach.channel_id references to non existing channel.id",
     ),
 ]
 
@@ -2183,29 +2154,6 @@ CHECKS += [
 
 CHECKS += [
     QueryCheck(
-        error_code=615,
-        level=CheckLevel.WARNING,
-        column=column.table.c.id,
-        invalid=Query(column.table).filter(
-            column.not_in(Query(referenced_table.id).scalar_subquery())
-        ),
-        message=f"{column.table.name}.{column.name} references a {referenced_table.__tablename__} feature that does not exist.",
-    )
-    for column, referenced_table in [
-        (models.SurfaceMap.surface_id, models.Surface),
-        (models.SurfaceMap.connection_node_id, models.ConnectionNode),
-        (models.Surface.surface_parameters_id, models.SurfaceParameter),
-        (models.DryWeatherFlowMap.dry_weather_flow_id, models.DryWeatherFlow),
-        (models.DryWeatherFlowMap.connection_node_id, models.ConnectionNode),
-        (
-            models.DryWeatherFlow.dry_weather_flow_distribution_id,
-            models.DryWeatherFlowDistribution,
-        ),
-    ]
-]
-
-CHECKS += [
-    QueryCheck(
         error_code=616,
         level=CheckLevel.WARNING,
         column=table.id,
@@ -2855,24 +2803,6 @@ CHECKS += [
 ]
 
 
-# 124x laterals
-CHECKS += [
-    QueryCheck(
-        error_code=1240,
-        column=models.Lateral1d.connection_node_id,
-        invalid=Query(models.Lateral1d)
-        .outerjoin(
-            models.ConnectionNode,
-            models.Lateral1d.connection_node_id == models.ConnectionNode.id,
-        )
-        .filter(models.ConnectionNode.id == None),
-        message=(
-            "lateral_1d.connection_node_id must point to an existing connection_node.id"
-        ),
-    ),
-]
-
-
 ## 018x cross section parameters (continues 008x)
 CHECKS += [
     QueryCheck(
@@ -3334,14 +3264,19 @@ not_null_columns = [
 # Foreign key check settings
 fk_settings = [
     ForeignKeyCheckSetting(models.PumpMap.pump_id, models.Pump.id),
-    ForeignKeyCheckSetting(models.CrossSectionLocation.channel_id, models.Channel.id),
-    ForeignKeyCheckSetting(models.Windshielding.channel_id, models.Channel.id),
     ForeignKeyCheckSetting(
         models.ControlMeasureMap.measure_location_id, models.ControlMeasureLocation.id
     ),
     ForeignKeyCheckSetting(models.SurfaceMap.surface_id, models.Surface.id),
     ForeignKeyCheckSetting(
         models.Surface.surface_parameters_id, models.SurfaceParameter.id
+    ),
+    ForeignKeyCheckSetting(
+        models.DryWeatherFlowMap.dry_weather_flow_id, models.DryWeatherFlow.id
+    ),
+    ForeignKeyCheckSetting(
+        models.DryWeatherFlow.dry_weather_flow_distribution_id,
+        models.DryWeatherFlowDistribution.id,
     ),
 ]
 connection_node_fk = [
@@ -3358,10 +3293,21 @@ connection_node_fk = [
     models.Pipe.connection_node_id_end,
     models.Weir.connection_node_id_start,
     models.Weir.connection_node_id_end,
+    models.Lateral1d.connection_node_id,
+    models.BoundaryCondition1D.connection_node_id,
+    models.DryWeatherFlowMap.connection_node_id,
+    models.SurfaceMap.connection_node_id,
 ]
 fk_settings += [
     ForeignKeyCheckSetting(col, models.ConnectionNode.id) for col in connection_node_fk
 ]
+channel_fk = [
+    models.CrossSectionLocation.channel_id,
+    models.Windshielding.channel_id,
+    models.PotentialBreach.channel_id,
+    models.ExchangeLine.channel_id,
+]
+fk_settings += [ForeignKeyCheckSetting(col, models.Channel.id) for col in channel_fk]
 material_fk = [
     models.Pipe.material_id,
     models.Culvert.material_id,
@@ -3371,29 +3317,45 @@ material_fk = [
 fk_settings += [ForeignKeyCheckSetting(col, models.Material.id) for col in material_fk]
 
 control_tables = [models.ControlMemory, models.ControlTable]
-target_cols = [
-    models.Channel.id,
-    models.Pipe.id,
-    models.Orifice.id,
-    models.Culvert.id,
-    models.Weir.id,
-    models.Pump.id,
+ref_tables = [
+    models.Channel,
+    models.Pipe,
+    models.Orifice,
+    models.Culvert,
+    models.Weir,
+    models.Pump,
 ]
-target_types = [
-    "channel",
-    "pipe",
-    "orifice",
-    "culvert",
-    "weir",
-    "pump",
-]
+
 fk_settings += [
     ForeignKeyCheckSetting(
-        control_table.target_id, ref_col, control_table.target_type == target_type
+        control_table.target_id,
+        ref_table.id,
+        control_table.target_type == ref_table.__tablename__,
     )
     for control_table in control_tables
-    for ref_col, target_type in zip(target_cols, target_types)
+    for ref_table in ref_tables
 ]
+
+fk_settings += [
+    ForeignKeyCheckSetting(
+        models.ControlMeasureMap.control_id,
+        models.ControlMemory.id,
+        models.ControlMeasureMap.control_type == "memory",
+    ),
+    ForeignKeyCheckSetting(
+        models.ControlMeasureMap.control_id,
+        models.ControlTable.id,
+        models.ControlMeasureMap.control_type == "table",
+    ),
+]
+
+level_map_fk_check = {
+    "dry_weather_flow.dry_weather_flow_distribution_id": CheckLevel.WARNING,
+    "dry_weather_flow_map.connection_node_id": CheckLevel.WARNING,
+    "dry_weather_flow_map.dry_weather_flow_id": CheckLevel.WARNING,
+    "surface_map.connection_node_id": CheckLevel.WARNING,
+    "surface_map.surface_id": CheckLevel.WARNING,
+}
 
 
 class Config:
@@ -3413,7 +3375,10 @@ class Config:
         # Error codes 1 to 9: factories
         for model in self.models:
             self.checks += generate_foreign_key_checks(
-                model.__table__, error_code=1, fk_settings=fk_settings
+                model.__table__,
+                error_code=1,
+                fk_settings=fk_settings,
+                custom_level_map=level_map_fk_check,
             )
             self.checks += generate_unique_checks(model.__table__, error_code=2)
             self.checks += generate_not_null_checks(

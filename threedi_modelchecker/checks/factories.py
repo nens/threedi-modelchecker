@@ -33,7 +33,7 @@ def generate_foreign_key_checks(table, fk_settings, custom_level_map=None, **kwa
     for fk_setting in fk_settings:
         if fk_setting.col.table != table:
             continue
-        level = get_level(table, fk_setting.ref, custom_level_map)
+        level = get_level(table, fk_setting.col, custom_level_map)
         # Prevent clash when kwargs contains 'filter'
         filter_val = (
             kwargs.get("filter") if fk_setting.filter is None else fk_setting.filter
