@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from typing import Optional
+
 from threedi_schema import custom_types
 
 from .base import (
@@ -11,33 +14,56 @@ from .base import (
 )
 
 
+@dataclass
+class ForeignKeyCheckSetting:
+    col: str
+    ref: str
+    filter: Optional[bool] = None
+
+
 def get_level(table, column, level_map):
     level = level_map.get(f"*.{column.name}")
     level = level_map.get(f"{table.name}.{column.name}", level)
     return level or "ERROR"
 
 
-def generate_foreign_key_checks(table, custom_level_map=None, **kwargs):
+def generate_foreign_key_checks(table, fk_settings, custom_level_map=None, **kwargs):
     custom_level_map = custom_level_map or {}
     foreign_key_checks = []
-    for fk_column in table.foreign_keys:
-        level = get_level(table, fk_column.parent, custom_level_map)
+    for fk_setting in fk_settings:
+        if fk_setting.col.table != table:
+            continue
+        level = get_level(table, fk_setting.col, custom_level_map)
+        # Prevent clash when kwargs contains 'filter'
+        filter_val = (
+            kwargs.get("filter") if fk_setting.filter is None else fk_setting.filter
+        )
+        kwargs.pop("filter", None)
         foreign_key_checks.append(
             ForeignKeyCheck(
-                reference_column=fk_column.column,
-                column=fk_column.parent,
+                reference_column=fk_setting.ref,
+                column=fk_setting.col,
                 level=level,
+                filters=filter_val,
                 **kwargs,
             )
         )
     return foreign_key_checks
 
 
-def generate_unique_checks(table, custom_level_map=None, **kwargs):
+def generate_unique_checks(
+    table, custom_level_map=None, extra_unique_columns=None, **kwargs
+):
     custom_level_map = custom_level_map or {}
     unique_checks = []
+    if extra_unique_columns is None:
+        extra_unique_columns = []
     for column in table.columns:
-        if column.unique or column.primary_key:
+        if (
+            column.unique
+            or column.primary_key
+            or any(col.compare(column) for col in extra_unique_columns)
+        ):
             level = get_level(table, column, custom_level_map)
             unique_checks.append(UniqueCheck(column, level=level, **kwargs))
     return unique_checks

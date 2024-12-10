@@ -3,6 +3,7 @@ from threedi_schema import models
 
 from threedi_modelchecker.checks.base import CheckLevel
 from threedi_modelchecker.checks.factories import (
+    ForeignKeyCheckSetting,
     generate_enum_checks,
     generate_foreign_key_checks,
     generate_geometry_checks,
@@ -11,13 +12,43 @@ from threedi_modelchecker.checks.factories import (
 )
 
 
-@pytest.mark.skip(reason="Cannot pass with schema current schema version")
-def test_gen_foreign_key_checks():
-    foreign_key_checks = generate_foreign_key_checks(models.Surface.__table__)
+def test_gen_foreign_key_checks_no_filter():
+    settings = [
+        ForeignKeyCheckSetting(
+            models.Surface.surface_parameters_id, models.SurfaceParameter.id
+        ),
+        ForeignKeyCheckSetting(
+            models.ControlMemory.target_id,
+            models.Channel.id,
+            models.ControlMemory.target_type == "channel",
+        ),
+    ]
+    foreign_key_checks = generate_foreign_key_checks(
+        models.Surface.__table__, fk_settings=settings
+    )
     assert len(foreign_key_checks) == 1
     fk_check = foreign_key_checks[0]
     assert models.Surface.surface_parameters_id == fk_check.column
     assert models.SurfaceParameter.id == fk_check.reference_column
+
+
+def test_gen_foreign_key_checks_filter():
+    settings = [
+        ForeignKeyCheckSetting(
+            models.Surface.surface_parameters_id, models.SurfaceParameter.id
+        ),
+        ForeignKeyCheckSetting(
+            models.ControlMemory.target_id,
+            models.Channel.id,
+            models.ControlMemory.target_type == "channel",
+        ),
+    ]
+    foreign_key_checks = generate_foreign_key_checks(
+        models.ControlMemory.__table__, fk_settings=settings
+    )
+    assert len(foreign_key_checks) == 1
+    fk_check = foreign_key_checks[0]
+    assert settings[1].filter == fk_check.filters
 
 
 def test_gen_not_unique_checks():
