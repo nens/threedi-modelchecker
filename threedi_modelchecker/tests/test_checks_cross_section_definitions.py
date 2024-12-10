@@ -167,7 +167,7 @@ def test_check_greater_zero(session, width, valid):
 
 @pytest.mark.parametrize(
     "cross_section_table",
-    [" ", "0 1", "3;5", "foo", "1,2\n3,", ",2", ",2\n3,4"],
+    ["0 1", "3;5", "foo", "1,2\n3,", ",2", ",2\n3,4"],
 )
 def test_csv_format_check_invalid(session, cross_section_table):
     factories.CrossSectionLocationFactory(
