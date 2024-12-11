@@ -1,4 +1,3 @@
-import math
 import re
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
@@ -1176,7 +1175,7 @@ class DWFDistributionSumCheck(DWFDistributionBaseCheck):
             except ValueError:
                 # handled by DWFDistributionCSVFormatCheck
                 continue
-            if not math.isclose(sum(values), 100.0, abs_tol=1e-2):
+            if not (99.99 <= sum(values) <= 100.01):
                 invalids.append(record)
         return invalids
 
