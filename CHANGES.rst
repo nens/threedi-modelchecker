@@ -12,6 +12,7 @@ Changelog of threedi-modelchecker
 - Bump minimal python version to 3.9
 - Collect all foreign key checks and give them a uniform error or warning (0001)
 - Add unique check for boundary_condition_1d.connection_node_id
+- Add checks for dry_weather_flow_distribution.distribution format, length and sum
 
 
 2.14.1 (2024-11-25)
