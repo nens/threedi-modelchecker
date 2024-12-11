@@ -2209,6 +2209,10 @@ CHECKS += [
     )
 ]
 
+# Dry weather flow distribution
+# Adds up to 100
+# 24 items
+
 
 # 07xx: RASTERS
 RASTER_COLUMNS = [

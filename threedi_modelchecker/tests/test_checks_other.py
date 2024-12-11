@@ -20,6 +20,9 @@ from threedi_modelchecker.checks.other import (
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
+    DWFDistributionCSVFormatCheck,
+    DWFDistributionLenghtCheck,
+    DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
@@ -966,5 +969,50 @@ def test_control_has_single_measure_variable(session, measure_variables, valid):
         )
         factories.ControlMeasureLocationFactory(id=i, measure_variable=measure_variable)
     check = ControlHasSingleMeasureVariable(control_model=models.ControlTable)
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize("distribution, valid", [("1,2", True), ("1 2", False)])
+def test_dwf_distribution_csv_format_check(session, distribution, valid):
+    factories.DryWeatherFlowDistributionFactory(distribution=distribution)
+    check = DWFDistributionCSVFormatCheck()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "distribution, valid",
+    [
+        (
+            "3,1.5,1,1,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,4",
+            True,
+        ),
+        ("1,2", False),
+    ],
+)
+def test_dwf_distribution_length_check(session, distribution, valid):
+    factories.DryWeatherFlowDistributionFactory(distribution=distribution)
+    check = DWFDistributionLenghtCheck()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "distribution, valid",
+    [
+        (
+            "3,1.5,1,1,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,4",
+            True,
+        ),
+        (
+            "3,1.5,1,1,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,40",
+            False,
+        ),
+    ],
+)
+def test_dwf_distribution_sum_check(session, distribution, valid):
+    factories.DryWeatherFlowDistributionFactory(distribution=distribution)
+    check = DWFDistributionSumCheck()
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
