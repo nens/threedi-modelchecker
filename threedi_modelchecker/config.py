@@ -2219,9 +2219,6 @@ CHECKS += [
     DWFDistributionSumCheck(error_code=623),
 ]
 
-# Adds up to 100
-# 24 items
-
 
 # 07xx: RASTERS
 RASTER_COLUMNS = [
