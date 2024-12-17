@@ -21,7 +21,7 @@ from threedi_modelchecker.checks.other import (
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     DWFDistributionCSVFormatCheck,
-    DWFDistributionLenghtCheck,
+    DWFDistributionLengthCheck,
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
@@ -993,7 +993,7 @@ def test_dwf_distribution_csv_format_check(session, distribution, valid):
 )
 def test_dwf_distribution_length_check(session, distribution, valid):
     factories.DryWeatherFlowDistributionFactory(distribution=distribution)
-    check = DWFDistributionLenghtCheck()
+    check = DWFDistributionLengthCheck()
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
 

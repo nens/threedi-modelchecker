@@ -61,7 +61,7 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     DWFDistributionCSVFormatCheck,
-    DWFDistributionLenghtCheck,
+    DWFDistributionLengthCheck,
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
@@ -2215,7 +2215,7 @@ CHECKS += [
 # Dry weather flow distribution
 CHECKS += [
     DWFDistributionCSVFormatCheck(error_code=621),
-    DWFDistributionLenghtCheck(error_code=622),
+    DWFDistributionLengthCheck(error_code=622),
     DWFDistributionSumCheck(error_code=623),
 ]
 

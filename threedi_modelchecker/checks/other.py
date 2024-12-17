@@ -1150,7 +1150,7 @@ class DWFDistributionCSVFormatCheck(DWFDistributionBaseCheck):
         return f"{self.table.name}.{self.column_name} should contain a list of comma-separated numbers"
 
 
-class DWFDistributionLenghtCheck(DWFDistributionBaseCheck):
+class DWFDistributionLengthCheck(DWFDistributionBaseCheck):
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         invalids = []
         for record in self.to_check(session).filter(
