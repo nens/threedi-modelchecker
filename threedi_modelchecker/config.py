@@ -60,6 +60,9 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
     CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
+    DWFDistributionCSVFormatCheck,
+    DWFDistributionLengthCheck,
+    DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
     LinestringLocationCheck,
@@ -2209,6 +2212,13 @@ CHECKS += [
     )
 ]
 
+# Dry weather flow distribution
+CHECKS += [
+    DWFDistributionCSVFormatCheck(error_code=621),
+    DWFDistributionLengthCheck(error_code=622),
+    DWFDistributionSumCheck(error_code=623),
+]
+
 
 # 07xx: RASTERS
 RASTER_COLUMNS = [
@@ -3367,7 +3377,6 @@ fk_settings += [
 ]
 
 level_map_fk_check = {
-    "dry_weather_flow.dry_weather_flow_distribution_id": CheckLevel.WARNING,
     "dry_weather_flow_map.connection_node_id": CheckLevel.WARNING,
     "dry_weather_flow_map.dry_weather_flow_id": CheckLevel.WARNING,
     "surface_map.connection_node_id": CheckLevel.WARNING,

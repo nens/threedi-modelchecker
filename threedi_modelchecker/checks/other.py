@@ -1114,3 +1114,70 @@ class ControlHasSingleMeasureVariable(BaseCheck):
 
     def description(self) -> str:
         return f"{self.table.name} is mapped to measure locations with different measure variables"
+
+
+class DWFDistributionBaseCheck(BaseCheck):
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            column=models.DryWeatherFlowDistribution.distribution, *args, **kwargs
+        )
+
+    def get_distribution(self, record):
+        str = getattr(record, self.column.name)
+        return str.split(",")
+
+    def get_distribution_values(self, record):
+        return [float(x) for x in self.get_distribution(record)]
+
+
+class DWFDistributionCSVFormatCheck(DWFDistributionBaseCheck):
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            try:
+                self.get_distribution_values(record)
+            except ValueError:
+                invalids.append(record)
+        return invalids
+
+    def description(self) -> str:
+        return f"{self.table.name}.{self.column_name} should contain a list of comma-separated numbers"
+
+
+class DWFDistributionLengthCheck(DWFDistributionBaseCheck):
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            if len(self.get_distribution(record)) != 24:
+                invalids.append(record)
+        return invalids
+
+    def description(self) -> str:
+        return f"{self.table.name}.{self.column_name} should contain exactly 24 values"
+
+
+class DWFDistributionSumCheck(DWFDistributionBaseCheck):
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            try:
+                values = self.get_distribution_values(record)
+            except ValueError:
+                # handled by DWFDistributionCSVFormatCheck
+                continue
+            if not (99.99 <= sum(values) <= 100.01):
+                invalids.append(record)
+        return invalids
+
+    def description(self) -> str:
+        return f"The values in {self.table.name}.{self.column_name} should add up to"

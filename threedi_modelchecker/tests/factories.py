@@ -190,6 +190,17 @@ class DryWeatherFlowFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = "SRID=4326;POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))"
 
 
+class DryWeatherFlowDistributionFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.DryWeatherFlowDistribution
+        sqlalchemy_session = None
+
+    id = 1
+    distribution = (
+        "3,1.5,1,1,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,4"
+    )
+
+
 class SurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Surface
