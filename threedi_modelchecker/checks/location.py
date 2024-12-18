@@ -8,6 +8,41 @@ from threedi_modelchecker.checks.base import BaseCheck
 from threedi_modelchecker.checks.geo_query import distance
 
 
+class PointLocationCheck(BaseCheck):
+    """Check if cross section locations are within {max_distance} of their channel."""
+
+    def __init__(
+        self,
+        ref_column,
+        ref_table,
+        max_distance,
+        *args,
+        **kwargs,
+    ):
+        self.max_distance = max_distance
+        self.ref_column = ref_column
+        self.ref_table = ref_table
+        super().__init__(*args, **kwargs)
+
+    def get_invalid(self, session):
+        # get all channels with more than 1 cross section location
+        return (
+            self.to_check(session)
+            .join(
+                self.ref_table,
+                self.ref_table.id == self.ref_column,
+            )
+            .filter(distance(self.column, self.ref_table.geom) > self.max_distance)
+            .all()
+        )
+
+    def description(self):
+        return (
+            f"{self.column_name} does not match the position of the object that "
+            f"{self.table.name}.{self.ref_column} refers to"
+        )
+
+
 class LinestringLocationCheck(BaseCheck):
     """Check that linestring geometry starts / ends are close to their connection nodes
 
@@ -21,10 +56,11 @@ class LinestringLocationCheck(BaseCheck):
         ref_column_end,
         ref_table_start,
         ref_table_end,
+        max_distance,
         *args,
         **kwargs,
     ):
-        self.max_distance = kwargs.pop("max_distance")
+        self.max_distance = max_distance
         self.ref_column_start = ref_column_start
         self.ref_column_end = ref_column_end
         self.ref_table_start = ref_table_start

@@ -51,6 +51,7 @@ from .checks.location import (
     ConnectionNodeLinestringLocationCheck,
     ControlMeasureMapLinestringMapLocationCheck,
     DWFMapLinestringLocationCheck,
+    PointLocationCheck,
     PumpMapLinestringLocationCheck,
     SurfaceMapLinestringLocationCheck,
 )
@@ -64,7 +65,6 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
     ConnectionNodesLength,
     ControlHasSingleMeasureVariable,
     CorrectAggregationSettingsExist,
-    CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     DWFDistributionCSVFormatCheck,
@@ -652,9 +652,6 @@ CHECKS += [
 ]
 
 CHECKS += [
-    CrossSectionLocationCheck(
-        level=CheckLevel.WARNING, max_distance=TOLERANCE_M, error_code=52
-    ),
     QueryCheck(
         error_code=54,
         level=CheckLevel.WARNING,
@@ -1134,6 +1131,66 @@ CHECKS += [
         DWFMapLinestringLocationCheck,
         SurfaceMapLinestringLocationCheck,
         PumpMapLinestringLocationCheck,
+    ]
+]
+
+
+CHECKS += [
+    PointLocationCheck(
+        level=CheckLevel.WARNING,
+        max_distance=TOLERANCE_M,
+        error_code=206,
+        column=table.geom,
+        ref_column=table.channel_id,
+        ref_table=models.Channel,
+    )
+    for table in [models.CrossSectionLocation, models.Windshielding]
+]
+
+CHECKS += [
+    PointLocationCheck(
+        level=CheckLevel.WARNING,
+        max_distance=TOLERANCE_M,
+        error_code=206,
+        column=table.geom,
+        ref_column=table.connection_node_id,
+        ref_table=models.ConnectionNode,
+    )
+    for table in [
+        models.BoundaryCondition1D,
+        models.ControlMeasureLocation,
+        models.Lateral1d,
+        models.Pump,
+    ]
+]
+
+control_tables = [models.ControlMemory, models.ControlTable]
+ref_tables = [
+    models.Pipe,
+    models.Orifice,
+    models.Culvert,
+    models.Weir,
+    models.Pump,
+]
+
+CHECKS += [
+    PointLocationCheck(
+        level=CheckLevel.WARNING,
+        max_distance=TOLERANCE_M,
+        error_code=206,
+        column=table.geom,
+        ref_column=table.target_id,
+        ref_table=ref_table,
+        filters=(table.target_type == ref_table.__tablename__),
+    )
+    for table in [models.ControlMemory, models.ControlTable]
+    for ref_table in [
+        models.Channel,
+        models.Pipe,
+        models.Orifice,
+        models.Culvert,
+        models.Weir,
+        models.Pump,
     ]
 ]
 

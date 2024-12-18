@@ -17,7 +17,6 @@ from threedi_modelchecker.checks.other import (
     ControlTableActionTableCheckDefault,
     ControlTableActionTableCheckDischargeCoefficients,
     CorrectAggregationSettingsExist,
-    CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     DWFDistributionCSVFormatCheck,
@@ -260,21 +259,6 @@ def test_node_distance(session):
     invalid_ids = [i.id for i in invalid]
     assert con1_too_close.id in invalid_ids
     assert con2_too_close.id in invalid_ids
-
-
-def test_cross_section_location(session):
-    factories.ChannelFactory(
-        id=1,
-        geom="SRID=4326;LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
-    )
-    factories.CrossSectionLocationFactory(
-        channel_id=1, geom="SRID=4326;POINT(5.387204 52.155200)"
-    )
-    factories.CrossSectionLocationFactory(
-        channel_id=1, geom="SRID=4326;POINT(5.387218 52.155244)"
-    )
-    errors = CrossSectionLocationCheck(0.1).get_invalid(session)
-    assert len(errors) == 1
 
 
 class TestCrossSectionSameConfiguration:

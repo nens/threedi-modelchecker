@@ -6,10 +6,31 @@ from threedi_modelchecker.checks.location import (
     ControlMeasureMapLinestringMapLocationCheck,
     DWFMapLinestringLocationCheck,
     LinestringLocationCheck,
+    PointLocationCheck,
     PumpMapLinestringLocationCheck,
     SurfaceMapLinestringLocationCheck,
 )
 from threedi_modelchecker.tests import factories
+
+
+def test_point_location_check(session):
+    factories.ChannelFactory(
+        id=1,
+        geom="SRID=4326;LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
+    )
+    factories.CrossSectionLocationFactory(
+        channel_id=1, geom="SRID=4326;POINT(5.387204 52.155200)"
+    )
+    factories.CrossSectionLocationFactory(
+        channel_id=1, geom="SRID=4326;POINT(5.387218 52.155244)"
+    )
+    errors = PointLocationCheck(
+        column=models.CrossSectionLocation.geom,
+        ref_column=models.CrossSectionLocation.channel_id,
+        ref_table=models.Channel,
+        max_distance=0.1,
+    ).get_invalid(session)
+    assert len(errors) == 1
 
 
 @pytest.mark.parametrize(

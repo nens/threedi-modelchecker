@@ -54,35 +54,6 @@ class CorrectAggregationSettingsExist(BaseCheck):
         )
 
 
-class CrossSectionLocationCheck(BaseCheck):
-    """Check if cross section locations are within {max_distance} of their channel."""
-
-    def __init__(self, max_distance, *args, **kwargs):
-        super().__init__(column=models.CrossSectionLocation.geom, *args, **kwargs)
-        self.max_distance = max_distance
-
-    def get_invalid(self, session):
-        # get all channels with more than 1 cross section location
-        return (
-            self.to_check(session)
-            .join(
-                models.Channel,
-                models.Channel.id == models.CrossSectionLocation.channel_id,
-            )
-            .filter(
-                distance(models.CrossSectionLocation.geom, models.Channel.geom)
-                > self.max_distance
-            )
-            .all()
-        )
-
-    def description(self):
-        return (
-            f"cross_section_location.geom is invalid: the cross-section location "
-            f"should be located on the channel geometry (tolerance = {self.max_distance} m)"
-        )
-
-
 class CrossSectionSameConfigurationCheck(BaseCheck):
     """Check the cross-sections on the object are either all open or all closed."""
 
