@@ -494,44 +494,6 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         )
 
 
-class LinestringLocationCheck(BaseCheck):
-    """Check that linestring geometry starts / ends are close to their connection nodes
-
-    This allows for reversing the geometries. threedi-gridbuilder will reverse the geometries if
-    that lowers the distance to the connection nodes.
-    """
-
-    def __init__(self, *args, **kwargs):
-        self.max_distance = kwargs.pop("max_distance")
-        super().__init__(*args, **kwargs)
-
-    def get_invalid(self, session: Session) -> List[NamedTuple]:
-        start_node = aliased(models.ConnectionNode)
-        end_node = aliased(models.ConnectionNode)
-
-        tol = self.max_distance
-        start_point = func.ST_PointN(self.column, 1)
-        end_point = func.ST_PointN(self.column, func.ST_NPoints(self.column))
-
-        start_ok = distance(start_point, start_node.geom) <= tol
-        end_ok = distance(end_point, end_node.geom) <= tol
-        start_ok_if_reversed = distance(end_point, start_node.geom) <= tol
-        end_ok_if_reversed = distance(start_point, end_node.geom) <= tol
-        return (
-            self.to_check(session)
-            .join(start_node, start_node.id == self.table.c.connection_node_id_start)
-            .join(end_node, end_node.id == self.table.c.connection_node_id_end)
-            .filter(
-                ~(start_ok & end_ok),
-                ~(start_ok_if_reversed & end_ok_if_reversed),
-            )
-            .all()
-        )
-
-    def description(self) -> str:
-        return f"{self.column_name} does not start or end at its connection node (tolerance = {self.max_distance} m)"
-
-
 class BoundaryCondition1DObjectNumberCheck(BaseCheck):
     """Check that the number of connected objects to 1D boundary connections is 1."""
 

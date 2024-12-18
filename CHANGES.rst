@@ -14,6 +14,7 @@ Changelog of threedi-modelchecker
 - Add unique check for boundary_condition_1d.connection_node_id
 - Add checks for dry_weather_flow_distribution.distribution format, length and sum
 - Check if geometries for orifice, weir and pipe match their connection nodes
+- Check if geometries for control_measure_map, dry_weather_flow_map, surface_map and pump_map match the object they connect
 
 
 2.14.1 (2024-11-25)

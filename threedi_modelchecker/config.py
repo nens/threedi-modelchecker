@@ -47,6 +47,13 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
+from .checks.location import (
+    ConnectionNodeLinestringLocationCheck,
+    ControlMeasureMapLinestringMapLocationCheck,
+    DWFMapLinestringLocationCheck,
+    PumpMapLinestringLocationCheck,
+    SurfaceMapLinestringLocationCheck,
+)
 from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
     AllPresentVegetationParameters,
     BetaColumnsCheck,
@@ -65,7 +72,6 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
-    LinestringLocationCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
@@ -1094,8 +1100,12 @@ CHECKS += [
     )
     for table in [models.Orifice, models.Weir]
 ]
+
+
 CHECKS += [
-    LinestringLocationCheck(error_code=205, column=table.geom, max_distance=1)
+    ConnectionNodeLinestringLocationCheck(
+        error_code=205, column=table.geom, max_distance=1
+    )
     for table in [
         models.Channel,
         models.Culvert,
@@ -1104,6 +1114,30 @@ CHECKS += [
         models.Weir,
     ]
 ]
+
+CHECKS += [
+    ControlMeasureMapLinestringMapLocationCheck(
+        control_table=table,
+        filters=models.ControlMeasureMap.control_type == control_type,
+        max_distance=1,
+        error_code=205,
+    )
+    for table, control_type in [
+        (models.ControlTable, "table"),
+        (models.ControlMemory, "memory"),
+    ]
+]
+
+CHECKS += [
+    check(max_distance=1, error_code=205)
+    for check in [
+        DWFMapLinestringLocationCheck,
+        SurfaceMapLinestringLocationCheck,
+        PumpMapLinestringLocationCheck,
+    ]
+]
+
+
 CHECKS += [
     SpatialIndexCheck(
         error_code=207, column=models.ConnectionNode.geom, level=CheckLevel.WARNING
