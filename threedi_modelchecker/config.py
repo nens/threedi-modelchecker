@@ -1096,7 +1096,13 @@ CHECKS += [
 ]
 CHECKS += [
     LinestringLocationCheck(error_code=205, column=table.geom, max_distance=1)
-    for table in [models.Channel, models.Culvert]
+    for table in [
+        models.Channel,
+        models.Culvert,
+        models.Orifice,
+        models.Pipe,
+        models.Weir,
+    ]
 ]
 CHECKS += [
     SpatialIndexCheck(

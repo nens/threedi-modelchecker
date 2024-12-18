@@ -13,6 +13,7 @@ Changelog of threedi-modelchecker
 - Collect all foreign key checks and give them a uniform error or warning (0001)
 - Add unique check for boundary_condition_1d.connection_node_id
 - Add checks for dry_weather_flow_distribution.distribution format, length and sum
+- Check if geometries for orifice, weir and pipe match their connection nodes
 
 
 2.14.1 (2024-11-25)
