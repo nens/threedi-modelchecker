@@ -28,7 +28,6 @@ rasterio = [
 ]
 test = [
     "factory_boy",
-    "mock ; python_version<'3.8'",
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
