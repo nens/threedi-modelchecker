@@ -13,6 +13,11 @@ Changelog of threedi-modelchecker
 - Collect all foreign key checks and give them a uniform error or warning (0001)
 - Add unique check for boundary_condition_1d.connection_node_id
 - Add checks for dry_weather_flow_distribution.distribution format, length and sum
+- Check if geometries for orifice, weir and pipe match their connection nodes
+- Check if geometries for control_measure_map, dry_weather_flow_map, surface_map and pump_map match the object they connect
+- Check if windshielding geometry matches with that of the linked channel
+- Check if the geometry of boundary_condition_1d, control_measure_location, lateral_1d, and pump matches with that of the linked connection node
+- Check if the geometry of memory_control or table_control matches to that of the linked object
 
 
 2.14.1 (2024-11-25)

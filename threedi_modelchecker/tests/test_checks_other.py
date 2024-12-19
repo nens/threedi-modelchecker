@@ -17,7 +17,6 @@ from threedi_modelchecker.checks.other import (
     ControlTableActionTableCheckDefault,
     ControlTableActionTableCheckDischargeCoefficients,
     CorrectAggregationSettingsExist,
-    CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
     DWFDistributionCSVFormatCheck,
@@ -25,7 +24,6 @@ from threedi_modelchecker.checks.other import (
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
-    LinestringLocationCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
@@ -261,67 +259,6 @@ def test_node_distance(session):
     invalid_ids = [i.id for i in invalid]
     assert con1_too_close.id in invalid_ids
     assert con2_too_close.id in invalid_ids
-
-
-@pytest.mark.parametrize(
-    "channel_geom",
-    [
-        "LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
-        "LINESTRING(5.387218 52.155172, 5.387218 52.155262)",  # within tolerance
-        "LINESTRING(5.387204 52.155262, 5.387204 52.155172)",  # reversed
-        "LINESTRING(5.387218 52.155262, 5.387218 52.155172)",  # reversed, within tolerance
-    ],
-)
-def test_channels_location_check(session, channel_geom):
-    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
-    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
-    factories.ChannelFactory(
-        connection_node_id_start=1,
-        connection_node_id_end=2,
-        geom=f"SRID=4326;{channel_geom}",
-    )
-
-    errors = LinestringLocationCheck(
-        column=models.Channel.geom, max_distance=1.01
-    ).get_invalid(session)
-    assert len(errors) == 0
-
-
-@pytest.mark.parametrize(
-    "channel_geom",
-    [
-        "LINESTRING(5.387204 52.164151, 5.387204 52.155262)",  # startpoint is wrong
-        "LINESTRING(5.387204 52.155172, 5.387204 52.164151)",  # endpoint is wrong
-    ],
-)
-def test_channels_location_check_invalid(session, channel_geom):
-    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
-    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
-    factories.ChannelFactory(
-        connection_node_id_start=1,
-        connection_node_id_end=2,
-        geom=f"SRID=4326;{channel_geom}",
-    )
-
-    errors = LinestringLocationCheck(
-        column=models.Channel.geom, max_distance=1.01
-    ).get_invalid(session)
-    assert len(errors) == 1
-
-
-def test_cross_section_location(session):
-    factories.ChannelFactory(
-        id=1,
-        geom="SRID=4326;LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
-    )
-    factories.CrossSectionLocationFactory(
-        channel_id=1, geom="SRID=4326;POINT(5.387204 52.155200)"
-    )
-    factories.CrossSectionLocationFactory(
-        channel_id=1, geom="SRID=4326;POINT(5.387218 52.155244)"
-    )
-    errors = CrossSectionLocationCheck(0.1).get_invalid(session)
-    assert len(errors) == 1
 
 
 class TestCrossSectionSameConfiguration:

@@ -100,6 +100,14 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
+class PumpMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.PumpMap
+        sqlalchemy_session = None
+
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+
+
 class PumpFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         model = models.Pump
@@ -180,6 +188,14 @@ class SurfaceParameterFactory(factory.alchemy.SQLAlchemyModelFactory):
     min_infiltration_capacity = 5.0
     infiltration_decay_constant = 3.0
     infiltration_recovery_constant = 2.0
+
+
+class DryWheatherFlowMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        model = models.DryWeatherFlowMap
+        sqlalchemy_session = None
+
+    geom = "SRID=4326;POINT(-71.064544 42.28787)"
 
 
 class DryWeatherFlowFactory(factory.alchemy.SQLAlchemyModelFactory):
