@@ -4,7 +4,7 @@ dynamic = ["version"]
 description = "Checks validity of a 3Di schematisation"
 readme = "README.rst"
 license = {text = "MIT"}
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 authors = [
     { name = "Nelen & Schuurmans", email = "info@nelen-schuurmans.nl" },
 ]
@@ -28,7 +28,6 @@ rasterio = [
 ]
 test = [
     "factory_boy",
-    "mock ; python_version<'3.8'",
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
