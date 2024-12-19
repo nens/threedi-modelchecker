@@ -7,7 +7,7 @@ Changelog of threedi-modelchecker
 -------------------
 
 - Add test for check descriptions.
-- Change minimum python version in pyproject.toml, update test matrix.
+- Change minimum python version to 3.9 in pyproject.toml, update test matrix.
 
 
 2.14.1 (2024-11-25)
