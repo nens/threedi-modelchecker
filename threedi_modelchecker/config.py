@@ -1140,11 +1140,17 @@ CHECKS += [
         level=CheckLevel.WARNING,
         max_distance=TOLERANCE_M,
         error_code=206,
-        column=table.geom,
-        ref_column=table.channel_id,
+        column=models.CrossSectionLocation.geom,
+        ref_column=models.CrossSectionLocation.channel_id,
         ref_table=models.Channel,
-    )
-    for table in [models.CrossSectionLocation, models.Windshielding]
+    ),
+    PointLocationCheck(
+        max_distance=TOLERANCE_M,
+        error_code=206,
+        column=models.Windshielding.geom,
+        ref_column=models.Windshielding.channel_id,
+        ref_table=models.Channel,
+    ),
 ]
 
 CHECKS += [
