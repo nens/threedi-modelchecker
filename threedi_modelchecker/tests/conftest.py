@@ -24,7 +24,7 @@ def threedi_db(tmpdir_factory):
     shutil.copyfile(data_dir / "empty.sqlite", tmp_sqlite)
     db = ThreediDatabase(tmp_sqlite)
     schema = ModelSchema(db)
-    schema.upgrade(backup=False, upgrade_spatialite_version=False)
+    schema.upgrade(backup=False, upgrade_spatialite_version=False, custom_epsg_code=28992)
     schema.set_spatial_indexes()
     return db
 
@@ -40,7 +40,6 @@ def session(threedi_db):
     :return: sqlalchemy.orm.session.Session
     """
     s = threedi_db.get_session(future=True)
-
     factories.inject_session(s)
     s.model_checker_context = LocalContext(base_path=data_dir)
 

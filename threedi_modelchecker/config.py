@@ -1580,19 +1580,6 @@ CHECKS += [
         min_value=0,
     ),
     QueryCheck(
-        error_code=317,
-        column=models.ModelSettings.epsg_code,
-        invalid=CONDITIONS["has_no_dem"].filter(models.ModelSettings.epsg_code == None),
-        message="model_settings.epsg_code may not be NULL if no dem file is provided",
-    ),
-    QueryCheck(
-        error_code=318,
-        level=CheckLevel.WARNING,
-        column=models.ModelSettings.epsg_code,
-        invalid=CONDITIONS["has_dem"].filter(models.ModelSettings.epsg_code == None),
-        message="if model_settings.epsg_code is NULL, it will be extracted from the DEM later, however, the modelchecker will use ESPG:28992 for its spatial checks",
-    ),
-    QueryCheck(
         error_code=319,
         column=models.ModelSettings.use_2d_flow,
         invalid=CONDITIONS["has_no_dem"].filter(

@@ -324,7 +324,7 @@ class ConnectionNodesDistance(BaseCheck):
             f"""SELECT *
                FROM connection_node AS cn1, connection_node AS cn2
                WHERE
-                   distance(cn1.geom, cn2.geom, 1) < :min_distance
+                   distance(cn1.geom, cn2.geom) < :min_distance
                    AND cn1.ROWID != cn2.ROWID
                    AND cn2.ROWID IN (
                      SELECT ROWID

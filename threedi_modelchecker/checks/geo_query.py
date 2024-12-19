@@ -13,7 +13,7 @@ def epsg_code_query():
 
 
 def transform(col):
-    return geo_func.ST_Transform(col, epsg_code_query())
+    return geo_func.ST_Transform(col, DEFAULT_EPSG)
 
 
 def distance(col_1, col_2):
