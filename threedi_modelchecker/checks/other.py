@@ -54,35 +54,6 @@ class CorrectAggregationSettingsExist(BaseCheck):
         )
 
 
-class CrossSectionLocationCheck(BaseCheck):
-    """Check if cross section locations are within {max_distance} of their channel."""
-
-    def __init__(self, max_distance, *args, **kwargs):
-        super().__init__(column=models.CrossSectionLocation.geom, *args, **kwargs)
-        self.max_distance = max_distance
-
-    def get_invalid(self, session):
-        # get all channels with more than 1 cross section location
-        return (
-            self.to_check(session)
-            .join(
-                models.Channel,
-                models.Channel.id == models.CrossSectionLocation.channel_id,
-            )
-            .filter(
-                distance(models.CrossSectionLocation.geom, models.Channel.geom)
-                > self.max_distance
-            )
-            .all()
-        )
-
-    def description(self):
-        return (
-            f"cross_section_location.geom is invalid: the cross-section location "
-            f"should be located on the channel geometry (tolerance = {self.max_distance} m)"
-        )
-
-
 class CrossSectionSameConfigurationCheck(BaseCheck):
     """Check the cross-sections on the object are either all open or all closed."""
 
@@ -492,44 +463,6 @@ class OpenChannelsWithNestedNewton(BaseCheck):
             f"NumericalSettings.use_nested_newton is switched off. "
             f"This gives convergence issues. We recommend setting use_nested_newton = 1."
         )
-
-
-class LinestringLocationCheck(BaseCheck):
-    """Check that linestring geometry starts / ends are close to their connection nodes
-
-    This allows for reversing the geometries. threedi-gridbuilder will reverse the geometries if
-    that lowers the distance to the connection nodes.
-    """
-
-    def __init__(self, *args, **kwargs):
-        self.max_distance = kwargs.pop("max_distance")
-        super().__init__(*args, **kwargs)
-
-    def get_invalid(self, session: Session) -> List[NamedTuple]:
-        start_node = aliased(models.ConnectionNode)
-        end_node = aliased(models.ConnectionNode)
-
-        tol = self.max_distance
-        start_point = func.ST_PointN(self.column, 1)
-        end_point = func.ST_PointN(self.column, func.ST_NPoints(self.column))
-
-        start_ok = distance(start_point, start_node.geom) <= tol
-        end_ok = distance(end_point, end_node.geom) <= tol
-        start_ok_if_reversed = distance(end_point, start_node.geom) <= tol
-        end_ok_if_reversed = distance(start_point, end_node.geom) <= tol
-        return (
-            self.to_check(session)
-            .join(start_node, start_node.id == self.table.c.connection_node_id_start)
-            .join(end_node, end_node.id == self.table.c.connection_node_id_end)
-            .filter(
-                ~(start_ok & end_ok),
-                ~(start_ok_if_reversed & end_ok_if_reversed),
-            )
-            .all()
-        )
-
-    def description(self) -> str:
-        return f"{self.column_name} does not start or end at its connection node (tolerance = {self.max_distance} m)"
 
 
 class BoundaryCondition1DObjectNumberCheck(BaseCheck):

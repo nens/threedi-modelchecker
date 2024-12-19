@@ -6,13 +6,18 @@ Changelog of threedi-modelchecker
 2.14.2 (unreleased)
 -------------------
 
+- Change minimum python version to 3.9 in pyproject.toml, update test matrix.
 - Check if tables related to use_* settings in model_settings and simulation_template settings are populated
 - Warn if tables related to use_* settings in model_settings and simulation_template settings are populated while use_* settings is false
 - Add test for check descriptions.
 - Collect all foreign key checks and give them a uniform error or warning (0001)
 - Add unique check for boundary_condition_1d.connection_node_id
 - Add checks for dry_weather_flow_distribution.distribution format, length and sum
-- Change minimum python version to 3.9 in pyproject.toml, update test matrix.
+- Add check if geometries for orifice, weir and pipe match their connection nodes
+- Add check if geometries for control_measure_map, dry_weather_flow_map, surface_map and pump_map match the object they connect
+- Add check if windshielding geometry matches with that of the linked channel
+- Add check if the geometry of boundary_condition_1d, control_measure_location, lateral_1d, and pump matches with that of the linked connection node
+- Add check if the geometry of memory_control or table_control matches to that of the linked object
 
 
 2.14.1 (2024-11-25)
