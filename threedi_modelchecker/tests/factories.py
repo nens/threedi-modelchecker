@@ -1,4 +1,3 @@
-
 from inspect import isclass
 
 import factory
@@ -12,6 +11,7 @@ DEFAULT_POINT = "SRID=28992;POINT (142742 473443)"
 DEFAULT_LINE = "SRID=28992;LINESTRING (142742 473443, 142747 473448)"
 # polygon containing DEFAULT_POINT
 DEFAULT_POLYGON = "SRID=28992;POLYGON ((142742 473443, 142743 473443, 142744 473444, 142742 473444, 142742 473443))"
+
 
 def inject_session(session):
     """Inject the session into all factories"""
