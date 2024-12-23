@@ -4,7 +4,6 @@ from sqlalchemy import func
 from sqlalchemy.orm import Query
 from threedi_schema import constants, custom_types, models
 
-from threedi_modelchecker.checks import geo_query
 from threedi_modelchecker.checks.base import (
     _sqlalchemy_to_sqlite_types,
     AllEqualCheck,
@@ -527,28 +526,6 @@ def test_global_settings_use_1d_flow_and_no_1d_elements(session):
     )
     errors = check_use_1d_flow_has_1d.get_invalid(session)
     assert len(errors) == 0
-
-
-def test_length_geom_linestring(session):
-    # TODO: reconsider this check because it tests geo_query.length,
-    #  not query_check so this should not be here!
-    factories.ModelSettingsFactory()
-    x, y = [
-        float(coord)
-        for coord in factories.DEFAULT_LINE.split("(")[1].split(",")[0].split()
-    ]
-    short_line = f"SRID=28992;LINESTRING({x} {y}, {x + 0.03} {y + 0.03})"
-    channel_too_short = factories.ChannelFactory(geom=short_line)
-    factories.ChannelFactory(geom=factories.DEFAULT_LINE)
-    q = Query(models.Channel).filter(geo_query.length(models.Channel.geom) < 0.05)
-    check_length_linestring = QueryCheck(
-        column=models.Channel.geom,
-        invalid=q,
-        message="Length of the channel is too short, should be at least 0.05m",
-    )
-    errors = check_length_linestring.get_invalid(session)
-    assert len(errors) == 1
-    assert errors[0].id == channel_too_short.id
 
 
 @pytest.mark.parametrize(

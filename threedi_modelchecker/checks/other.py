@@ -2,6 +2,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
+from geoalchemy2.functions import ST_Distance, ST_Length
 from sqlalchemy import (
     and_,
     case,
@@ -19,7 +20,6 @@ from threedi_schema.domain import constants, models
 
 from .base import BaseCheck, CheckLevel
 from .cross_section_definitions import cross_section_configuration_for_record
-from .geo_query import distance, length, transform
 
 
 class CorrectAggregationSettingsExist(BaseCheck):
@@ -290,7 +290,7 @@ class ConnectionNodesLength(BaseCheck):
             self.to_check(session)
             .join(start_node, start_node.id == self.start_node)
             .join(end_node, end_node.id == self.end_node)
-            .filter(distance(start_node.geom, end_node.geom) < self.min_distance)
+            .filter(ST_Distance(start_node.geom, end_node.geom) < self.min_distance)
         )
         return list(q.with_session(session).all())
 
@@ -548,10 +548,10 @@ class PotentialBreachStartEndCheck(BaseCheck):
         linestring = models.Channel.geom
         tol = self.min_distance
         breach_point = func.Line_Locate_Point(
-            transform(linestring), transform(func.ST_PointN(self.column, 1))
+            linestring, func.ST_PointN(self.column, 1)
         )
-        dist_1 = breach_point * length(linestring)
-        dist_2 = (1 - breach_point) * length(linestring)
+        dist_1 = breach_point * ST_Length(linestring)
+        dist_2 = (1 - breach_point) * ST_Length(linestring)
         return (
             self.to_check(session)
             .join(models.Channel, self.table.c.channel_id == models.Channel.id)
@@ -577,10 +577,8 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
 
         # First fetch the position of each potential breach per channel
         def get_position(point, linestring):
-            breach_point = func.Line_Locate_Point(
-                transform(linestring), transform(func.ST_PointN(point, 1))
-            )
-            return (breach_point * length(linestring)).label("position")
+            breach_point = func.Line_Locate_Point(linestring, func.ST_PointN(point, 1))
+            return (breach_point * ST_Length(linestring)).label("position")
 
         potential_breaches = sorted(
             session.query(self.table, get_position(self.column, models.Channel.geom))
@@ -776,7 +774,7 @@ class DefinedAreaCheck(BaseCheck):
             self.table.c.id,
             self.table.c.area,
             self.table.c.geom,
-            func.ST_Area(transform(self.table.c.geom)).label("calculated_area"),
+            func.ST_Area(self.table.c.geom).label("calculated_area"),
         ).subquery()
         return (
             session.query(all_results)
