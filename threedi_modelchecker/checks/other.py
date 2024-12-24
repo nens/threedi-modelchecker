@@ -258,8 +258,7 @@ class ConnectionNodes(BaseCheck):
 
 class ConnectionNodesLength(BaseCheck):
     """Check that the distance between `start_node` and `end_node` is at least
-    `min_distance`. The coords will be transformed into (the first entry) of
-    ModelSettings.epsg_code.
+    `min_distance`.
     """
 
     def __init__(
