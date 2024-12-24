@@ -1,11 +1,10 @@
 from typing import List, NamedTuple
 
-from sqlalchemy import func
+from geoalchemy2.functions import ST_Distance, ST_NPoints, ST_PointN
 from sqlalchemy.orm import aliased, Session
 from threedi_schema.domain import models
 
 from threedi_modelchecker.checks.base import BaseCheck
-from threedi_modelchecker.checks.geo_query import distance
 
 
 class PointLocationCheck(BaseCheck):
@@ -32,7 +31,7 @@ class PointLocationCheck(BaseCheck):
                 self.ref_table,
                 self.ref_table.id == self.ref_column,
             )
-            .filter(distance(self.column, self.ref_table.geom) > self.max_distance)
+            .filter(ST_Distance(self.column, self.ref_table.geom) > self.max_distance)
             .all()
         )
 
@@ -72,13 +71,13 @@ class LinestringLocationCheck(BaseCheck):
         end_node = aliased(self.ref_table_end)
 
         tol = self.max_distance
-        start_point = func.ST_PointN(self.column, 1)
-        end_point = func.ST_PointN(self.column, func.ST_NPoints(self.column))
+        start_point = ST_PointN(self.column, 1)
+        end_point = ST_PointN(self.column, ST_NPoints(self.column))
 
-        start_ok = distance(start_point, start_node.geom) <= tol
-        end_ok = distance(end_point, end_node.geom) <= tol
-        start_ok_if_reversed = distance(end_point, start_node.geom) <= tol
-        end_ok_if_reversed = distance(start_point, end_node.geom) <= tol
+        start_ok = ST_Distance(start_point, start_node.geom) <= tol
+        end_ok = ST_Distance(end_point, end_node.geom) <= tol
+        start_ok_if_reversed = ST_Distance(end_point, start_node.geom) <= tol
+        end_ok_if_reversed = ST_Distance(start_point, end_node.geom) <= tol
         return (
             self.to_check(session)
             .join(start_node, start_node.id == self.ref_column_start)

@@ -1,11 +1,11 @@
 from typing import List
 
+from geoalchemy2 import functions as geo_func
 from sqlalchemy import and_, func, or_, true
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
-from .checks import geo_query
 from .checks.base import (
     AllEqualCheck,
     BaseCheck,
@@ -1068,7 +1068,7 @@ CHECKS += [
         error_code=202,
         level=CheckLevel.WARNING,
         column=table.id,
-        invalid=Query(table).filter(geo_query.length(table.geom) < 5),
+        invalid=Query(table).filter(geo_func.ST_Length(table.geom) < 5),
         message=f"The length of {table.__tablename__} is very short (< 5 m). A length of at least 5.0 m is recommended to avoid timestep reduction.",
     )
     for table in [models.Channel, models.Culvert]
@@ -1369,8 +1369,8 @@ CHECKS += [
         invalid=Query(models.ExchangeLine)
         .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            geo_query.length(models.ExchangeLine.geom)
-            < (0.8 * geo_query.length(models.Channel.geom))
+            geo_func.ST_Length(models.ExchangeLine.geom)
+            < (0.8 * geo_func.ST_Length(models.Channel.geom))
         ),
         message=(
             "exchange_line.geom should not be significantly shorter than its "
@@ -1384,7 +1384,7 @@ CHECKS += [
         invalid=Query(models.ExchangeLine)
         .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            geo_query.distance(models.ExchangeLine.geom, models.Channel.geom) > 500.0
+            geo_func.ST_Distance(models.ExchangeLine.geom, models.Channel.geom) > 500.0
         ),
         message=("exchange_line.geom is far (> 500 m) from its corresponding channel"),
     ),
@@ -1455,7 +1455,7 @@ CHECKS += [
         invalid=Query(models.PotentialBreach)
         .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
-            geo_query.distance(
+            geo_func.ST_Distance(
                 func.PointN(models.PotentialBreach.geom, 1), models.Channel.geom
             )
             > TOLERANCE_M
@@ -1578,19 +1578,6 @@ CHECKS += [
         error_code=316,
         column=models.ModelSettings.manhole_aboveground_storage_area,
         min_value=0,
-    ),
-    QueryCheck(
-        error_code=317,
-        column=models.ModelSettings.epsg_code,
-        invalid=CONDITIONS["has_no_dem"].filter(models.ModelSettings.epsg_code == None),
-        message="model_settings.epsg_code may not be NULL if no dem file is provided",
-    ),
-    QueryCheck(
-        error_code=318,
-        level=CheckLevel.WARNING,
-        column=models.ModelSettings.epsg_code,
-        invalid=CONDITIONS["has_dem"].filter(models.ModelSettings.epsg_code == None),
-        message="if model_settings.epsg_code is NULL, it will be extracted from the DEM later, however, the modelchecker will use ESPG:28992 for its spatial checks",
     ),
     QueryCheck(
         error_code=319,

@@ -4,7 +4,6 @@ from sqlalchemy import func
 from sqlalchemy.orm import Query
 from threedi_schema import constants, custom_types, models
 
-from threedi_modelchecker.checks import geo_query
 from threedi_modelchecker.checks.base import (
     _sqlalchemy_to_sqlite_types,
     AllEqualCheck,
@@ -158,7 +157,6 @@ def test_unique_check_multiple_description():
 def test_all_equal_check(session):
     factories.ModelSettingsFactory(minimum_table_step_size=0.5)
     factories.ModelSettingsFactory(minimum_table_step_size=0.5)
-
     check = AllEqualCheck(models.ModelSettings.minimum_table_step_size)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == 0
@@ -310,7 +308,7 @@ def test_type_check_boolean(session):
 
 
 def test_geometry_check(session):
-    factories.ConnectionNodeFactory(geom="SRID=4326;POINT(-371.064544 42.28787)")
+    factories.ConnectionNodeFactory(geom=factories.DEFAULT_POINT)
 
     geometry_check = GeometryCheck(models.ConnectionNode.geom)
     invalid_rows = geometry_check.get_invalid(session)
@@ -319,9 +317,7 @@ def test_geometry_check(session):
 
 
 def test_geometry_type_check(session):
-    factories.ConnectionNodeFactory.create_batch(
-        2, geom="SRID=4326;POINT(-71.064544 42.28787)"
-    )
+    factories.ConnectionNodeFactory.create_batch(2, geom=factories.DEFAULT_POINT)
 
     geometry_type_check = GeometryTypeCheck(models.ConnectionNode.geom)
     invalid_rows = geometry_type_check.get_invalid(session)
@@ -530,58 +526,6 @@ def test_global_settings_use_1d_flow_and_no_1d_elements(session):
     )
     errors = check_use_1d_flow_has_1d.get_invalid(session)
     assert len(errors) == 0
-
-
-def test_length_geom_linestring_in_4326(session):
-    factories.ModelSettingsFactory(epsg_code=28992)
-    channel_too_short = factories.ChannelFactory(
-        geom="SRID=4326;LINESTRING("
-        "-0.38222938832999598 -0.13872236685816669, "
-        "-0.38222930900909202 -0.13872236685816669)",
-    )
-    factories.ChannelFactory(
-        geom="SRID=4326;LINESTRING("
-        "-0.38222938468305784 -0.13872235682908687, "
-        "-0.38222931083256106 -0.13872235591735235, "
-        "-0.38222930992082654 -0.13872207236791409, "
-        "-0.38222940929989008 -0.13872235591735235)",
-    )
-
-    q = Query(models.Channel).filter(geo_query.length(models.Channel.geom) < 0.05)
-    check_length_linestring = QueryCheck(
-        column=models.Channel.geom,
-        invalid=q,
-        message="Length of the channel is too short, should be at least 0.05m",
-    )
-
-    errors = check_length_linestring.get_invalid(session)
-    assert len(errors) == 1
-    assert errors[0].id == channel_too_short.id
-
-
-def test_length_geom_linestring_missing_epsg_from_global_settings(session):
-    factories.ChannelFactory(
-        geom="SRID=4326;LINESTRING("
-        "-0.38222938832999598 -0.13872236685816669, "
-        "-0.38222930900909202 -0.13872236685816669)",
-    )
-    factories.ChannelFactory(
-        geom="SRID=4326;LINESTRING("
-        "-0.38222938468305784 -0.13872235682908687, "
-        "-0.38222931083256106 -0.13872235591735235, "
-        "-0.38222930992082654 -0.13872207236791409, "
-        "-0.38222940929989008 -0.13872235591735235)",
-    )
-
-    q = Query(models.Channel).filter(geo_query.length(models.Channel.geom) < 0.05)
-    check_length_linestring = QueryCheck(
-        column=models.Channel.geom,
-        invalid=q,
-        message="Length of the channel is too short, should be at least 0.05m",
-    )
-
-    errors = check_length_linestring.get_invalid(session)
-    assert len(errors) == 1
 
 
 @pytest.mark.parametrize(
