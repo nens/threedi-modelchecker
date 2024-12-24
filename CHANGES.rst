@@ -3,7 +3,16 @@ Changelog of threedi-modelchecker
 
 
 
-2.14.2 (unreleased)
+2.16.0 (unreleased)
+-------------------
+
+- Adapt to schema 230 where all geometries use the model CRS and model_settings.epsg_code is no longer available
+- Remove checks for model_settings.epsg_code (317 and 318)
+- Remove usage of epsg 4326 in the tests because this CRS is no longer valid
+- Remove no longer needed transformations
+
+
+2.15.0 (unreleased)
 -------------------
 
 - Change minimum python version to 3.9 in pyproject.toml, update test matrix.
