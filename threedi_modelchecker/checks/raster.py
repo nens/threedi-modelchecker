@@ -172,21 +172,28 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
 
     def __init__(
         self,
-        ref_epsg,
-        ref_name,
         *args,
         **kwargs,
     ):
-        self.ref_epsg = ref_epsg
-        self.ref_name = ref_name
+        self.ref_epsg_name = ""
+        self.ref_epsg_code = None
+
+    def get_invalid(self, session):
+        if session.ref_epsg_code is None:
+            return []
+        self.ref_epsg_name = session.ref_epsg_name
+        self.ref_epsg_code = session.ref_epsg_code
+        return super().get_invalid(session)
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        if self.ref_epsg_code is None:
+            return True
         with interface_cls(path) as raster:
             if not raster.is_valid_geotiff or not raster.has_projection:
                 return True
-            if self.ref_epsg is None or raster.epsg_code is None:
+            if raster.epsg_code is None:
                 return False
-            return raster.epsg_code == self.ref_epsg
+            return raster.epsg_code == self.ref_epsg_code
 
     def description(self):
         return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match {self.ref_name}"

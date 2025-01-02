@@ -267,14 +267,13 @@ NULL_EPSG_CODE = (
         (28992, 28992, True),
         (28992, 27700, False),
         (NULL_EPSG_CODE, 28992, False),
-        (27700, None, False),
+        (27700, None, True),
     ],
 )
 def test_has_epsg(tmp_path, interface_cls, raster_epsg, sqlite_epsg, validity):
     path = create_geotiff(tmp_path / "raster.tiff", epsg=raster_epsg)
-    check = RasterHasMatchingEPSGCheck(
-        ref_epsg=sqlite_epsg, ref_name="foo", column=models.ModelSettings.dem_file
-    )
+    check = RasterHasMatchingEPSGCheck(column=models.ModelSettings.dem_file)
+    check.ref_epsg_code = sqlite_epsg
     assert check.is_valid(path, interface_cls) == validity
 
 
@@ -428,9 +427,7 @@ def test_raster_range_no_data(tmp_path, interface_cls):
     [
         RasterHasOneBandCheck(column=models.ModelSettings.dem_file),
         RasterHasProjectionCheck(column=models.ModelSettings.dem_file),
-        RasterHasMatchingEPSGCheck(
-            column=models.ModelSettings.dem_file, ref_epsg=None, ref_name=None
-        ),
+        RasterHasMatchingEPSGCheck(column=models.ModelSettings.dem_file),
         RasterIsProjectedCheck(column=models.ModelSettings.dem_file),
         RasterSquareCellsCheck(column=models.ModelSettings.dem_file),
         RasterGridSizeCheck(column=models.ModelSettings.dem_file),

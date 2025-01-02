@@ -940,11 +940,18 @@ def test_dwf_distribution_sum_check(session, distribution, valid):
     assert (len(invalids) == 0) == valid
 
 
-@pytest.mark.parametrize("ref_epsg, valid", [(28992, True), (4326, False)])
+@pytest.mark.parametrize(
+    "ref_epsg, valid",
+    [
+        (28992, True),
+        (4326, False),
+        (None, True),  # skip check when there is no epsg
+    ],
+)
 def test_epsg_geom_check(session, ref_epsg, valid):
     factories.ConnectionNodeFactory()
-    check = EPSGGeomCheck(
-        column=models.ConnectionNode.geom, ref_epsg=ref_epsg, ref_name="foo"
-    )
+    session.ref_epsg_code = ref_epsg
+    session.ref_epsg_name = "foo"
+    check = EPSGGeomCheck(column=models.ConnectionNode.geom)
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid

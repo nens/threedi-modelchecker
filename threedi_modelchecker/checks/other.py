@@ -1118,19 +1118,21 @@ class EPSGGeomCheck(BaseCheck):
 
     def __init__(
         self,
-        ref_epsg,
-        ref_name,
         *args,
         **kwargs,
     ):
-        self.ref_epsg = ref_epsg
-        self.ref_name = ref_name
         super().__init__(*args, **kwargs)
+        self.ref_epsg_name = ""
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
+        self.ref_epsg_name = session.ref_epsg_name
+        if session.ref_epsg_code is None:
+            return []
         return (
-            self.to_check(session).filter(ST_SRID(self.column) != self.ref_epsg).all()
+            self.to_check(session)
+            .filter(ST_SRID(self.column) != session.ref_epsg_code)
+            .all()
         )
 
     def description(self) -> str:
-        return f"The epsg of {self.table.name}.{self.column_name} should match {self.ref_name}"
+        return f"The epsg of {self.table.name}.{self.column_name} should match {self.ref_epsg_name}"

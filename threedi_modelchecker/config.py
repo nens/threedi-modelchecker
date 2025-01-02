@@ -3536,6 +3536,7 @@ class Config:
                     message=f"{model.id.name} must be a positive signed 32-bit integer.",
                 )
             ]
+            # self.checks += generate_epsg_geom_checks()
 
         self.checks += CHECKS
         if not self.allow_beta_features:

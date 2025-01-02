@@ -1,12 +1,73 @@
 from typing import Dict, Iterator, NamedTuple, Optional, Tuple
 
-from threedi_schema import ThreediDatabase
+from geoalchemy2.functions import ST_SRID
+from threedi_schema import models, ThreediDatabase
 
 from .checks.base import BaseCheck, CheckLevel
 from .checks.raster import LocalContext, ServerContext
 from .config import Config
 
 __all__ = ["ThreediModelChecker"]
+
+
+rasters = [
+    models.ModelSettings.dem_file,
+    models.GroundWater.equilibrium_infiltration_rate_file,
+    models.ModelSettings.friction_coefficient_file,
+    models.InitialConditions.initial_groundwater_level_file,
+    models.InitialConditions.initial_water_level_file,
+    models.GroundWater.groundwater_hydraulic_conductivity_file,
+    models.GroundWater.groundwater_impervious_layer_level_file,
+    models.GroundWater.infiltration_decay_period_file,
+    models.GroundWater.initial_infiltration_rate_file,
+    models.GroundWater.leakage_file,
+    models.GroundWater.phreatic_storage_capacity_file,
+    models.Interflow.hydraulic_conductivity_file,
+    models.Interflow.porosity_file,
+    models.SimpleInfiltration.infiltration_rate_file,
+    models.SimpleInfiltration.max_infiltration_volume_file,
+    models.Interception.interception_file,
+    models.VegetationDrag.vegetation_height_file,
+    models.VegetationDrag.vegetation_stem_count_file,
+    models.VegetationDrag.vegetation_stem_diameter_file,
+    models.VegetationDrag.vegetation_drag_coefficient_file,
+]
+
+
+def set_epsg_in_session(session):
+    session.ref_epsg_code = None
+    session.ref_epsg_name = ""
+    for model in models.DECLARED_MODELS:
+        if hasattr(model, "geom"):
+            srids = [item[0] for item in session.query(ST_SRID(model.geom)).all()]
+            if len(srids) > 0:
+                session.ref_epsg_code = srids[0]
+                session.ref_epsg_name = f"{model.__tablename__}.geom"
+                return
+    if (
+        session.model_checker_context is None
+        or session.model_checker_context.raster_interface is None
+    ):
+        return
+    context = session.model_checker_context
+    raster_interface = context.raster_interface
+    for raster in rasters:
+        raster_files = (
+            session.query(raster).filter(raster != None, raster != "").first()
+        )
+        if raster_files is None:
+            continue
+        if isinstance(context, ServerContext):
+            if isinstance(context.available_rasters, dict):
+                abs_path = context.available_rasters.get(raster.name)
+        else:
+            abs_path = context.base_path.joinpath("rasters", getattr(raster.name))
+            if not abs_path.exists():
+                continue
+            with raster_interface(abs_path) as ro:
+                session.ref_epsg_code = ro.epsg_code
+                session.ref_epsg_name = f"{raster.table.name}.{raster.name}"
+                return
 
 
 class ThreediModelChecker:
@@ -57,6 +118,7 @@ class ThreediModelChecker:
         """
         session = self.db.get_session()
         session.model_checker_context = self.context
+        set_epsg_in_session(session)
 
         for check in self.checks(level=level, ignore_checks=ignore_checks):
             model_errors = check.get_invalid(session)
