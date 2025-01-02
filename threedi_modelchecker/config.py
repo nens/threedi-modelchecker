@@ -85,12 +85,11 @@ from .checks.other import (
     UsedSettingsPresentCheck,
     UsedSettingsPresentCheckSingleTable,
 )
-from .checks.raster import (
+from .checks.raster import (  # RasterHasMatchingEPSGCheck,
     GDALAvailableCheck,
     RasterCompressionUsedCheck,
     RasterExistsCheck,
     RasterGridSizeCheck,
-    RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
     RasterHasProjectionCheck,
     RasterIsProjectedCheck,
@@ -2463,11 +2462,11 @@ CHECKS += [
         min_value=-9998.0,
         max_value=8848.0,
     ),
-    RasterHasMatchingEPSGCheck(
-        error_code=797,
-        level=CheckLevel.WARNING,
-        column=models.ModelSettings.dem_file,
-    ),
+    # RasterHasMatchingEPSGCheck(
+    #     error_code=797,
+    #     level=CheckLevel.WARNING,
+    #     column=models.ModelSettings.dem_file,
+    # ),
     RasterGridSizeCheck(
         error_code=798,
         column=models.ModelSettings.dem_file,

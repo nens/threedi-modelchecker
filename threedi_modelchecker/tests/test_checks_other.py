@@ -22,6 +22,7 @@ from threedi_modelchecker.checks.other import (
     DWFDistributionCSVFormatCheck,
     DWFDistributionLengthCheck,
     DWFDistributionSumCheck,
+    EPSGGeomCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
@@ -935,5 +936,15 @@ def test_dwf_distribution_length_check(session, distribution, valid):
 def test_dwf_distribution_sum_check(session, distribution, valid):
     factories.DryWeatherFlowDistributionFactory(distribution=distribution)
     check = DWFDistributionSumCheck()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize("ref_epsg, valid", [(28992, True), (4326, False)])
+def test_epsg_geom_check(session, ref_epsg, valid):
+    factories.ConnectionNodeFactory()
+    check = EPSGGeomCheck(
+        column=models.ConnectionNode.geom, ref_epsg=ref_epsg, ref_name="foo"
+    )
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
