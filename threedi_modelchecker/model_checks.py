@@ -34,23 +34,23 @@ rasters = [
 ]
 
 
-def set_epsg_in_session(session):
-    session.ref_epsg_code = None
-    session.ref_epsg_name = ""
+def get_epsg_data(session) -> Tuple[int, str]:
+    """
+    Retrieve epsg code for schematisation loaded in session. This is done by
+    iterating over all geometries in the declared models and all raster files, and
+    stopping at the first geometry or raster file with data.
+
+    Returns the epsg code and the name (table.column) of the source.
+    """
     for model in models.DECLARED_MODELS:
         if hasattr(model, "geom"):
             srids = [item[0] for item in session.query(ST_SRID(model.geom)).all()]
             if len(srids) > 0:
-                session.ref_epsg_code = srids[0]
-                session.ref_epsg_name = f"{model.__tablename__}.geom"
-                return
-    if (
-        session.model_checker_context is None
-        or session.model_checker_context.raster_interface is None
-    ):
-        return
+                return srids[0], f"{model.__tablename__}.geom"
     context = session.model_checker_context
-    raster_interface = context.raster_interface
+    raster_interface = context.raster_interface if context is not None else None
+    if raster_interface is None:
+        return None, ""
     for raster in rasters:
         raster_files = (
             session.query(raster).filter(raster != None, raster != "").first()
@@ -61,13 +61,13 @@ def set_epsg_in_session(session):
             if isinstance(context.available_rasters, dict):
                 abs_path = context.available_rasters.get(raster.name)
         else:
-            abs_path = context.base_path.joinpath("rasters", getattr(raster.name))
-            if not abs_path.exists():
-                continue
-            with raster_interface(abs_path) as ro:
-                session.ref_epsg_code = ro.epsg_code
-                session.ref_epsg_name = f"{raster.table.name}.{raster.name}"
-                return
+            abs_path = context.base_path.joinpath("rasters", raster_files[0])
+        if not abs_path.exists():
+            continue
+        with raster_interface(abs_path) as ro:
+            if ro.epsg_code is not None:
+                return ro.epsg_code, f"{raster.table.name}.{raster.name}"
+    return None, ""
 
 
 class ThreediModelChecker:
@@ -118,8 +118,9 @@ class ThreediModelChecker:
         """
         session = self.db.get_session()
         session.model_checker_context = self.context
-        set_epsg_in_session(session)
-
+        epsg_ref_code, epsg_ref_name = get_epsg_data(session)
+        session.epsg_ref_code = epsg_ref_code
+        session.epsg_ref_name = epsg_ref_name
         for check in self.checks(level=level, ignore_checks=ignore_checks):
             model_errors = check.get_invalid(session)
             for error_row in model_errors:
