@@ -416,8 +416,6 @@ class ListOfIntsCheck(BaseCheck):
 
 
 class EPSGGeomCheck(BaseCheck):
-    # use factory to make these!!!
-
     def __init__(
         self,
         *args,
