@@ -5,7 +5,7 @@ from threedi_schema import models, ThreediDatabase
 
 from .checks.base import BaseCheck, CheckLevel
 from .checks.raster import LocalContext, ServerContext
-from .config import Config, raster_columns
+from .config import Config, RASTER_COLUMNS
 
 __all__ = ["ThreediModelChecker"]
 
@@ -27,7 +27,7 @@ def get_epsg_data(session) -> Tuple[int, str]:
     raster_interface = context.raster_interface if context is not None else None
     if raster_interface is None:
         return None, ""
-    for raster in raster_columns:
+    for raster in RASTER_COLUMNS:
         raster_files = (
             session.query(raster).filter(raster != None, raster != "").first()
         )

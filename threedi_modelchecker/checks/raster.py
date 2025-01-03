@@ -141,32 +141,6 @@ class RasterHasOneBandCheck(BaseRasterCheck):
         return f"The file in {self.column_name} has multiple or no bands."
 
 
-class RasterHasProjectionCheck(BaseRasterCheck):
-    """Check whether a raster has a projected coordinate system."""
-
-    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
-        with interface_cls(path) as raster:
-            if not raster.is_valid_geotiff:
-                return True
-            return raster.has_projection
-
-    def description(self):
-        return f"The file in {self.column_name} has no CRS."
-
-
-class RasterIsProjectedCheck(BaseRasterCheck):
-    """Check whether a raster has a projected coordinate system."""
-
-    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
-        with interface_cls(path) as raster:
-            if not raster.is_valid_geotiff or not raster.has_projection:
-                return True
-            return not raster.is_geographic
-
-    def description(self):
-        return f"The file in {self.column_name} does not use a projected CRS."
-
-
 class RasterHasMatchingEPSGCheck(BaseRasterCheck):
     """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite."""
 

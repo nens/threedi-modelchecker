@@ -93,8 +93,6 @@ from .checks.raster import (
     RasterExistsCheck,
     RasterGridSizeCheck,
     RasterHasOneBandCheck,
-    RasterHasProjectionCheck,
-    RasterIsProjectedCheck,
     RasterIsValidCheck,
     RasterPixelCountCheck,
     RasterRangeCheck,
@@ -2363,17 +2361,6 @@ CHECKS += [
     for i, column in enumerate(RASTER_COLUMNS)
 ]
 CHECKS += [
-    RasterHasProjectionCheck(
-        error_code=761 + i,
-        column=column,
-    )
-    for i, column in enumerate(RASTER_COLUMNS)
-]
-CHECKS += [
-    RasterIsProjectedCheck(
-        error_code=779,
-        column=models.ModelSettings.dem_file,
-    ),
     RasterSquareCellsCheck(
         error_code=780,
         column=models.ModelSettings.dem_file,
@@ -3471,29 +3458,6 @@ level_map_fk_check = {
 
 unique_columns = [models.BoundaryCondition1D.connection_node_id]
 
-raster_columns = [
-    models.ModelSettings.dem_file,
-    models.GroundWater.equilibrium_infiltration_rate_file,
-    models.ModelSettings.friction_coefficient_file,
-    models.InitialConditions.initial_groundwater_level_file,
-    models.InitialConditions.initial_water_level_file,
-    models.GroundWater.groundwater_hydraulic_conductivity_file,
-    models.GroundWater.groundwater_impervious_layer_level_file,
-    models.GroundWater.infiltration_decay_period_file,
-    models.GroundWater.initial_infiltration_rate_file,
-    models.GroundWater.leakage_file,
-    models.GroundWater.phreatic_storage_capacity_file,
-    models.Interflow.hydraulic_conductivity_file,
-    models.Interflow.porosity_file,
-    models.SimpleInfiltration.infiltration_rate_file,
-    models.SimpleInfiltration.max_infiltration_volume_file,
-    models.Interception.interception_file,
-    models.VegetationDrag.vegetation_height_file,
-    models.VegetationDrag.vegetation_stem_count_file,
-    models.VegetationDrag.vegetation_stem_diameter_file,
-    models.VegetationDrag.vegetation_drag_coefficient_file,
-]
-
 
 class Config:
     """Collection of checks
@@ -3558,7 +3522,7 @@ class Config:
             ]
             self.checks += generate_epsg_geom_checks(model.__table__, error_code=9)
             self.checks += generate_epsg_raster_checks(
-                model.__table__, raster_columns, error_code=10
+                model.__table__, RASTER_COLUMNS, error_code=10
             )
 
         self.checks += CHECKS
