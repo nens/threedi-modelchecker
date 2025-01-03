@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
-from geoalchemy2.functions import ST_Distance, ST_Length, ST_SRID
+from geoalchemy2.functions import ST_Distance, ST_Length
 from sqlalchemy import (
     and_,
     case,
@@ -1111,28 +1111,3 @@ class DWFDistributionSumCheck(DWFDistributionBaseCheck):
 
     def description(self) -> str:
         return f"The values in {self.table.name}.{self.column_name} should add up to"
-
-
-class EPSGGeomCheck(BaseCheck):
-    # use factory to make these!!!
-
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.ref_epsg_name = ""
-
-    def get_invalid(self, session: Session) -> List[NamedTuple]:
-        self.ref_epsg_name = session.ref_epsg_name
-        if session.ref_epsg_code is None:
-            return []
-        return (
-            self.to_check(session)
-            .filter(ST_SRID(self.column) != session.ref_epsg_code)
-            .all()
-        )
-
-    def description(self) -> str:
-        return f"The epsg of {self.table.name}.{self.column_name} should match {self.ref_epsg_name}"

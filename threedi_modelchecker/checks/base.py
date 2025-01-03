@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from enum import IntEnum
 from typing import List, NamedTuple
 
+from geoalchemy2.functions import ST_SRID
 from sqlalchemy import and_, false, func, types
 from sqlalchemy.orm.session import Session
 from threedi_schema.domain import custom_types
@@ -412,3 +413,28 @@ class ListOfIntsCheck(BaseCheck):
         return (
             f"{self.table.name}.{self.column} is not a comma seperated list of integers"
         )
+
+
+class EPSGGeomCheck(BaseCheck):
+    # use factory to make these!!!
+
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.ref_epsg_name = ""
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        self.ref_epsg_name = session.ref_epsg_name
+        if session.ref_epsg_code is None:
+            return []
+        return (
+            self.to_check(session)
+            .filter(ST_SRID(self.column) != session.ref_epsg_code)
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"The epsg of {self.table.name}.{self.column_name} should match {self.ref_epsg_name}"

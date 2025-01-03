@@ -5,6 +5,8 @@ from threedi_modelchecker.checks.base import CheckLevel
 from threedi_modelchecker.checks.factories import (
     ForeignKeyCheckSetting,
     generate_enum_checks,
+    generate_epsg_geom_checks,
+    generate_epsg_raster_checks,
     generate_foreign_key_checks,
     generate_geometry_checks,
     generate_not_null_checks,
@@ -112,3 +114,34 @@ def test_gen_enum_checks_custom_mapping(name):
     checks = {check.column.name: check for check in enum_checks}
     assert checks["aggregation_method"].level == CheckLevel.WARNING
     assert checks["flow_variable"].level == CheckLevel.ERROR
+
+
+@pytest.mark.parametrize(
+    "model, nof_checks_expected",
+    [
+        (models.ModelSettings, 0),
+        (models.ConnectionNode, 1),
+    ],
+)
+def test_gen_epsg_geom_checks(model, nof_checks_expected):
+    assert len(generate_epsg_geom_checks(model.__table__)) == nof_checks_expected
+
+
+@pytest.mark.parametrize(
+    "model, nof_checks_expected",
+    [
+        (models.ConnectionNode, 0),
+        (models.GroundWater, 1),
+        (models.ModelSettings, 2),
+    ],
+)
+def test_gen_epsg_raster_checks(model, nof_checks_expected):
+    raster_columns = [
+        models.ModelSettings.dem_file,
+        models.ModelSettings.friction_coefficient_file,
+        models.GroundWater.equilibrium_infiltration_rate_file,
+    ]
+    assert (
+        len(generate_epsg_raster_checks(model.__table__, raster_columns))
+        == nof_checks_expected
+    )

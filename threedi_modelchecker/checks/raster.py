@@ -170,13 +170,8 @@ class RasterIsProjectedCheck(BaseRasterCheck):
 class RasterHasMatchingEPSGCheck(BaseRasterCheck):
     """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite."""
 
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        self.ref_epsg_name = ""
-        self.ref_epsg_code = None
+    ref_epsg_name = ""
+    ref_epsg_code = None
 
     def get_invalid(self, session):
         if session.ref_epsg_code is None:
@@ -196,7 +191,7 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
             return raster.epsg_code == self.ref_epsg_code
 
     def description(self):
-        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match {self.ref_name}"
+        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match {self.ref_epsg_name}"
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):

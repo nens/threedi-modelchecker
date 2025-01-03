@@ -5,33 +5,9 @@ from threedi_schema import models, ThreediDatabase
 
 from .checks.base import BaseCheck, CheckLevel
 from .checks.raster import LocalContext, ServerContext
-from .config import Config
+from .config import Config, raster_columns
 
 __all__ = ["ThreediModelChecker"]
-
-
-rasters = [
-    models.ModelSettings.dem_file,
-    models.GroundWater.equilibrium_infiltration_rate_file,
-    models.ModelSettings.friction_coefficient_file,
-    models.InitialConditions.initial_groundwater_level_file,
-    models.InitialConditions.initial_water_level_file,
-    models.GroundWater.groundwater_hydraulic_conductivity_file,
-    models.GroundWater.groundwater_impervious_layer_level_file,
-    models.GroundWater.infiltration_decay_period_file,
-    models.GroundWater.initial_infiltration_rate_file,
-    models.GroundWater.leakage_file,
-    models.GroundWater.phreatic_storage_capacity_file,
-    models.Interflow.hydraulic_conductivity_file,
-    models.Interflow.porosity_file,
-    models.SimpleInfiltration.infiltration_rate_file,
-    models.SimpleInfiltration.max_infiltration_volume_file,
-    models.Interception.interception_file,
-    models.VegetationDrag.vegetation_height_file,
-    models.VegetationDrag.vegetation_stem_count_file,
-    models.VegetationDrag.vegetation_stem_diameter_file,
-    models.VegetationDrag.vegetation_drag_coefficient_file,
-]
 
 
 def get_epsg_data(session) -> Tuple[int, str]:
@@ -51,7 +27,7 @@ def get_epsg_data(session) -> Tuple[int, str]:
     raster_interface = context.raster_interface if context is not None else None
     if raster_interface is None:
         return None, ""
-    for raster in rasters:
+    for raster in raster_columns:
         raster_files = (
             session.query(raster).filter(raster != None, raster != "").first()
         )

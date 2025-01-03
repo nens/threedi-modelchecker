@@ -8,6 +8,7 @@ from threedi_modelchecker.checks.base import (
     _sqlalchemy_to_sqlite_types,
     AllEqualCheck,
     EnumCheck,
+    EPSGGeomCheck,
     ForeignKeyCheck,
     GeometryCheck,
     GeometryTypeCheck,
@@ -590,3 +591,20 @@ def test_list_of_inst_check(session, tag_ids_string, nof_invalid_expected):
     check = ListOfIntsCheck(column=models.DryWeatherFlow.tags)
     invalid_rows = check.get_invalid(session)
     assert len(invalid_rows) == nof_invalid_expected
+
+
+@pytest.mark.parametrize(
+    "ref_epsg, valid",
+    [
+        (28992, True),
+        (4326, False),
+        (None, True),  # skip check when there is no epsg
+    ],
+)
+def test_epsg_geom_check(session, ref_epsg, valid):
+    factories.ConnectionNodeFactory()
+    session.ref_epsg_code = ref_epsg
+    session.ref_epsg_name = "foo"
+    check = EPSGGeomCheck(column=models.ConnectionNode.geom)
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
