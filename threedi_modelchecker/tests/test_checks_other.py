@@ -25,6 +25,9 @@ from threedi_modelchecker.checks.other import (
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
+    ModelEPSGCheckProjected,
+    ModelEPSGCheckUnits,
+    ModelEPSGCheckValid,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
@@ -935,5 +938,52 @@ def test_dwf_distribution_length_check(session, distribution, valid):
 def test_dwf_distribution_sum_check(session, distribution, valid):
     factories.DryWeatherFlowDistributionFactory(distribution=distribution)
     check = DWFDistributionSumCheck()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "ref_epsg, valid",
+    [
+        (28992, True),
+        (999999, False),
+    ],
+)
+def test_model_epsg_check_valid(session, ref_epsg, valid):
+    factories.ModelSettingsFactory()
+    session.ref_epsg_code = ref_epsg
+    check = ModelEPSGCheckValid()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "ref_epsg, valid",
+    [
+        (28992, True),
+        (4326, False),
+        (None, True),  # skip check when there is no epsg
+    ],
+)
+def test_model_epsg_check_projected(session, ref_epsg, valid):
+    factories.ModelSettingsFactory()
+    session.ref_epsg_code = ref_epsg
+    check = ModelEPSGCheckProjected()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "ref_epsg, valid",
+    [
+        (28992, True),
+        (4326, False),
+        (None, True),  # skip check when there is no epsg
+    ],
+)
+def test_model_epsg_check_units(session, ref_epsg, valid):
+    factories.ModelSettingsFactory()
+    session.ref_epsg_code = ref_epsg
+    check = ModelEPSGCheckUnits()
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid

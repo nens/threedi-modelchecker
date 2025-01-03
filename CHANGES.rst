@@ -11,6 +11,7 @@ Changelog of threedi-modelchecker
 - Remove usage of epsg 4326 in the tests because this CRS is no longer valid
 - Remove no longer needed transformations
 - Add checks for mathing epsg in all geometries and raster files
+- Add checks for valid epsg (existing code, projected, in meters) which requires pyproj
 
 
 2.15.0 (unreleased)

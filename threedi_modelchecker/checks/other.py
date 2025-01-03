@@ -2,6 +2,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
+import pyproj
 from geoalchemy2.functions import ST_Distance, ST_Length
 from sqlalchemy import (
     and_,
@@ -1111,3 +1112,64 @@ class DWFDistributionSumCheck(DWFDistributionBaseCheck):
 
     def description(self) -> str:
         return f"The values in {self.table.name}.{self.column_name} should add up to"
+
+
+class ModelEPSGCheckValid(BaseCheck):
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.ModelSettings.id, *args, **kwargs)
+        self.epsg_code = None
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        self.epsg_code = session.ref_epsg_code
+        if self.epsg_code is not None:
+            try:
+                pyproj.CRS.from_epsg(self.epsg_code)
+            except pyproj.exceptions.CRSError:
+                return self.to_check(session).all()
+        return []
+
+    def description(self) -> str:
+        return f"Found invalid EPSG: {self.epsg_code}"
+
+
+class ModelEPSGCheckProjected(BaseCheck):
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.ModelSettings.id, *args, **kwargs)
+        self.epsg_code = None
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        self.epsg_code = session.ref_epsg_code
+        if self.epsg_code is not None:
+            try:
+                crs = pyproj.CRS.from_epsg(self.epsg_code)
+            except pyproj.exceptions.CRSError:
+                # handled by ModelEPSGCheckValid
+                return []
+            if not crs.is_projected:
+                return self.to_check(session).all()
+        return []
+
+    def description(self) -> str:
+        return f"EPSG {self.epsg_code} is not projected"
+
+
+class ModelEPSGCheckUnits(BaseCheck):
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.ModelSettings.id, *args, **kwargs)
+        self.epsg_code = None
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        self.epsg_code = session.ref_epsg_code
+        if self.epsg_code is not None:
+            try:
+                crs = pyproj.CRS.from_epsg(self.epsg_code)
+            except pyproj.exceptions.CRSError:
+                # handled by ModelEPSGCheckValid
+                return []
+            for ax in crs.axis_info:
+                if not ax.unit_name == "metre":
+                    return self.to_check(session).all()
+        return []
+
+    def description(self) -> str:
+        return f"EPSG {self.epsg_code} is not fully defined in meters"
