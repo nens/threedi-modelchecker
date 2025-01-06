@@ -1,7 +1,6 @@
 from typing import Dict, Iterator, NamedTuple, Optional, Tuple
 
-from geoalchemy2.functions import ST_SRID
-from threedi_schema import models, ThreediDatabase
+from threedi_schema import ThreediDatabase
 
 from .checks.base import BaseCheck, CheckLevel
 from .checks.raster import LocalContext, ServerContext
@@ -10,7 +9,7 @@ from .config import Config, RASTER_COLUMNS
 __all__ = ["ThreediModelChecker"]
 
 
-def get_epsg_data(session) -> Tuple[int, str]:
+def get_epsg_data_from_raster(session) -> Tuple[int, str]:
     """
     Retrieve epsg code for schematisation loaded in session. This is done by
     iterating over all geometries in the declared models and all raster files, and
@@ -18,11 +17,6 @@ def get_epsg_data(session) -> Tuple[int, str]:
 
     Returns the epsg code and the name (table.column) of the source.
     """
-    for model in models.DECLARED_MODELS:
-        if hasattr(model, "geom"):
-            srids = [item[0] for item in session.query(ST_SRID(model.geom)).all()]
-            if len(srids) > 0:
-                return srids[0], f"{model.__tablename__}.geom"
     context = session.model_checker_context
     raster_interface = context.raster_interface if context is not None else None
     if raster_interface is None:
@@ -94,9 +88,13 @@ class ThreediModelChecker:
         """
         session = self.db.get_session()
         session.model_checker_context = self.context
-        epsg_ref_code, epsg_ref_name = get_epsg_data(session)
-        session.epsg_ref_code = epsg_ref_code
-        session.epsg_ref_name = epsg_ref_name
+        if self.db.schema.epsg_code is not None:
+            session.epsg_ref_code = self.db.schema.epsg_code
+            session.epsg_ref_name = self.db.schema.epsg_source
+        else:
+            epsg_ref_code, epsg_ref_name = get_epsg_data_from_raster(session)
+            session.epsg_ref_code = epsg_ref_code
+            session.epsg_ref_name = epsg_ref_name
         for check in self.checks(level=level, ignore_checks=ignore_checks):
             model_errors = check.get_invalid(session)
             for error_row in model_errors:

@@ -6,7 +6,7 @@ from threedi_schema import ThreediDatabase
 from threedi_modelchecker.config import CHECKS
 from threedi_modelchecker.model_checks import (
     BaseCheck,
-    get_epsg_data,
+    get_epsg_data_from_raster,
     LocalContext,
     ThreediModelChecker,
 )
@@ -70,46 +70,18 @@ def test_individual_checks(threedi_db, check):
         assert len(check.get_invalid(session)) == 0
 
 
-class BasePathContextManager:
-    """
-    Context manager to handle temporarly changing the base path of a session context
-    """
-
-    def __init__(self, session, new_path):
-        self.session = session
-        self.new_path = new_path
-        self.old_path = None
-
-    def __enter__(self):
-        self.old_path = self.session.model_checker_context.base_path
-        self.session.model_checker_context.base_path = self.new_path
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.session.model_checker_context.base_path = self.old_path
+def test_get_epsg_data_from_raster_empty_schema(session):
+    epsg_code, epsg_name = get_epsg_data_from_raster(session)
+    assert epsg_code is None
+    assert epsg_name == ""
 
 
-class TestGetEPSGData:
-    def test_no_epsg(self, session):
-        epsg_code, epsg_name = get_epsg_data(session)
-        assert epsg_code is None
-        assert epsg_name == ""
-
-    def _add_raster(self, session, tmp_path):
-        create_geotiff(tmp_path / "rasters" / "raster.tiff", epsg=28992)
-        factories.VegetationDragFactory(vegetation_height_file="raster.tiff")
-
-    def test_epsg_from_geom(self, session, tmp_path):
-        with BasePathContextManager(session, tmp_path):
-            self._add_raster(session, tmp_path)
-            factories.ConnectionNodeFactory()
-            factories.PumpFactory()
-            epsg_code, epsg_name = get_epsg_data(session)
-            assert epsg_code == 28992
-            assert epsg_name == "connection_node.geom"
-
-    def test_epsg_rom_raster(self, session, tmp_path):
-        with BasePathContextManager(session, tmp_path):
-            self._add_raster(session, tmp_path)
-            epsg_code, epsg_name = get_epsg_data(session)
-            assert epsg_code == 28992
-            assert epsg_name == "vegetation_drag_2d.vegetation_height_file"
+def test_get_epsg_data_from_raster(session, threedi_db, tmp_path):
+    old_context_path = session.model_checker_context.base_path
+    session.model_checker_context.base_path = tmp_path
+    create_geotiff(tmp_path / "rasters" / "raster.tiff", epsg=28992)
+    factories.VegetationDragFactory(vegetation_height_file="raster.tiff")
+    epsg_code, epsg_name = get_epsg_data_from_raster(session)
+    assert epsg_code == 28992
+    assert epsg_name == "vegetation_drag_2d.vegetation_height_file"
+    session.model_checker_context.base_path = old_context_path
