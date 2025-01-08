@@ -69,11 +69,9 @@ class LinestringLocationCheck(BaseCheck):
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         start_node = aliased(self.ref_table_start)
         end_node = aliased(self.ref_table_end)
-
         tol = self.max_distance
         start_point = ST_PointN(self.column, 1)
         end_point = ST_PointN(self.column, ST_NPoints(self.column))
-
         start_ok = ST_Distance(start_point, start_node.geom) <= tol
         end_ok = ST_Distance(end_point, end_node.geom) <= tol
         start_ok_if_reversed = ST_Distance(end_point, start_node.geom) <= tol
