@@ -3,7 +3,7 @@ Changelog of threedi-modelchecker
 
 
 
-2.15.0 (unreleased)
+2.15.0 (2025-01-08)
 -------------------
 
 - Change minimum python version to 3.9 in pyproject.toml, update test matrix.
