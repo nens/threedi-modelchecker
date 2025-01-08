@@ -54,35 +54,6 @@ class CorrectAggregationSettingsExist(BaseCheck):
         )
 
 
-class CrossSectionLocationCheck(BaseCheck):
-    """Check if cross section locations are within {max_distance} of their channel."""
-
-    def __init__(self, max_distance, *args, **kwargs):
-        super().__init__(column=models.CrossSectionLocation.geom, *args, **kwargs)
-        self.max_distance = max_distance
-
-    def get_invalid(self, session):
-        # get all channels with more than 1 cross section location
-        return (
-            self.to_check(session)
-            .join(
-                models.Channel,
-                models.Channel.id == models.CrossSectionLocation.channel_id,
-            )
-            .filter(
-                distance(models.CrossSectionLocation.geom, models.Channel.geom)
-                > self.max_distance
-            )
-            .all()
-        )
-
-    def description(self):
-        return (
-            f"cross_section_location.geom is invalid: the cross-section location "
-            f"should be located on the channel geometry (tolerance = {self.max_distance} m)"
-        )
-
-
 class CrossSectionSameConfigurationCheck(BaseCheck):
     """Check the cross-sections on the object are either all open or all closed."""
 
@@ -494,44 +465,6 @@ class OpenChannelsWithNestedNewton(BaseCheck):
         )
 
 
-class LinestringLocationCheck(BaseCheck):
-    """Check that linestring geometry starts / ends are close to their connection nodes
-
-    This allows for reversing the geometries. threedi-gridbuilder will reverse the geometries if
-    that lowers the distance to the connection nodes.
-    """
-
-    def __init__(self, *args, **kwargs):
-        self.max_distance = kwargs.pop("max_distance")
-        super().__init__(*args, **kwargs)
-
-    def get_invalid(self, session: Session) -> List[NamedTuple]:
-        start_node = aliased(models.ConnectionNode)
-        end_node = aliased(models.ConnectionNode)
-
-        tol = self.max_distance
-        start_point = func.ST_PointN(self.column, 1)
-        end_point = func.ST_PointN(self.column, func.ST_NPoints(self.column))
-
-        start_ok = distance(start_point, start_node.geom) <= tol
-        end_ok = distance(end_point, end_node.geom) <= tol
-        start_ok_if_reversed = distance(end_point, start_node.geom) <= tol
-        end_ok_if_reversed = distance(start_point, end_node.geom) <= tol
-        return (
-            self.to_check(session)
-            .join(start_node, start_node.id == self.table.c.connection_node_id_start)
-            .join(end_node, end_node.id == self.table.c.connection_node_id_end)
-            .filter(
-                ~(start_ok & end_ok),
-                ~(start_ok_if_reversed & end_ok_if_reversed),
-            )
-            .all()
-        )
-
-    def description(self) -> str:
-        return f"{self.column_name} does not start or end at its connection node (tolerance = {self.max_distance} m)"
-
-
 class BoundaryCondition1DObjectNumberCheck(BaseCheck):
     """Check that the number of connected objects to 1D boundary connections is 1."""
 
@@ -935,24 +868,46 @@ class UsedSettingsPresentCheck(BaseCheck):
     def __init__(
         self,
         column,
-        settings_table,
+        settings_tables,
         filters=None,
         level=CheckLevel.ERROR,
         error_code=0,
     ):
         super().__init__(column, filters, level, error_code)
-        self.settings_table = settings_table
+        self.settings_tables = settings_tables
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         # more than 1 row should be caught by another check
         all_results = self.to_check(session).filter(self.column == True).all()
         use_cols = len(all_results) > 0
-        if use_cols and session.query(self.settings_table).count() == 0:
-            return all_results
+        for table in self.settings_tables:
+            if use_cols and session.query(table).count() == 0:
+                return all_results
         return []
 
     def description(self) -> str:
-        return f"{self.column_name} in {self.table.name} is set to True but {self.settings_table.__tablename__} is empty"
+        msg = f"{self.column_name} in {self.table.name} is set to True but "
+        if len(self.settings_tables) == 1:
+            msg += "{self.settings_tables[0].__tablename__} is empty"
+        else:
+            msg += (
+                "["
+                + ",".join(table.__tablename__ for table in self.settings_tables)
+                + "] are empty"
+            )
+        return msg
+
+
+class UsedSettingsPresentCheckSingleTable(UsedSettingsPresentCheck):
+    def __init__(
+        self,
+        column,
+        settings_table,
+        filters=None,
+        level=CheckLevel.ERROR,
+        error_code=0,
+    ):
+        super().__init__(column, [settings_table], filters, level, error_code)
 
 
 class MaxOneRecordCheck(BaseCheck):
@@ -983,7 +938,7 @@ class TagsValidCheck(BaseCheck):
             (self.column != None) & (self.column != "")
         ):
             query = (
-                f"SELECT id FROM tags WHERE id IN ({getattr(record, self.column.name)})"
+                f"SELECT id FROM tag WHERE id IN ({getattr(record, self.column.name)})"
             )
             match_rows = session.connection().execute(text(query)).fetchall()
             found_idx = {row[0] for row in match_rows}
@@ -1083,6 +1038,8 @@ class ControlHasSingleMeasureVariable(BaseCheck):
                 )
                 .with_entities(models.ControlMeasureLocation.measure_variable)
             ).all()
+            if len(res) == 0:
+                continue
             first_measure_variable = res[0].measure_variable
             if not all(item[0] == first_measure_variable for item in res):
                 invalid.append(record)
@@ -1090,3 +1047,70 @@ class ControlHasSingleMeasureVariable(BaseCheck):
 
     def description(self) -> str:
         return f"{self.table.name} is mapped to measure locations with different measure variables"
+
+
+class DWFDistributionBaseCheck(BaseCheck):
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            column=models.DryWeatherFlowDistribution.distribution, *args, **kwargs
+        )
+
+    def get_distribution(self, record):
+        str = getattr(record, self.column.name)
+        return str.split(",")
+
+    def get_distribution_values(self, record):
+        return [float(x) for x in self.get_distribution(record)]
+
+
+class DWFDistributionCSVFormatCheck(DWFDistributionBaseCheck):
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            try:
+                self.get_distribution_values(record)
+            except ValueError:
+                invalids.append(record)
+        return invalids
+
+    def description(self) -> str:
+        return f"{self.table.name}.{self.column_name} should contain a list of comma-separated numbers"
+
+
+class DWFDistributionLengthCheck(DWFDistributionBaseCheck):
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            if len(self.get_distribution(record)) != 24:
+                invalids.append(record)
+        return invalids
+
+    def description(self) -> str:
+        return f"{self.table.name}.{self.column_name} should contain exactly 24 values"
+
+
+class DWFDistributionSumCheck(DWFDistributionBaseCheck):
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalids = []
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            try:
+                values = self.get_distribution_values(record)
+            except ValueError:
+                # handled by DWFDistributionCSVFormatCheck
+                continue
+            if not (99.99 <= sum(values) <= 100.01):
+                invalids.append(record)
+        return invalids
+
+    def description(self) -> str:
+        return f"The values in {self.table.name}.{self.column_name} should add up to"

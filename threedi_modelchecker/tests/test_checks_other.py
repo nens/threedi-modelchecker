@@ -17,12 +17,13 @@ from threedi_modelchecker.checks.other import (
     ControlTableActionTableCheckDefault,
     ControlTableActionTableCheckDischargeCoefficients,
     CorrectAggregationSettingsExist,
-    CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
+    DWFDistributionCSVFormatCheck,
+    DWFDistributionLengthCheck,
+    DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
-    LinestringLocationCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
@@ -34,6 +35,7 @@ from threedi_modelchecker.checks.other import (
     TagsValidCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
+    UsedSettingsPresentCheckSingleTable,
 )
 from threedi_modelchecker.model_checks import ThreediModelChecker
 
@@ -257,67 +259,6 @@ def test_node_distance(session):
     invalid_ids = [i.id for i in invalid]
     assert con1_too_close.id in invalid_ids
     assert con2_too_close.id in invalid_ids
-
-
-@pytest.mark.parametrize(
-    "channel_geom",
-    [
-        "LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
-        "LINESTRING(5.387218 52.155172, 5.387218 52.155262)",  # within tolerance
-        "LINESTRING(5.387204 52.155262, 5.387204 52.155172)",  # reversed
-        "LINESTRING(5.387218 52.155262, 5.387218 52.155172)",  # reversed, within tolerance
-    ],
-)
-def test_channels_location_check(session, channel_geom):
-    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
-    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
-    factories.ChannelFactory(
-        connection_node_id_start=1,
-        connection_node_id_end=2,
-        geom=f"SRID=4326;{channel_geom}",
-    )
-
-    errors = LinestringLocationCheck(
-        column=models.Channel.geom, max_distance=1.01
-    ).get_invalid(session)
-    assert len(errors) == 0
-
-
-@pytest.mark.parametrize(
-    "channel_geom",
-    [
-        "LINESTRING(5.387204 52.164151, 5.387204 52.155262)",  # startpoint is wrong
-        "LINESTRING(5.387204 52.155172, 5.387204 52.164151)",  # endpoint is wrong
-    ],
-)
-def test_channels_location_check_invalid(session, channel_geom):
-    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(5.387204 52.155172)")
-    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(5.387204 52.155262)")
-    factories.ChannelFactory(
-        connection_node_id_start=1,
-        connection_node_id_end=2,
-        geom=f"SRID=4326;{channel_geom}",
-    )
-
-    errors = LinestringLocationCheck(
-        column=models.Channel.geom, max_distance=1.01
-    ).get_invalid(session)
-    assert len(errors) == 1
-
-
-def test_cross_section_location(session):
-    factories.ChannelFactory(
-        id=1,
-        geom="SRID=4326;LINESTRING(5.387204 52.155172, 5.387204 52.155262)",
-    )
-    factories.CrossSectionLocationFactory(
-        channel_id=1, geom="SRID=4326;POINT(5.387204 52.155200)"
-    )
-    factories.CrossSectionLocationFactory(
-        channel_id=1, geom="SRID=4326;POINT(5.387218 52.155244)"
-    )
-    errors = CrossSectionLocationCheck(0.1).get_invalid(session)
-    assert len(errors) == 1
 
 
 class TestCrossSectionSameConfiguration:
@@ -681,7 +622,7 @@ def test_defined_area(session, defined_area, max_difference, expected_result):
     "value,expected_result",
     [
         (None, 0),  # column not set, valid result
-        (5, 1),  # column set, invalid result
+        (True, 1),  # column set, invalid result
     ],
 )
 def test_beta_columns(session, value, expected_result):
@@ -836,14 +777,31 @@ def test_use_0d_flow_check(session, use_0d_inflow: int, add_surface: bool):
 
 @pytest.mark.parametrize("use_setting", [True, False])
 @pytest.mark.parametrize("add_setting", [True, False])
-def test_used_settings_present_check(session, use_setting, add_setting):
+def test_used_settings_present_check_single_table(session, use_setting, add_setting):
     nof_invalid_expected = 1 if use_setting and not add_setting else 0
     factories.ModelSettingsFactory(use_vegetation_drag_2d=use_setting)
     if add_setting:
         factories.VegetationDragFactory()
-    check = UsedSettingsPresentCheck(
+    check = UsedSettingsPresentCheckSingleTable(
         column=models.ModelSettings.use_vegetation_drag_2d,
         settings_table=models.VegetationDrag,
+    )
+    assert len(check.get_invalid(session)) == nof_invalid_expected
+
+
+@pytest.mark.parametrize("use_setting", [True, False])
+@pytest.mark.parametrize("add_surface", [True, False])
+@pytest.mark.parametrize("add_dwf", [True, False])
+def test_used_settings_present_check(session, use_setting, add_surface, add_dwf):
+    nof_invalid_expected = 1 if use_setting and not (add_surface and add_dwf) else 0
+    factories.SimulationTemplateSettingsFactory(use_0d_inflow=use_setting)
+    if add_surface:
+        factories.SurfaceFactory()
+    if add_dwf:
+        factories.DryWeatherFlowFactory()
+    check = UsedSettingsPresentCheck(
+        column=models.SimulationTemplateSettings.use_0d_inflow,
+        settings_tables=[models.Surface, models.DryWeatherFlow],
     )
     assert len(check.get_invalid(session)) == nof_invalid_expected
 
@@ -883,7 +841,6 @@ def test_tags_valid(session):
         ("2,3\n3,4\n", True),
         ("1.0,2", True),
         ("1,2.1", True),
-        ("1, 2", False),
         ("1;2", False),
         ("1,2 3", False),
         ("1,2,3", False),
@@ -909,7 +866,6 @@ def test_control_table_action_table_check_default(session, action_table, valid):
         ("1,2.1 3", True),
         ("1,2.1 3.3", True),
         ("1,2", False),
-        ("1, 2 3", False),
         ("1;2 3", False),
         ("1,2,3", False),
         ("1,2 3 4", False),
@@ -950,5 +906,58 @@ def test_control_has_single_measure_variable(session, measure_variables, valid):
         )
         factories.ControlMeasureLocationFactory(id=i, measure_variable=measure_variable)
     check = ControlHasSingleMeasureVariable(control_model=models.ControlTable)
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize("distribution, valid", [("1,2", True), ("1 2", False)])
+def test_dwf_distribution_csv_format_check(session, distribution, valid):
+    factories.DryWeatherFlowDistributionFactory(distribution=distribution)
+    check = DWFDistributionCSVFormatCheck()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "distribution, valid",
+    [
+        (
+            "3,1.5,1,1,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,4",
+            True,
+        ),
+        ("1,2", False),
+    ],
+)
+def test_dwf_distribution_length_check(session, distribution, valid):
+    factories.DryWeatherFlowDistributionFactory(distribution=distribution)
+    check = DWFDistributionLengthCheck()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "distribution, valid",
+    [
+        (
+            "3,1.5,1,1,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,4",
+            True,
+        ),
+        (
+            "3.33,1.5,1.33,0.33,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,4",
+            True,
+        ),
+        (
+            "3.3,1.5,1.3,0.3,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,4",
+            False,
+        ),
+        (
+            "3,1.5,1,1,0.5,0.5,2.5,8,7.5,6,5.5,5,4.5,4,4,3.5,3.5,4,5.5,8,7,5.5,4.5,40",
+            False,
+        ),
+    ],
+)
+def test_dwf_distribution_sum_check(session, distribution, valid):
+    factories.DryWeatherFlowDistributionFactory(distribution=distribution)
+    check = DWFDistributionSumCheck()
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid

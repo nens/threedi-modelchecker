@@ -10,7 +10,6 @@ from .checks.base import (
     AllEqualCheck,
     BaseCheck,
     CheckLevel,
-    ForeignKeyCheck,
     ListOfIntsCheck,
     NotNullCheck,
     QueryCheck,
@@ -39,6 +38,7 @@ from .checks.cross_section_definitions import (
     OpenIncreasingCrossSectionVariableCheck,
 )
 from .checks.factories import (
+    ForeignKeyCheckSetting,
     generate_enum_checks,
     generate_foreign_key_checks,
     generate_geometry_checks,
@@ -47,7 +47,15 @@ from .checks.factories import (
     generate_type_checks,
     generate_unique_checks,
 )
-from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
+from .checks.location import (
+    ConnectionNodeLinestringLocationCheck,
+    ControlMeasureMapLinestringMapLocationCheck,
+    DWFMapLinestringLocationCheck,
+    PointLocationCheck,
+    PumpMapLinestringLocationCheck,
+    SurfaceMapLinestringLocationCheck,
+)
+from .checks.other import (
     AllPresentVegetationParameters,
     BetaColumnsCheck,
     BetaValuesCheck,
@@ -57,12 +65,13 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
     ConnectionNodesLength,
     ControlHasSingleMeasureVariable,
     CorrectAggregationSettingsExist,
-    CrossSectionLocationCheck,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
+    DWFDistributionCSVFormatCheck,
+    DWFDistributionLengthCheck,
+    DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
-    LinestringLocationCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
@@ -74,6 +83,7 @@ from .checks.other import (  # Use0DFlowCheck,,;,; ,; ,; ,,; ,
     TagsValidCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
+    UsedSettingsPresentCheckSingleTable,
 )
 from .checks.raster import (
     GDALAvailableCheck,
@@ -642,9 +652,6 @@ CHECKS += [
 ]
 
 CHECKS += [
-    CrossSectionLocationCheck(
-        level=CheckLevel.WARNING, max_distance=TOLERANCE_M, error_code=52
-    ),
     QueryCheck(
         error_code=54,
         level=CheckLevel.WARNING,
@@ -732,21 +739,6 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.Pump.capacity,
     ),
-    ForeignKeyCheck(
-        error_code=67,
-        column=models.Pump.connection_node_id,
-        reference_column=models.ConnectionNode.id,
-    ),
-    ForeignKeyCheck(
-        error_code=68,
-        column=models.PumpMap.connection_node_id_end,
-        reference_column=models.ConnectionNode.id,
-    ),
-    ForeignKeyCheck(
-        error_code=69,
-        column=models.PumpMap.pump_id,
-        reference_column=models.Pump.id,
-    ),
 ]
 
 ## 007x: BOUNDARY CONDITIONS
@@ -793,19 +785,6 @@ CHECKS += [
             )
         ),
         message=("boundary_condition_1d cannot have a groundwater type"),
-    ),
-    QueryCheck(
-        error_code=75,
-        column=models.BoundaryCondition1D.connection_node_id,
-        invalid=Query(models.BoundaryCondition1D)
-        .outerjoin(
-            models.ConnectionNode,
-            models.BoundaryCondition1D.connection_node_id == models.ConnectionNode.id,
-        )
-        .filter(models.ConnectionNode.id == None),
-        message=(
-            "boundary_condition_1d.connection_node_id must point to an existing connection_node.id"
-        ),
     ),
 ]
 
@@ -1080,13 +1059,6 @@ CHECKS += [
     ),
 ]
 
-## Linked channels
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=110 + i, column=table.channel_id, reference_column=models.Channel.id
-    )
-    for i, table in enumerate([models.CrossSectionLocation, models.Windshielding])
-]
 
 ## 020x: Spatial checks
 
@@ -1125,10 +1097,110 @@ CHECKS += [
     )
     for table in [models.Orifice, models.Weir]
 ]
+
+
 CHECKS += [
-    LinestringLocationCheck(error_code=205, column=table.geom, max_distance=1)
-    for table in [models.Channel, models.Culvert]
+    ConnectionNodeLinestringLocationCheck(
+        error_code=205, column=table.geom, max_distance=1
+    )
+    for table in [
+        models.Channel,
+        models.Culvert,
+        models.Orifice,
+        models.Pipe,
+        models.Weir,
+    ]
 ]
+
+CHECKS += [
+    ControlMeasureMapLinestringMapLocationCheck(
+        control_table=table,
+        filters=models.ControlMeasureMap.control_type == control_type,
+        max_distance=1,
+        error_code=205,
+    )
+    for table, control_type in [
+        (models.ControlTable, "table"),
+        (models.ControlMemory, "memory"),
+    ]
+]
+
+CHECKS += [
+    check(max_distance=1, error_code=205)
+    for check in [
+        DWFMapLinestringLocationCheck,
+        SurfaceMapLinestringLocationCheck,
+        PumpMapLinestringLocationCheck,
+    ]
+]
+
+
+CHECKS += [
+    PointLocationCheck(
+        level=CheckLevel.WARNING,
+        max_distance=TOLERANCE_M,
+        error_code=206,
+        column=models.CrossSectionLocation.geom,
+        ref_column=models.CrossSectionLocation.channel_id,
+        ref_table=models.Channel,
+    ),
+    PointLocationCheck(
+        max_distance=TOLERANCE_M,
+        error_code=206,
+        column=models.Windshielding.geom,
+        ref_column=models.Windshielding.channel_id,
+        ref_table=models.Channel,
+    ),
+]
+
+CHECKS += [
+    PointLocationCheck(
+        level=CheckLevel.WARNING,
+        max_distance=TOLERANCE_M,
+        error_code=206,
+        column=table.geom,
+        ref_column=table.connection_node_id,
+        ref_table=models.ConnectionNode,
+    )
+    for table in [
+        models.BoundaryCondition1D,
+        models.ControlMeasureLocation,
+        models.Lateral1d,
+        models.Pump,
+    ]
+]
+
+control_tables = [models.ControlMemory, models.ControlTable]
+ref_tables = [
+    models.Pipe,
+    models.Orifice,
+    models.Culvert,
+    models.Weir,
+    models.Pump,
+]
+
+CHECKS += [
+    PointLocationCheck(
+        level=CheckLevel.WARNING,
+        max_distance=TOLERANCE_M,
+        error_code=206,
+        column=table.geom,
+        ref_column=table.target_id,
+        ref_table=ref_table,
+        filters=(table.target_type == ref_table.__tablename__),
+    )
+    for table in [models.ControlMemory, models.ControlTable]
+    for ref_table in [
+        models.Channel,
+        models.Pipe,
+        models.Orifice,
+        models.Culvert,
+        models.Weir,
+        models.Pump,
+    ]
+]
+
+
 CHECKS += [
     SpatialIndexCheck(
         error_code=207, column=models.ConnectionNode.geom, level=CheckLevel.WARNING
@@ -1243,19 +1315,6 @@ CHECKS += [
 ]
 
 
-for i, table in enumerate(
-    [models.Channel, models.Culvert, models.Orifice, models.Pipe, models.Weir]
-):
-    CHECKS += [
-        ForeignKeyCheck(
-            error_code=255 + i,
-            column=col,
-            reference_column=models.ConnectionNode.id,
-        )
-        for col in [table.connection_node_id_start, table.connection_node_id_end]
-    ]
-
-
 ## 026x: Exchange lines
 CHECKS += [
     QueryCheck(
@@ -1334,14 +1393,6 @@ CHECKS += [
         column=models.ExchangeLine.exchange_level,
         min_value=-9998.0,
         max_value=8848.0,
-    ),
-    QueryCheck(
-        error_code=266,
-        column=models.ExchangeLine.channel_id,
-        invalid=Query(models.ExchangeLine).filter(
-            models.ExchangeLine.channel_id.not_in(Query(models.Channel.id))
-        ),
-        message="exchange_line.channel_id references to non existing channel.id",
     ),
 ]
 
@@ -1435,14 +1486,6 @@ CHECKS += [
         min_value=-9998.0,
         max_value=8848.0,
         left_inclusive=False,
-    ),
-    QueryCheck(
-        error_code=278,
-        column=models.PotentialBreach.channel_id,
-        invalid=Query(models.PotentialBreach).filter(
-            models.PotentialBreach.channel_id.not_in(Query(models.Channel.id))
-        ),
-        message="potential_breach.channel_id references to non existing channel.id",
     ),
 ]
 
@@ -1610,7 +1653,7 @@ CHECKS += [
 ]
 
 CHECKS += [
-    UsedSettingsPresentCheck(
+    UsedSettingsPresentCheckSingleTable(
         error_code=326, level=CheckLevel.ERROR, column=use_col, settings_table=table
     )
     for table, use_col in (
@@ -1663,6 +1706,22 @@ CHECKS += [
         min_value=5.0,
         left_inclusive=True,  # 0 itself is not allowed
         message="model_settings.calculation_point_distance_1d should preferably be at least 5.0 metres to prevent simulation timestep reduction.",
+    )
+]
+
+CHECKS += [
+    UsedSettingsPresentCheck(
+        error_code=329, level=CheckLevel.ERROR, column=use_col, settings_tables=tables
+    )
+    for tables, use_col in (
+        (
+            [models.Surface, models.DryWeatherFlow],
+            models.SimulationTemplateSettings.use_0d_inflow,
+        ),
+        (
+            [models.ControlTable, models.ControlMemory],
+            models.SimulationTemplateSettings.use_structure_control,
+        ),
     )
 ]
 
@@ -2218,29 +2277,6 @@ CHECKS += [
 
 CHECKS += [
     QueryCheck(
-        error_code=615,
-        level=CheckLevel.WARNING,
-        column=column.table.c.id,
-        invalid=Query(column.table).filter(
-            column.not_in(Query(referenced_table.id).scalar_subquery())
-        ),
-        message=f"{column.table.name}.{column.name} references a {referenced_table.__tablename__} feature that does not exist.",
-    )
-    for column, referenced_table in [
-        (models.SurfaceMap.surface_id, models.Surface),
-        (models.SurfaceMap.connection_node_id, models.ConnectionNode),
-        (models.Surface.surface_parameters_id, models.SurfaceParameter),
-        (models.DryWeatherFlowMap.dry_weather_flow_id, models.DryWeatherFlow),
-        (models.DryWeatherFlowMap.connection_node_id, models.ConnectionNode),
-        (
-            models.DryWeatherFlow.dry_weather_flow_distribution_id,
-            models.DryWeatherFlowDistribution,
-        ),
-    ]
-]
-
-CHECKS += [
-    QueryCheck(
         error_code=616,
         level=CheckLevel.WARNING,
         column=table.id,
@@ -2277,6 +2313,13 @@ CHECKS += [
             (models.DryWeatherFlow, models.DryWeatherFlow.daily_total),
         ]
     )
+]
+
+# Dry weather flow distribution
+CHECKS += [
+    DWFDistributionCSVFormatCheck(error_code=621),
+    DWFDistributionLengthCheck(error_code=622),
+    DWFDistributionSumCheck(error_code=623),
 ]
 
 
@@ -2861,44 +2904,6 @@ CHECKS += [
 ]
 CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 
-## 12xx Structure controls
-
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1220,
-        column=models.ControlMeasureLocation.connection_node_id,
-        reference_column=models.ConnectionNode.id,
-    )
-]
-
-# 1221 - 1226
-ref_cols = [
-    models.Channel.id,
-    models.Pipe.id,
-    models.Orifice.id,
-    models.Culvert.id,
-    models.Weir.id,
-    models.Pump.id,
-]
-target_types = [
-    "channel",
-    "pipe",
-    "orifice",
-    "culvert",
-    "weir",
-    "pump",
-]
-for i, (ref_col, target_type) in enumerate(zip(ref_cols, target_types)):
-    for control_table in (models.ControlMemory, models.ControlTable):
-        CHECKS += [
-            ForeignKeyCheck(
-                error_code=1221 + i,
-                column=control_table.target_id,
-                reference_column=ref_col,
-                filters=control_table.target_type == target_type,
-            )
-        ]
-
 
 CHECKS += [
     QueryCheck(
@@ -2923,34 +2928,8 @@ CHECKS += [
 ]
 
 CHECKS += [
-    ForeignKeyCheck(
-        error_code=1228,
-        column=models.ControlMeasureMap.measure_location_id,
-        reference_column=models.ControlMeasureLocation.id,
-    )
-]
-
-CHECKS += [
     ControlHasSingleMeasureVariable(error_code=1229, control_model=table)
     for table in [models.ControlTable, models.ControlMemory]
-]
-
-
-# 124x laterals
-CHECKS += [
-    QueryCheck(
-        error_code=1240,
-        column=models.Lateral1d.connection_node_id,
-        invalid=Query(models.Lateral1d)
-        .outerjoin(
-            models.ConnectionNode,
-            models.Lateral1d.connection_node_id == models.ConnectionNode.id,
-        )
-        .filter(models.ConnectionNode.id == None),
-        message=(
-            "lateral_1d.connection_node_id must point to an existing connection_node.id"
-        ),
-    ),
 ]
 
 
@@ -3271,15 +3250,6 @@ CHECKS += [
 
 # Checks for material
 material_ref_tables = [models.Pipe, models.Culvert, models.Weir, models.Orifice]
-CHECKS += [
-    ForeignKeyCheck(
-        error_code=1600,
-        column=table.material_id,
-        reference_column=models.Material.id,
-    )
-    for table in material_ref_tables
-]
-
 conditions = [
     and_(
         table.material_id == models.Material.id,
@@ -3421,6 +3391,103 @@ not_null_columns = [
     models.ModelSettings.node_open_water_detection,
 ]
 
+# Foreign key check settings
+fk_settings = [
+    ForeignKeyCheckSetting(models.PumpMap.pump_id, models.Pump.id),
+    ForeignKeyCheckSetting(
+        models.ControlMeasureMap.measure_location_id, models.ControlMeasureLocation.id
+    ),
+    ForeignKeyCheckSetting(models.SurfaceMap.surface_id, models.Surface.id),
+    ForeignKeyCheckSetting(
+        models.Surface.surface_parameters_id, models.SurfaceParameter.id
+    ),
+    ForeignKeyCheckSetting(
+        models.DryWeatherFlowMap.dry_weather_flow_id, models.DryWeatherFlow.id
+    ),
+    ForeignKeyCheckSetting(
+        models.DryWeatherFlow.dry_weather_flow_distribution_id,
+        models.DryWeatherFlowDistribution.id,
+    ),
+]
+connection_node_fk = [
+    models.Pump.connection_node_id,
+    models.PumpMap.connection_node_id_end,
+    models.ControlMeasureLocation.connection_node_id,
+    models.Channel.connection_node_id_start,
+    models.Channel.connection_node_id_end,
+    models.Culvert.connection_node_id_start,
+    models.Culvert.connection_node_id_end,
+    models.Orifice.connection_node_id_start,
+    models.Orifice.connection_node_id_end,
+    models.Pipe.connection_node_id_start,
+    models.Pipe.connection_node_id_end,
+    models.Weir.connection_node_id_start,
+    models.Weir.connection_node_id_end,
+    models.Lateral1d.connection_node_id,
+    models.BoundaryCondition1D.connection_node_id,
+    models.DryWeatherFlowMap.connection_node_id,
+    models.SurfaceMap.connection_node_id,
+]
+fk_settings += [
+    ForeignKeyCheckSetting(col, models.ConnectionNode.id) for col in connection_node_fk
+]
+channel_fk = [
+    models.CrossSectionLocation.channel_id,
+    models.Windshielding.channel_id,
+    models.PotentialBreach.channel_id,
+    models.ExchangeLine.channel_id,
+]
+fk_settings += [ForeignKeyCheckSetting(col, models.Channel.id) for col in channel_fk]
+material_fk = [
+    models.Pipe.material_id,
+    models.Culvert.material_id,
+    models.Weir.material_id,
+    models.Orifice.material_id,
+]
+fk_settings += [ForeignKeyCheckSetting(col, models.Material.id) for col in material_fk]
+
+control_tables = [models.ControlMemory, models.ControlTable]
+ref_tables = [
+    models.Channel,
+    models.Pipe,
+    models.Orifice,
+    models.Culvert,
+    models.Weir,
+    models.Pump,
+]
+
+fk_settings += [
+    ForeignKeyCheckSetting(
+        control_table.target_id,
+        ref_table.id,
+        control_table.target_type == ref_table.__tablename__,
+    )
+    for control_table in control_tables
+    for ref_table in ref_tables
+]
+
+fk_settings += [
+    ForeignKeyCheckSetting(
+        models.ControlMeasureMap.control_id,
+        models.ControlMemory.id,
+        models.ControlMeasureMap.control_type == "memory",
+    ),
+    ForeignKeyCheckSetting(
+        models.ControlMeasureMap.control_id,
+        models.ControlTable.id,
+        models.ControlMeasureMap.control_type == "table",
+    ),
+]
+
+level_map_fk_check = {
+    "dry_weather_flow_map.connection_node_id": CheckLevel.WARNING,
+    "dry_weather_flow_map.dry_weather_flow_id": CheckLevel.WARNING,
+    "surface_map.connection_node_id": CheckLevel.WARNING,
+    "surface_map.surface_id": CheckLevel.WARNING,
+}
+
+unique_columns = [models.BoundaryCondition1D.connection_node_id]
+
 
 class Config:
     """Collection of checks
@@ -3441,8 +3508,12 @@ class Config:
             self.checks += generate_foreign_key_checks(
                 model.__table__,
                 error_code=1,
+                fk_settings=fk_settings,
+                custom_level_map=level_map_fk_check,
             )
-            self.checks += generate_unique_checks(model.__table__, error_code=2)
+            self.checks += generate_unique_checks(
+                model.__table__, error_code=2, extra_unique_columns=unique_columns
+            )
             self.checks += generate_not_null_checks(
                 model.__table__, error_code=3, extra_not_null_columns=not_null_columns
             )
