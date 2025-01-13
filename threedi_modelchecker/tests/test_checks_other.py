@@ -1,8 +1,7 @@
 from unittest import mock
 
 import pytest
-from sqlalchemy import func, select, text
-from sqlalchemy.orm import aliased, Query
+from sqlalchemy import select, text
 from threedi_schema import constants, models, ThreediDatabase
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
@@ -224,31 +223,18 @@ def test_channel_manhole_level_check(
     assert len(errors) == errors_number
 
 
-def test_node_distance(session):
-    con1_too_close = factories.ConnectionNodeFactory(
-        geom=f"SRID={SRID};POINT(142740 473443)",
-    )
-    con2_too_close = factories.ConnectionNodeFactory(
-        geom=f"SRID={SRID};POINT(142743 473443)",
-    )
-    # Good distance
-    factories.ConnectionNodeFactory(
-        geom=f"SRID={SRID};POINT(142755 473443)",
-    )
-    # sanity check to see the distances between the nodes
-    node_a = aliased(models.ConnectionNode)
-    node_b = aliased(models.ConnectionNode)
-    distances_query = Query(func.ST_Distance(node_a.geom, node_b.geom)).filter(
-        node_a.id != node_b.id
-    )
-    # Shows the distances between all 3 nodes: node 1 and 2 are too close
-    distances_query.with_session(session).all()
-    check = ConnectionNodesDistance(minimum_distance=10)
+@pytest.mark.parametrize("other_x, valid", [(142740.05, False), (142740.15, True)])
+def test_node_distance_alt(session, other_x, valid):
+    factories.ConnectionNodeFactory(id=0, geom=f"SRID={SRID};POINT(142740 473443)")
+    factories.ConnectionNodeFactory(id=1, geom=f"SRID={SRID};POINT({other_x} 473443)")
+    # Note that the test uses plain sqlite, so this needs to be committed
+    session.commit()
+    check = ConnectionNodesDistance(minimum_distance=0.1)
     invalid = check.get_invalid(session)
-    assert len(invalid) == 2
-    invalid_ids = [i.id for i in invalid]
-    assert con1_too_close.id in invalid_ids
-    assert con2_too_close.id in invalid_ids
+    assert (len(invalid) == 0) == valid
+    # Remove connection nodes
+    session.query(models.ConnectionNode).delete()
+    session.commit()
 
 
 class TestCrossSectionSameConfiguration:

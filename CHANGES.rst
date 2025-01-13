@@ -8,6 +8,7 @@ Changelog of threedi-modelchecker
 - Remove checks for model_settings.epsg_code (317 and 318)
 - Remove usage of epsg 4326 in the tests because this CRS is no longer valid
 - Remove no longer needed transformations
+- Change ConnectionNodeCheck (201) to require minimum distance of 10cm
 
 
 2.15.0 (2025-01-08)
