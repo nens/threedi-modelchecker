@@ -10,6 +10,7 @@ Changelog of threedi-modelchecker
 - Remove no longer needed transformations
 - Add checks for mathing epsg in all geometries and raster files
 - Add checks for valid epsg (existing code, projected, in meters) which requires pyproj
+- Change ConnectionNodeCheck (201) to require minimum distance of 10cm
 
 
 2.15.0 (2025-01-08)

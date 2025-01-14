@@ -1061,7 +1061,7 @@ CHECKS += [
 
 ## 020x: Spatial checks
 
-CHECKS += [ConnectionNodesDistance(error_code=201, minimum_distance=0.001)]
+CHECKS += [ConnectionNodesDistance(error_code=201, minimum_distance=0.1)]
 CHECKS += [
     QueryCheck(
         error_code=202,
