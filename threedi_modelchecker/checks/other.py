@@ -321,30 +321,26 @@ class ConnectionNodesDistance(BaseCheck):
         distance between all connection nodes.
         """
         query = text(
-            f"""SELECT *
-               FROM connection_node AS cn1, connection_node AS cn2
-               WHERE
-                   distance(cn1.geom, cn2.geom) < :min_distance
-                   AND cn1.ROWID != cn2.ROWID
-                   AND cn2.ROWID IN (
-                     SELECT ROWID
-                     FROM SpatialIndex
-                     WHERE (
-                       f_table_name = "connection_node"
-                       AND search_frame = Buffer(cn1.geom, {self.minimum_distance / 2})));
+            f"""
+            SELECT *
+            FROM connection_node AS cn1, connection_node AS cn2
+            WHERE ST_Distance(cn1.geom, cn2.geom) < {self.minimum_distance}
+            AND cn1.ROWID != cn2.ROWID
+            AND cn2.ROWID IN (
+                SELECT ROWID
+                FROM SpatialIndex
+                WHERE (
+                    f_table_name = "connection_node"
+                    AND search_frame = Buffer(cn1.geom, {self.minimum_distance / 2})))
             """
         )
-        results = (
-            session.connection()
-            .execute(query, {"min_distance": self.minimum_distance})
-            .fetchall()
-        )
-
+        results = session.connection().execute(query).fetchall()
         return results
 
     def description(self) -> str:
+
         return (
-            f"The connection_node is within {self.minimum_distance} degrees of "
+            f"The connection_node is within {self.minimum_distance * 100 } cm of "
             f"another connection_node."
         )
 
