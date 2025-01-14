@@ -1172,4 +1172,4 @@ class ModelEPSGCheckUnits(BaseCheck):
         return []
 
     def description(self) -> str:
-        return f"EPSG {self.epsg_code} is not fully defined in meters"
+        return f"EPSG {self.epsg_code} is not fully defined in metres"
