@@ -1,10 +1,10 @@
 from typing import Dict, Iterator, NamedTuple, Optional, Tuple
 
-from threedi_schema import ThreediDatabase
+from threedi_schema import models, ThreediDatabase
 
 from .checks.base import BaseCheck, CheckLevel
 from .checks.raster import LocalContext, ServerContext
-from .config import Config, RASTER_COLUMNS
+from .config import Config
 
 __all__ = ["ThreediModelChecker"]
 
@@ -19,25 +19,21 @@ def get_epsg_data_from_raster(session) -> Tuple[int, str]:
     """
     context = session.model_checker_context
     raster_interface = context.raster_interface if context is not None else None
-    if raster_interface is None:
-        return None, ""
-    for raster in RASTER_COLUMNS:
-        raster_files = (
-            session.query(raster).filter(raster != None, raster != "").first()
-        )
-        if raster_files is None:
-            continue
+    epsg_code = None
+    epsg_source = ""
+    raster = models.ModelSettings.dem_file
+    raster_files = session.query(raster).filter(raster != None, raster != "").first()
+    if raster_files is not None and raster_files is not None:
         if isinstance(context, ServerContext):
             if isinstance(context.available_rasters, dict):
                 abs_path = context.available_rasters.get(raster.name)
         else:
             abs_path = context.base_path.joinpath("rasters", raster_files[0])
-        if not abs_path.exists():
-            continue
         with raster_interface(abs_path) as ro:
             if ro.epsg_code is not None:
-                return ro.epsg_code, f"{raster.table.name}.{raster.name}"
-    return None, ""
+                epsg_code = ro.epsg_code
+                epsg_source = "model_settings.dem_file"
+    return epsg_code, epsg_source
 
 
 class ThreediModelChecker:

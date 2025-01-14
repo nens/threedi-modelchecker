@@ -80,8 +80,8 @@ def test_get_epsg_data_from_raster(session, threedi_db, tmp_path):
     old_context_path = session.model_checker_context.base_path
     session.model_checker_context.base_path = tmp_path
     create_geotiff(tmp_path / "rasters" / "raster.tiff", epsg=28992)
-    factories.VegetationDragFactory(vegetation_height_file="raster.tiff")
+    factories.ModelSettingsFactory(dem_file="raster.tiff")
     epsg_code, epsg_name = get_epsg_data_from_raster(session)
     assert epsg_code == 28992
-    assert epsg_name == "vegetation_drag_2d.vegetation_height_file"
+    assert epsg_name == "model_settings.dem_file"
     session.model_checker_context.base_path = old_context_path
