@@ -5,6 +5,7 @@ from threedi_schema import custom_types
 
 from .base import (
     EnumCheck,
+    EPSGGeomCheck,
     ForeignKeyCheck,
     GeometryCheck,
     GeometryTypeCheck,
@@ -12,6 +13,7 @@ from .base import (
     TypeCheck,
     UniqueCheck,
 )
+from .raster import RasterHasMatchingEPSGCheck
 
 
 @dataclass
@@ -124,3 +126,25 @@ def generate_enum_checks(table, custom_level_map=None, **kwargs):
             level = get_level(table, column, custom_level_map)
             enum_checks.append(EnumCheck(column, level=level, **kwargs))
     return enum_checks
+
+
+def generate_epsg_geom_checks(table, custom_level_map=None, **kwargs):
+    custom_level_map = custom_level_map or {}
+    column = table.columns.get("geom")
+    if column is not None:
+        level = get_level(table, column, custom_level_map)
+        return [EPSGGeomCheck(column=column, level=level, **kwargs)]
+    else:
+        return []
+
+
+def generate_epsg_raster_checks(table, raster_columns, custom_level_map=None, **kwargs):
+    custom_level_map = custom_level_map or {}
+    checks = []
+    for column in table.columns:
+        if column in raster_columns:
+            level = get_level(table, column, custom_level_map)
+            checks.append(
+                RasterHasMatchingEPSGCheck(column=column, level=level, **kwargs)
+            )
+    return checks

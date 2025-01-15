@@ -10,8 +10,6 @@ from threedi_modelchecker.checks.raster import (
     RasterGridSizeCheck,
     RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
-    RasterHasProjectionCheck,
-    RasterIsProjectedCheck,
     RasterIsValidCheck,
     RasterPixelCountCheck,
     RasterRangeCheck,
@@ -230,23 +228,6 @@ def test_one_band_err(tmp_path, interface_cls):
     assert not check.is_valid(path, interface_cls)
 
 
-@pytest.mark.parametrize(
-    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
-)
-def test_has_projection_ok(valid_geotiff, interface_cls):
-    check = RasterHasProjectionCheck(column=models.ModelSettings.dem_file)
-    assert check.is_valid(valid_geotiff, interface_cls)
-
-
-@pytest.mark.parametrize(
-    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
-)
-def test_has_projection_err(tmp_path, interface_cls):
-    path = create_geotiff(tmp_path / "raster.tiff", epsg=None)
-    check = RasterHasProjectionCheck(column=models.ModelSettings.dem_file)
-    assert not check.is_valid(path, interface_cls)
-
-
 NULL_EPSG_CODE = (
     'PROJCS["unnamed",GEOGCS["GRS 1980(IUGG, 1980)"'
     + ',DATUM["unknown",SPHEROID["GRS80",6378137,298.257222101]],'
@@ -267,40 +248,14 @@ NULL_EPSG_CODE = (
         (28992, 28992, True),
         (28992, 27700, False),
         (NULL_EPSG_CODE, 28992, False),
-        (27700, None, False),
+        (27700, None, True),
     ],
 )
 def test_has_epsg(tmp_path, interface_cls, raster_epsg, sqlite_epsg, validity):
     path = create_geotiff(tmp_path / "raster.tiff", epsg=raster_epsg)
     check = RasterHasMatchingEPSGCheck(column=models.ModelSettings.dem_file)
-    check.epsg_code = sqlite_epsg
+    check.ref_epsg_code = sqlite_epsg
     assert check.is_valid(path, interface_cls) == validity
-
-
-@pytest.mark.parametrize(
-    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
-)
-def test_is_projected_ok(valid_geotiff, interface_cls):
-    check = RasterIsProjectedCheck(column=models.ModelSettings.dem_file)
-    assert check.is_valid(valid_geotiff, interface_cls)
-
-
-@pytest.mark.parametrize(
-    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
-)
-def test_is_projected_err(tmp_path, interface_cls):
-    path = create_geotiff(tmp_path / "raster.tiff", epsg=4326)
-    check = RasterIsProjectedCheck(column=models.ModelSettings.dem_file)
-    assert not check.is_valid(path, interface_cls)
-
-
-@pytest.mark.parametrize(
-    "interface_cls", [GDALRasterInterface, RasterIORasterInterface]
-)
-def test_is_projected_no_projection(tmp_path, interface_cls):
-    path = create_geotiff(tmp_path / "raster.tiff", epsg=None)
-    check = RasterIsProjectedCheck(column=models.ModelSettings.dem_file)
-    assert check.is_valid(path, interface_cls)
 
 
 @pytest.mark.parametrize(
@@ -426,9 +381,7 @@ def test_raster_range_no_data(tmp_path, interface_cls):
     "check",
     [
         RasterHasOneBandCheck(column=models.ModelSettings.dem_file),
-        RasterHasProjectionCheck(column=models.ModelSettings.dem_file),
         RasterHasMatchingEPSGCheck(column=models.ModelSettings.dem_file),
-        RasterIsProjectedCheck(column=models.ModelSettings.dem_file),
         RasterSquareCellsCheck(column=models.ModelSettings.dem_file),
         RasterGridSizeCheck(column=models.ModelSettings.dem_file),
         RasterRangeCheck(column=models.ModelSettings.dem_file, min_value=0),

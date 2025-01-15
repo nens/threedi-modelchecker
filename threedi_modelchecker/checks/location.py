@@ -1,7 +1,6 @@
 from typing import List, NamedTuple
 
-from geoalchemy2.functions import ST_Distance
-from sqlalchemy import func
+from geoalchemy2.functions import ST_Distance, ST_NPoints, ST_PointN
 from sqlalchemy.orm import aliased, Session
 from threedi_schema.domain import models
 
@@ -71,8 +70,8 @@ class LinestringLocationCheck(BaseCheck):
         start_node = aliased(self.ref_table_start)
         end_node = aliased(self.ref_table_end)
         tol = self.max_distance
-        start_point = func.ST_PointN(self.column, 1)
-        end_point = func.ST_PointN(self.column, func.ST_NPoints(self.column))
+        start_point = ST_PointN(self.column, 1)
+        end_point = ST_PointN(self.column, ST_NPoints(self.column))
         start_ok = ST_Distance(start_point, start_node.geom) <= tol
         end_ok = ST_Distance(end_point, end_node.geom) <= tol
         start_ok_if_reversed = ST_Distance(end_point, start_node.geom) <= tol

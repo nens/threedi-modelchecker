@@ -141,51 +141,37 @@ class RasterHasOneBandCheck(BaseRasterCheck):
         return f"The file in {self.column_name} has multiple or no bands."
 
 
-class RasterHasProjectionCheck(BaseRasterCheck):
-    """Check whether a raster has a projected coordinate system."""
-
-    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
-        with interface_cls(path) as raster:
-            if not raster.is_valid_geotiff:
-                return True
-            return raster.has_projection
-
-    def description(self):
-        return f"The file in {self.column_name} has no CRS."
-
-
-class RasterIsProjectedCheck(BaseRasterCheck):
-    """Check whether a raster has a projected coordinate system."""
-
-    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
-        with interface_cls(path) as raster:
-            if not raster.is_valid_geotiff or not raster.has_projection:
-                return True
-            return not raster.is_geographic
-
-    def description(self):
-        return f"The file in {self.column_name} does not use a projected CRS."
-
-
 class RasterHasMatchingEPSGCheck(BaseRasterCheck):
     """Check whether a raster's EPSG code matches the EPSG code in the global settings for the SQLite."""
 
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.ref_epsg_name = ""
+        self.ref_epsg_code = None
+
     def get_invalid(self, session):
-        # TODO: replace this check with check that ensures that all EPSG
-        #  in a schematisation match (ticket 414)
-        return []
-        # return super().get_invalid(session)
+        if session.ref_epsg_code is None:
+            return []
+        self.ref_epsg_name = session.ref_epsg_name
+        self.ref_epsg_code = session.ref_epsg_code
+        return super().get_invalid(session)
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+        if self.ref_epsg_code is None:
+            return True
         with interface_cls(path) as raster:
             if not raster.is_valid_geotiff or not raster.has_projection:
                 return True
-            if self.epsg_code is None or raster.epsg_code is None:
+            if raster.epsg_code is None:
                 return False
-            return raster.epsg_code == self.epsg_code
+            return raster.epsg_code == self.ref_epsg_code
 
     def description(self):
-        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match model_settings.epsg_code"
+        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match {self.ref_epsg_name}"
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):

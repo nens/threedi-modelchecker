@@ -8,6 +8,8 @@ Changelog of threedi-modelchecker
 - Remove checks for model_settings.epsg_code (317 and 318)
 - Remove usage of epsg 4326 in the tests because this CRS is no longer valid
 - Remove no longer needed transformations
+- Add checks for mathing epsg in all geometries and raster files
+- Add checks for valid epsg (existing code, projected, in meters) which requires pyproj
 - Change ConnectionNodeCheck (201) to require minimum distance of 10cm
 
 

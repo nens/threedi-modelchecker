@@ -40,6 +40,8 @@ from .checks.cross_section_definitions import (
 from .checks.factories import (
     ForeignKeyCheckSetting,
     generate_enum_checks,
+    generate_epsg_geom_checks,
+    generate_epsg_raster_checks,
     generate_foreign_key_checks,
     generate_geometry_checks,
     generate_geometry_type_checks,
@@ -90,10 +92,7 @@ from .checks.raster import (
     RasterCompressionUsedCheck,
     RasterExistsCheck,
     RasterGridSizeCheck,
-    RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
-    RasterHasProjectionCheck,
-    RasterIsProjectedCheck,
     RasterIsValidCheck,
     RasterPixelCountCheck,
     RasterRangeCheck,
@@ -2362,17 +2361,6 @@ CHECKS += [
     for i, column in enumerate(RASTER_COLUMNS)
 ]
 CHECKS += [
-    RasterHasProjectionCheck(
-        error_code=761 + i,
-        column=column,
-    )
-    for i, column in enumerate(RASTER_COLUMNS)
-]
-CHECKS += [
-    RasterIsProjectedCheck(
-        error_code=779,
-        column=models.ModelSettings.dem_file,
-    ),
     RasterSquareCellsCheck(
         error_code=780,
         column=models.ModelSettings.dem_file,
@@ -2462,11 +2450,6 @@ CHECKS += [
         filters=models.InitialConditions.id != None,
         min_value=-9998.0,
         max_value=8848.0,
-    ),
-    RasterHasMatchingEPSGCheck(
-        error_code=797,
-        level=CheckLevel.WARNING,
-        column=models.ModelSettings.dem_file,
     ),
     RasterGridSizeCheck(
         error_code=798,
@@ -3537,6 +3520,10 @@ class Config:
                     message=f"{model.id.name} must be a positive signed 32-bit integer.",
                 )
             ]
+            self.checks += generate_epsg_geom_checks(model.__table__, error_code=9)
+            self.checks += generate_epsg_raster_checks(
+                model.__table__, RASTER_COLUMNS, error_code=10
+            )
 
         self.checks += CHECKS
         if not self.allow_beta_features:
