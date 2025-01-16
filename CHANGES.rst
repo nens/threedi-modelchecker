@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.16.0 (unreleased)
+2.16.0 (2025-01-16)
 -------------------
 
 - Adapt to schema 230 where all geometries use the model CRS and model_settings.epsg_code is no longer available
