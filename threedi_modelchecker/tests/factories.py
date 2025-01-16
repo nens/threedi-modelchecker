@@ -4,6 +4,14 @@ import factory
 from factory import Faker
 from threedi_schema import constants, models
 
+# Default geometry strings
+
+DEFAULT_POINT = "SRID=28992;POINT (142742 473443)"
+# line from DEFAULT_POINT to another point
+DEFAULT_LINE = "SRID=28992;LINESTRING (142742 473443, 142747 473448)"
+# polygon containing DEFAULT_POINT
+DEFAULT_POLYGON = "SRID=28992;POLYGON ((142742 473443, 142743 473443, 142744 473444, 142742 473444, 142742 473443))"
+
 
 def inject_session(session):
     """Inject the session into all factories"""
@@ -47,7 +55,7 @@ class ConnectionNodeFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     code = Faker("name")
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -58,7 +66,7 @@ class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
     display_name = Faker("name")
     code = Faker("name")
     exchange_type = constants.CalculationType.CONNECTED
-    geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
+    geom = DEFAULT_LINE
 
 
 class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -75,7 +83,7 @@ class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
     sewerage = False
     connection_node_id_start = 1
     connection_node_id_end = 1
-    geom = "SRID=4326;LINESTRING(4.885534714757985 52.38513158257129,4.88552805617346 52.38573773758626)"
+    geom = DEFAULT_LINE
 
 
 class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -86,7 +94,7 @@ class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     type = constants.BoundaryType.WATERLEVEL.value
     timeseries = "0,-0.5"
     display_name = Faker("name")
-    geom = "SRID=4326;LINESTRING(4.885534714757985 52.38513158257129,4.88552805617346 52.38573773758626)"
+    geom = DEFAULT_LINE
 
 
 class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -97,7 +105,7 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
     type = constants.BoundaryType.WATERLEVEL
     timeseries = "0,-0.5"
     connection_node_id = 1
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class PumpMapFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -105,7 +113,7 @@ class PumpMapFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.PumpMap
         sqlalchemy_session = None
 
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class PumpFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -120,7 +128,7 @@ class PumpFactory(factory.alchemy.SQLAlchemyModelFactory):
     start_level = 1.0
     lower_stop_level = 0.0
     capacity = 5.0
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -132,7 +140,7 @@ class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     reference_level = 0.0
     friction_type = constants.FrictionType.CHEZY
     friction_value = 0.0
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -163,7 +171,7 @@ class Lateral1dFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     timeseries = "0,-0.1"
     connection_node_id = 1
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -172,7 +180,7 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     timeseries = "0,-0.2"
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
     type = constants.Later2dType.SURFACE
 
 
@@ -195,7 +203,7 @@ class DryWheatherFlowMapFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.DryWeatherFlowMap
         sqlalchemy_session = None
 
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class DryWeatherFlowFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -203,7 +211,7 @@ class DryWeatherFlowFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.DryWeatherFlow
         sqlalchemy_session = None
 
-    geom = "SRID=4326;POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))"
+    geom = DEFAULT_POLYGON
 
 
 class DryWeatherFlowDistributionFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -223,7 +231,7 @@ class SurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     area = 0.0
-    geom = "SRID=4326;POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))"
+    geom = DEFAULT_POLYGON
 
     # surface_parameters = factory.SubFactory(SurfaceParameterFactory)
 
@@ -234,7 +242,7 @@ class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     percentage = 100.0
-    geom = "SRID=4326;LINESTRING(30 10, 10 30, 40 40)"
+    geom = DEFAULT_LINE
 
 
 class TagsFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -253,7 +261,7 @@ class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
     measure_operator = constants.MeasureOperators.greater_than
     target_type = constants.StructureControlTypes.channel
     target_id = 10
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -270,7 +278,7 @@ class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):
     is_active = True
     upper_threshold = 1.0
     lower_threshold = -1.0
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class ControlMeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -279,7 +287,7 @@ class ControlMeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
     control_type = constants.MeasureVariables.waterlevel
-    geom = "SRID=4326;LINESTRING(30 10, 10 30, 40 40)"
+    geom = DEFAULT_LINE
 
 
 class ControlMeasureLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -287,7 +295,7 @@ class ControlMeasureLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
         model = models.ControlMeasureLocation
         sqlalchemy_session = None
 
-    geom = "SRID=4326;POINT(-71.064544 42.28787)"
+    geom = DEFAULT_POINT
 
 
 class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
@@ -298,7 +306,7 @@ class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
     code = "code"
     display_name = Faker("name")
     exchange_type = constants.CalculationTypeCulvert.ISOLATED_NODE
-    geom = "SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)"
+    geom = DEFAULT_LINE
     friction_value = 0.03
     friction_type = 2
     invert_level_start = 0.1
@@ -314,7 +322,7 @@ class PotentialBreachFactory(factory.alchemy.SQLAlchemyModelFactory):
 
     display_name = Faker("name")
     code = "code"
-    geom = "SRID=4326;LINESTRING(-71.06452 42.2874, -71.06452 42.286)"
+    geom = DEFAULT_LINE
 
 
 class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):

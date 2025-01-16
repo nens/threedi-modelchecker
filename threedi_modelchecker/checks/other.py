@@ -2,6 +2,8 @@ import re
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
+import pyproj
+from geoalchemy2.functions import ST_Distance, ST_Length
 from sqlalchemy import (
     and_,
     case,
@@ -19,7 +21,6 @@ from threedi_schema.domain import constants, models
 
 from .base import BaseCheck, CheckLevel
 from .cross_section_definitions import cross_section_configuration_for_record
-from .geo_query import distance, length, transform
 
 
 class CorrectAggregationSettingsExist(BaseCheck):
@@ -258,8 +259,7 @@ class ConnectionNodes(BaseCheck):
 
 class ConnectionNodesLength(BaseCheck):
     """Check that the distance between `start_node` and `end_node` is at least
-    `min_distance`. The coords will be transformed into (the first entry) of
-    ModelSettings.epsg_code.
+    `min_distance`.
     """
 
     def __init__(
@@ -290,7 +290,7 @@ class ConnectionNodesLength(BaseCheck):
             self.to_check(session)
             .join(start_node, start_node.id == self.start_node)
             .join(end_node, end_node.id == self.end_node)
-            .filter(distance(start_node.geom, end_node.geom) < self.min_distance)
+            .filter(ST_Distance(start_node.geom, end_node.geom) < self.min_distance)
         )
         return list(q.with_session(session).all())
 
@@ -321,30 +321,26 @@ class ConnectionNodesDistance(BaseCheck):
         distance between all connection nodes.
         """
         query = text(
-            f"""SELECT *
-               FROM connection_node AS cn1, connection_node AS cn2
-               WHERE
-                   distance(cn1.geom, cn2.geom, 1) < :min_distance
-                   AND cn1.ROWID != cn2.ROWID
-                   AND cn2.ROWID IN (
-                     SELECT ROWID
-                     FROM SpatialIndex
-                     WHERE (
-                       f_table_name = "connection_node"
-                       AND search_frame = Buffer(cn1.geom, {self.minimum_distance / 2})));
+            f"""
+            SELECT *
+            FROM connection_node AS cn1, connection_node AS cn2
+            WHERE ST_Distance(cn1.geom, cn2.geom) < {self.minimum_distance}
+            AND cn1.ROWID != cn2.ROWID
+            AND cn2.ROWID IN (
+                SELECT ROWID
+                FROM SpatialIndex
+                WHERE (
+                    f_table_name = "connection_node"
+                    AND search_frame = Buffer(cn1.geom, {self.minimum_distance / 2})))
             """
         )
-        results = (
-            session.connection()
-            .execute(query, {"min_distance": self.minimum_distance})
-            .fetchall()
-        )
-
+        results = session.connection().execute(query).fetchall()
         return results
 
     def description(self) -> str:
+
         return (
-            f"The connection_node is within {self.minimum_distance} degrees of "
+            f"The connection_node is within {self.minimum_distance * 100 } cm of "
             f"another connection_node."
         )
 
@@ -548,10 +544,10 @@ class PotentialBreachStartEndCheck(BaseCheck):
         linestring = models.Channel.geom
         tol = self.min_distance
         breach_point = func.Line_Locate_Point(
-            transform(linestring), transform(func.ST_PointN(self.column, 1))
+            linestring, func.ST_PointN(self.column, 1)
         )
-        dist_1 = breach_point * length(linestring)
-        dist_2 = (1 - breach_point) * length(linestring)
+        dist_1 = breach_point * ST_Length(linestring)
+        dist_2 = (1 - breach_point) * ST_Length(linestring)
         return (
             self.to_check(session)
             .join(models.Channel, self.table.c.channel_id == models.Channel.id)
@@ -577,10 +573,8 @@ class PotentialBreachInterdistanceCheck(BaseCheck):
 
         # First fetch the position of each potential breach per channel
         def get_position(point, linestring):
-            breach_point = func.Line_Locate_Point(
-                transform(linestring), transform(func.ST_PointN(point, 1))
-            )
-            return (breach_point * length(linestring)).label("position")
+            breach_point = func.Line_Locate_Point(linestring, func.ST_PointN(point, 1))
+            return (breach_point * ST_Length(linestring)).label("position")
 
         potential_breaches = sorted(
             session.query(self.table, get_position(self.column, models.Channel.geom))
@@ -776,7 +770,7 @@ class DefinedAreaCheck(BaseCheck):
             self.table.c.id,
             self.table.c.area,
             self.table.c.geom,
-            func.ST_Area(transform(self.table.c.geom)).label("calculated_area"),
+            func.ST_Area(self.table.c.geom).label("calculated_area"),
         ).subquery()
         return (
             session.query(all_results)
@@ -1114,3 +1108,64 @@ class DWFDistributionSumCheck(DWFDistributionBaseCheck):
 
     def description(self) -> str:
         return f"The values in {self.table.name}.{self.column_name} should add up to"
+
+
+class ModelEPSGCheckValid(BaseCheck):
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.ModelSettings.id, *args, **kwargs)
+        self.epsg_code = None
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        self.epsg_code = session.ref_epsg_code
+        if self.epsg_code is not None:
+            try:
+                pyproj.CRS.from_epsg(self.epsg_code)
+            except pyproj.exceptions.CRSError:
+                return self.to_check(session).all()
+        return []
+
+    def description(self) -> str:
+        return f"Found invalid EPSG: {self.epsg_code}"
+
+
+class ModelEPSGCheckProjected(BaseCheck):
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.ModelSettings.id, *args, **kwargs)
+        self.epsg_code = None
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        self.epsg_code = session.ref_epsg_code
+        if self.epsg_code is not None:
+            try:
+                crs = pyproj.CRS.from_epsg(self.epsg_code)
+            except pyproj.exceptions.CRSError:
+                # handled by ModelEPSGCheckValid
+                return []
+            if not crs.is_projected:
+                return self.to_check(session).all()
+        return []
+
+    def description(self) -> str:
+        return f"EPSG {self.epsg_code} is not projected"
+
+
+class ModelEPSGCheckUnits(BaseCheck):
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.ModelSettings.id, *args, **kwargs)
+        self.epsg_code = None
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        self.epsg_code = session.ref_epsg_code
+        if self.epsg_code is not None:
+            try:
+                crs = pyproj.CRS.from_epsg(self.epsg_code)
+            except pyproj.exceptions.CRSError:
+                # handled by ModelEPSGCheckValid
+                return []
+            for ax in crs.axis_info:
+                if not ax.unit_name == "metre":
+                    return self.to_check(session).all()
+        return []
+
+    def description(self) -> str:
+        return f"EPSG {self.epsg_code} is not fully defined in metres"

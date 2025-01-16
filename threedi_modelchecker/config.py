@@ -1,11 +1,11 @@
 from typing import List
 
+from geoalchemy2 import functions as geo_func
 from sqlalchemy import and_, func, or_, true
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
-from .checks import geo_query
 from .checks.base import (
     AllEqualCheck,
     BaseCheck,
@@ -40,6 +40,8 @@ from .checks.cross_section_definitions import (
 from .checks.factories import (
     ForeignKeyCheckSetting,
     generate_enum_checks,
+    generate_epsg_geom_checks,
+    generate_epsg_raster_checks,
     generate_foreign_key_checks,
     generate_geometry_checks,
     generate_geometry_type_checks,
@@ -90,10 +92,7 @@ from .checks.raster import (
     RasterCompressionUsedCheck,
     RasterExistsCheck,
     RasterGridSizeCheck,
-    RasterHasMatchingEPSGCheck,
     RasterHasOneBandCheck,
-    RasterHasProjectionCheck,
-    RasterIsProjectedCheck,
     RasterIsValidCheck,
     RasterPixelCountCheck,
     RasterRangeCheck,
@@ -1062,13 +1061,13 @@ CHECKS += [
 
 ## 020x: Spatial checks
 
-CHECKS += [ConnectionNodesDistance(error_code=201, minimum_distance=0.001)]
+CHECKS += [ConnectionNodesDistance(error_code=201, minimum_distance=0.1)]
 CHECKS += [
     QueryCheck(
         error_code=202,
         level=CheckLevel.WARNING,
         column=table.id,
-        invalid=Query(table).filter(geo_query.length(table.geom) < 5),
+        invalid=Query(table).filter(geo_func.ST_Length(table.geom) < 5),
         message=f"The length of {table.__tablename__} is very short (< 5 m). A length of at least 5.0 m is recommended to avoid timestep reduction.",
     )
     for table in [models.Channel, models.Culvert]
@@ -1369,8 +1368,8 @@ CHECKS += [
         invalid=Query(models.ExchangeLine)
         .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            geo_query.length(models.ExchangeLine.geom)
-            < (0.8 * geo_query.length(models.Channel.geom))
+            geo_func.ST_Length(models.ExchangeLine.geom)
+            < (0.8 * geo_func.ST_Length(models.Channel.geom))
         ),
         message=(
             "exchange_line.geom should not be significantly shorter than its "
@@ -1384,7 +1383,7 @@ CHECKS += [
         invalid=Query(models.ExchangeLine)
         .join(models.Channel, models.Channel.id == models.ExchangeLine.channel_id)
         .filter(
-            geo_query.distance(models.ExchangeLine.geom, models.Channel.geom) > 500.0
+            geo_func.ST_Distance(models.ExchangeLine.geom, models.Channel.geom) > 500.0
         ),
         message=("exchange_line.geom is far (> 500 m) from its corresponding channel"),
     ),
@@ -1455,7 +1454,7 @@ CHECKS += [
         invalid=Query(models.PotentialBreach)
         .join(models.Channel, models.Channel.id == models.PotentialBreach.channel_id)
         .filter(
-            geo_query.distance(
+            geo_func.ST_Distance(
                 func.PointN(models.PotentialBreach.geom, 1), models.Channel.geom
             )
             > TOLERANCE_M
@@ -1578,19 +1577,6 @@ CHECKS += [
         error_code=316,
         column=models.ModelSettings.manhole_aboveground_storage_area,
         min_value=0,
-    ),
-    QueryCheck(
-        error_code=317,
-        column=models.ModelSettings.epsg_code,
-        invalid=CONDITIONS["has_no_dem"].filter(models.ModelSettings.epsg_code == None),
-        message="model_settings.epsg_code may not be NULL if no dem file is provided",
-    ),
-    QueryCheck(
-        error_code=318,
-        level=CheckLevel.WARNING,
-        column=models.ModelSettings.epsg_code,
-        invalid=CONDITIONS["has_dem"].filter(models.ModelSettings.epsg_code == None),
-        message="if model_settings.epsg_code is NULL, it will be extracted from the DEM later, however, the modelchecker will use ESPG:28992 for its spatial checks",
     ),
     QueryCheck(
         error_code=319,
@@ -2375,17 +2361,6 @@ CHECKS += [
     for i, column in enumerate(RASTER_COLUMNS)
 ]
 CHECKS += [
-    RasterHasProjectionCheck(
-        error_code=761 + i,
-        column=column,
-    )
-    for i, column in enumerate(RASTER_COLUMNS)
-]
-CHECKS += [
-    RasterIsProjectedCheck(
-        error_code=779,
-        column=models.ModelSettings.dem_file,
-    ),
     RasterSquareCellsCheck(
         error_code=780,
         column=models.ModelSettings.dem_file,
@@ -2475,11 +2450,6 @@ CHECKS += [
         filters=models.InitialConditions.id != None,
         min_value=-9998.0,
         max_value=8848.0,
-    ),
-    RasterHasMatchingEPSGCheck(
-        error_code=797,
-        level=CheckLevel.WARNING,
-        column=models.ModelSettings.dem_file,
     ),
     RasterGridSizeCheck(
         error_code=798,
@@ -3550,6 +3520,10 @@ class Config:
                     message=f"{model.id.name} must be a positive signed 32-bit integer.",
                 )
             ]
+            self.checks += generate_epsg_geom_checks(model.__table__, error_code=9)
+            self.checks += generate_epsg_raster_checks(
+                model.__table__, RASTER_COLUMNS, error_code=10
+            )
 
         self.checks += CHECKS
         if not self.allow_beta_features:

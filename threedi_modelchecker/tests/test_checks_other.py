@@ -1,8 +1,7 @@
 from unittest import mock
 
 import pytest
-from sqlalchemy import func, select, text
-from sqlalchemy.orm import aliased, Query
+from sqlalchemy import select, text
 from threedi_schema import constants, models, ThreediDatabase
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
 
@@ -25,6 +24,9 @@ from threedi_modelchecker.checks.other import (
     FeatureClosedCrossSectionCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
+    ModelEPSGCheckProjected,
+    ModelEPSGCheckUnits,
+    ModelEPSGCheckValid,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
@@ -40,6 +42,11 @@ from threedi_modelchecker.checks.other import (
 from threedi_modelchecker.model_checks import ThreediModelChecker
 
 from . import factories
+
+SRID = 28992
+POINT1 = "142742 473443"
+POINT2 = "142743 473443"  # POINT1 + 1 meter
+POINT3 = "142747 473443"  # POINT1 + 5 meter
 
 
 @pytest.mark.parametrize(
@@ -73,29 +80,23 @@ def test_aggregation_settings(
 
 
 def test_connection_nodes_length(session):
-    factories.ModelSettingsFactory(epsg_code=28992)
-    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(-71.064544 42.28787)")
-    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(-71.0645 42.287)")
-    factories.ConnectionNodeFactory(
-        id=3, geom="SRID=4326;POINT(-0.38222938832999598 -0.13872236685816669)"
-    ),
-    factories.ConnectionNodeFactory(
-        id=4, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-    ),
+    factories.ModelSettingsFactory()
+    factories.ConnectionNodeFactory(id=1, geom=f"SRID={SRID};POINT({POINT1})")
+    factories.ConnectionNodeFactory(id=2, geom=f"SRID={SRID};POINT({POINT2})")
     factories.WeirFactory(
         connection_node_id_start=1,
         connection_node_id_end=2,
     )
     weir_too_short = factories.WeirFactory(
-        connection_node_id_start=3,
-        connection_node_id_end=4,
+        connection_node_id_start=1,
+        connection_node_id_end=1,
     )
 
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
         start_node=models.Weir.connection_node_id_start,
         end_node=models.Weir.connection_node_id_end,
-        min_distance=0.05,
+        min_distance=0.01,
     )
 
     errors = check_length.get_invalid(session)
@@ -104,11 +105,9 @@ def test_connection_nodes_length(session):
 
 
 def test_connection_nodes_length_missing_start_node(session):
-    factories.ModelSettingsFactory(epsg_code=28992)
+    factories.ModelSettingsFactory()
     factories.WeirFactory(connection_node_id_start=1, connection_node_id_end=2)
-    factories.ConnectionNodeFactory(
-        id=2, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-    )
+    factories.ConnectionNodeFactory(id=2)
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
         start_node=models.Weir.connection_node_id_start,
@@ -123,12 +122,9 @@ def test_connection_nodes_length_missing_start_node(session):
 def test_connection_nodes_length_missing_end_node(session):
     if session.bind.name == "postgresql":
         pytest.skip("Postgres only accepts coords in epsg 4326")
-    factories.ModelSettingsFactory(epsg_code=28992)
+    factories.ModelSettingsFactory()
     factories.WeirFactory(connection_node_id_start=1, connection_node_id_end=2)
-    factories.ConnectionNodeFactory(
-        id=1, geom="SRID=4326;POINT(-0.38222930900909202 -0.13872236685816669)"
-    )
-
+    factories.ConnectionNodeFactory(id=1)
     check_length = ConnectionNodesLength(
         column=models.Weir.id,
         start_node=models.Weir.connection_node_id_start,
@@ -142,29 +138,29 @@ def test_connection_nodes_length_missing_end_node(session):
 
 def test_open_channels_with_nested_newton(session):
     factories.NumericalSettingsFactory(use_nested_newton=0)
-    factories.ConnectionNodeFactory(id=1, geom="SRID=4326;POINT(-71.064544 42.28787)")
-    factories.ConnectionNodeFactory(id=2, geom="SRID=4326;POINT(-71.0645 42.287)")
+    factories.ConnectionNodeFactory(id=1, geom=f"SRID={SRID};POINT({POINT1})")
+    factories.ConnectionNodeFactory(id=2, geom=f"SRID={SRID};POINT({POINT2})")
     factories.ChannelFactory(
         id=1,
         connection_node_id_start=1,
         connection_node_id_end=2,
-        geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
+        geom=f"SRID={SRID};LINESTRING({POINT1}, {POINT2})",
     )
     factories.CrossSectionLocationFactory(
         channel_id=1,
         cross_section_shape=constants.CrossSectionShape.TABULATED_TRAPEZIUM,
         cross_section_table="0,1\n1,0",
-        geom="SRID=4326;POINT(-71.0645 42.287)",
+        geom=f"SRID={SRID};POINT({POINT2})",
     )
     factories.ChannelFactory(
         id=2,
         connection_node_id_start=1,
         connection_node_id_end=2,
-        geom="SRID=4326;LINESTRING(-71.064544 42.28787, -71.0645 42.287)",
+        geom=f"SRID={SRID};LINESTRING({POINT1}, {POINT2})",
     )
     factories.CrossSectionLocationFactory(
         channel_id=2,
-        geom="SRID=4326;POINT(-71.0645 42.287)",
+        geom=f"SRID={SRID};POINT({POINT2})",
         cross_section_shape=constants.CrossSectionShape.EGG,
     )
 
@@ -197,33 +193,31 @@ def test_channel_manhole_level_check(
     # using factories, create one minimal test case which passes, and one which fails
     # once that works, parametrise.
     # use nested factories for channel and connectionNode
-    starting_coordinates = "4.718300 52.696686"
-    ending_coordinates = "4.718255 52.696709"
     factories.ConnectionNodeFactory(
         id=1,
-        geom=f"SRID=4326;POINT({starting_coordinates})",
+        geom=f"SRID={SRID};POINT({POINT1})",
         bottom_level=manhole_level,
     )
     factories.ConnectionNodeFactory(
         id=2,
-        geom=f"SRID=4326;POINT({ending_coordinates})",
+        geom=f"SRID={SRID};POINT({POINT2})",
         bottom_level=manhole_level,
     )
     factories.ChannelFactory(
         id=1,
-        geom=f"SRID=4326;LINESTRING({starting_coordinates}, {ending_coordinates})",
+        geom=f"SRID={SRID};LINESTRING({POINT1}, {POINT2})",
         connection_node_id_start=1,
         connection_node_id_end=2,
     )
     # starting cross-section location
     factories.CrossSectionLocationFactory(
-        geom="SRID=4326;POINT(4.718278 52.696697)",
+        geom=f"SRID={SRID};POINT(142742.25 473443)",
         reference_level=starting_reference_level,
         channel_id=1,
     )
     # ending cross-section location
     factories.CrossSectionLocationFactory(
-        geom="SRID=4326;POINT(4.718264 52.696704)",
+        geom=f"SRID={SRID};POINT(142743.25 473443)",
         reference_level=ending_reference_level,
         channel_id=1,
     )
@@ -232,33 +226,18 @@ def test_channel_manhole_level_check(
     assert len(errors) == errors_number
 
 
-def test_node_distance(session):
-    con1_too_close = factories.ConnectionNodeFactory(
-        geom="SRID=4326;POINT(4.728282 52.64579283592512)"
-    )
-    con2_too_close = factories.ConnectionNodeFactory(
-        geom="SRID=4326;POINT(4.72828 52.64579283592512)"
-    )
-    # Good distance
-    factories.ConnectionNodeFactory(
-        geom="SRID=4326;POINT(4.726838755789598 52.64514133594995)"
-    )
-
-    # sanity check to see the distances between the nodes
-    node_a = aliased(models.ConnectionNode)
-    node_b = aliased(models.ConnectionNode)
-    distances_query = Query(func.ST_Distance(node_a.geom, node_b.geom, 1)).filter(
-        node_a.id != node_b.id
-    )
-    # Shows the distances between all 3 nodes: node 1 and 2 are too close
-    distances_query.with_session(session).all()
-
-    check = ConnectionNodesDistance(minimum_distance=10)
+@pytest.mark.parametrize("other_x, valid", [(142740.05, False), (142740.15, True)])
+def test_node_distance_alt(session, other_x, valid):
+    factories.ConnectionNodeFactory(id=0, geom=f"SRID={SRID};POINT(142740 473443)")
+    factories.ConnectionNodeFactory(id=1, geom=f"SRID={SRID};POINT({other_x} 473443)")
+    # Note that the test uses plain sqlite, so this needs to be committed
+    session.commit()
+    check = ConnectionNodesDistance(minimum_distance=0.1)
     invalid = check.get_invalid(session)
-    assert len(invalid) == 2
-    invalid_ids = [i.id for i in invalid]
-    assert con1_too_close.id in invalid_ids
-    assert con2_too_close.id in invalid_ids
+    assert (len(invalid) == 0) == valid
+    # Remove connection nodes
+    session.query(models.ConnectionNode).delete()
+    session.commit()
 
 
 class TestCrossSectionSameConfiguration:
@@ -390,16 +369,13 @@ def test_cross_section_same_configuration(
     """
     factories.ChannelFactory(
         id=1,
-        geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
     )
     factories.ChannelFactory(
         id=2,
-        geom="SRID=4326;LINESTRING(4.718301 52.696686, 4.718255 52.696709)",
     )
     # shape 1 is always open
     factories.CrossSectionLocationFactory(
         channel_id=1,
-        geom="SRID=4326;POINT(4.718278 52.696697)",
         cross_section_shape=1,
         cross_section_width=3,
         cross_section_height=4,
@@ -407,7 +383,6 @@ def test_cross_section_same_configuration(
     # the second one is parametrised
     factories.CrossSectionLocationFactory(
         channel_id=1 if same_channels else 2,
-        geom="SRID=4326;POINT(4.718265 52.696704)",
         cross_section_shape=shape,
         cross_section_width=width,
         cross_section_height=height,
@@ -434,20 +409,20 @@ def test_spatial_index_disabled(empty_sqlite_v4):
 
 
 @pytest.mark.parametrize(
-    "x,y,ok",
+    "start,ok",
     [
-        (-71.064544, 42.28787, True),  # at start
-        (-71.0645, 42.287, True),  # at end
-        (-71.06452, 42.2874, True),  # middle
-        (-71.064544, 42.287869, False),  # close to start
-        (-71.064499, 42.287001, False),  # close to end
+        ("142742 473443", True),  # at start
+        ("142747 473448", True),  # at end
+        ("142744.5 473445.5", True),  # middle
+        ("142742 473443.01", False),  # close to start
+        ("142747 473447.99", False),  # close to end
     ],
 )
-def test_potential_breach_start_end(session, x, y, ok):
-    # channel geom: LINESTRING (-71.064544 42.28787, -71.0645 42.287)
+def test_potential_breach_start_end(session, start, ok):
+    # channel geom: "SRID={SRID}};LINESTRING (142742 473443, 142747 473448)"
     factories.ChannelFactory(id=1)
     factories.PotentialBreachFactory(
-        geom=f"SRID=4326;LINESTRING({x} {y}, -71.064544 42.286)", channel_id=1
+        geom=f"SRID={SRID};LINESTRING({start}, 142750 473450)", channel_id=1
     )
     check = PotentialBreachStartEndCheck(models.PotentialBreach.geom, min_distance=1.0)
     invalid = check.get_invalid(session)
@@ -458,21 +433,23 @@ def test_potential_breach_start_end(session, x, y, ok):
 
 
 @pytest.mark.parametrize(
-    "x,y,ok",
+    "start,channel_id,ok",
     [
-        (-71.06452, 42.2874, True),  # exactly on other
-        (-71.06452, 42.287401, False),  # too close to other
-        (-71.0645, 42.287, True),  # far enough from other
+        (POINT1, 1, True),  # exactly on other
+        ("142742.5 473443.5", 1, False),  # too close to other
+        ("142742.5 473443.5", 2, True),  # too close to other but other channel
+        ("142740 473440", 1, True),  # far enough from other
     ],
 )
-def test_potential_breach_interdistance(session, x, y, ok):
-    # channel geom: LINESTRING (-71.064544 42.28787, -71.0645 42.287)
+def test_potential_breach_interdistance(session, start, channel_id, ok):
+    # channel geom: "SRID=28992;LINESTRING (142742 473443, 142747 473448)"
     factories.ChannelFactory(id=1)
+    factories.ChannelFactory(id=2)
     factories.PotentialBreachFactory(
-        geom="SRID=4326;LINESTRING(-71.06452 42.2874, -71.0646 42.286)", channel_id=1
+        geom=f"SRID={SRID};LINESTRING({POINT1}, {POINT3})", channel_id=1
     )
     factories.PotentialBreachFactory(
-        geom=f"SRID=4326;LINESTRING({x} {y}, -71.064544 42.286)", channel_id=1
+        geom=f"SRID={SRID};LINESTRING({start}, 142737 473438)", channel_id=channel_id
     )
     check = PotentialBreachInterdistanceCheck(
         models.PotentialBreach.geom, min_distance=1.0
@@ -482,23 +459,6 @@ def test_potential_breach_interdistance(session, x, y, ok):
         assert len(invalid) == 0
     else:
         assert len(invalid) == 1
-
-
-def test_potential_breach_interdistance_other_channel(session):
-    factories.ChannelFactory(id=1)
-    factories.ChannelFactory(id=2)
-    factories.PotentialBreachFactory(
-        geom="SRID=4326;LINESTRING(-71.06452 42.2874, -71.0646 42.286)", channel_id=1
-    )
-    factories.PotentialBreachFactory(
-        geom="SRID=4326;LINESTRING(-71.06452 42.287401, -71.064544 42.286)",
-        channel_id=2,
-    )
-    check = PotentialBreachInterdistanceCheck(
-        models.PotentialBreach.geom, min_distance=1.0
-    )
-    invalid = check.get_invalid(session)
-    assert len(invalid) == 0
 
 
 @pytest.mark.parametrize(
@@ -605,13 +565,18 @@ def test_feature_closed_cross_section(session, shape, expected_result):
 @pytest.mark.parametrize(
     "defined_area, max_difference, expected_result",
     [
-        (1.5, 1.2, 0),
-        (2, 1, 1),
-        (1, 0.5, 1),
+        (1.2, 0.5, 0),
+        (1, 1, 0),
+        (2.1, 1, 1),
+        (1.6, 0.5, 1),
     ],
 )
 def test_defined_area(session, defined_area, max_difference, expected_result):
-    geom = "SRID=4326;POLYGON((4.7 52.5, 4.7 52.50001, 4.70001 52.50001, 4.70001 52.50001))"
+    # create square polygon with area 1
+    x0 = int(POINT1.split()[0])
+    y0 = int(POINT1.split()[1])
+    geom = f"SRID={SRID};POLYGON(({x0} {y0}, {x0 + 1} {y0}, {x0 + 1} {y0 + 1}, {x0} {y0 + 1}, {x0} {y0}))"
+
     factories.SurfaceFactory(area=defined_area, geom=geom)
     check = DefinedAreaCheck(models.Surface.area, max_difference=max_difference)
     invalid = check.get_invalid(session)
@@ -959,5 +924,52 @@ def test_dwf_distribution_length_check(session, distribution, valid):
 def test_dwf_distribution_sum_check(session, distribution, valid):
     factories.DryWeatherFlowDistributionFactory(distribution=distribution)
     check = DWFDistributionSumCheck()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "ref_epsg, valid",
+    [
+        (28992, True),
+        (999999, False),
+    ],
+)
+def test_model_epsg_check_valid(session, ref_epsg, valid):
+    factories.ModelSettingsFactory()
+    session.ref_epsg_code = ref_epsg
+    check = ModelEPSGCheckValid()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "ref_epsg, valid",
+    [
+        (28992, True),
+        (4326, False),
+        (None, True),  # skip check when there is no epsg
+    ],
+)
+def test_model_epsg_check_projected(session, ref_epsg, valid):
+    factories.ModelSettingsFactory()
+    session.ref_epsg_code = ref_epsg
+    check = ModelEPSGCheckProjected()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "ref_epsg, valid",
+    [
+        (28992, True),
+        (4326, False),
+        (None, True),  # skip check when there is no epsg
+    ],
+)
+def test_model_epsg_check_units(session, ref_epsg, valid):
+    factories.ModelSettingsFactory()
+    session.ref_epsg_code = ref_epsg
+    check = ModelEPSGCheckUnits()
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
