@@ -110,14 +110,14 @@ class ConnectionNodeLinestringLocationCheck(LinestringLocationCheck):
         return f"{self.column_name} does not start or end at its connection node (tolerance = {self.max_distance} m)"
 
 
-class ControlMeasureMapLinestringMapLocationCheck(LinestringLocationCheck):
+class MeasureMapLinestringMapLocationCheck(LinestringLocationCheck):
     def __init__(self, control_table, filters, *args, **kwargs):
         super().__init__(
-            ref_column_start=models.ControlMeasureMap.measure_location_id,
-            ref_column_end=models.ControlMeasureMap.control_id,
-            ref_table_start=models.ControlMeasureLocation,
+            ref_column_start=models.MeasureMap.measure_location_id,
+            ref_column_end=models.MeasureMap.control_id,
+            ref_table_start=models.MeasureLocation,
             ref_table_end=control_table,
-            column=models.ControlMeasureMap.geom,
+            column=models.MeasureMap.geom,
             filters=filters,
             *args,
             **kwargs,

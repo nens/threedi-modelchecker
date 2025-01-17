@@ -17,12 +17,12 @@ from threedi_modelchecker.checks.factories import (
 def test_gen_foreign_key_checks_no_filter():
     settings = [
         ForeignKeyCheckSetting(
-            models.Surface.surface_parameters_id, models.SurfaceParameter.id
+            models.Surface.surface_parameters_id, models.SurfaceParameters.id
         ),
         ForeignKeyCheckSetting(
-            models.ControlMemory.target_id,
+            models.MemoryControl.target_id,
             models.Channel.id,
-            models.ControlMemory.target_type == "channel",
+            models.MemoryControl.target_type == "channel",
         ),
     ]
     foreign_key_checks = generate_foreign_key_checks(
@@ -31,22 +31,22 @@ def test_gen_foreign_key_checks_no_filter():
     assert len(foreign_key_checks) == 1
     fk_check = foreign_key_checks[0]
     assert models.Surface.surface_parameters_id == fk_check.column
-    assert models.SurfaceParameter.id == fk_check.reference_column
+    assert models.SurfaceParameters.id == fk_check.reference_column
 
 
 def test_gen_foreign_key_checks_filter():
     settings = [
         ForeignKeyCheckSetting(
-            models.Surface.surface_parameters_id, models.SurfaceParameter.id
+            models.Surface.surface_parameters_id, models.SurfaceParameters.id
         ),
         ForeignKeyCheckSetting(
-            models.ControlMemory.target_id,
+            models.MemoryControl.target_id,
             models.Channel.id,
-            models.ControlMemory.target_type == "channel",
+            models.MemoryControl.target_type == "channel",
         ),
     ]
     foreign_key_checks = generate_foreign_key_checks(
-        models.ControlMemory.__table__, fk_settings=settings
+        models.MemoryControl.__table__, fk_settings=settings
     )
     assert len(foreign_key_checks) == 1
     fk_check = foreign_key_checks[0]
