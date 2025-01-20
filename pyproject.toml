@@ -20,8 +20,8 @@ dependencies = [
     "GeoAlchemy2>=0.9,!=0.11.*",
     "SQLAlchemy>=1.4",
     "pyproj",
+    "threedi-schema @ https://github.com/nens/threedi-schema/archive/margriet_119_orm_class_names.zip"
 #    "threedi-schema==0.230.*"
-    "threedi-schema @ git+ssh://git@github.com/nens/threedi-schema@margriet_119_orm_class_names"
 ]
 
 [project.optional-dependencies]
