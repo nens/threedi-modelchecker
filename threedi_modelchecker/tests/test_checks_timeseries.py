@@ -50,6 +50,15 @@ def test_timeseries_same_timesteps(
     assert len(invalid) == expected_invalid
 
 
+@pytest.mark.parametrize("timeseries", ["0,-0.5", "0,-0.5 \n59,-0.5\n60,-0.5\n   "])
+def test_timeseries_existence_ok(session, timeseries):
+    BoundaryConditions2DFactory(timeseries=timeseries)
+
+    check = TimeseriesExistenceCheck(models.BoundaryConditions2D.timeseries)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == 0
+
+
 @pytest.mark.parametrize(
     "one_d_timeseries_tuple,two_d_timeseries_tuple,expected_invalid",
     [
@@ -71,22 +80,13 @@ def test_timeseries_same_timesteps(
 def test_first_timeseries_same_timesteps(
     session, one_d_timeseries_tuple, two_d_timeseries_tuple, expected_invalid
 ):
-    for timeseries in one_d_timeseries_tuple:
-        BoundaryConditions1DFactory(timeseries=timeseries)
-    for timeseries in two_d_timeseries_tuple:
-        BoundaryConditions2DFactory(timeseries=timeseries)
+    for i, timeseries in enumerate(one_d_timeseries_tuple):
+        BoundaryConditions1DFactory(id=i, timeseries=timeseries)
+    for i, timeseries in enumerate(two_d_timeseries_tuple):
+        BoundaryConditions2DFactory(id=i, timeseries=timeseries)
     check = FirstTimeSeriesEqualTimestepsCheck()
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_invalid
-
-
-@pytest.mark.parametrize("timeseries", ["0,-0.5", "0,-0.5 \n59,-0.5\n60,-0.5\n   "])
-def test_timeseries_existence_ok(session, timeseries):
-    BoundaryConditions2DFactory(timeseries=timeseries)
-
-    check = TimeseriesExistenceCheck(models.BoundaryConditions2D.timeseries)
-    invalid = check.get_invalid(session)
-    assert len(invalid) == 0
 
 
 @pytest.mark.parametrize("timeseries", ["", None])
