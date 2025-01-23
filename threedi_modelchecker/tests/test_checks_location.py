@@ -3,9 +3,9 @@ from threedi_schema.domain import models
 
 from threedi_modelchecker.checks.location import (
     ConnectionNodeLinestringLocationCheck,
-    ControlMeasureMapLinestringMapLocationCheck,
     DWFMapLinestringLocationCheck,
     LinestringLocationCheck,
+    MeasureMapLinestringMapLocationCheck,
     PointLocationCheck,
     PumpMapLinestringLocationCheck,
     SurfaceMapLinestringLocationCheck,
@@ -95,29 +95,29 @@ def test_connection_node_linestring_location_check(session, channel_geom, nof_in
 )
 @pytest.mark.parametrize(
     "control_table, control_type",
-    [(models.ControlMemory, "memory"), (models.ControlTable, "table")],
+    [(models.MemoryControl, "memory"), (models.TableControl, "table")],
 )
 def test_control_measure_map_linestring_map_location_check(
     session, control_table, control_type, channel_geom, nof_invalid
 ):
-    factories.ControlMeasureLocationFactory(id=1, geom=f"SRID={SRID};POINT({POINT1})")
-    factories.ControlMemoryFactory(id=1, geom=f"SRID={SRID};POINT({POINT3})")
-    factories.ControlTableFactory(id=1, geom=f"SRID={SRID};POINT({POINT3})")
-    factories.ControlMeasureMapFactory(
+    factories.MeasureLocationFactory(id=1, geom=f"SRID={SRID};POINT({POINT1})")
+    factories.MemoryControlFactory(id=1, geom=f"SRID={SRID};POINT({POINT3})")
+    factories.TableControlFactory(id=1, geom=f"SRID={SRID};POINT({POINT3})")
+    factories.MeasureMapFactory(
         measure_location_id=1,
         control_id=1,
         control_type="memory",
         geom=f"SRID={SRID};{channel_geom}",
     )
-    factories.ControlMeasureMapFactory(
+    factories.MeasureMapFactory(
         measure_location_id=1,
         control_id=1,
         control_type="table",
         geom=f"SRID={SRID};{channel_geom}",
     )
-    errors = ControlMeasureMapLinestringMapLocationCheck(
+    errors = MeasureMapLinestringMapLocationCheck(
         control_table=control_table,
-        filters=models.ControlMeasureMap.control_type == control_type,
+        filters=models.MeasureMap.control_type == control_type,
         max_distance=1.01,
     ).get_invalid(session)
     assert len(errors) == nof_invalid

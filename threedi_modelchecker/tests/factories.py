@@ -164,9 +164,9 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     flooding_threshold = 0.01
 
 
-class Lateral1dFactory(factory.alchemy.SQLAlchemyModelFactory):
+class Lateral1DFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.Lateral1d
+        model = models.Lateral1D
         sqlalchemy_session = None
 
     timeseries = "0,-0.1"
@@ -184,9 +184,9 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     type = constants.Later2dType.SURFACE
 
 
-class SurfaceParameterFactory(factory.alchemy.SQLAlchemyModelFactory):
+class SurfaceParametersFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.SurfaceParameter
+        model = models.SurfaceParameters
         sqlalchemy_session = None
 
     outflow_delay = 10.0
@@ -251,12 +251,12 @@ class TagsFactory(factory.alchemy.SQLAlchemyModelFactory):
         sqlalchemy_session = None
 
 
-class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
+class TableControlFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.ControlTable
+        model = models.TableControl
         sqlalchemy_session = None
 
-    action_type = constants.ControlTableActionTypes.set_discharge_coefficients
+    action_type = constants.TableControlActionTypes.set_discharge_coefficients
     action_table = "0.0,-1.0 2.0\n1.0,-1.1 2.1"
     measure_operator = constants.MeasureOperators.greater_than
     target_type = constants.StructureControlTypes.channel
@@ -264,12 +264,12 @@ class ControlTableFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):
+class MemoryControlFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.ControlMemory
+        model = models.MemoryControl
         sqlalchemy_session = None
 
-    action_type = constants.ControlTableActionTypes.set_discharge_coefficients
+    action_type = constants.TableControlActionTypes.set_discharge_coefficients
     action_value_1 = 0.0
     action_value_2 = -1.0
     target_type = constants.StructureControlTypes.channel
@@ -281,18 +281,18 @@ class ControlMemoryFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class ControlMeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+class MeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.ControlMeasureMap
+        model = models.MeasureMap
         sqlalchemy_session = None
 
     control_type = constants.MeasureVariables.waterlevel
     geom = DEFAULT_LINE
 
 
-class ControlMeasureLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
+class MeasureLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.ControlMeasureLocation
+        model = models.MeasureLocation
         sqlalchemy_session = None
 
     geom = DEFAULT_POINT
@@ -327,7 +327,7 @@ class PotentialBreachFactory(factory.alchemy.SQLAlchemyModelFactory):
 
 class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
-        model = models.VegetationDrag
+        model = models.VegetationDrag2D
         sqlalchemy_session = None
 
     vegetation_height = 1.0

@@ -51,8 +51,8 @@ from .checks.factories import (
 )
 from .checks.location import (
     ConnectionNodeLinestringLocationCheck,
-    ControlMeasureMapLinestringMapLocationCheck,
     DWFMapLinestringLocationCheck,
+    MeasureMapLinestringMapLocationCheck,
     PointLocationCheck,
     PumpMapLinestringLocationCheck,
     SurfaceMapLinestringLocationCheck,
@@ -1112,15 +1112,15 @@ CHECKS += [
 ]
 
 CHECKS += [
-    ControlMeasureMapLinestringMapLocationCheck(
+    MeasureMapLinestringMapLocationCheck(
         control_table=table,
-        filters=models.ControlMeasureMap.control_type == control_type,
+        filters=models.MeasureMap.control_type == control_type,
         max_distance=1,
         error_code=205,
     )
     for table, control_type in [
-        (models.ControlTable, "table"),
-        (models.ControlMemory, "memory"),
+        (models.TableControl, "table"),
+        (models.MemoryControl, "memory"),
     ]
 ]
 
@@ -1146,8 +1146,8 @@ CHECKS += [
     PointLocationCheck(
         max_distance=TOLERANCE_M,
         error_code=206,
-        column=models.Windshielding.geom,
-        ref_column=models.Windshielding.channel_id,
+        column=models.Windshielding1D.geom,
+        ref_column=models.Windshielding1D.channel_id,
         ref_table=models.Channel,
     ),
 ]
@@ -1163,13 +1163,13 @@ CHECKS += [
     )
     for table in [
         models.BoundaryCondition1D,
-        models.ControlMeasureLocation,
-        models.Lateral1d,
+        models.MeasureLocation,
+        models.Lateral1D,
         models.Pump,
     ]
 ]
 
-control_tables = [models.ControlMemory, models.ControlTable]
+control_tables = [models.MemoryControl, models.TableControl]
 ref_tables = [
     models.Pipe,
     models.Orifice,
@@ -1188,7 +1188,7 @@ CHECKS += [
         ref_table=ref_table,
         filters=(table.target_type == ref_table.__tablename__),
     )
-    for table in [models.ControlMemory, models.ControlTable]
+    for table in [models.MemoryControl, models.TableControl]
     for ref_table in [
         models.Channel,
         models.Pipe,
@@ -1650,7 +1650,7 @@ CHECKS += [
         (models.Interflow, models.ModelSettings.use_interflow),
         (models.GroundWater, models.ModelSettings.use_groundwater_flow),
         (models.GroundWater, models.ModelSettings.use_groundwater_storage),
-        (models.VegetationDrag, models.ModelSettings.use_vegetation_drag_2d),
+        (models.VegetationDrag2D, models.ModelSettings.use_vegetation_drag_2d),
         (models.Interception, models.ModelSettings.use_interception),
     )
 ]
@@ -1679,7 +1679,7 @@ CHECKS += [
         models.SimpleInfiltration,
         models.Interflow,
         models.GroundWater,
-        models.VegetationDrag,
+        models.VegetationDrag2D,
         models.Interception,
     ]
 ]
@@ -1705,7 +1705,7 @@ CHECKS += [
             models.SimulationTemplateSettings.use_0d_inflow,
         ),
         (
-            [models.ControlTable, models.ControlMemory],
+            [models.TableControl, models.MemoryControl],
             models.SimulationTemplateSettings.use_structure_control,
         ),
     )
@@ -2080,101 +2080,101 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=501,
-        column=models.VegetationDrag.vegetation_height,
+        column=models.VegetationDrag2D.vegetation_height,
         min_value=0,
         left_inclusive=False,
     ),
     QueryCheck(
         error_code=502,
-        column=models.VegetationDrag.vegetation_height,
-        invalid=Query(models.VegetationDrag).filter(
-            models.VegetationDrag.vegetation_height == None,
-            is_none_or_empty(models.VegetationDrag.vegetation_height_file),
+        column=models.VegetationDrag2D.vegetation_height,
+        invalid=Query(models.VegetationDrag2D).filter(
+            models.VegetationDrag2D.vegetation_height == None,
+            is_none_or_empty(models.VegetationDrag2D.vegetation_height_file),
         ),
         message="vegetation_drag.height must be defined.",
     ),
     QueryCheck(
         error_code=503,
         level=CheckLevel.WARNING,
-        column=models.VegetationDrag.vegetation_height,
-        invalid=Query(models.VegetationDrag).filter(
-            models.VegetationDrag.vegetation_height == None,
-            ~is_none_or_empty(models.VegetationDrag.vegetation_height_file),
+        column=models.VegetationDrag2D.vegetation_height,
+        invalid=Query(models.VegetationDrag2D).filter(
+            models.VegetationDrag2D.vegetation_height == None,
+            ~is_none_or_empty(models.VegetationDrag2D.vegetation_height_file),
         ),
         message="vegetation_drag.height is recommended as fallback value when using a vegetation_height_file.",
     ),
     RangeCheck(
         error_code=504,
-        column=models.VegetationDrag.vegetation_stem_count,
+        column=models.VegetationDrag2D.vegetation_stem_count,
         min_value=0,
         left_inclusive=False,
     ),
     QueryCheck(
         error_code=505,
-        column=models.VegetationDrag.vegetation_stem_count,
-        invalid=Query(models.VegetationDrag).filter(
-            models.VegetationDrag.vegetation_stem_count == None,
-            is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
+        column=models.VegetationDrag2D.vegetation_stem_count,
+        invalid=Query(models.VegetationDrag2D).filter(
+            models.VegetationDrag2D.vegetation_stem_count == None,
+            is_none_or_empty(models.VegetationDrag2D.vegetation_stem_count_file),
         ),
         message="vegetation_drag.vegetation_stem_count must be defined.",
     ),
     QueryCheck(
         error_code=506,
         level=CheckLevel.WARNING,
-        column=models.VegetationDrag.vegetation_stem_count,
-        invalid=Query(models.VegetationDrag).filter(
-            models.VegetationDrag.vegetation_stem_count == None,
-            ~is_none_or_empty(models.VegetationDrag.vegetation_stem_count_file),
+        column=models.VegetationDrag2D.vegetation_stem_count,
+        invalid=Query(models.VegetationDrag2D).filter(
+            models.VegetationDrag2D.vegetation_stem_count == None,
+            ~is_none_or_empty(models.VegetationDrag2D.vegetation_stem_count_file),
         ),
         message="vegetation_drag.vegetation_stem_count is recommended as fallback value when using a vegetation_stem_count_file.",
     ),
     RangeCheck(
         error_code=507,
-        column=models.VegetationDrag.vegetation_stem_diameter,
+        column=models.VegetationDrag2D.vegetation_stem_diameter,
         min_value=0,
         left_inclusive=False,
     ),
     QueryCheck(
         error_code=508,
-        column=models.VegetationDrag.vegetation_stem_diameter,
-        invalid=Query(models.VegetationDrag).filter(
-            models.VegetationDrag.vegetation_stem_diameter == None,
-            is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
+        column=models.VegetationDrag2D.vegetation_stem_diameter,
+        invalid=Query(models.VegetationDrag2D).filter(
+            models.VegetationDrag2D.vegetation_stem_diameter == None,
+            is_none_or_empty(models.VegetationDrag2D.vegetation_stem_diameter_file),
         ),
         message="vegetation_drag.vegetation_stem_diameter must be defined.",
     ),
     QueryCheck(
         error_code=509,
         level=CheckLevel.WARNING,
-        column=models.VegetationDrag.vegetation_stem_diameter,
-        invalid=Query(models.VegetationDrag).filter(
-            models.VegetationDrag.vegetation_stem_diameter == None,
-            ~is_none_or_empty(models.VegetationDrag.vegetation_stem_diameter_file),
+        column=models.VegetationDrag2D.vegetation_stem_diameter,
+        invalid=Query(models.VegetationDrag2D).filter(
+            models.VegetationDrag2D.vegetation_stem_diameter == None,
+            ~is_none_or_empty(models.VegetationDrag2D.vegetation_stem_diameter_file),
         ),
         message="vegetation_drag.vegetation_stem_diameter is recommended as fallback value when using a vegetation_stem_diameter_file.",
     ),
     RangeCheck(
         error_code=510,
-        column=models.VegetationDrag.vegetation_drag_coefficient,
+        column=models.VegetationDrag2D.vegetation_drag_coefficient,
         min_value=0,
         left_inclusive=False,
     ),
     QueryCheck(
         error_code=511,
-        column=models.VegetationDrag.vegetation_drag_coefficient,
-        invalid=Query(models.VegetationDrag).filter(
-            models.VegetationDrag.vegetation_drag_coefficient == None,
-            is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
+        column=models.VegetationDrag2D.vegetation_drag_coefficient,
+        invalid=Query(models.VegetationDrag2D).filter(
+            models.VegetationDrag2D.vegetation_drag_coefficient == None,
+            is_none_or_empty(models.VegetationDrag2D.vegetation_drag_coefficient_file),
         ),
         message="vegetation_drag.vegetation_drag_coefficient must be defined.",
     ),
     QueryCheck(
         error_code=512,
         level=CheckLevel.WARNING,
-        column=models.VegetationDrag.vegetation_drag_coefficient,
-        invalid=Query(models.VegetationDrag).filter(
-            models.VegetationDrag.vegetation_drag_coefficient == None,
-            ~is_none_or_empty(models.VegetationDrag.vegetation_drag_coefficient_file),
+        column=models.VegetationDrag2D.vegetation_drag_coefficient,
+        invalid=Query(models.VegetationDrag2D).filter(
+            models.VegetationDrag2D.vegetation_drag_coefficient == None,
+            ~is_none_or_empty(models.VegetationDrag2D.vegetation_drag_coefficient_file),
         ),
         message="vegetation_drag.vegetation_drag_coefficient is recommended as fallback value when using a vegetation_drag_coefficient_file.",
     ),
@@ -2215,16 +2215,16 @@ CHECKS += [
 CHECKS += [
     RangeCheck(
         error_code=code,
-        column=models.SurfaceParameter.outflow_delay,
+        column=models.SurfaceParameters.outflow_delay,
         min_value=0,
         filters=CONDITIONS["has_inflow"].exists(),
     )
     for code, column in [
-        (606, models.SurfaceParameter.outflow_delay),
-        (607, models.SurfaceParameter.max_infiltration_capacity),
-        (608, models.SurfaceParameter.min_infiltration_capacity),
-        (609, models.SurfaceParameter.infiltration_decay_constant),
-        (610, models.SurfaceParameter.infiltration_recovery_constant),
+        (606, models.SurfaceParameters.outflow_delay),
+        (607, models.SurfaceParameters.max_infiltration_capacity),
+        (608, models.SurfaceParameters.min_infiltration_capacity),
+        (609, models.SurfaceParameters.infiltration_decay_constant),
+        (610, models.SurfaceParameters.infiltration_recovery_constant),
     ]
 ]
 CHECKS += [Use0DFlowCheck(error_code=611, level=CheckLevel.WARNING)]
@@ -2327,10 +2327,10 @@ RASTER_COLUMNS = [
     models.GroundWater.leakage_file,
     models.InitialConditions.initial_water_level_file,
     models.InitialConditions.initial_groundwater_level_file,
-    models.VegetationDrag.vegetation_height_file,
-    models.VegetationDrag.vegetation_stem_count_file,
-    models.VegetationDrag.vegetation_stem_diameter_file,
-    models.VegetationDrag.vegetation_drag_coefficient_file,
+    models.VegetationDrag2D.vegetation_height_file,
+    models.VegetationDrag2D.vegetation_stem_count_file,
+    models.VegetationDrag2D.vegetation_stem_diameter_file,
+    models.VegetationDrag2D.vegetation_drag_coefficient_file,
 ]
 
 CHECKS += [
@@ -2466,22 +2466,22 @@ CHECKS += [
     ## 100xx: We continue raster checks from 1400
     RasterRangeCheck(
         error_code=1401,
-        column=models.VegetationDrag.vegetation_height_file,
+        column=models.VegetationDrag2D.vegetation_height_file,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=1402,
-        column=models.VegetationDrag.vegetation_stem_count_file,
+        column=models.VegetationDrag2D.vegetation_stem_count_file,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=1403,
-        column=models.VegetationDrag.vegetation_stem_diameter_file,
+        column=models.VegetationDrag2D.vegetation_stem_diameter_file,
         min_value=0,
     ),
     RasterRangeCheck(
         error_code=1404,
-        column=models.VegetationDrag.vegetation_drag_coefficient_file,
+        column=models.VegetationDrag2D.vegetation_drag_coefficient_file,
         min_value=0,
     ),
     RasterPixelCountCheck(
@@ -2508,10 +2508,10 @@ CHECKS += [
         models.GroundWater.infiltration_decay_period_file,
         models.GroundWater.groundwater_hydraulic_conductivity_file,
         models.GroundWater.leakage_file,
-        models.VegetationDrag.vegetation_height_file,
-        models.VegetationDrag.vegetation_stem_count_file,
-        models.VegetationDrag.vegetation_stem_diameter_file,
-        models.VegetationDrag.vegetation_drag_coefficient_file,
+        models.VegetationDrag2D.vegetation_height_file,
+        models.VegetationDrag2D.vegetation_stem_count_file,
+        models.VegetationDrag2D.vegetation_stem_diameter_file,
+        models.VegetationDrag2D.vegetation_drag_coefficient_file,
         models.ModelSettings.dem_file,
         models.ModelSettings.friction_coefficient_file,
         models.InitialConditions.initial_water_level_file,
@@ -2820,7 +2820,7 @@ CHECKS += [
     for col in [
         models.BoundaryCondition1D.timeseries,
         models.BoundaryConditions2D.timeseries,
-        models.Lateral1d.timeseries,
+        models.Lateral1D.timeseries,
         models.Lateral2D.timeseries,
     ]
 ]
@@ -2829,7 +2829,7 @@ CHECKS += [
     for col in [
         models.BoundaryCondition1D.timeseries,
         models.BoundaryConditions2D.timeseries,
-        models.Lateral1d.timeseries,
+        models.Lateral1D.timeseries,
         models.Lateral2D.timeseries,
     ]
 ]
@@ -2838,7 +2838,7 @@ CHECKS += [
     for col in [
         models.BoundaryCondition1D.timeseries,
         models.BoundaryConditions2D.timeseries,
-        models.Lateral1d.timeseries,
+        models.Lateral1D.timeseries,
         models.Lateral2D.timeseries,
     ]
 ]
@@ -2847,7 +2847,7 @@ CHECKS += [
     for col in [
         models.BoundaryCondition1D.timeseries,
         models.BoundaryConditions2D.timeseries,
-        models.Lateral1d.timeseries,
+        models.Lateral1D.timeseries,
         models.Lateral2D.timeseries,
     ]
 ]
@@ -2878,19 +2878,15 @@ CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
 CHECKS += [
     QueryCheck(
         error_code=1227,
-        column=models.ControlMeasureMap.id,
-        invalid=Query(models.ControlMeasureMap).filter(
+        column=models.MeasureMap.id,
+        invalid=Query(models.MeasureMap).filter(
             (
-                (models.ControlMeasureMap.control_type == "memory")
-                & models.ControlMeasureMap.control_id.not_in(
-                    Query(models.ControlMemory.id)
-                )
+                (models.MeasureMap.control_type == "memory")
+                & models.MeasureMap.control_id.not_in(Query(models.MemoryControl.id))
             )
             | (
-                (models.ControlMeasureMap.control_type == "table")
-                & models.ControlMeasureMap.control_id.not_in(
-                    Query(models.ControlTable.id)
-                )
+                (models.MeasureMap.control_type == "table")
+                & models.MeasureMap.control_id.not_in(Query(models.TableControl.id))
             )
         ),
         message="control_measure_map.control_id references an id in memory_control or table_control, but the table it references does not contain an entry with that id.",
@@ -2899,7 +2895,7 @@ CHECKS += [
 
 CHECKS += [
     ControlHasSingleMeasureVariable(error_code=1229, control_model=table)
-    for table in [models.ControlTable, models.ControlMemory]
+    for table in [models.TableControl, models.MemoryControl]
 ]
 
 
@@ -3318,18 +3314,18 @@ not_null_columns = [
     models.Channel.exchange_type,
     models.Channel.connection_node_id_start,
     models.Channel.connection_node_id_end,
-    models.ControlMeasureMap.weight,
-    models.ControlMeasureMap.measure_location_id,
-    models.ControlMeasureLocation.connection_node_id,
-    models.ControlMeasureLocation.measure_variable,
-    models.ControlMemory.action_type,
-    models.ControlMemory.action_value_1,
-    models.ControlMemory.action_value_2,
-    models.ControlMemory.target_type,
-    models.ControlMemory.target_id,
-    models.ControlTable.action_table,
-    models.ControlTable.action_type,
-    models.ControlTable.target_type,
+    models.MeasureMap.weight,
+    models.MeasureMap.measure_location_id,
+    models.MeasureLocation.connection_node_id,
+    models.MeasureLocation.measure_variable,
+    models.MemoryControl.action_type,
+    models.MemoryControl.action_value_1,
+    models.MemoryControl.action_value_2,
+    models.MemoryControl.target_type,
+    models.MemoryControl.target_id,
+    models.TableControl.action_table,
+    models.TableControl.action_type,
+    models.TableControl.target_type,
     models.CrossSectionLocation.channel_id,
     models.CrossSectionLocation.friction_type,
     models.CrossSectionLocation.reference_level,
@@ -3357,7 +3353,7 @@ not_null_columns = [
     models.Weir.connection_node_id_end,
     models.Weir.crest_level,
     models.Weir.crest_type,
-    models.Windshielding.channel_id,
+    models.Windshielding1D.channel_id,
     models.ModelSettings.node_open_water_detection,
 ]
 
@@ -3365,11 +3361,11 @@ not_null_columns = [
 fk_settings = [
     ForeignKeyCheckSetting(models.PumpMap.pump_id, models.Pump.id),
     ForeignKeyCheckSetting(
-        models.ControlMeasureMap.measure_location_id, models.ControlMeasureLocation.id
+        models.MeasureMap.measure_location_id, models.MeasureLocation.id
     ),
     ForeignKeyCheckSetting(models.SurfaceMap.surface_id, models.Surface.id),
     ForeignKeyCheckSetting(
-        models.Surface.surface_parameters_id, models.SurfaceParameter.id
+        models.Surface.surface_parameters_id, models.SurfaceParameters.id
     ),
     ForeignKeyCheckSetting(
         models.DryWeatherFlowMap.dry_weather_flow_id, models.DryWeatherFlow.id
@@ -3382,7 +3378,7 @@ fk_settings = [
 connection_node_fk = [
     models.Pump.connection_node_id,
     models.PumpMap.connection_node_id_end,
-    models.ControlMeasureLocation.connection_node_id,
+    models.MeasureLocation.connection_node_id,
     models.Channel.connection_node_id_start,
     models.Channel.connection_node_id_end,
     models.Culvert.connection_node_id_start,
@@ -3393,7 +3389,7 @@ connection_node_fk = [
     models.Pipe.connection_node_id_end,
     models.Weir.connection_node_id_start,
     models.Weir.connection_node_id_end,
-    models.Lateral1d.connection_node_id,
+    models.Lateral1D.connection_node_id,
     models.BoundaryCondition1D.connection_node_id,
     models.DryWeatherFlowMap.connection_node_id,
     models.SurfaceMap.connection_node_id,
@@ -3403,7 +3399,7 @@ fk_settings += [
 ]
 channel_fk = [
     models.CrossSectionLocation.channel_id,
-    models.Windshielding.channel_id,
+    models.Windshielding1D.channel_id,
     models.PotentialBreach.channel_id,
     models.ExchangeLine.channel_id,
 ]
@@ -3416,7 +3412,7 @@ material_fk = [
 ]
 fk_settings += [ForeignKeyCheckSetting(col, models.Material.id) for col in material_fk]
 
-control_tables = [models.ControlMemory, models.ControlTable]
+control_tables = [models.MemoryControl, models.TableControl]
 ref_tables = [
     models.Channel,
     models.Pipe,
@@ -3438,14 +3434,14 @@ fk_settings += [
 
 fk_settings += [
     ForeignKeyCheckSetting(
-        models.ControlMeasureMap.control_id,
-        models.ControlMemory.id,
-        models.ControlMeasureMap.control_type == "memory",
+        models.MeasureMap.control_id,
+        models.MemoryControl.id,
+        models.MeasureMap.control_type == "memory",
     ),
     ForeignKeyCheckSetting(
-        models.ControlMeasureMap.control_id,
-        models.ControlTable.id,
-        models.ControlMeasureMap.control_type == "table",
+        models.MeasureMap.control_id,
+        models.TableControl.id,
+        models.MeasureMap.control_type == "table",
     ),
 ]
 

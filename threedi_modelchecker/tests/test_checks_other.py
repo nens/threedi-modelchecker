@@ -13,8 +13,6 @@ from threedi_modelchecker.checks.other import (
     ConnectionNodesDistance,
     ConnectionNodesLength,
     ControlHasSingleMeasureVariable,
-    ControlTableActionTableCheckDefault,
-    ControlTableActionTableCheckDischargeCoefficients,
     CorrectAggregationSettingsExist,
     CrossSectionSameConfigurationCheck,
     DefinedAreaCheck,
@@ -34,6 +32,8 @@ from threedi_modelchecker.checks.other import (
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
     SurfaceNodeInflowAreaCheck,
+    TableControlActionTableCheckDefault,
+    TableControlActionTableCheckDischargeCoefficients,
     TagsValidCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
@@ -749,7 +749,7 @@ def test_used_settings_present_check_single_table(session, use_setting, add_sett
         factories.VegetationDragFactory()
     check = UsedSettingsPresentCheckSingleTable(
         column=models.ModelSettings.use_vegetation_drag_2d,
-        settings_table=models.VegetationDrag,
+        settings_table=models.VegetationDrag2D,
     )
     assert len(check.get_invalid(session)) == nof_invalid_expected
 
@@ -812,11 +812,11 @@ def test_tags_valid(session):
     ],
 )
 def test_control_table_action_table_check_default(session, action_table, valid):
-    factories.ControlTableFactory(
+    factories.TableControlFactory(
         action_table=action_table,
-        action_type=constants.ControlTableActionTypes.set_capacity,
+        action_type=constants.TableControlActionTypes.set_capacity,
     )
-    check = ControlTableActionTableCheckDefault()
+    check = TableControlActionTableCheckDefault()
     assert (len(check.get_invalid(session)) == 0) == valid
 
 
@@ -839,11 +839,11 @@ def test_control_table_action_table_check_default(session, action_table, valid):
 def test_control_table_action_table_check_discharge_coefficients(
     session, action_table, valid
 ):
-    factories.ControlTableFactory(
+    factories.TableControlFactory(
         action_table=action_table,
-        action_type=constants.ControlTableActionTypes.set_discharge_coefficients,
+        action_type=constants.TableControlActionTypes.set_discharge_coefficients,
     )
-    check = ControlTableActionTableCheckDischargeCoefficients()
+    check = TableControlActionTableCheckDischargeCoefficients()
     assert (len(check.get_invalid(session)) == 0) == valid
 
 
@@ -864,13 +864,13 @@ def test_control_table_action_table_check_discharge_coefficients(
     ],
 )
 def test_control_has_single_measure_variable(session, measure_variables, valid):
-    factories.ControlTableFactory(id=1)
+    factories.TableControlFactory(id=1)
     for i, measure_variable in enumerate(measure_variables, 1):
-        factories.ControlMeasureMapFactory(
+        factories.MeasureMapFactory(
             control_id=1, measure_location_id=i, control_type="table"
         )
-        factories.ControlMeasureLocationFactory(id=i, measure_variable=measure_variable)
-    check = ControlHasSingleMeasureVariable(control_model=models.ControlTable)
+        factories.MeasureLocationFactory(id=i, measure_variable=measure_variable)
+    check = ControlHasSingleMeasureVariable(control_model=models.TableControl)
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
 

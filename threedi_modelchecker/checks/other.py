@@ -963,15 +963,15 @@ class TableStrCheck(BaseCheck):
         return invalids
 
 
-class ControlTableActionTableCheckDefault(TableStrCheck):
+class TableControlActionTableCheckDefault(TableStrCheck):
     def __init__(self, level=CheckLevel.ERROR, error_code=0):
         # check for action_table for action_type != set_discharge_coefficients
         # expected format: multiple rows, separated by \n of "val,val"
         super().__init__(
-            column=models.ControlTable.action_table,
+            column=models.TableControl.action_table,
             pattern=r"^(-?\d+(\.\d+)?,-?\d+(\.\d+)?\n?)+$",
-            filters=models.ControlTable.action_type
-            != constants.ControlTableActionTypes.set_discharge_coefficients,
+            filters=models.TableControl.action_type
+            != constants.TableControlActionTypes.set_discharge_coefficients,
             level=level,
             error_code=error_code,
         )
@@ -983,15 +983,15 @@ class ControlTableActionTableCheckDefault(TableStrCheck):
             )
 
 
-class ControlTableActionTableCheckDischargeCoefficients(TableStrCheck):
+class TableControlActionTableCheckDischargeCoefficients(TableStrCheck):
     def __init__(self, level=CheckLevel.ERROR, error_code=0):
         # check for action_table for action_type = set_discharge_coefficients
         # expected format: multiple rows, separated by \n of "val,val val"
         super().__init__(
-            column=models.ControlTable.action_table,
+            column=models.TableControl.action_table,
             pattern=r"^(-?\d+(\.\d+)?,-?\d+(\.\d+)? -?\d+(\.\d+)?\n?)+$",
-            filters=models.ControlTable.action_type
-            == constants.ControlTableActionTypes.set_discharge_coefficients,
+            filters=models.TableControl.action_type
+            == constants.TableControlActionTypes.set_discharge_coefficients,
             level=level,
             error_code=error_code,
         )
@@ -1006,8 +1006,8 @@ class ControlTableActionTableCheckDischargeCoefficients(TableStrCheck):
 class ControlHasSingleMeasureVariable(BaseCheck):
     def __init__(self, control_model, level=CheckLevel.ERROR, error_code=0):
         control_type_map = {
-            models.ControlTable: "table",
-            models.ControlMemory: "memory",
+            models.TableControl: "table",
+            models.MemoryControl: "memory",
         }
         self.control_type_name = control_type_map[control_model]
         super().__init__(
@@ -1020,17 +1020,16 @@ class ControlHasSingleMeasureVariable(BaseCheck):
         invalid = []
         for record in self.to_check(session):
             res = (
-                session.query(models.ControlMeasureMap)
+                session.query(models.MeasureMap)
                 .filter(
-                    models.ControlMeasureMap.control_type == self.control_type_name,
-                    models.ControlMeasureMap.control_id == record.id,
+                    models.MeasureMap.control_type == self.control_type_name,
+                    models.MeasureMap.control_id == record.id,
                 )
                 .join(
-                    models.ControlMeasureLocation,
-                    models.ControlMeasureMap.measure_location_id
-                    == models.ControlMeasureLocation.id,
+                    models.MeasureLocation,
+                    models.MeasureMap.measure_location_id == models.MeasureLocation.id,
                 )
-                .with_entities(models.ControlMeasureLocation.measure_variable)
+                .with_entities(models.MeasureLocation.measure_variable)
             ).all()
             if len(res) == 0:
                 continue
