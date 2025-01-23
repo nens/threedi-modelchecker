@@ -116,7 +116,7 @@ def test_unique_check_null_values(session):
 
 def test_unique_check_multiple_columns(session):
     factories.AggregationSettingsFactory()
-    factories.AggregationSettingsFactory(aggregation_method="sum")
+    factories.AggregationSettingsFactory(id=1, aggregation_method="sum")
 
     unique_check = UniqueCheck(
         (
