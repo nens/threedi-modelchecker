@@ -519,7 +519,15 @@ class SpatialIndexCheck(BaseCheck):
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         result = session.execute(
-            func.CheckSpatialIndex(self.column.table.name, self.column.name)
+            text(
+                f"""
+            SELECT EXISTS(
+                SELECT 1 FROM sqlite_master
+                WHERE type='table'
+                AND name='rtree_{self.column.table.name}_{self.column.name}'
+            );
+        """
+            )
         ).scalar()
         if result == 1:
             return []
