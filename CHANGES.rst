@@ -5,6 +5,7 @@ Changelog of threedi-modelchecker
 -------------------
 
 - Bump schema version to 0.300
+- Fix incorrect name of Tags table
 
 
 2.16.1 (2025-01-23)
