@@ -39,12 +39,12 @@ def test_timeseries_same_timesteps(
     session, timeseries_tuple, check_type, expected_invalid
 ):
     if check_type == "1d":
-        for timeseries in timeseries_tuple:
-            BoundaryConditions1DFactory(timeseries=timeseries)
+        for i, timeseries in enumerate(timeseries_tuple):
+            BoundaryConditions1DFactory(id=i, timeseries=timeseries)
         check = TimeSeriesEqualTimestepsCheck(models.BoundaryCondition1D.timeseries)
     elif check_type == "2d":
-        for timeseries in timeseries_tuple:
-            BoundaryConditions2DFactory(timeseries=timeseries)
+        for i, timeseries in enumerate(timeseries_tuple):
+            BoundaryConditions2DFactory(id=i, timeseries=timeseries)
         check = TimeSeriesEqualTimestepsCheck(models.BoundaryConditions2D.timeseries)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_invalid
