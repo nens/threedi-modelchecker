@@ -328,10 +328,14 @@ class ConnectionNodesDistance(BaseCheck):
             AND cn1.ROWID != cn2.ROWID
             AND cn2.ROWID IN (
                 SELECT ROWID
-                FROM SpatialIndex
+                FROM rtree_connection_node_geom
                 WHERE (
-                    f_table_name = "connection_node"
-                    AND search_frame = Buffer(cn1.geom, {self.minimum_distance / 2})))
+                    maxx >= ST_MinX(ST_Buffer(cn1.geom, {self.minimum_distance/2}))
+                    AND minx <= ST_MaxX(ST_Buffer(cn1.geom, {self.minimum_distance/2}))
+                    AND maxy >= ST_MinY(ST_Buffer(cn1.geom, {self.minimum_distance/2}))
+                    AND miny <= ST_MaxY(ST_Buffer(cn1.geom, {self.minimum_distance/2}))
+                )
+            )
             """
         )
         results = session.connection().execute(query).fetchall()
@@ -515,7 +519,15 @@ class SpatialIndexCheck(BaseCheck):
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         result = session.execute(
-            func.CheckSpatialIndex(self.column.table.name, self.column.name)
+            text(
+                f"""
+            SELECT EXISTS(
+                SELECT 1 FROM sqlite_master
+                WHERE type='table'
+                AND name='rtree_{self.column.table.name}_{self.column.name}'
+            );
+        """
+            )
         ).scalar()
         if result == 1:
             return []

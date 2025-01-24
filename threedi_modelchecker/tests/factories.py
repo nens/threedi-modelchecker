@@ -20,7 +20,14 @@ def inject_session(session):
             cls._meta.sqlalchemy_session = session
 
 
-class TimeStepSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class BaseFactory(factory.alchemy.SQLAlchemyModelFactory):
+    class Meta:
+        abstract = True
+
+    id = factory.Faker("random_int")
+
+
+class TimeStepSettingsFactory(BaseFactory):
     class Meta:
         model = models.TimeStepSettings
         sqlalchemy_session = None
@@ -32,7 +39,7 @@ class TimeStepSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     use_time_step_stretch = False
 
 
-class ModelSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class ModelSettingsFactory(BaseFactory):
     class Meta:
         model = models.ModelSettings
         sqlalchemy_session = None
@@ -49,7 +56,7 @@ class ModelSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     friction_type = constants.FrictionType.CHEZY
 
 
-class ConnectionNodeFactory(factory.alchemy.SQLAlchemyModelFactory):
+class ConnectionNodeFactory(BaseFactory):
     class Meta:
         model = models.ConnectionNode
         sqlalchemy_session = None
@@ -58,7 +65,7 @@ class ConnectionNodeFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
+class ChannelFactory(BaseFactory):
     class Meta:
         model = models.Channel
         sqlalchemy_session = None
@@ -69,7 +76,7 @@ class ChannelFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_LINE
 
 
-class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
+class WeirFactory(BaseFactory):
     class Meta:
         model = models.Weir
         sqlalchemy_session = None
@@ -86,7 +93,7 @@ class WeirFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_LINE
 
 
-class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
+class BoundaryConditions2DFactory(BaseFactory):
     class Meta:
         model = models.BoundaryConditions2D
         sqlalchemy_session = None
@@ -97,7 +104,7 @@ class BoundaryConditions2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_LINE
 
 
-class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
+class BoundaryConditions1DFactory(BaseFactory):
     class Meta:
         model = models.BoundaryCondition1D
         sqlalchemy_session = None
@@ -108,7 +115,7 @@ class BoundaryConditions1DFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class PumpMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+class PumpMapFactory(BaseFactory):
     class Meta:
         model = models.PumpMap
         sqlalchemy_session = None
@@ -116,7 +123,7 @@ class PumpMapFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class PumpFactory(factory.alchemy.SQLAlchemyModelFactory):
+class PumpFactory(BaseFactory):
     class Meta:
         model = models.Pump
         sqlalchemy_session = None
@@ -131,7 +138,7 @@ class PumpFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
+class CrossSectionLocationFactory(BaseFactory):
     class Meta:
         model = models.CrossSectionLocation
         sqlalchemy_session = None
@@ -143,7 +150,7 @@ class CrossSectionLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class AggregationSettingsFactory(BaseFactory):
     class Meta:
         model = models.AggregationSettings
         sqlalchemy_session = None
@@ -153,7 +160,7 @@ class AggregationSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     interval = 10
 
 
-class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class NumericalSettingsFactory(BaseFactory):
     class Meta:
         model = models.NumericalSettings
         sqlalchemy_session = None
@@ -164,7 +171,7 @@ class NumericalSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
     flooding_threshold = 0.01
 
 
-class Lateral1DFactory(factory.alchemy.SQLAlchemyModelFactory):
+class Lateral1DFactory(BaseFactory):
     class Meta:
         model = models.Lateral1D
         sqlalchemy_session = None
@@ -174,7 +181,7 @@ class Lateral1DFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
+class Lateral2DFactory(BaseFactory):
     class Meta:
         model = models.Lateral2D
         sqlalchemy_session = None
@@ -184,7 +191,7 @@ class Lateral2DFactory(factory.alchemy.SQLAlchemyModelFactory):
     type = constants.Later2dType.SURFACE
 
 
-class SurfaceParametersFactory(factory.alchemy.SQLAlchemyModelFactory):
+class SurfaceParametersFactory(BaseFactory):
     class Meta:
         model = models.SurfaceParameters
         sqlalchemy_session = None
@@ -198,7 +205,7 @@ class SurfaceParametersFactory(factory.alchemy.SQLAlchemyModelFactory):
     infiltration_recovery_constant = 2.0
 
 
-class DryWheatherFlowMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+class DryWheatherFlowMapFactory(BaseFactory):
     class Meta:
         model = models.DryWeatherFlowMap
         sqlalchemy_session = None
@@ -206,7 +213,7 @@ class DryWheatherFlowMapFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class DryWeatherFlowFactory(factory.alchemy.SQLAlchemyModelFactory):
+class DryWeatherFlowFactory(BaseFactory):
     class Meta:
         model = models.DryWeatherFlow
         sqlalchemy_session = None
@@ -214,7 +221,7 @@ class DryWeatherFlowFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POLYGON
 
 
-class DryWeatherFlowDistributionFactory(factory.alchemy.SQLAlchemyModelFactory):
+class DryWeatherFlowDistributionFactory(BaseFactory):
     class Meta:
         model = models.DryWeatherFlowDistribution
         sqlalchemy_session = None
@@ -225,7 +232,7 @@ class DryWeatherFlowDistributionFactory(factory.alchemy.SQLAlchemyModelFactory):
     )
 
 
-class SurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
+class SurfaceFactory(BaseFactory):
     class Meta:
         model = models.Surface
         sqlalchemy_session = None
@@ -236,7 +243,7 @@ class SurfaceFactory(factory.alchemy.SQLAlchemyModelFactory):
     # surface_parameters = factory.SubFactory(SurfaceParameterFactory)
 
 
-class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+class SurfaceMapFactory(BaseFactory):
     class Meta:
         model = models.SurfaceMap
         sqlalchemy_session = None
@@ -245,13 +252,13 @@ class SurfaceMapFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_LINE
 
 
-class TagsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class TagsFactory(BaseFactory):
     class Meta:
         model = models.Tags
         sqlalchemy_session = None
 
 
-class TableControlFactory(factory.alchemy.SQLAlchemyModelFactory):
+class TableControlFactory(BaseFactory):
     class Meta:
         model = models.TableControl
         sqlalchemy_session = None
@@ -264,7 +271,7 @@ class TableControlFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class MemoryControlFactory(factory.alchemy.SQLAlchemyModelFactory):
+class MemoryControlFactory(BaseFactory):
     class Meta:
         model = models.MemoryControl
         sqlalchemy_session = None
@@ -281,7 +288,7 @@ class MemoryControlFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class MeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
+class MeasureMapFactory(BaseFactory):
     class Meta:
         model = models.MeasureMap
         sqlalchemy_session = None
@@ -290,7 +297,7 @@ class MeasureMapFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_LINE
 
 
-class MeasureLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
+class MeasureLocationFactory(BaseFactory):
     class Meta:
         model = models.MeasureLocation
         sqlalchemy_session = None
@@ -298,7 +305,7 @@ class MeasureLocationFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_POINT
 
 
-class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
+class CulvertFactory(BaseFactory):
     class Meta:
         model = models.Culvert
         sqlalchemy_session = None
@@ -315,7 +322,7 @@ class CulvertFactory(factory.alchemy.SQLAlchemyModelFactory):
     discharge_coefficient_positive = 1.0
 
 
-class PotentialBreachFactory(factory.alchemy.SQLAlchemyModelFactory):
+class PotentialBreachFactory(BaseFactory):
     class Meta:
         model = models.PotentialBreach
         sqlalchemy_session = None
@@ -325,7 +332,7 @@ class PotentialBreachFactory(factory.alchemy.SQLAlchemyModelFactory):
     geom = DEFAULT_LINE
 
 
-class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):
+class VegetationDragFactory(BaseFactory):
     class Meta:
         model = models.VegetationDrag2D
         sqlalchemy_session = None
@@ -343,7 +350,7 @@ class VegetationDragFactory(factory.alchemy.SQLAlchemyModelFactory):
     vegetation_drag_coefficient_file = "vegetation_drag_coefficient_file.txt"
 
 
-class SimulationTemplateSettingsFactory(factory.alchemy.SQLAlchemyModelFactory):
+class SimulationTemplateSettingsFactory(BaseFactory):
     class Meta:
         model = models.SimulationTemplateSettings
         sqlalchemy_session = None
