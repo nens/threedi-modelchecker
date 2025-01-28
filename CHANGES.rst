@@ -4,7 +4,9 @@ Changelog of threedi-modelchecker
 2.17.1 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix typos in session.epsg_ref_name and session.epsg_ref_code
+- Ensure that id's created via factory models, used for testing, always autoincrement
+
 
 
 2.17.0 (2025-01-24)
