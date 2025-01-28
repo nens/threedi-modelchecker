@@ -24,7 +24,7 @@ class BaseFactory(factory.alchemy.SQLAlchemyModelFactory):
     class Meta:
         abstract = True
 
-    id = factory.Faker("random_int")
+    id = factory.Sequence(lambda n: n + 1)
 
 
 class TimeStepSettingsFactory(BaseFactory):
