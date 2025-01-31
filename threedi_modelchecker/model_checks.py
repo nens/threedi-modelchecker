@@ -85,7 +85,7 @@ class ThreediModelChecker:
         session = self.db.get_session()
         session.model_checker_context = self.context
         if self.db.schema.epsg_code is not None:
-            session.epsg_ref_code = self.db.schema.epsg_code
+            session.chanc = self.db.schema.epsg_code
             session.epsg_ref_name = self.db.schema.epsg_source
         else:
             epsg_ref_code, epsg_ref_name = get_epsg_data_from_raster(session)

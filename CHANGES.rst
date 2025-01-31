@@ -8,7 +8,6 @@ Changelog of threedi-modelchecker
 - Ensure that id's created via factory models, used for testing, always autoincrement
 
 
-
 2.17.0 (2025-01-24)
 -------------------
 
