@@ -1127,7 +1127,7 @@ class ModelEPSGCheckValid(BaseCheck):
         self.epsg_code = None
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        self.epsg_code = session.ref_epsg_code
+        self.epsg_code = session.epsg_ref_code
         if self.epsg_code is not None:
             try:
                 pyproj.CRS.from_epsg(self.epsg_code)
@@ -1145,7 +1145,7 @@ class ModelEPSGCheckProjected(BaseCheck):
         self.epsg_code = None
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        self.epsg_code = session.ref_epsg_code
+        self.epsg_code = session.epsg_ref_code
         if self.epsg_code is not None:
             try:
                 crs = pyproj.CRS.from_epsg(self.epsg_code)
@@ -1166,7 +1166,7 @@ class ModelEPSGCheckUnits(BaseCheck):
         self.epsg_code = None
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        self.epsg_code = session.ref_epsg_code
+        self.epsg_code = session.epsg_ref_code
         if self.epsg_code is not None:
             try:
                 crs = pyproj.CRS.from_epsg(self.epsg_code)

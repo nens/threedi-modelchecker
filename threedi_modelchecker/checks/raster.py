@@ -150,28 +150,28 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.ref_epsg_name = ""
-        self.ref_epsg_code = None
+        self.epsg_ref_name = ""
+        self.epsg_ref_code = None
 
     def get_invalid(self, session):
-        if session.ref_epsg_code is None:
+        if session.epsg_ref_code is None:
             return []
-        self.ref_epsg_name = session.ref_epsg_name
-        self.ref_epsg_code = session.ref_epsg_code
+        self.epsg_ref_name = session.epsg_ref_name
+        self.epsg_ref_code = session.epsg_ref_code
         return super().get_invalid(session)
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
-        if self.ref_epsg_code is None:
+        if self.epsg_ref_code is None:
             return True
         with interface_cls(path) as raster:
             if not raster.is_valid_geotiff or not raster.has_projection:
                 return True
             if raster.epsg_code is None:
                 return False
-            return raster.epsg_code == self.ref_epsg_code
+            return raster.epsg_code == self.epsg_ref_code
 
     def description(self):
-        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match {self.ref_epsg_name}"
+        return f"The file in {self.column_name} has no EPSG code or the EPSG code does not match does not match {self.epsg_ref_name}"
 
 
 class RasterSquareCellsCheck(BaseRasterCheck):

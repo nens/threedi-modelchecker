@@ -254,7 +254,7 @@ NULL_EPSG_CODE = (
 def test_has_epsg(tmp_path, interface_cls, raster_epsg, sqlite_epsg, validity):
     path = create_geotiff(tmp_path / "raster.tiff", epsg=raster_epsg)
     check = RasterHasMatchingEPSGCheck(column=models.ModelSettings.dem_file)
-    check.ref_epsg_code = sqlite_epsg
+    check.epsg_ref_code = sqlite_epsg
     assert check.is_valid(path, interface_cls) == validity
 
 
