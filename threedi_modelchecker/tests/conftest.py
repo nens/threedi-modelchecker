@@ -1,14 +1,26 @@
+import hashlib
 import pathlib
 import shutil
+from pathlib import Path
 
 import pytest
 from threedi_schema import ModelSchema, ThreediDatabase
 
-from threedi_modelchecker.checks.raster import LocalContext
+from threedi_modelchecker.checks.raster_context import LocalContext
+from threedi_modelchecker.context import model_checker_ctx
 
 from . import factories
 
 data_dir = pathlib.Path(__file__).parent / "data"
+
+
+def calculate_md5sum(file_path: Path) -> str:
+    """Calculate the MD5 checksum of a file."""
+    hash_md5 = hashlib.md5()
+    with file_path.open("rb") as f:
+        while chunk := f.read(4096):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 
 @pytest.fixture(scope="session")
@@ -24,10 +36,19 @@ def threedi_db(tmpdir_factory):
     shutil.copyfile(data_dir / "empty.sqlite", tmp_sqlite)
     db = ThreediDatabase(tmp_sqlite)
     schema = ModelSchema(db)
-    schema.upgrade(
-        backup=False, upgrade_spatialite_version=False, custom_epsg_code=28992
+    sqlite_md5sum = calculate_md5sum(Path(tmp_sqlite))
+    upgraded_path = Path(data_dir) / Path(
+        "cached_" + sqlite_md5sum + "_upgraded.sqlite"
     )
-    schema.set_spatial_indexes()
+
+    if not upgraded_path.exists():
+        schema.upgrade(
+            backup=False, upgrade_spatialite_version=False, custom_epsg_code=28992
+        )
+        shutil.copyfile(db.path, upgraded_path)
+
+        schema.set_spatial_indexes()
+    db.path = upgraded_path
     return db
 
 
@@ -43,9 +64,8 @@ def session(threedi_db):
     """
     s = threedi_db.get_session(future=True)
     factories.inject_session(s)
-    s.model_checker_context = LocalContext(base_path=data_dir)
-
-    yield s
+    with model_checker_ctx(LocalContext(base_path=data_dir)):
+        yield s
     # Rollback the session => no changes to the database
     s.rollback()
     factories.inject_session(None)

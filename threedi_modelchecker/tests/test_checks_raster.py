@@ -16,6 +16,7 @@ from threedi_modelchecker.checks.raster import (
     RasterSquareCellsCheck,
     ServerContext,
 )
+from threedi_modelchecker.context import ctx
 from threedi_modelchecker.interfaces.raster_interface_gdal import GDALRasterInterface
 from threedi_modelchecker.interfaces.raster_interface_rasterio import (
     RasterIORasterInterface,
@@ -50,13 +51,13 @@ def context_server():
 
 @pytest.fixture
 def session_local(session, context_local):
-    session.model_checker_context = context_local
+    ctx.model_checker_context = context_local
     return session
 
 
 @pytest.fixture
 def session_server(session, context_server):
-    session.model_checker_context = context_server
+    ctx.model_checker_context = context_server
     return session
 
 
@@ -69,7 +70,7 @@ def create_geotiff(
     )
     if epsg is not None:
         if isinstance(epsg, int):
-            wkt = osr.GetUserInputAsWKT(f"EPSG:{epsg}")
+            wkt = osr.GetUserInputAsWKT(f"EPSG:{epsg}")  # noqa: E231
         else:
             wkt = epsg
         ds.SetProjection(wkt)
@@ -119,8 +120,9 @@ def test_base_to_check_ignores_none(session):
 def test_base_get_invalid_local(mocked_check, session_local, invalid_geotiff):
     factories.ModelSettingsFactory(dem_file="raster.tiff")
     assert mocked_check.get_invalid(session_local) == []
+    assert isinstance(ctx.model_checker_context, LocalContext)
     mocked_check.is_valid.assert_called_once_with(
-        invalid_geotiff, session_local.model_checker_context.raster_interface
+        invalid_geotiff, ctx.model_checker_context.raster_interface
     )
 
 
@@ -134,8 +136,9 @@ def test_base_get_invalid_server(mocked_check, context_server, session_server):
     factories.ModelSettingsFactory(dem_file="somefile")
     context_server.available_rasters = {"dem_file": "http://tempurl"}
     assert mocked_check.get_invalid(session_server) == []
+    assert isinstance(ctx.model_checker_context, ServerContext)
     mocked_check.is_valid.assert_called_once_with(
-        "http://tempurl", session_server.model_checker_context.raster_interface
+        "http://tempurl", ctx.model_checker_context.raster_interface
     )
 
 
@@ -156,8 +159,9 @@ def test_base_get_invalid_server_available_set(
 
 
 def test_base_no_gdal(mocked_check, session_local):
+    assert isinstance(ctx.model_checker_context, LocalContext)
     with mock.patch.object(
-        session_local.model_checker_context.raster_interface,
+        ctx.model_checker_context.raster_interface,
         "available",
         return_value=False,
     ):
@@ -397,8 +401,9 @@ def test_gdal_check_ok(session_local):
 
 
 def test_gdal_check_err(session_local):
+    assert isinstance(ctx.model_checker_context, LocalContext)
     with mock.patch.object(
-        session_local.model_checker_context.raster_interface,
+        ctx.model_checker_context.raster_interface,
         "available",
         return_value=False,
     ):

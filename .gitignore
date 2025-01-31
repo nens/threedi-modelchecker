@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Cached test files
+threedi_modelchecker/tests/data/cached_*_upgraded.sqlite
+
 # C extensions
 *.so
 

@@ -1,35 +1,20 @@
 from dataclasses import dataclass
 from math import isclose
-from pathlib import Path
-from typing import Dict, Optional, Type
+from typing import Optional, Type
 
 from threedi_schema import models
 
-from threedi_modelchecker.interfaces import GDALRasterInterface, RasterInterface
+from threedi_modelchecker.context import ctx
+from threedi_modelchecker.interfaces import RasterInterface
 
 from .base import BaseCheck
+from .raster_context import LocalContext, ServerContext
 
 # interface_cls.is_valid_geotiff returns False if the dataset is empty
 # (such as when the column doesn't reference a file) or the dataset is not a valid geotiff.
 # It's used on every raster check which reads the raster file in any way,
 # to prevent any other code in the check from executing on a bad file.
 # On such datasets, RasterExistsCheck and/or RasterIsValidCheck will be raised.
-
-
-class Context:
-    pass
-
-
-@dataclass
-class ServerContext(Context):
-    available_rasters: Dict[str, str]
-    raster_interface: Type[RasterInterface] = GDALRasterInterface
-
-
-@dataclass
-class LocalContext(Context):
-    base_path: Path
-    raster_interface: Type[RasterInterface] = GDALRasterInterface
 
 
 class BaseRasterCheck(BaseCheck):
@@ -50,7 +35,8 @@ class BaseRasterCheck(BaseCheck):
         )
 
     def get_invalid(self, session):
-        context = session.model_checker_context
+        assert ctx.model_checker_context is not None, "No model_checker_context found"
+        context = ctx.model_checker_context
         raster_interface = context.raster_interface
         if not raster_interface.available():
             return []
@@ -74,11 +60,12 @@ class BaseRasterCheck(BaseCheck):
         if abs_path.exists():
             return str(abs_path)
 
-    def get_path_server(self, record, context: ServerContext) -> str:
+    def get_path_server(self, record, context: ServerContext) -> str | None:
         if isinstance(context.available_rasters, dict):
-            return context.available_rasters.get(self.column.name)
+            path = context.available_rasters.get(self.column.name)
+            return path
 
-    def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
+    def is_valid(self, path: str, interface_cls: Type[RasterInterface]) -> bool:
         return True
 
 
@@ -92,8 +79,8 @@ class RasterExistsCheck(BaseRasterCheck):
     """
 
     def get_invalid(self, session):
-        context = session.model_checker_context
-        if isinstance(context, ServerContext):
+        assert ctx.model_checker_context is not None, "No model_checker_context found"
+        if isinstance(ctx.model_checker_context, ServerContext):
             # map names of raster files fields in the schema to those in the RasterOptions class
             raster_name_mapping = {
                 "friction_coefficient_file": "frict_coef_file",
@@ -104,13 +91,13 @@ class RasterExistsCheck(BaseRasterCheck):
             raster_col = self.column.name
             if self.column.name in raster_name_mapping:
                 raster_col = raster_name_mapping[self.column.name]
-            if raster_col in context.available_rasters:
+            if raster_col in ctx.model_checker_context.available_rasters:
                 return []
             else:
                 return self.to_check(session).all()
         else:
             records = list(self.to_check(session).all())
-            paths = [self.get_path_local(x, context) for x in records]
+            paths = [self.get_path_local(x, ctx.model_checker_context) for x in records]
             return [record for (record, path) in zip(records, paths) if path is None]
 
     def description(self):
@@ -154,10 +141,11 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
         self.epsg_ref_code = None
 
     def get_invalid(self, session):
-        if session.epsg_ref_code is None:
+        if ctx.epsg_ref_code is None:
             return []
-        self.epsg_ref_name = session.epsg_ref_name
-        self.epsg_ref_code = session.epsg_ref_code
+        assert ctx.epsg_ref_name is not None, "No EPSG ref name found"
+        self.epsg_ref_name = ctx.epsg_ref_name
+        self.epsg_ref_code = ctx.epsg_ref_code
         return super().get_invalid(session)
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
@@ -326,8 +314,8 @@ class GDALAvailableCheck(BaseRasterCheck):
     """Checks whether GDAL is available"""
 
     def get_invalid(self, session):
-        context = session.model_checker_context
-        raster_interface = context.raster_interface
+        assert ctx.model_checker_context is not None, "No model_checker_context found"
+        raster_interface = ctx.model_checker_context.raster_interface
         if not raster_interface.available():
             return [GDALUnavailable(id=1)]
         else:
