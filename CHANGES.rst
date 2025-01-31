@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.17.2 (unreleased)
+2.17.2 (2025-01-31)
 -------------------
 
 - Fix in session.epsg_ref_code
