@@ -330,10 +330,10 @@ class ConnectionNodesDistance(BaseCheck):
                 SELECT ROWID
                 FROM rtree_connection_node_geom
                 WHERE (
-                    maxx >= ST_MinX(ST_Buffer(cn1.geom, {self.minimum_distance/2}))
-                    AND minx <= ST_MaxX(ST_Buffer(cn1.geom, {self.minimum_distance/2}))
-                    AND maxy >= ST_MinY(ST_Buffer(cn1.geom, {self.minimum_distance/2}))
-                    AND miny <= ST_MaxY(ST_Buffer(cn1.geom, {self.minimum_distance/2}))
+                    maxx >= ST_MinX(ST_Buffer(cn1.geom, {self.minimum_distance / 2}))
+                    AND minx <= ST_MaxX(ST_Buffer(cn1.geom, {self.minimum_distance / 2}))
+                    AND maxy >= ST_MinY(ST_Buffer(cn1.geom, {self.minimum_distance / 2}))
+                    AND miny <= ST_MaxY(ST_Buffer(cn1.geom, {self.minimum_distance / 2}))
                 )
             )
             """
@@ -344,7 +344,7 @@ class ConnectionNodesDistance(BaseCheck):
     def description(self) -> str:
 
         return (
-            f"The connection_node is within {self.minimum_distance * 100 } cm of "
+            f"The connection_node is within {self.minimum_distance * 100} cm of "
             f"another connection_node."
         )
 
@@ -423,7 +423,7 @@ class ChannelManholeLevelCheck(BaseCheck):
     def description(self) -> str:
         return (
             f"The connection_node.bottom_level at the {self.nodes_to_check} of this channel is higher than the "
-            "cross_section_location.reference_level closest to the manhole. This will be "
+            "cross_section_location.reference_level closest to the connection-node. This will be "
             "automatically fixed in threedigrid-builder."
         )
 
@@ -1118,7 +1118,9 @@ class DWFDistributionSumCheck(DWFDistributionBaseCheck):
         return invalids
 
     def description(self) -> str:
-        return f"The values in {self.table.name}.{self.column_name} should add up to"
+        return (
+            f"The values in {self.table.name}.{self.column_name} should add up to 100 %"
+        )
 
 
 class ModelEPSGCheckValid(BaseCheck):
