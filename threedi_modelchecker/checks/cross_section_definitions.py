@@ -191,7 +191,7 @@ class CrossSectionTableCheck(CrossSectionCSVFormatCheck):
 
     def description(self):
         return (
-            f"{self.table.name}.{self.column_name} should contain a csv table containing "
+            f"{self.column_name} should contain a csv table containing "
             f"{self.ncol} columns with floats for shapes {self.shape_msg}"
         )
 
@@ -543,7 +543,7 @@ class CrossSectionVariableCorrectLengthCheck(CrossSectionBaseCheck, ABC):
         return invalids
 
     def description(self):
-        return f"{self.column_name} should contain 1 value for each element; len({self.column_name}) = len(width)-1"
+        return f"{self.column_name} should contain 1 value for each element."
 
 
 class OpenIncreasingCrossSectionConveyanceFrictionCheckWithMaterial(

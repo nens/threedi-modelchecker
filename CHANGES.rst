@@ -4,7 +4,11 @@ Changelog of threedi-modelchecker
 2.17.3 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Check with error_code=46 has become FUTURE_ERROR
+- Check with error_code=800 has become FUTURE_ERROR
+- Removed checks: 28, 186, 1601, 1602, 1603. Can be re-added at a later stage.
+- Checks with error_code in [95, 96, 97] are not only run for channels.
+- Some textual fixes.
 
 
 2.17.2 (2025-01-31)
@@ -481,7 +485,7 @@ Changelog of threedi-modelchecker
 -----------------
 
 - Added raster checks: file validity, has one band, has crs, range check.
-  For DEM only it is also checked if pixels are square and crs is projected. 
+  For DEM only it is also checked if pixels are square and crs is projected.
 
 - Added warning 325: interception_file given and interception_global not.
 
@@ -628,7 +632,7 @@ Changelog of threedi-modelchecker
 
 - Updated DWF calculation to match ThreediToolBox update.
 
-- Included Surface in DWF calculation. 
+- Included Surface in DWF calculation.
 
 
 0.24.2 (2022-01-18)
@@ -765,13 +769,13 @@ Changelog of threedi-modelchecker
 0.17 (2021-11-03)
 -----------------
 
-- Added `id` (boundary sqlite id)  and `type` (1D or 2D)  field to generated boundaries JSON file. 
+- Added `id` (boundary sqlite id)  and `type` (1D or 2D)  field to generated boundaries JSON file.
 
 
 0.16 (2021-11-02)
 -----------------
 
-- Added support for saving 1D initial waterlevel (from file), 2D initial waterlevel and initial groundwaterlevel in API. 
+- Added support for saving 1D initial waterlevel (from file), 2D initial waterlevel and initial groundwaterlevel in API.
   Note: uses first initial waterlevel (aggregation) resource found for 1D, 2D or groundwater.
 
 0.15 (2021-10-25)
@@ -828,7 +832,7 @@ Changelog of threedi-modelchecker
 - Set WARNING in description of check on storage area of an isolated manhole.
 
 - Added database schema revision management using alembic. The ModelSchema has
-  two new methods: .get_version() and .upgrade(). 
+  two new methods: .get_version() and .upgrade().
 
 
 0.11 (2021-01-26)
@@ -939,7 +943,7 @@ Changelog of threedi-modelchecker
 - Updated some constraints on CrossSectionShapeCheck:
   - Heights of tabulated shape must be increasing.
   - Egg only requires a width, which must be greater than 0.
-- Added 0 to a valid value for ZoomCategories. Also renamed the ZoomCategories names 
+- Added 0 to a valid value for ZoomCategories. Also renamed the ZoomCategories names
   to something clear names.
 
 
@@ -947,7 +951,7 @@ Changelog of threedi-modelchecker
 ----------------
 
 - Renamed some methods of ThreediModelChecker.
-- Added basic to the 3di model schema: checks if the model has the latest migration 
+- Added basic to the 3di model schema: checks if the model has the latest migration
   applied and raises an error if not.
 - Rewrote CrossSectionShape check to no longer use regex and added it to config.
 

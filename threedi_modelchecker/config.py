@@ -33,9 +33,6 @@ from .checks.cross_section_definitions import (
     CrossSectionYZCoordinateCountCheck,
     CrossSectionYZHeightCheck,
     CrossSectionYZIncreasingWidthIfOpenCheck,
-    OpenIncreasingCrossSectionConveyanceFrictionCheck,
-    OpenIncreasingCrossSectionConveyanceFrictionCheckWithMaterial,
-    OpenIncreasingCrossSectionVariableCheck,
 )
 from .checks.factories import (
     ForeignKeyCheckSetting,
@@ -341,16 +338,6 @@ CHECKS += [
         ),
     )
 ]
-CHECKS += [
-    OpenIncreasingCrossSectionConveyanceFrictionCheckWithMaterial(
-        error_code=28, column=table.id
-    )
-    for table in [models.Pipe, models.Weir, models.Orifice, models.Culvert]
-] + [
-    OpenIncreasingCrossSectionConveyanceFrictionCheck(
-        error_code=28, column=models.CrossSectionLocation.id
-    )
-]
 
 
 ## 003x: CALCULATION TYPE
@@ -463,7 +450,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=46,
-        level=CheckLevel.ERROR,
+        level=CheckLevel.FUTURE_ERROR,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
         .filter(models.ConnectionNode.bottom_level.is_(None))
@@ -804,8 +791,8 @@ CHECKS += [
                 | (models.CrossSectionLocation.cross_section_friction_values == "")
             )
         ),
-        message=f"Either {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name}"
-        f"or {models.CrossSectionLocation.cross_section_friction_values.table.name}.{models.CrossSectionLocation.cross_section_friction_values.name}"
+        message=f"Either {models.CrossSectionLocation.friction_value.table.name}.{models.CrossSectionLocation.friction_value.name} "
+        f"or {models.CrossSectionLocation.cross_section_friction_values.table.name}.{models.CrossSectionLocation.cross_section_friction_values.name} "
         f" must be defined for a {constants.CrossSectionShape.TABULATED_YZ} cross section shape",
     )
 ]
@@ -896,21 +883,6 @@ for table in cross_section_tables:
                 constants.CrossSectionShape.INVERTED_EGG,
             ),
         ),
-        CrossSectionYZHeightCheck(
-            error_code=95,
-            column=table.cross_section_table,
-            shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-        ),
-        CrossSectionYZCoordinateCountCheck(
-            column=table.cross_section_table,
-            error_code=96,
-            shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-        ),
-        CrossSectionYZIncreasingWidthIfOpenCheck(
-            column=table.cross_section_table,
-            error_code=97,
-            shapes=(constants.CrossSectionShape.TABULATED_YZ,),
-        ),
         CrossSectionMinimumDiameterCheck(
             column=table.id,
             error_code=98,
@@ -918,6 +890,25 @@ for table in cross_section_tables:
             filters=table.cross_section_shape.isnot(None),
         ),
     ]
+
+CHECKS += [
+    # Checks for channels (culvert, orfice, pipe and weir cannot have YZ profile)
+    CrossSectionYZHeightCheck(
+        error_code=95,
+        column=models.CrossSectionLocation.cross_section_table,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    ),
+    CrossSectionYZCoordinateCountCheck(
+        column=models.CrossSectionLocation.cross_section_table,
+        error_code=96,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    ),
+    CrossSectionYZIncreasingWidthIfOpenCheck(
+        column=models.CrossSectionLocation.cross_section_table,
+        error_code=97,
+        shapes=(constants.CrossSectionShape.TABULATED_YZ,),
+    ),
+]
 
 CHECKS += [
     CrossSectionListCheck(
@@ -2524,6 +2515,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=800,
+        level=CheckLevel.FUTURE_ERROR,
         column=model.grid_level,
         invalid=Query(model).filter(model.grid_level > nr_grid_levels),
         message=f"{model.__table__.name}.refinement_level must not be greater than model_settings.nr_grid_levels",
@@ -3035,14 +3027,7 @@ CHECKS += [
         "are defined for non-conveyance friction. Only cross_section_location.friction_value will be used",
     ),
 ]
-CHECKS += [
-    OpenIncreasingCrossSectionVariableCheck(
-        error_code=186,
-        column=table.id,
-        filters=table.cross_section_shape.isnot(None),
-    )
-    for table in cross_section_tables
-]
+
 ## Friction values range
 CHECKS += [
     CrossSectionVariableFrictionRangeCheck(
@@ -3225,23 +3210,6 @@ conditions = [
     for table in material_ref_tables
 ]
 CHECKS += [
-    NotNullCheck(
-        error_code=1601,
-        column=models.Material.friction_coefficient,
-        filters=or_(*conditions),
-    ),
-    NotNullCheck(
-        error_code=1602,
-        column=models.Material.friction_type,
-        filters=or_(*conditions),
-    ),
-    # extend 21 for Materials.friction_value
-    RangeCheck(
-        error_code=1603,
-        column=models.Material.friction_coefficient,
-        min_value=0,
-        filters=or_(*conditions),
-    ),
     # extend 22 for Materials.friction_value
     RangeCheck(
         error_code=1604,
