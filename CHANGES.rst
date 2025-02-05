@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.17.3 (unreleased)
+2.17.3 (2025-02-05)
 -------------------
 
 - Check with error_code=46 has become FUTURE_ERROR
