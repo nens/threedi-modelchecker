@@ -4,7 +4,10 @@ Changelog of threedi-modelchecker
 2.17.4 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Check with error_code=71 has become FUTURE_ERROR
+- Check with error_code=91 has become FUTURE_ERROR
+- Check with error_code=253 has become FUTURE_ERROR
+- Check with error_code=329 has become FUTURE_ERROR
 
 
 2.17.3 (2025-02-05)

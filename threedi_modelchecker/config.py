@@ -732,6 +732,7 @@ CHECKS += [
     QueryCheck(
         error_code=71,
         column=models.BoundaryCondition1D.connection_node_id,
+        level=CheckLevel.FUTURE_ERROR,
         invalid=Query(models.BoundaryCondition1D).filter(
             models.BoundaryCondition1D.connection_node_id
             == models.Pump.connection_node_id
@@ -861,6 +862,7 @@ for table in cross_section_tables:
         ),
         CrossSectionFirstElementNonZeroCheck(
             error_code=91,
+            level=CheckLevel.FUTURE_ERROR,
             column=table.cross_section_table,
             shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
         ),
@@ -1263,6 +1265,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=253,
+        level=CheckLevel.FUTURE_ERROR,
         column=table.connection_node_id_end,
         invalid=Query(table).filter(
             table.connection_node_id_start == table.connection_node_id_end
@@ -1281,6 +1284,7 @@ CHECKS += [
     QueryCheck(
         error_code=253,
         column=models.Pump.connection_node_id,
+        level=CheckLevel.FUTURE_ERROR,
         invalid=(
             Query(models.Pump)
             .join(models.PumpMap, models.PumpMap.id == models.Pump.id)
@@ -1688,7 +1692,10 @@ CHECKS += [
 
 CHECKS += [
     UsedSettingsPresentCheck(
-        error_code=329, level=CheckLevel.ERROR, column=use_col, settings_tables=tables
+        error_code=329,
+        level=CheckLevel.FUTURE_ERROR,
+        column=use_col,
+        settings_tables=tables,
     )
     for tables, use_col in (
         (
