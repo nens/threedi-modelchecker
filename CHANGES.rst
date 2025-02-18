@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.17.4 (unreleased)
+2.17.4 (2025-02-18)
 -------------------
 
 - Check with error_code=71 has become FUTURE_ERROR
