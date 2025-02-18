@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.17.5 (unreleased)
+2.17.5 (2025-02-18)
 -------------------
 
 - Fix tests to be compatible with threedi-schema 0.300.9
