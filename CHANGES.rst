@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.17.7 (unreleased)
+2.17.6 (2025-02-27)
 -------------------
 
 - Store epsg name and code in context instead of session.
