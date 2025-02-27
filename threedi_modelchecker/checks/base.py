@@ -425,12 +425,12 @@ class EPSGGeomCheck(BaseCheck):
         self.epsg_ref_name = ""
 
     def get_invalid(self, session: Session) -> List[NamedTuple]:
-        self.epsg_ref_name = session.epsg_ref_name
-        if session.epsg_ref_code is None:
+        self.epsg_ref_name = session.model_checker_context.epsg_ref_name
+        if session.model_checker_context.epsg_ref_code is None:
             return []
         return (
             self.to_check(session)
-            .filter(ST_SRID(self.column) != session.epsg_ref_code)
+            .filter(ST_SRID(self.column) != session.model_checker_context.epsg_ref_code)
             .all()
         )
 

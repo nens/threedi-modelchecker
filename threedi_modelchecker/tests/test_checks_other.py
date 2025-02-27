@@ -937,7 +937,7 @@ def test_dwf_distribution_sum_check(session, distribution, valid):
 )
 def test_model_epsg_check_valid(session, ref_epsg, valid):
     factories.ModelSettingsFactory()
-    session.epsg_ref_code = ref_epsg
+    session.model_checker_context.epsg_ref_code = ref_epsg
     check = ModelEPSGCheckValid()
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
@@ -953,7 +953,7 @@ def test_model_epsg_check_valid(session, ref_epsg, valid):
 )
 def test_model_epsg_check_projected(session, ref_epsg, valid):
     factories.ModelSettingsFactory()
-    session.epsg_ref_code = ref_epsg
+    session.model_checker_context.epsg_ref_code = ref_epsg
     check = ModelEPSGCheckProjected()
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
@@ -969,7 +969,7 @@ def test_model_epsg_check_projected(session, ref_epsg, valid):
 )
 def test_model_epsg_check_units(session, ref_epsg, valid):
     factories.ModelSettingsFactory()
-    session.epsg_ref_code = ref_epsg
+    session.model_checker_context.epsg_ref_code = ref_epsg
     check = ModelEPSGCheckUnits()
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid

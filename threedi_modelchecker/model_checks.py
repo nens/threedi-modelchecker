@@ -67,6 +67,15 @@ class ThreediModelChecker:
             self.context = ServerContext(**context)
         else:
             raise ValueError(f"Unknown context_type '{context_type}'")
+        session = self.db.get_session()
+        if self.db.schema.epsg_code is not None:
+            self.context.epsg_ref_code = self.db.schema.epsg_code
+            self.context.epsg_ref_name = self.db.schema.epsg_source
+        else:
+            epsg_ref_code, epsg_ref_name = get_epsg_data_from_raster(session)
+            self.context.epsg_ref_code = epsg_ref_code
+            self.context.epsg_ref_name = epsg_ref_name
+        session.model_checker_context = self.context
 
     @property
     def models(self):
@@ -83,14 +92,6 @@ class ThreediModelChecker:
         :return: Tuple of the applied check and the failing row.
         """
         session = self.db.get_session()
-        session.model_checker_context = self.context
-        if self.db.schema.epsg_code is not None:
-            session.epsg_ref_code = self.db.schema.epsg_code
-            session.epsg_ref_name = self.db.schema.epsg_source
-        else:
-            epsg_ref_code, epsg_ref_name = get_epsg_data_from_raster(session)
-            session.epsg_ref_code = epsg_ref_code
-            session.epsg_ref_name = epsg_ref_name
         for check in self.checks(level=level, ignore_checks=ignore_checks):
             model_errors = check.get_invalid(session)
             for error_row in model_errors:

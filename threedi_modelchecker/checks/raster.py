@@ -24,12 +24,16 @@ class Context:
 class ServerContext(Context):
     available_rasters: Dict[str, str]
     raster_interface: Type[RasterInterface] = GDALRasterInterface
+    epsg_ref_code: int = None
+    epsg_ref_name: str = ""
 
 
 @dataclass
 class LocalContext(Context):
     base_path: Path
     raster_interface: Type[RasterInterface] = GDALRasterInterface
+    epsg_ref_code: int = None
+    epsg_ref_name: str = ""
 
 
 class BaseRasterCheck(BaseCheck):
@@ -154,10 +158,10 @@ class RasterHasMatchingEPSGCheck(BaseRasterCheck):
         self.epsg_ref_code = None
 
     def get_invalid(self, session):
-        if session.epsg_ref_code is None:
+        if session.model_checker_context.epsg_ref_code is None:
             return []
-        self.epsg_ref_name = session.epsg_ref_name
-        self.epsg_ref_code = session.epsg_ref_code
+        self.epsg_ref_name = session.model_checker_context.epsg_ref_name
+        self.epsg_ref_code = session.model_checker_context.epsg_ref_code
         return super().get_invalid(session)
 
     def is_valid(self, path: str, interface_cls: Type[RasterInterface]):
