@@ -603,8 +603,8 @@ def test_list_of_inst_check(session, tag_ids_string, nof_invalid_expected):
 )
 def test_epsg_geom_check(session, ref_epsg, valid):
     factories.ConnectionNodeFactory()
-    session.epsg_ref_code = ref_epsg
-    session.epsg_ref_name = "foo"
+    session.model_checker_context.epsg_ref_code = ref_epsg
+    session.model_checker_context.epsg_ref_name = "foo"
     check = EPSGGeomCheck(column=models.ConnectionNode.geom)
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
