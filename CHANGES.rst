@@ -4,13 +4,13 @@ Changelog of threedi-modelchecker
 2.17.7 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Bump threedi-schema
 
 
 2.17.6 (2025-02-27)
 -------------------
 
-- Store epsg name and code in context instead of session.
+- Store epsg name and code in context instead of session
 
 
 2.17.5 (2025-02-18)
