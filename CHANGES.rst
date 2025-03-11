@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.17.10 (unreleased)
+2.17.10 (2025-03-11)
 --------------------
 
 - Fix cross section checks to not break with undefined shape
