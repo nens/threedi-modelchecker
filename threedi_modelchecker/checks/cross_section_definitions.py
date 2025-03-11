@@ -440,6 +440,15 @@ class CrossSectionMinimumDiameterCheck(CrossSectionBaseCheck):
     def description(self):
         return f"{self.table.name}.cross_section_width and/or cross_section_height should be at least 0.1m"
 
+    def to_check(self, session):
+        return (
+            super()
+            .to_check(session)
+            .where(
+                self.table.c.cross_section_shape.isnot(None),
+            )
+        )
+
 
 class OpenIncreasingCrossSectionCheck(CrossSectionBaseCheck):
     def get_invalid(self, session):
@@ -473,6 +482,13 @@ class OpenIncreasingCrossSectionCheck(CrossSectionBaseCheck):
 
     def description(self):
         return f"{self.column_name} can only be used in an open channel with monotonically increasing width values"
+
+    def to_check(self, session):
+        return (
+            super()
+            .to_check(session)
+            .where(self.table.c.cross_section_shape.isnot(None))
+        )
 
 
 class OpenIncreasingCrossSectionConveyanceFrictionCheck(

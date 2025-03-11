@@ -343,6 +343,7 @@ def test_check_yz_increasing_if_open(session, cross_section_table, valid):
             None,
             0,
         ),  # open rectangle, sufficient width, no height, pass
+        (None, None, None, 0),  # no shape, should skip tests
     ],
 )
 def test_check_cross_section_minimum_diameter(
@@ -368,6 +369,7 @@ def test_check_cross_section_minimum_diameter(
             1,
         ),  # closed rectangle, fail
         (constants.CrossSectionShape.RECTANGLE, "0.1", None, 0),  # open rectangle, pass
+        (None, None, None, 0),
     ],
 )
 @pytest.mark.parametrize(
