@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.17.13 (unreleased)
+2.17.13 (2025-03-18)
 --------------------
 
 - Set minimum threedi-schema version instead of hard pin.
