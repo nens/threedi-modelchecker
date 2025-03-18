@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.17.12 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Bump threedi-schema to 0.300.19
 
 
 2.17.11 (2025-03-12)

@@ -20,7 +20,7 @@ dependencies = [
     "GeoAlchemy2>=0.9,!=0.11.*",
     "SQLAlchemy>=1.4",
     "pyproj",
-    "threedi-schema==0.300.18"
+    "threedi-schema==0.300.19"
 ]
 
 [project.optional-dependencies]
