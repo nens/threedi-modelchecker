@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.17.14 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Remove sewerage type value warning level override, since sewerage type is no longer an enum.
 
 
 2.17.13 (2025-03-18)
