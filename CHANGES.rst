@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.17.14 (unreleased)
+2.17.14 (2025-04-03)
 --------------------
 
 - Remove warning level override for old enum checks.
