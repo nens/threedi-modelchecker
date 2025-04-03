@@ -3477,10 +3477,6 @@ class Config:
             self.checks += generate_enum_checks(
                 model.__table__,
                 error_code=7,
-                custom_level_map={
-                    "pipe.sewerage_type": "INFO",
-                    "pipe.material": "INFO",
-                },
             )
             self.checks += [
                 RangeCheck(
