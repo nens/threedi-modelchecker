@@ -3478,7 +3478,6 @@ class Config:
                 model.__table__,
                 error_code=7,
                 custom_level_map={
-                    "pipe.sewerage_type": "INFO",
                     "pipe.material": "INFO",
                 },
             )
