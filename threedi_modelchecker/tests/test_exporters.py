@@ -1,9 +1,15 @@
 from unittest.mock import MagicMock
 
 import pytest
+from geoalchemy2.shape import from_shape
+from shapely import wkt
 
 from threedi_modelchecker.checks.base import CheckLevel
-from threedi_modelchecker.exporters import generate_csv_table, generate_rst_table
+from threedi_modelchecker.exporters import (
+    export_with_geom,
+    generate_csv_table,
+    generate_rst_table,
+)
 
 
 @pytest.fixture
@@ -74,3 +80,19 @@ def test_generate_csv_table(fake_checks):
     )
     csv_result = generate_csv_table(fake_checks)
     assert csv_result == correct_csv_result
+
+
+def test_export_with_geom(fake_check_error):
+    fake_check_error.column.name = "foo"
+    error_row_no_geom = MagicMock()
+    del error_row_no_geom.geom
+    error_row_no_geom.foo = "bar"
+    error_row_geom = MagicMock()
+    ref_geom = wkt.loads("POINT(1 1)")
+    error_row_geom.geom = from_shape(ref_geom, srid=4326)
+    error_row_geom.foo = "bar"
+    result = export_with_geom(
+        [(fake_check_error, error_row_no_geom), (fake_check_error, error_row_geom)]
+    )
+    assert result[0].geom is None
+    assert bytes(result[1].geom.data) == ref_geom.wkb

@@ -45,7 +45,6 @@ def export_with_geom(
     :return: A list of ErrorWithGeom named tuples, each containing details about the error,
     including geometry if available
     """
-    # TODO: test this!!!!
     return [
         ErrorWithGeom(
             name=check.level.name,
