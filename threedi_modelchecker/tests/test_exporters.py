@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 
 from threedi_modelchecker.checks.base import CheckLevel
@@ -5,22 +7,41 @@ from threedi_modelchecker.exporters import generate_csv_table, generate_rst_tabl
 
 
 @pytest.fixture
-def fake_checks():
-    class FakeCheck:
-        def __init__(self, level, error_code):
-            self.level = level
-            self.error_code = error_code
+def fake_check_warning():
+    fake_check = MagicMock()
+    fake_check.level = CheckLevel.WARNING
+    fake_check.error_code = 2
+    fake_check.description.return_value = (
+        "This sample message has code 2 and level WARNING"
+    )
+    return fake_check
 
-        def description(self):
-            return f"This sample message has code {self.error_code} and level {self.level.name}"
 
-    fake_checks = [
-        FakeCheck(level=CheckLevel.WARNING, error_code=2),
-        FakeCheck(level=CheckLevel.ERROR, error_code=1234),
-        FakeCheck(level=CheckLevel.INFO, error_code=12),
-    ]
+@pytest.fixture
+def fake_check_error():
+    fake_check = MagicMock()
+    fake_check.level = CheckLevel.ERROR
+    fake_check.error_code = 1234
+    fake_check.description.return_value = (
+        "This sample message has code 1234 and level ERROR"
+    )
+    return fake_check
 
-    return fake_checks
+
+@pytest.fixture
+def fake_check_info():
+    fake_check = MagicMock()
+    fake_check.level = CheckLevel.INFO
+    fake_check.error_code = 12
+    fake_check.description.return_value = (
+        "This sample message has code 12 and level INFO"
+    )
+    return fake_check
+
+
+@pytest.fixture
+def fake_checks(fake_check_warning, fake_check_error, fake_check_info):
+    return [fake_check_warning, fake_check_error, fake_check_info]
 
 
 def test_generate_rst_table(fake_checks):
