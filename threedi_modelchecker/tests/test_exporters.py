@@ -1,8 +1,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-from geoalchemy2.shape import from_shape
-from shapely import wkt
 
 from threedi_modelchecker.checks.base import CheckLevel
 from threedi_modelchecker.exporters import (
@@ -88,11 +86,11 @@ def test_export_with_geom(fake_check_error):
     del error_row_no_geom.geom
     error_row_no_geom.foo = "bar"
     error_row_geom = MagicMock()
-    ref_geom = wkt.loads("POINT(1 1)")
-    error_row_geom.geom = from_shape(ref_geom, srid=4326)
+    # mock as_wkb to test the return without depending on shapely
+    error_row_geom.geom.as_wkb = MagicMock(return_value="wkb")
     error_row_geom.foo = "bar"
     result = export_with_geom(
         [(fake_check_error, error_row_no_geom), (fake_check_error, error_row_geom)]
     )
     assert result[0].geom is None
-    assert bytes(result[1].geom.data) == ref_geom.wkb
+    assert result[1].geom == "wkb"
