@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.17.15 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Fix checks 1604 and 1605 from stalling execution
 
 
 2.17.14 (2025-04-03)
