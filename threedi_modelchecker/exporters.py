@@ -1,8 +1,14 @@
 import csv
+from collections import namedtuple
 from io import StringIO
-from typing import NamedTuple
+from typing import Iterator, NamedTuple, Tuple
 
 from threedi_modelchecker.checks.base import BaseCheck
+
+ErrorWithGeom = namedtuple(
+    "ErrorWithGeom",
+    ["name", "code", "id", "table", "column", "value", "description", "geom"],
+)
 
 
 # error handling export functions
@@ -28,6 +34,30 @@ def export_to_file(errors, file):
     with open(file, "w") as f:
         for error in errors:
             f.write(format_check_results(*error) + "\n")
+
+
+def export_with_geom(
+    errors: Iterator[Tuple[BaseCheck, NamedTuple]],
+) -> list[ErrorWithGeom]:
+    """Process errors into a list that includes the geometry related to the error
+
+    :param errors: iterator of BaseModelError
+    :return: A list of ErrorWithGeom named tuples, each containing details about the error,
+    including geometry if available
+    """
+    return [
+        ErrorWithGeom(
+            name=check.level.name,
+            code=check.error_code,
+            id=error_row.id,
+            table=check.table.name,
+            column=check.column.name,
+            value=getattr(error_row, check.column.name),
+            description=check.description(),
+            geom=error_row.geom.as_wkb() if hasattr(error_row, "geom") else None,
+        )
+        for check, error_row in errors
+    ]
 
 
 def format_check_results(check: BaseCheck, invalid_row: NamedTuple):
