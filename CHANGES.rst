@@ -1,8 +1,8 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.17.15 (unreleased)
---------------------
+2.18.0 (2025-04-16)
+-------------------
 
 - Add exporter that includes geometries
 
