@@ -1,7 +1,7 @@
 from typing import List
 
 from geoalchemy2 import functions as geo_func
-from sqlalchemy import and_, func, or_, true
+from sqlalchemy import and_, exists, func, or_, true
 from sqlalchemy.orm import Query
 from threedi_schema import constants, models
 from threedi_schema.beta_features import BETA_COLUMNS, BETA_VALUES
@@ -3208,22 +3208,27 @@ CHECKS += [
 
 # Checks for material
 material_ref_tables = [models.Pipe, models.Culvert, models.Weir, models.Orifice]
-conditions = [
-    and_(
-        table.material_id == models.Material.id,
-        table.friction_value.is_(None),
-        table.friction_type.is_(None),
+conditions = []
+for table in material_ref_tables:
+    conditions.append(
+        exists().where(
+            table.material_id == models.Material.id,
+            table.friction_value.is_(None),
+            table.friction_type.is_(None),
+        )
     )
-    for table in material_ref_tables
-]
+
+# Query materials with the specified friction type that are referenced by structures
 CHECKS += [
     # extend 22 for Materials.friction_value
     RangeCheck(
         error_code=1604,
         level=CheckLevel.WARNING,
         column=models.Material.friction_coefficient,
-        filters=(models.Material.friction_type == constants.FrictionType.MANNING.value)
-        & or_(*conditions),
+        filters=(
+            (models.Material.friction_type == constants.FrictionType.MANNING.value)
+            & or_(*conditions)
+        ),
         max_value=1,
         right_inclusive=False,  # 1 is not allowed
         message="material.friction_coefficient is not less than 1 while MANNING friction is selected. CHEZY friction will be used instead. In the future this will lead to an error.",
@@ -3232,8 +3237,10 @@ CHECKS += [
         error_code=1605,
         level=CheckLevel.WARNING,
         column=models.Material.friction_coefficient,
-        filters=(models.Material.friction_type == constants.FrictionType.CHEZY.value)
-        & or_(*conditions),
+        filters=(
+            (models.Material.friction_type == constants.FrictionType.CHEZY.value)
+            & or_(*conditions)
+        ),
         min_value=1,
         message="material.friction_coefficient is less than 1, while friction type is Chézy. This may lead to unexpected results. Did you mean to use friction type Manning?",
     ),
