@@ -3218,7 +3218,7 @@ for table in material_ref_tables:
         )
     )
 
-# Query materials with the specified friction type that are referenced by structuresW
+# Query materials with the specified friction type that are referenced by structures
 CHECKS += [
     # extend 22 for Materials.friction_value
     RangeCheck(
