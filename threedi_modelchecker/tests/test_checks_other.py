@@ -758,7 +758,7 @@ def test_used_settings_present_check_single_table(session, use_setting, add_sett
 @pytest.mark.parametrize("add_surface", [True, False])
 @pytest.mark.parametrize("add_dwf", [True, False])
 def test_used_settings_present_check(session, use_setting, add_surface, add_dwf):
-    nof_invalid_expected = 1 if use_setting and not (add_surface and add_dwf) else 0
+    nof_invalid_expected = 1 if use_setting and not (add_surface or add_dwf) else 0
     factories.SimulationTemplateSettingsFactory(use_0d_inflow=use_setting)
     if add_surface:
         factories.SurfaceFactory()
