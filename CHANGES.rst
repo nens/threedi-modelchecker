@@ -5,6 +5,7 @@ Changelog of threedi-modelchecker
 -------------------
 
 - Fix checks 1604 and 1605 from stalling execution
+- Fix checks that fail on empty cross_section_table
 
 
 2.18.0 (2025-04-16)

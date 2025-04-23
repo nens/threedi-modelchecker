@@ -632,6 +632,16 @@ def test_cross_section_configuration_not_tabulated_raise():
             {"cross_section_width": 1, "cross_section_height": 2},
             (1, 2, "closed"),
         ),
+        (
+            constants.CrossSectionShape.TABULATED_YZ,
+            {},
+            (None, None, None),
+        ),
+        (
+            constants.CrossSectionShape.TABULATED_YZ,
+            {"cross_section_table": ""},
+            (None, None, None),
+        ),
     ],
 )
 def test_cross_section_configuration_for_record(session, shape, kwargs, expected):

@@ -332,6 +332,10 @@ def get_widths_heights_for_tabulated_record(record):
 
 def cross_section_configuration_for_record(record):
     if record.cross_section_shape.is_tabulated:
+        # Handle empty cross section table by returning all None to prevent issues in parsing
+        # Note that CrossSectionNullCheck already checks for this
+        if record.cross_section_table is None or record.cross_section_table == "":
+            return None, None, None
         widths, heights = get_widths_heights_for_tabulated_record(record)
         return cross_section_configuration_tabulated(
             shape=record.cross_section_shape, widths=widths, heights=heights
