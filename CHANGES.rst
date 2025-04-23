@@ -6,6 +6,7 @@ Changelog of threedi-modelchecker
 
 - Fix checks 1604 and 1605 from stalling execution
 - Fix checks that fail on empty cross_section_table
+- Add checks for NULL grid_level for grid_refinement_area and grid_refinement_line
 
 
 2.18.0 (2025-04-16)

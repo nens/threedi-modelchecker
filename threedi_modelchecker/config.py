@@ -3296,6 +3296,8 @@ not_null_columns = [
     models.Channel.exchange_type,
     models.Channel.connection_node_id_start,
     models.Channel.connection_node_id_end,
+    models.GridRefinementArea.grid_level,
+    models.GridRefinementLine.grid_level,
     models.MeasureMap.weight,
     models.MeasureMap.measure_location_id,
     models.MeasureLocation.connection_node_id,
