@@ -1,5 +1,4 @@
-from pint import UnitRegistry
-from pint.errors import UndefinedUnitError
+from sqlalchemy import func
 from threedi_schema import models
 
 from .base import BaseCheck
@@ -274,14 +273,25 @@ class TimeUnitsValidCheck(BaseCheck):
     """Check that an empty timeseries has not been provided."""
 
     def get_invalid(self, session):
-        invalid_rows = []
-        ureg = UnitRegistry()
-        for row in self.to_check(session).all():
-            try:
-                ureg.parse_units(row.time_units)
-            except UndefinedUnitError:
-                invalid_rows.append(row)
-        return invalid_rows
+        valid_units = [
+            "second",
+            "seconds",
+            "sec",
+            "s",
+            "minute",
+            "minutes",
+            "min",
+            "m",
+            "hour",
+            "hours",
+            "hr",
+            "h",
+        ]
+        return (
+            self.to_check(session)
+            .filter(func.lower(self.column).not_in(valid_units))
+            .all()
+        )
 
     def description(self):
         return f"{self.column_name} is not recognized as a valid unit of time."
