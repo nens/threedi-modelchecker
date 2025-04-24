@@ -1,3 +1,5 @@
+from pint import UnitRegistry
+from pint.errors import UndefinedUnitError
 from threedi_schema import models
 
 from .base import BaseCheck
@@ -266,3 +268,20 @@ class TimeseriesStartsAtZeroCheck(BaseCheck):
 
     def description(self):
         return f"{self.column_name} should be start at timestamp 0"
+
+
+class TimeUnitsValidCheck(BaseCheck):
+    """Check that an empty timeseries has not been provided."""
+
+    def get_invalid(self, session):
+        invalid_rows = []
+        ureg = UnitRegistry()
+        for row in self.to_check(session).all():
+            try:
+                ureg.parse_units(row.time_units)
+            except UndefinedUnitError:
+                invalid_rows.append(row)
+        return invalid_rows
+
+    def description(self):
+        return f"{self.column_name} is not recognized as a valid unit of time."

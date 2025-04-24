@@ -10,6 +10,7 @@ from threedi_modelchecker.checks.timeseries import (
     TimeseriesStartsAtZeroCheck,
     TimeseriesTimestepCheck,
     TimeseriesValueCheck,
+    TimeUnitsValidCheck,
 )
 
 from .factories import BoundaryConditions1DFactory, BoundaryConditions2DFactory
@@ -230,3 +231,11 @@ def test_timeseries_starts_zero_check_err(session, timeseries):
     check = TimeseriesStartsAtZeroCheck(models.BoundaryConditions2D.timeseries)
     invalid = check.get_invalid(session)
     assert len(invalid) == 1
+
+
+@pytest.mark.parametrize("time_units, valid", [("foo", False), ("seconds", True)])
+def test_time_units_valid_check(session, time_units, valid):
+    BoundaryConditions2DFactory(time_units=time_units)
+    check = TimeUnitsValidCheck(models.BoundaryConditions2D.timeseries)
+    invalid = check.get_invalid(session)
+    assert (len(invalid) == 0) == valid
