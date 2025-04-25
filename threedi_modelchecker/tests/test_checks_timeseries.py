@@ -233,7 +233,16 @@ def test_timeseries_starts_zero_check_err(session, timeseries):
     assert len(invalid) == 1
 
 
-@pytest.mark.parametrize("time_units, valid", [("seconds", True), ("foo", False)])
+@pytest.mark.parametrize(
+    "time_units, valid",
+    [
+        ("seconds", True),
+        ("Seconds", True),
+        ("minutes", True),
+        ("hours", True),
+        ("foo", False),
+    ],
+)
 def test_time_units_valid_check(session, time_units, valid):
     BoundaryConditions2DFactory(time_units=time_units)
     check = TimeUnitsValidCheck(models.BoundaryConditions2D.time_units)
