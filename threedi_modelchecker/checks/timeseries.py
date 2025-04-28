@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from threedi_schema import models
 
 from .base import BaseCheck
@@ -266,3 +267,31 @@ class TimeseriesStartsAtZeroCheck(BaseCheck):
 
     def description(self):
         return f"{self.column_name} should be start at timestamp 0"
+
+
+class TimeUnitsValidCheck(BaseCheck):
+    """Check that an empty timeseries has not been provided."""
+
+    def get_invalid(self, session):
+        valid_units = [
+            "second",
+            "seconds",
+            "sec",
+            "s",
+            "minute",
+            "minutes",
+            "min",
+            "m",
+            "hour",
+            "hours",
+            "hr",
+            "h",
+        ]
+        return (
+            self.to_check(session)
+            .filter(func.lower(self.column).not_in(valid_units))
+            .all()
+        )
+
+    def description(self):
+        return f"{self.column_name} is not recognized as a valid unit of time."

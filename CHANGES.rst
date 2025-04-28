@@ -7,6 +7,8 @@ Changelog of threedi-modelchecker
 - Fix checks 1604 and 1605 from stalling execution
 - Fix checks that fail on empty cross_section_table
 - Add checks for NULL grid_level for grid_refinement_area and grid_refinement_line
+- Fix check 0329 to only raise when none of the associated tables contain data
+- Add check 1207 for time_units in boundary_condition_1d, boundary_condition_2d, lateral_1d and lateral_2d
 
 
 2.18.0 (2025-04-16)

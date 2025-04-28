@@ -886,9 +886,11 @@ class UsedSettingsPresentCheck(BaseCheck):
         # more than 1 row should be caught by another check
         all_results = self.to_check(session).filter(self.column == True).all()
         use_cols = len(all_results) > 0
-        for table in self.settings_tables:
-            if use_cols and session.query(table).count() == 0:
-                return all_results
+        # return as invalid if the use_col is true but none of the associated tables are actually used
+        if use_cols and all(
+            session.query(table).count() == 0 for table in self.settings_tables
+        ):
+            return all_results
         return []
 
     def description(self) -> str:
