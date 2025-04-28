@@ -104,6 +104,7 @@ from .checks.timeseries import (
     TimeseriesStartsAtZeroCheck,
     TimeseriesTimestepCheck,
     TimeseriesValueCheck,
+    TimeUnitsValidCheck,
 )
 
 TOLERANCE_M = 1.0
@@ -2872,7 +2873,15 @@ CHECKS += [
     ]
 ]
 CHECKS += [FirstTimeSeriesEqualTimestepsCheck(error_code=1206)]
-
+CHECKS += [
+    TimeUnitsValidCheck(col, error_code=1207)
+    for col in [
+        models.BoundaryCondition1D.time_units,
+        models.BoundaryConditions2D.time_units,
+        models.Lateral1D.time_units,
+        models.Lateral2D.time_units,
+    ]
+]
 
 CHECKS += [
     QueryCheck(
