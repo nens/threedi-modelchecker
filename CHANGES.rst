@@ -6,6 +6,7 @@ Changelog of threedi-modelchecker
 
 - Fix checks 1604 and 1605 from stalling execution
 - Fix checks that fail on empty cross_section_table
+- Add check 1207 for time_units in boundary_condition_1d, boundary_condition_2d, lateral_1d and lateral_2d
 
 
 2.18.0 (2025-04-16)
