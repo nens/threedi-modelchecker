@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.2 (unreleased)
+2.18.2 (2025-05-01)
 -------------------
 
 - Exclude embedded nodes from check for connection node storage area (check 45)
