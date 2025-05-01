@@ -427,6 +427,7 @@ CHECKS += [
                 models.ConnectionNode.storage_area < 0,
             )
         )
+        .filter(models.ConnectionNode.exchange_type != 0)
         .filter(
             models.ConnectionNode.id.notin_(
                 Query(models.Pipe.connection_node_id_start).union_all(
