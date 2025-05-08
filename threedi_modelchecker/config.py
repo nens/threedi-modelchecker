@@ -3314,7 +3314,6 @@ not_null_columns = [
     models.MeasureLocation.measure_variable,
     models.MemoryControl.action_type,
     models.MemoryControl.action_value_1,
-    models.MemoryControl.action_value_2,
     models.MemoryControl.target_type,
     models.MemoryControl.target_id,
     models.TableControl.action_table,
