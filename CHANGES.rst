@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.3 (unreleased)
+2.18.3 (2025-05-08)
 -------------------
 
 - Remove not null check for memory_control.action_value_2 (#468)
