@@ -3,6 +3,8 @@ from collections import namedtuple
 from io import StringIO
 from typing import Iterator, NamedTuple, Tuple
 
+from geoalchemy2.elements import WKBElement
+
 from threedi_modelchecker.checks.base import BaseCheck
 
 ErrorWithGeom = namedtuple(
@@ -49,7 +51,7 @@ def export_with_geom(
     for check, error_row in errors:
         if hasattr(error_row, "geom"):
             geom = (
-                error_row.geom
+                WKBElement(error_row.geom)
                 if isinstance(error_row.geom, bytes)
                 else error_row.geom.as_wkb()
             )
