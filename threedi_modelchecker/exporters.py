@@ -45,19 +45,29 @@ def export_with_geom(
     :return: A list of ErrorWithGeom named tuples, each containing details about the error,
     including geometry if available
     """
-    return [
-        ErrorWithGeom(
-            name=check.level.name,
-            code=check.error_code,
-            id=error_row.id,
-            table=check.table.name,
-            column=check.column.name,
-            value=getattr(error_row, check.column.name),
-            description=check.description(),
-            geom=error_row.geom.as_wkb() if hasattr(error_row, "geom") else None,
+    errors_with_geom = []
+    for check, error_row in errors:
+        if hasattr(error_row, "geom"):
+            geom = (
+                error_row.geom
+                if isinstance(error_row.geom, bytes)
+                else error_row.geom.as_wkb()
+            )
+        else:
+            geom = None
+        errors_with_geom.append(
+            ErrorWithGeom(
+                name=check.level.name,
+                code=check.error_code,
+                id=error_row.id,
+                table=check.table.name,
+                column=check.column.name,
+                value=getattr(error_row, check.column.name),
+                description=check.description(),
+                geom=geom,
+            )
         )
-        for check, error_row in errors
-    ]
+    return errors_with_geom
 
 
 def format_check_results(check: BaseCheck, invalid_row: NamedTuple):
