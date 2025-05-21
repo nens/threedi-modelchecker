@@ -49,14 +49,9 @@ def export_with_geom(
     """
     errors_with_geom = []
     for check, error_row in errors:
-        if hasattr(error_row, "geom"):
-            geom = (
-                WKBElement(error_row.geom)
-                if isinstance(error_row.geom, bytes)
-                else error_row.geom.as_wkb()
-            )
-        else:
-            geom = None
+        geom = None
+        if hasattr(error_row, "geom") and isinstance(error_row.geom, WKBElement):
+            geom = error_row.geom
         errors_with_geom.append(
             ErrorWithGeom(
                 name=check.level.name,
