@@ -321,25 +321,27 @@ class ConnectionNodesDistance(BaseCheck):
         distance between all connection nodes.
         """
         query = text(
-            f"""
+            """
             SELECT *
             FROM connection_node AS cn1, connection_node AS cn2
-            WHERE ST_Distance(cn1.geom, cn2.geom) < {self.minimum_distance}
+            WHERE ST_Distance(cn1.geom, cn2.geom) < :minimum_distance
             AND cn1.ROWID != cn2.ROWID
             AND cn2.ROWID IN (
                 SELECT ROWID
                 FROM rtree_connection_node_geom
                 WHERE (
-                    maxx >= ST_MinX(ST_Buffer(cn1.geom, {self.minimum_distance / 2}))
-                    AND minx <= ST_MaxX(ST_Buffer(cn1.geom, {self.minimum_distance / 2}))
-                    AND maxy >= ST_MinY(ST_Buffer(cn1.geom, {self.minimum_distance / 2}))
-                    AND miny <= ST_MaxY(ST_Buffer(cn1.geom, {self.minimum_distance / 2}))
+                    maxx >= ST_MinX(ST_Buffer(cn1.geom, :buffer_distance))
+                    AND minx <= ST_MaxX(ST_Buffer(cn1.geom, :buffer_distance))
+                    AND maxy >= ST_MinY(ST_Buffer(cn1.geom, :buffer_distance))
+                    AND miny <= ST_MaxY(ST_Buffer(cn1.geom, :buffer_distance))
                 )
             )
             """
+        ).bindparams(
+            minimum_distance=self.minimum_distance,
+            buffer_distance=self.minimum_distance / 2,
         )
-        results = session.connection().execute(query).fetchall()
-        return results
+        return session.execute(query).fetchall()
 
     def description(self) -> str:
 

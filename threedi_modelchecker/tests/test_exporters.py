@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from geoalchemy2.elements import WKBElement
 
 from threedi_modelchecker.checks.base import CheckLevel
 from threedi_modelchecker.exporters import (
@@ -83,14 +84,22 @@ def test_generate_csv_table(fake_checks):
 def test_export_with_geom(fake_check_error):
     fake_check_error.column.name = "foo"
     error_row_no_geom = MagicMock()
-    del error_row_no_geom.geom
+    error_row_no_geom.id = 1337
     error_row_no_geom.foo = "bar"
+    del error_row_no_geom.geom
     error_row_geom = MagicMock()
-    # mock as_wkb to test the return without depending on shapely
-    error_row_geom.geom.as_wkb = MagicMock(return_value="wkb")
-    error_row_geom.foo = "bar"
+    error_row_geom.geom = MagicMock(spec=WKBElement)
     result = export_with_geom(
         [(fake_check_error, error_row_no_geom), (fake_check_error, error_row_geom)]
     )
+    # check all attributes for the first row
+    assert result[0].name == fake_check_error.level.name
+    assert result[0].code == fake_check_error.error_code
+    assert result[0].id == 1337
+    assert result[0].table == fake_check_error.table.name
+    assert result[0].description == fake_check_error.description()
+    assert result[0].column == "foo"
+    assert result[0].value == "bar"
     assert result[0].geom is None
-    assert result[1].geom == "wkb"
+    # check geom for row with geom
+    assert result[1].geom == error_row_geom.geom
