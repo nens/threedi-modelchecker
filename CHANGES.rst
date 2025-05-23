@@ -4,7 +4,8 @@ Changelog of threedi-modelchecker
 2.18.4 (unreleased)
 -------------------
 
-- Prevent geometry exporter from failing when geometry in error row is already a wkb
+- Prevent geometry exporter from failing or causing downstream failues when geometry in error row is not a WKBElement
+- Fix `geom` returned with the ConnectionNodesDistance check
 
 
 2.18.3 (2025-05-08)
