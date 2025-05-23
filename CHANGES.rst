@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.4 (unreleased)
+2.18.4 (2025-05-23)
 -------------------
 
 - Prevent geometry exporter from failing or causing downstream failues when geometry in error row is not a WKBElement
