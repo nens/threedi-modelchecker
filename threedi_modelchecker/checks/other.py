@@ -397,6 +397,7 @@ class ChannelManholeLevelCheck(BaseCheck):
         channels_with_cs_locations = (
             session.query(
                 models.Channel.id,
+                models.Channel.geom,
                 models.CrossSectionLocation,
                 func_agg(
                     func.Line_Locate_Point(
