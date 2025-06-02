@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.5 (unreleased)
+2.18.5 (2025-06-02)
 -------------------
 
 - Add geom object to result of ChannelManholeLevelCheck (#472)
