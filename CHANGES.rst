@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.6 (unreleased)
+2.18.6 (2025-06-12)
 -------------------
 
 - Add not null check for cross_section_shape in CrossSectionLocation, Culvert, Orifice, Pipe, and Weir
