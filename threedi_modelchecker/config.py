@@ -3346,6 +3346,8 @@ not_null_columns = [
     models.Pump.type_,
     models.PumpMap.pump_id,
     models.PumpMap.connection_node_id_end,
+    models.SurfaceMap.percentage,
+    models.DryWeatherFlowMap.percentage,
     models.Weir.connection_node_id_start,
     models.Weir.connection_node_id_end,
     models.Weir.crest_level,
