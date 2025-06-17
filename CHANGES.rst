@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.7 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add not null check for surface_map.percentage and dry_weather_flow_map.percentage (#480)
 
 
 2.18.6 (2025-06-12)
