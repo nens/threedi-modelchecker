@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.8 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add a bunch of missing not null checks
 
 
 2.18.7 (2025-06-17)
