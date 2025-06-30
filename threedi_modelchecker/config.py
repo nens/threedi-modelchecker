@@ -727,6 +727,12 @@ CHECKS += [
         level=CheckLevel.WARNING,
         column=models.Pump.capacity,
     ),
+    UniqueCheck(
+        error_code=67,
+        level=CheckLevel.ERROR,
+        columns=models.PumpMap.pump_id,
+        message="Multiple pump map features defined for the same pump, this is not allowed.",
+    ),
 ]
 
 ## 007x: BOUNDARY CONDITIONS

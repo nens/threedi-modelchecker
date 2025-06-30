@@ -161,10 +161,11 @@ class UniqueCheck(BaseCheck):
 
     Null values are ignored."""
 
-    def __init__(self, columns, **kwargs):
+    def __init__(self, columns, message=None, **kwargs):
         if not isinstance(columns, (list, tuple)):
             columns = (columns,)
         self.columns = columns
+        self.message = message
         super().__init__(column=columns[0], **kwargs)
 
     def get_invalid(self, session):
@@ -180,7 +181,9 @@ class UniqueCheck(BaseCheck):
         return q_invalid.all()
 
     def description(self):
-        if len(self.columns) > 1:
+        if self.message:
+            return self.message
+        elif len(self.columns) > 1:
             return f"columns {sorted({c.name for c in self.columns})} in table {self.table.name} should be unique together"
         else:
             return f"{self.column_name} should be unique"
