@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.9 (unreleased)
+2.18.9 (2025-06-30)
 -------------------
 
 - Add check for unique pump_map.pump_id (#483)
