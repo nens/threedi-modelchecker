@@ -1,4 +1,5 @@
 import re
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Literal, NamedTuple
 
@@ -873,7 +874,7 @@ class AllPresentVegetationParameters(BaseCheck):
         )
 
 
-class UsedSettingsPresentCheck(BaseCheck):
+class SettingsPresentCheck(BaseCheck, ABC):
     def __init__(
         self,
         column,
@@ -885,16 +886,52 @@ class UsedSettingsPresentCheck(BaseCheck):
         super().__init__(column, filters, level, error_code)
         self.settings_tables = settings_tables
 
+    @abstractmethod
+    def get_all_results(self, session):
+        pass
+
+    @abstractmethod
+    def get_table_condition(self, session):
+        pass
+
     def get_invalid(self, session: Session) -> List[NamedTuple]:
         # more than 1 row should be caught by another check
-        all_results = self.to_check(session).filter(self.column == True).all()
-        use_cols = len(all_results) > 0
+        all_results = self.get_all_results(session)
+        not_use_cols = len(all_results) == 1
         # return as invalid if the use_col is true but none of the associated tables are actually used
-        if use_cols and all(
-            session.query(table).count() == 0 for table in self.settings_tables
-        ):
+        if not_use_cols and self.get_table_condition(session):
             return all_results
         return []
+
+
+class UnusedSettingsPresentCheck(SettingsPresentCheck):
+
+    def get_all_results(self, session):
+        return self.to_check(session).filter(self.column == False).all()
+
+    def get_table_condition(self, session):
+        return any(session.query(table).count() > 0 for table in self.settings_tables)
+
+    def description(self) -> str:
+        msg = f"{self.column_name} in {self.table.name} is not set to True but "
+        if len(self.settings_tables) == 1:
+            msg += "{self.settings_tables[0].__tablename__} is not empty"
+        else:
+            msg += (
+                "["
+                + ",".join(table.__tablename__ for table in self.settings_tables)
+                + "] are not empty"
+            )
+        return msg
+
+
+class UsedSettingsPresentCheck(SettingsPresentCheck):
+
+    def get_all_results(self, session):
+        return self.to_check(session).filter(self.column == True).all()
+
+    def get_table_condition(self, session):
+        return all(session.query(table).count() == 0 for table in self.settings_tables)
 
     def description(self) -> str:
         msg = f"{self.column_name} in {self.table.name} is set to True but "

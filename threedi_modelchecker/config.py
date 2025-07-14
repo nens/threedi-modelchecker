@@ -80,6 +80,7 @@ from .checks.other import (
     SpatialIndexCheck,
     SurfaceNodeInflowAreaCheck,
     TagsValidCheck,
+    UnusedSettingsPresentCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
     UsedSettingsPresentCheckSingleTable,
@@ -1702,6 +1703,25 @@ CHECKS += [
     UsedSettingsPresentCheck(
         error_code=329,
         level=CheckLevel.FUTURE_ERROR,
+        column=use_col,
+        settings_tables=tables,
+    )
+    for tables, use_col in (
+        (
+            [models.Surface, models.DryWeatherFlow],
+            models.SimulationTemplateSettings.use_0d_inflow,
+        ),
+        (
+            [models.TableControl, models.MemoryControl],
+            models.SimulationTemplateSettings.use_structure_control,
+        ),
+    )
+]
+
+CHECKS += [
+    UnusedSettingsPresentCheck(
+        error_code=330,
+        level=CheckLevel.WARNING,
         column=use_col,
         settings_tables=tables,
     )
