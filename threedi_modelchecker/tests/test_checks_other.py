@@ -35,6 +35,7 @@ from threedi_modelchecker.checks.other import (
     TableControlActionTableCheckDefault,
     TableControlActionTableCheckDischargeCoefficients,
     TagsValidCheck,
+    UnusedSettingsPresentCheck,
     Use0DFlowCheck,
     UsedSettingsPresentCheck,
     UsedSettingsPresentCheckSingleTable,
@@ -765,6 +766,29 @@ def test_used_settings_present_check(session, use_setting, add_surface, add_dwf)
     if add_dwf:
         factories.DryWeatherFlowFactory()
     check = UsedSettingsPresentCheck(
+        column=models.SimulationTemplateSettings.use_0d_inflow,
+        settings_tables=[models.Surface, models.DryWeatherFlow],
+    )
+    assert len(check.get_invalid(session)) == nof_invalid_expected
+
+
+@pytest.mark.parametrize("use_setting", [True, False])
+@pytest.mark.parametrize("add_surface", [True, False])
+@pytest.mark.parametrize("add_dwf", [True, False])
+def test_unused_settings_present_check(session, use_setting, add_surface, add_dwf):
+    if use_setting:
+        nof_invalid_expected = 0
+    elif add_surface or add_dwf:
+        nof_invalid_expected = 1
+    else:
+        nof_invalid_expected = 0
+    # nof_invalid_expected = 0 if use_setting and not (add_surface or add_dwf) else 1
+    factories.SimulationTemplateSettingsFactory(use_0d_inflow=use_setting)
+    if add_surface:
+        factories.SurfaceFactory()
+    if add_dwf:
+        factories.DryWeatherFlowFactory()
+    check = UnusedSettingsPresentCheck(
         column=models.SimulationTemplateSettings.use_0d_inflow,
         settings_tables=[models.Surface, models.DryWeatherFlow],
     )
