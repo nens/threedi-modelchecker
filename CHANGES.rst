@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.10 (unreleased)
+2.18.10 (2025-07-15)
 --------------------
 
 - Add warning for settings tables that contain data but related use settings is not True (#485)
