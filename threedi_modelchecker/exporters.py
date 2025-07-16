@@ -4,6 +4,7 @@ from io import StringIO
 from typing import Iterator, NamedTuple, Tuple
 
 from geoalchemy2.elements import WKBElement
+from geoalchemy2.shape import to_shape
 
 from threedi_modelchecker.checks.base import BaseCheck
 
@@ -52,6 +53,12 @@ def export_with_geom(
         geom = None
         if hasattr(error_row, "geom") and isinstance(error_row.geom, WKBElement):
             geom = error_row.geom
+        value = getattr(error_row, check.column.name)
+        if isinstance(value, WKBElement):
+            try:
+                value = to_shape(value).wkt
+            except Exception:
+                value = None
         errors_with_geom.append(
             ErrorWithGeom(
                 name=check.level.name,
@@ -59,7 +66,7 @@ def export_with_geom(
                 id=error_row.id,
                 table=check.table.name,
                 column=check.column.name,
-                value=getattr(error_row, check.column.name),
+                value=value,
                 description=check.description(),
                 geom=geom,
             )
