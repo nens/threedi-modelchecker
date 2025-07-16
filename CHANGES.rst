@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.11 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Convert value fields, returned by export_with_geom, containing WKB to WKT
 
 
 2.18.10 (2025-07-15)

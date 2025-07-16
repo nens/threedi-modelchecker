@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from geoalchemy2.elements import WKBElement
@@ -83,16 +83,41 @@ def test_generate_csv_table(fake_checks):
 
 def test_export_with_geom(fake_check_error):
     fake_check_error.column.name = "foo"
+
+    # First test case - no geom
     error_row_no_geom = MagicMock()
     error_row_no_geom.id = 1337
     error_row_no_geom.foo = "bar"
     del error_row_no_geom.geom
+
+    # Second test case - with geom
     error_row_geom = MagicMock()
     error_row_geom.geom = MagicMock(spec=WKBElement)
-    result = export_with_geom(
-        [(fake_check_error, error_row_no_geom), (fake_check_error, error_row_geom)]
-    )
-    # check all attributes for the first row
+
+    # Third test case - WKBElement in value attribute
+    error_row_geom_value = MagicMock()
+    error_row_geom_value.geom = MagicMock(spec=WKBElement)
+
+    # Mock class so isinstance check works
+    class CustomWKBElement:
+        __class__ = WKBElement
+
+    error_row_geom_value.foo = CustomWKBElement()
+    # Setup to_shape patch before calling export_with_geom
+    with patch("threedi_modelchecker.exporters.to_shape") as mock_to_shape:
+        # Configure mock to return a shape with 'wkt' property
+        mock_shape = MagicMock()
+        mock_shape.wkt = "wkt"
+        mock_to_shape.return_value = mock_shape
+        result = export_with_geom(
+            [
+                (fake_check_error, error_row_no_geom),
+                (fake_check_error, error_row_geom),
+                (fake_check_error, error_row_geom_value),
+            ]
+        )
+
+    # Assertions for first and second row remain the same
     assert result[0].name == fake_check_error.level.name
     assert result[0].code == fake_check_error.error_code
     assert result[0].id == 1337
@@ -101,5 +126,5 @@ def test_export_with_geom(fake_check_error):
     assert result[0].column == "foo"
     assert result[0].value == "bar"
     assert result[0].geom is None
-    # check geom for row with geom
     assert result[1].geom == error_row_geom.geom
+    assert result[2].value == "wkt"
