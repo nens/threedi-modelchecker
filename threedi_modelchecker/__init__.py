@@ -1,5 +1,5 @@
 from .model_checks import *  # NOQA
 
 # fmt: off
-__version__ = '2.18.11'
+__version__ = '2.18.12.dev0'
 # fmt: on
