@@ -4,13 +4,14 @@ Changelog of threedi-modelchecker
 2.18.13 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Convert value fields of type enum, returned by export_with_geom, to proper string representation
 
 
 2.18.12 (2025-07-21)
 --------------------
 
 - Clarify message for warning 616 (#487)
+
 
 2.18.11 (2025-07-16)
 --------------------
