@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from geoalchemy2.elements import WKBElement
+from threedi_schema.domain.constants import InflowType
 
 from threedi_modelchecker.checks.base import CheckLevel
 from threedi_modelchecker.exporters import (
@@ -103,6 +104,11 @@ def test_export_with_geom(fake_check_error):
         __class__ = WKBElement
 
     error_row_geom_value.foo = CustomWKBElement()
+
+    # Fourth test case value is an enum
+    error_row_enum = MagicMock()
+    error_row_enum.foo = InflowType.NO_INFLOW
+
     # Setup to_shape patch before calling export_with_geom
     with patch("threedi_modelchecker.exporters.to_shape") as mock_to_shape:
         # Configure mock to return a shape with 'wkt' property
@@ -114,6 +120,7 @@ def test_export_with_geom(fake_check_error):
                 (fake_check_error, error_row_no_geom),
                 (fake_check_error, error_row_geom),
                 (fake_check_error, error_row_geom_value),
+                (fake_check_error, error_row_enum),
             ]
         )
 
@@ -128,3 +135,4 @@ def test_export_with_geom(fake_check_error):
     assert result[0].geom is None
     assert result[1].geom == error_row_geom.geom
     assert result[2].value == "wkt"
+    assert result[3].value == "No inflow"
