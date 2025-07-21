@@ -4,8 +4,7 @@ Changelog of threedi-modelchecker
 2.18.12 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Clarify message for warning 616 (#487)
 
 2.18.11 (2025-07-16)
 --------------------
