@@ -1,5 +1,6 @@
 import csv
 from collections import namedtuple
+from enum import Enum
 from io import StringIO
 from typing import Iterator, NamedTuple, Tuple
 
@@ -59,6 +60,8 @@ def export_with_geom(
                 value = to_shape(value).wkt
             except Exception:
                 value = None
+        elif isinstance(value, Enum):
+            value = value.name.lower().replace("_", " ").capitalize()
         errors_with_geom.append(
             ErrorWithGeom(
                 name=check.level.name,
