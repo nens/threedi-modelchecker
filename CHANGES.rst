@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.14 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Fix small error in check 0045.
 
 
 2.18.13 (2025-07-25)

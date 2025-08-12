@@ -425,7 +425,7 @@ CHECKS += [
         .filter(
             or_(
                 models.ConnectionNode.storage_area.is_(None),
-                models.ConnectionNode.storage_area < 0,
+                models.ConnectionNode.storage_area <= 0,
             )
         )
         .filter(models.ConnectionNode.exchange_type != 0)
@@ -444,8 +444,8 @@ CHECKS += [
                 )
             ),
         ),
-        message="connection_node.storage_area should be defined and greater than 0 if the connection nodes "
-        "has no connections to channels, culverts, pipes, weirs, or orifices0. "
+        message="connection_node.storage_area should be defined and greater than 0 if the connection node "
+        "has no connections to channels, culverts, pipes, weirs, or orifices. "
         "From September 2025 onwards, this will be an ERROR.",
     )
 ]
