@@ -1584,7 +1584,7 @@ CHECKS += [
         error_code=314,
         column=models.ModelSettings.friction_coefficient,
         filters=CONDITIONS["chezy"].exists(),
-        min_value=0,
+        min_value=1,
     ),
     RangeCheck(
         error_code=315,
