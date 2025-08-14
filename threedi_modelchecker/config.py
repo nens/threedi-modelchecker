@@ -1019,7 +1019,7 @@ CHECKS += [
         "connection_node.exchange_type is CONNECTED. In the future, this will lead to an error.",
     ),
     QueryCheck(
-        level=CheckLevel.WARNING,
+        level=CheckLevel.ERROR,
         error_code=107,
         column=models.ConnectionNode.exchange_level,
         filters=CONDITIONS["has_no_dem"]
