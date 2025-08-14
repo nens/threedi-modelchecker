@@ -1547,8 +1547,10 @@ CHECKS += [
     RangeCheck(
         error_code=307,
         column=models.ModelSettings.minimum_cell_size,
+        filters=CONDITIONS["has_dem"].exists(),
         min_value=0,
         left_inclusive=False,  # 0 itself is not allowed
+        message="model_settings.minimum_cell_size is <=0; this is not allowed when model_settings.dem_file is filled in",
     ),
     RangeCheck(
         error_code=308,
