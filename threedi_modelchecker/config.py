@@ -1022,16 +1022,13 @@ CHECKS += [
         level=CheckLevel.ERROR,
         error_code=107,
         column=models.ConnectionNode.exchange_level,
-        filters=CONDITIONS["has_no_dem"]
-        .filter(models.ModelSettings.manhole_aboveground_storage_area > 0)
-        .exists(),
         invalid=Query(models.ConnectionNode).filter(
             models.ConnectionNode.exchange_type.in_(
                 [constants.CalculationTypeNode.CONNECTED]
             ),
             models.ConnectionNode.exchange_level == None,
         ),
-        message="connection_node.exchange_level cannot be null when using sub-basins (model_settings.manhole_aboveground_storage_area > 0) and no DEM is supplied.",
+        message="connection_node.exchange_level cannot be null when exchange_type is Connected.",
     ),
 ]
 CHECKS += [
