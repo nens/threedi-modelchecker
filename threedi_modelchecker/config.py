@@ -1254,8 +1254,15 @@ CHECKS += [
             models.Pipe.connection_node_id_start == models.ConnectionNode.id,
         )
         .filter(
-            models.Pipe.exchange_type == constants.PipeCalculationType.ISOLATED,
-            models.ConnectionNode.storage_area.is_(None),
+            models.Pipe.exchange_type.in_(
+                (
+                    constants.PipeCalculationType.ISOLATED,
+                    constants.PipeCalculationType.CONNECTED,
+                )
+            ),
+            models.ConnectionNode.storage_area.is_(None)
+            | models.ConnectionNode.storage_area
+            == 0,
         )
         .union(
             Query(models.Pipe)
@@ -1264,11 +1271,18 @@ CHECKS += [
                 models.Pipe.connection_node_id_end == models.ConnectionNode.id,
             )
             .filter(
-                models.Pipe.exchange_type == constants.PipeCalculationType.ISOLATED,
-                models.ConnectionNode.storage_area.is_(None),
+                models.Pipe.exchange_type.in_(
+                    (
+                        constants.PipeCalculationType.ISOLATED,
+                        constants.PipeCalculationType.CONNECTED,
+                    )
+                ),
+                models.ConnectionNode.storage_area.is_(None)
+                | models.ConnectionNode.storage_area
+                == 0,
             )
         ),
-        message="When connecting two isolated pipes, it is recommended to add storage to the connection node.",
+        message="When connecting two isolated or connected pipes, it is recommended to add storage to the connection node.",
     ),
 ]
 CHECKS += [
