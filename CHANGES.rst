@@ -4,7 +4,8 @@ Changelog of threedi-modelchecker
 2.18.14 (unreleased)
 --------------------
 
-- Fix small error in check 0045.
+- Fix small error in check 0045. (#495)
+- Run check 0252 on isolated and connected pipes, and on storage area NULL and 0. (#492)
 
 
 2.18.13 (2025-07-25)
