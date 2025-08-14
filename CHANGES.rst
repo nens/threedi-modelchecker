@@ -7,7 +7,7 @@ Changelog of threedi-modelchecker
 - Fix small error in check 0045. (#495)
 - Run check 0252 on isolated and connected pipes, and on storage area NULL and 0. (#492)
 - Change minimum friction_coefficient value for check 314. (#491)
-- Only raise error 0307 when dem file is not null. (#490)
+- Only raise error 0307 when dem file is specified. (#490)
 
 
 2.18.13 (2025-07-25)
