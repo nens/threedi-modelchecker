@@ -2357,6 +2357,35 @@ CHECKS += [
     DWFDistributionSumCheck(error_code=623),
 ]
 
+CHECKS += [
+    QueryCheck(
+        error_code=624,
+        level=CheckLevel.WARNING,
+        column=models.Surface.id,
+        invalid=Query(models.Surface)
+        .join(
+            models.SurfaceMap,
+            models.Surface.id == models.SurfaceMap.surface_id,
+            isouter=True,
+        )
+        .filter(models.SurfaceMap.surface_id.is_(None)),
+        message="Surface does not have surface map. It will be ignored. Make sure that this is intentional.",
+    ),
+    QueryCheck(
+        error_code=624,
+        level=CheckLevel.WARNING,
+        column=models.DryWeatherFlow.id,
+        invalid=Query(models.DryWeatherFlow)
+        .join(
+            models.DryWeatherFlowMap,
+            models.DryWeatherFlow.id == models.DryWeatherFlowMap.surface_id,
+            isouter=True,
+        )
+        .filter(models.DryWeatherFlowMap.surface_id.is_(None)),
+        message="Dry weather flow does not have dry weather flow map. It will be ignored. Make sure that this is intentional.",
+    ),
+]
+
 
 # 07xx: RASTERS
 RASTER_COLUMNS = [
