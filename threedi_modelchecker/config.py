@@ -2378,10 +2378,10 @@ CHECKS += [
         invalid=Query(models.DryWeatherFlow)
         .join(
             models.DryWeatherFlowMap,
-            models.DryWeatherFlow.id == models.DryWeatherFlowMap.surface_id,
+            models.DryWeatherFlow.id == models.DryWeatherFlowMap.dry_weather_flow_id,
             isouter=True,
         )
-        .filter(models.DryWeatherFlowMap.surface_id.is_(None)),
+        .filter(models.DryWeatherFlowMap.dry_weather_flow_id.is_(None)),
         message="Dry weather flow does not have dry weather flow map. It will be ignored. Make sure that this is intentional.",
     ),
 ]
