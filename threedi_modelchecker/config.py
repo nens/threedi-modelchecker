@@ -1029,7 +1029,7 @@ CHECKS += [
             ),
             models.ConnectionNode.exchange_level == None,
         ),
-        message="connection_node.exchange_level cannot be null when exchange_type is Connected.",
+        message="connection_node.exchange_level cannot be null when using sub-basins (model_settings.manhole_aboveground_storage_area > 0) or a DEM is supplied.",
     ),
 ]
 CHECKS += [
