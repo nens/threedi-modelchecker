@@ -1024,7 +1024,9 @@ CHECKS += [
         column=models.ConnectionNode.exchange_level,
         filters=or_(
             CONDITIONS["has_dem"].exists(),
-            models.ModelSettings.manhole_aboveground_storage_area > 0,
+            Query(models.ModelSettings)
+            .filter(models.ModelSettings.manhole_aboveground_storage_area > 0)
+            .exists(),  # to avoid SQLAlchemy complaints about cartesian products
         ),
         invalid=Query(models.ConnectionNode).filter(
             models.ConnectionNode.exchange_type.in_(
