@@ -9,6 +9,7 @@ Changelog of threedi-modelchecker
 - Change minimum friction_coefficient value for check 314. (#491)
 - Only raise error 0307 when dem file is specified. (#490)
 - Add check 624 to warn if surface and dry weather flow have no map. (#489)
+- Clarify message for check 0106 (#502)
 
 
 2.18.13 (2025-07-25)
