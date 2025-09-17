@@ -342,7 +342,14 @@ class ConnectionNodesDistance(BaseCheck):
             minimum_distance=self.minimum_distance,
             buffer_distance=self.minimum_distance / 2,
         )
-        return session.execute(query).fetchall()
+        # get ids for invalid rows
+        result_ids = [row.id for row in session.execute(query).fetchall()]
+        # use sqlalchemy to return invalid rows with proper WKBElement for geometries
+        return (
+            session.query(models.ConnectionNode)
+            .filter(models.ConnectionNode.id.in_(result_ids))
+            .all()
+        )
 
     def description(self) -> str:
 

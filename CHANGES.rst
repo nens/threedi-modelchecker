@@ -1,7 +1,13 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.14 (unreleased)
+2.18.15 (unreleased)
+--------------------
+
+- Broaden check 0107. (#494)
+
+
+2.18.14 (2025-09-01)
 --------------------
 
 - Fix small error in check 0045. (#495)
@@ -9,7 +15,8 @@ Changelog of threedi-modelchecker
 - Change minimum friction_coefficient value for check 314. (#491)
 - Only raise error 0307 when dem file is specified. (#490)
 - Add check 624 to warn if surface and dry weather flow have no map. (#489)
-- Broaden check 0107. (#494)
+- Fix geometry return for check 201 (#504)
+- Clarify message for check 0106 (#502)
 
 
 2.18.13 (2025-07-25)

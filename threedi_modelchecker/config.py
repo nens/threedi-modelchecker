@@ -1015,7 +1015,7 @@ CHECKS += [
         .filter(
             models.ConnectionNode.exchange_level < models.ConnectionNode.bottom_level
         ),
-        message="connection_node.exchange_level >= connection_node.bottom_level when "
+        message="connection_node.exchange_level must be >= connection_node.bottom_level when "
         "connection_node.exchange_type is CONNECTED. In the future, this will lead to an error.",
     ),
     QueryCheck(
