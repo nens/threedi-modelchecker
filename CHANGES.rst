@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.15 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Broaden check 0107. (#494)
 
 
 2.18.14 (2025-09-01)
