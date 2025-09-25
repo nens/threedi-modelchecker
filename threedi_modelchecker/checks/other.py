@@ -1231,3 +1231,23 @@ class ModelEPSGCheckUnits(BaseCheck):
 
     def description(self) -> str:
         return f"EPSG {self.epsg_code} is not fully defined in metres"
+
+
+class GridRefinementPartialOverlap2DBoundaryCheck(BaseCheck):
+    def get_invalid(self, session) -> List[NamedTuple]:
+        invalid = []
+        for record in self.to_check(session):
+            # check how many grid refinement areas are crossed by the 2D boundary condition line
+            overlapped_areas = len(
+                session.execute(
+                    select(models.GridRefinementArea).filter(
+                        func.ST_Crosses(models.GridRefinementArea.geom, record.geom)
+                    )
+                ).all()
+            )
+            if overlapped_areas > 0:
+                invalid.append(record)
+        return invalid
+
+    def description(self):
+        return "2D boundary condition overlaps with grid refinement area. Make sure it is either completely contained by (within) or disjoint from the grid refinement polygon."
