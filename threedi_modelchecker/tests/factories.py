@@ -115,6 +115,16 @@ class BoundaryConditions1DFactory(BaseFactory):
     geom = DEFAULT_POINT
 
 
+class GridRefinementAreaFactory(BaseFactory):
+    class Meta:
+        model = models.GridRefinementArea
+        sqlalchemy_session = None
+
+    grid_level = 2
+    code = Faker("name")
+    geom = DEFAULT_POLYGON
+
+
 class PumpMapFactory(BaseFactory):
     class Meta:
         model = models.PumpMap
