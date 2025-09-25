@@ -5,6 +5,7 @@ Changelog of threedi-modelchecker
 --------------------
 
 - Broaden check 0107. (#494)
+- Add check 0075 to give a warning when a 2D boundary condition partially overlaps a grid refinement area. (#356)
 
 
 2.18.14 (2025-09-01)
