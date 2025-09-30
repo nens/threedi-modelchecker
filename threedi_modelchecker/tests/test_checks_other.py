@@ -20,6 +20,7 @@ from threedi_modelchecker.checks.other import (
     DWFDistributionLengthCheck,
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
+    GridRefinementPartialOverlap2DBoundaryCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
     ModelEPSGCheckProjected,
@@ -995,5 +996,23 @@ def test_model_epsg_check_units(session, ref_epsg, valid):
     factories.ModelSettingsFactory()
     session.model_checker_context.epsg_ref_code = ref_epsg
     check = ModelEPSGCheckUnits()
+    invalids = check.get_invalid(session)
+    assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "linestring, valid",
+    [
+        ("1 1, 1 2", True),
+        ("3 1, 3 2", True),
+        ("1 2, 3 2", False),
+    ],
+)
+def test_grid_refinement_area_2d_boundary_condition_overlap(session, linestring, valid):
+    factories.BoundaryConditions2DFactory(geom=f"SRID=28992;LINESTRING ({linestring})")
+    factories.GridRefinementAreaFactory(
+        geom="SRID=28992;POLYGON ((0 0, 0 4, 2 4, 2 0, 0 0))"
+    )
+    check = GridRefinementPartialOverlap2DBoundaryCheck(models.BoundaryConditions2D.id)
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid

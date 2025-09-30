@@ -70,6 +70,7 @@ from .checks.other import (
     DWFDistributionLengthCheck,
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
+    GridRefinementPartialOverlap2DBoundaryCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
     NodeSurfaceConnectionsCheck,
@@ -781,6 +782,11 @@ CHECKS += [
             )
         ),
         message=("boundary_condition_1d cannot have a groundwater type"),
+    ),
+    GridRefinementPartialOverlap2DBoundaryCheck(
+        error_code=75,
+        column=models.BoundaryConditions2D.id,
+        level=CheckLevel.WARNING,
     ),
 ]
 
