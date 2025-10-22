@@ -2319,7 +2319,7 @@ CHECKS += [
         column=models.Surface.id,
         filters=~CONDITIONS["has_inflow"].exists(),
         invalid=Query(models.Surface),
-        message="No surface inflow will be generated for this feature, because model_settings.use_0d_inflow is set to False.",
+        message="No surface inflow will be generated for this feature, because simulation_template_settings.use_0d_inflow is set to False.",
     ),
     QueryCheck(
         error_code=616,
@@ -2327,7 +2327,7 @@ CHECKS += [
         column=models.DryWeatherFlow.id,
         filters=~CONDITIONS["has_inflow"].exists(),
         invalid=Query(models.DryWeatherFlow),
-        message="No dry weather inflow will be generated for this feature, because model_settings.use_0d_inflow is set to False.",
+        message="No dry weather inflow will be generated for this feature, because simulation_template_settings.use_0d_inflow is set to False.",
     ),
 ]
 
