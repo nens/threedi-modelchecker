@@ -2719,7 +2719,7 @@ CHECKS += [
     RangeCheck(
         error_code=1112,
         column=models.NumericalSettings.convergence_eps,
-        min_value=1e-7,
+        min_value=1e-11,
         max_value=1e-4,
     ),
     RangeCheck(
