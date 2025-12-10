@@ -989,17 +989,20 @@ class MaxOneRecordCheck(BaseCheck):
 class TagsValidCheck(BaseCheck):
     def get_invalid(self, session):
         invalids = []
-        for record in self.to_check(session).filter(
-            (self.column != None) & (self.column != "")
-        ):
-            query = (
-                f"SELECT id FROM tags WHERE id IN ({getattr(record, self.column.name)})"
-            )
-            match_rows = session.connection().execute(text(query)).fetchall()
-            found_idx = {row[0] for row in match_rows}
-            req_idx = {int(x) for x in getattr(record, self.column.name).split(",")}
-            if found_idx != req_idx:
-                invalids.append(record)
+        try:
+            for record in self.to_check(session).filter(
+                (self.column != None) & (self.column != "")
+            ):
+                query = (
+                    f"SELECT id FROM tags WHERE id IN ({getattr(record, self.column.name)})"
+                )
+                match_rows = session.connection().execute(text(query)).fetchall()
+                found_idx = {row[0] for row in match_rows}
+                req_idx = {int(x) for x in getattr(record, self.column.name).split(",")}
+                if found_idx != req_idx:
+                    invalids.append(record)
+        except ValueError:  # in case of badly formatted tags; handled by ListOfIntsCheck
+            pass
         return invalids
 
     def description(self) -> str:

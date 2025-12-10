@@ -414,7 +414,7 @@ class ListOfIntsCheck(BaseCheck):
 
     def description(self) -> str:
         return (
-            f"{self.table.name}.{self.column} is not a comma seperated list of integers"
+            f"{self.table.name}.{self.column} is not a comma-separated list of integers"
         )
 
 
