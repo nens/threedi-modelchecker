@@ -5,6 +5,7 @@ Changelog of threedi-modelchecker
 --------------------
 
 - Ignore ValueError in TagsValidCheck. (#512)
+- Add check 0801 to warn if obstacle does not affect any type of water flow. (#510)
 
 
 2.18.15 (2025-11-11)

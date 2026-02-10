@@ -2638,6 +2638,27 @@ CHECKS += [
     for model in (models.GridRefinementLine, models.GridRefinementArea)
 ]
 
+# 090x: obstacles
+CHECKS += [
+    QueryCheck(
+        error_code=901,
+        level=CheckLevel.WARNING,
+        column=models.Obstacle.id,
+        invalid=(
+            Query(models.Obstacle).filter(
+                and_(
+                    models.Obstacle.affects_2d != True,
+                    models.Obstacle.affects_1d2d_open_water != True,
+                    models.Obstacle.affects_1d2d_closed != True,
+                )
+            )
+        ),
+        message=(
+            "Obstacle will not have any effect, because none of the options affects_2d, affects_1d2d_open_water, or affects_1d2d_closed are set to True."
+        ),
+    )
+]
+
 ## 110x: SIMULATION SETTINGS, timestep
 CHECKS += [
     QueryCheck(
