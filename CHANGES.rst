@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.17 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Fix github workflow.
 
 
 2.18.16 (2026-02-12)
