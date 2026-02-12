@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.16 (unreleased)
+2.18.16 (2026-02-12)
 --------------------
 
 - Ignore ValueError in TagsValidCheck. (#512)
