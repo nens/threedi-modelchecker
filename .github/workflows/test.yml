@@ -49,9 +49,8 @@ jobs:
       - name: Install python dependencies
         shell: bash
         run: |
-          pip install --disable-pip-version-check --upgrade pip setuptools wheel
           pip install ${{ matrix.pins }} .[test,rasterio]
-          pip install GDAL==$(gdal-config --version) --no-build-isolation # install gdal AFTER numpy
+          pip install GDAL==$(gdal-config --version) --no-build-isolation --no-cache-dir --force-reinstall
           pip list
 
       - name: Run tests
