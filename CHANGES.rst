@@ -4,7 +4,9 @@ Changelog of threedi-modelchecker
 2.18.18 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Drop numpy 1 support
+- Drop Python 3.9 support and add Python 3.14 to test matrix
+- Bump threedi-schema to 0.301
 
 
 2.18.17 (2026-02-12)

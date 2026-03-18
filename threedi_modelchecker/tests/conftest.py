@@ -24,9 +24,7 @@ def threedi_db(tmpdir_factory):
     shutil.copyfile(data_dir / "empty.sqlite", tmp_sqlite)
     db = ThreediDatabase(tmp_sqlite)
     schema = ModelSchema(db)
-    schema.upgrade(
-        backup=False, upgrade_spatialite_version=False, epsg_code_override=28992
-    )
+    schema.upgrade(backup=False, epsg_code_override=28992)
     schema.set_spatial_indexes()
     return db
 
