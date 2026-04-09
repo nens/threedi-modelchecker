@@ -7,6 +7,8 @@ Changelog of threedi-modelchecker
 - Drop numpy 1 support
 - Drop Python 3.9 support and add Python 3.14 to test matrix
 - Bump threedi-schema to 0.301
+- Improve description for check 616 (nens/threedi-modelchecker#507)
+- Narrow check 617 to only warn when dry_weather_flow and surface is empty (nens/threedi-modelchecker#507)
 
 
 2.18.17 (2026-02-12)
