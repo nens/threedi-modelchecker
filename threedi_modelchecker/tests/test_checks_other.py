@@ -511,23 +511,23 @@ def test_surface_connection_node_inflow_area(session, value, expected_result):
 
 
 @pytest.mark.parametrize(
-    "surface_number,expected_result",
-    [
-        (0, 1),
-        (1, 0),
-        (10, 0),
-    ],
+    "surface_number, dwf_number, expected_invalid_cnt",
+    [(0, 0, 1), (1, 0, 0), (0, 1, 0), (1, 1, 0)],
 )
-def test_inflow_no_features_impervious(session, surface_number, expected_result):
+def test_inflow_no_features_impervious(
+    session, surface_number, dwf_number, expected_invalid_cnt
+):
     # add fields
     factories.ModelSettingsFactory()
     if surface_number > 0:
         factories.SurfaceFactory.create_batch(size=surface_number)
+    if dwf_number > 0:
+        factories.DryWeatherFlowFactory.create_batch(size=dwf_number)
 
     # Only test this for surface because InflowNoFeaturesCheck only uses table length and not table contents
-    check = InflowNoFeaturesCheck(feature_table=models.Surface)
+    check = InflowNoFeaturesCheck()
     invalid = check.get_invalid(session)
-    assert len(invalid) == expected_result
+    assert len(invalid) == expected_invalid_cnt
 
 
 @pytest.mark.parametrize(

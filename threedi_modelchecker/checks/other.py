@@ -716,23 +716,23 @@ class PerviousNodeInflowAreaCheck(BaseCheck):
 class InflowNoFeaturesCheck(BaseCheck):
     """Check that the surface table in the global use_0d_inflow setting contains at least 1 feature."""
 
-    def __init__(self, *args, feature_table, condition=True, **kwargs):
+    def __init__(self, *args, condition=True, **kwargs):
         super().__init__(*args, column=models.ModelSettings.id, **kwargs)
-        self.feature_table = feature_table
+        self.feature_tables = [models.DryWeatherFlow, models.Surface]
         self.condition = condition
 
     def get_invalid(self, session: Session):
-        surface_table_length = session.execute(
-            select(func.count(self.feature_table.id))
-        ).scalar()
+        table_lengths = [
+            session.execute(select(func.count(table.id))).scalar()
+            for table in self.feature_tables
+        ]
+        all_empty = all(length == 0 for length in table_lengths)
         return (
-            session.query(models.ModelSettings)
-            .filter(self.condition, surface_table_length == 0)
-            .all()
+            session.query(models.ModelSettings).filter(self.condition, all_empty).all()
         )
 
     def description(self) -> str:
-        return f"model_settings.use_0d_inflow is set to use {self.feature_table.__tablename__}, but {self.feature_table.__tablename__} does not contain any features."
+        return "model_settings.use_0d_inflow is True, but neither dry_weather_flow nor surface contain any features."
 
 
 class NodeSurfaceConnectionsCheck(BaseCheck):
