@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.18 (unreleased)
+2.18.18 (2026-04-10)
 --------------------
 
 - Drop numpy 1 support
