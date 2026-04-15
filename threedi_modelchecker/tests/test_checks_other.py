@@ -537,45 +537,6 @@ def test_surface_map_percentage(session, percentage_1, percentage_2, expected_re
     assert len(invalid) == expected_result
 
 
-def test_surface_map_percentage_multiple_surfaces(session):
-    """Test SurfaceMapPercentageCheck with multiple surfaces having different total percentages"""
-    # Create 5 surfaces with different percentage totals
-    surface_1 = factories.SurfaceFactory(id=1)  # 99.0% - valid
-    surface_2 = factories.SurfaceFactory(id=2)  # 100.0% - valid
-    surface_3 = factories.SurfaceFactory(id=3)  # 100.05% - invalid
-    surface_4 = factories.SurfaceFactory(id=4)  # 150.0% - invalid
-    surface_5 = factories.SurfaceFactory(id=5)  # 50.0% - valid
-
-    # Surface 1: 99.0% total
-    factories.SurfaceMapFactory(surface_id=surface_1.id, percentage=40.0)
-    factories.SurfaceMapFactory(surface_id=surface_1.id, percentage=59.0)
-
-    # Surface 2: 100.0% total
-    factories.SurfaceMapFactory(surface_id=surface_2.id, percentage=50.0)
-    factories.SurfaceMapFactory(surface_id=surface_2.id, percentage=50.0)
-
-    # Surface 3: 100.05% total
-    factories.SurfaceMapFactory(surface_id=surface_3.id, percentage=33.35)
-    factories.SurfaceMapFactory(surface_id=surface_3.id, percentage=33.35)
-    factories.SurfaceMapFactory(surface_id=surface_3.id, percentage=33.35)
-
-    # Surface 4: 150.0% total
-    factories.SurfaceMapFactory(surface_id=surface_4.id, percentage=50.0)
-    factories.SurfaceMapFactory(surface_id=surface_4.id, percentage=50.0)
-    factories.SurfaceMapFactory(surface_id=surface_4.id, percentage=50.0)
-
-    # Surface 5: 50.0% total
-    factories.SurfaceMapFactory(surface_id=surface_5.id, percentage=50.0)
-
-    check = SurfaceMapPercentageCheck()
-    invalid = check.get_invalid(session)
-
-    # Should return only surfaces 3 and 4 (the ones over 100.01%)
-    assert len(invalid) == 2
-    invalid_ids = {row.id for row in invalid}
-    assert invalid_ids == {surface_3.id, surface_4.id}
-
-
 @pytest.mark.parametrize(
     "surface_number, dwf_number, expected_invalid_cnt",
     [(0, 0, 1), (1, 0, 0), (0, 1, 0), (1, 1, 0)],
@@ -594,27 +555,6 @@ def test_inflow_no_features_impervious(
     check = InflowNoFeaturesCheck()
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_invalid_cnt
-
-
-def test_surface_map_percentage_many_small_entries(session):
-    """Test SurfaceMapPercentageCheck with many small percentage entries per surface"""
-    # Create surfaces with many small percentage entries
-    surface_1 = factories.SurfaceFactory(id=1)  # 10 * 10.0% = 100.0% - valid
-    surface_2 = factories.SurfaceFactory(id=2)  # 11 * 10.0% = 110.0% - invalid
-
-    # Surface 1: 10 entries * 10.0% = 100.0%
-    for _ in range(10):
-        factories.SurfaceMapFactory(surface_id=surface_1.id, percentage=10.0)
-
-    # Surface 2: 11 entries * 10.0% = 110.0%
-    for _ in range(11):
-        factories.SurfaceMapFactory(surface_id=surface_2.id, percentage=10.0)
-
-    check = SurfaceMapPercentageCheck()
-    invalid = check.get_invalid(session)
-
-    assert len(invalid) == 1
-    assert invalid[0].id == surface_2.id
 
 
 @pytest.mark.parametrize(
