@@ -79,6 +79,7 @@ from .checks.other import (
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
+    SurfaceMapPercentageCheck,
     SurfaceNodeInflowAreaCheck,
     TagsValidCheck,
     UnusedSettingsPresentCheck,
@@ -1438,7 +1439,7 @@ CHECKS += [
                 }
             )
         ),
-        message="potential_breach is assigned to an isolated " "or embedded channel.",
+        message="potential_breach is assigned to an isolated or embedded channel.",
     ),
     QueryCheck(
         error_code=271,
@@ -2309,6 +2310,14 @@ CHECKS += [
         level=CheckLevel.WARNING,
         filters=CONDITIONS["has_inflow"].exists(),
     )
+]
+
+CHECKS += [
+    SurfaceMapPercentageCheck(
+        error_code=615,
+        level=CheckLevel.WARNING,
+        filters=CONDITIONS["has_inflow"].exists(),
+    ),
 ]
 
 

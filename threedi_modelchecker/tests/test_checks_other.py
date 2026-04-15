@@ -32,6 +32,7 @@ from threedi_modelchecker.checks.other import (
     PotentialBreachStartEndCheck,
     PumpStorageTimestepCheck,
     SpatialIndexCheck,
+    SurfaceMapPercentageCheck,
     SurfaceNodeInflowAreaCheck,
     TableControlActionTableCheckDefault,
     TableControlActionTableCheckDischargeCoefficients,
@@ -506,6 +507,32 @@ def test_surface_connection_node_inflow_area(session, value, expected_result):
         surface_id=second_surface.id, connection_node_id=connection_node.id
     )
     check = SurfaceNodeInflowAreaCheck()
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_result
+
+
+@pytest.mark.parametrize(
+    "percentage_1, percentage_2, expected_result",
+    [
+        (50.0, 50.0, 0),  # total = 100.0; valid
+        (50.0, 49.5, 0),  # total = 99.5; valid
+        (50.0, 50.02, 1),  # total = 100.02; invalid
+        (50.0, 55.5, 1),  # total = 105.5; invalid
+    ],
+)
+def test_surface_map_percentage(session, percentage_1, percentage_2, expected_result):
+    """Test SurfaceMapPercentageCheck with various percentage combinations"""
+    surface_1 = factories.SurfaceFactory(id=1)
+    surface_2 = factories.SurfaceFactory(id=2)
+
+    # Create surface map entries with specified percentages
+    factories.SurfaceMapFactory(surface_id=surface_1.id, percentage=percentage_1)
+    factories.SurfaceMapFactory(surface_id=surface_1.id, percentage=percentage_2)
+
+    # Create another surface with valid percentage to ensure we only flag the over-limit one
+    factories.SurfaceMapFactory(surface_id=surface_2.id, percentage=75.0)
+
+    check = SurfaceMapPercentageCheck()
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_result
 

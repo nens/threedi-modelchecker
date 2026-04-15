@@ -144,7 +144,7 @@ class CrossSectionSameConfigurationCheck(BaseCheck):
             (
                 (
                     (shape == 1)
-                    | ((shape.in_([5, 6]) & (last_width > 0)))
+                    | (shape.in_([5, 6]) & (last_width > 0))
                     | (
                         (shape == 7)
                         & ((first_width != last_width) | (first_height != last_height))
@@ -636,15 +636,13 @@ class PumpStorageTimestepCheck(BaseCheck):
             .filter(
                 (models.ConnectionNode.storage_area != None)
                 & (
+                    # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
                     (
-                        # calculate how many seconds the pumpstation takes to empty its storage: (storage * height)/pump capacity
-                        (
-                            # Arithmetic operations on None return None, so without this
-                            # conditional type cast, no invalid results would be returned
-                            # even if the storage_area was set to None.
-                            models.ConnectionNode.storage_area
-                            * (models.Pump.start_level - models.Pump.lower_stop_level)
-                        )
+                        # Arithmetic operations on None return None, so without this
+                        # conditional type cast, no invalid results would be returned
+                        # even if the storage_area was set to None.
+                        models.ConnectionNode.storage_area
+                        * (models.Pump.start_level - models.Pump.lower_stop_level)
                     )
                     / (models.Pump.capacity / 1000)
                     < Query(models.TimeStepSettings.time_step).scalar_subquery()
@@ -711,6 +709,30 @@ class PerviousNodeInflowAreaCheck(BaseCheck):
 
     def description(self) -> str:
         return f"{self.column_name} has a an associated inflow area larger than 10000 m2; this might be an error."
+
+
+class SurfaceMapPercentageCheck(BaseCheck):
+    """Check that total percentage mapped to the same surface_id does not exceed 100%"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.Surface.id, *args, **kwargs)
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        invalid_surface_ids = (
+            select(models.SurfaceMap.surface_id)
+            .select_from(models.SurfaceMap)
+            .group_by(models.SurfaceMap.surface_id)
+            .having(func.sum(models.SurfaceMap.percentage) > 100.01)
+        ).subquery()
+
+        return (
+            session.query(models.Surface)
+            .filter(models.Surface.id == invalid_surface_ids.c.surface_id)
+            .all()
+        )
+
+    def description(self) -> str:
+        return f"{self.column_name} has a total mapped percentage larger than 100%; this might be an error."
 
 
 class InflowNoFeaturesCheck(BaseCheck):
@@ -912,7 +934,6 @@ class SettingsPresentCheck(BaseCheck, ABC):
 
 
 class UnusedSettingsPresentCheck(SettingsPresentCheck):
-
     def get_all_results(self, session):
         return self.to_check(session).filter(self.column == False).all()
 
@@ -933,7 +954,6 @@ class UnusedSettingsPresentCheck(SettingsPresentCheck):
 
 
 class UsedSettingsPresentCheck(SettingsPresentCheck):
-
     def get_all_results(self, session):
         return self.to_check(session).filter(self.column == True).all()
 
