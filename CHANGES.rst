@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.19 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Add check that warns when the total percentage mapped to the same surface via SurfaceMap is greater than 100% (nens/rana#3863)
 
 
 2.18.18 (2026-04-10)
