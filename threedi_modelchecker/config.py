@@ -1223,6 +1223,9 @@ CHECKS += [
     )
 ]
 
+## 022x: MeasureMap
+CHECKS += []
+
 
 ## 025x: Connectivity
 
