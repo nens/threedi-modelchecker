@@ -1,7 +1,31 @@
+from enum import Enum
+from itertools import chain
+
 from sqlalchemy import func
 from threedi_schema import models
 
 from .base import BaseCheck
+
+valid_time_map = {
+    "seconds": ["seconds", "second", "sec", "s"],
+    "minutes": ["minutes", "minute", "min", "m"],
+    "hours": ["hours", "hour", "hr", "h"],
+}
+
+
+class TimeUnits(Enum):
+    seconds = "seconds"
+    minutes = "minutes"
+    hours = "hours"
+
+    @classmethod
+    def from_string(cls, time_units: str) -> "TimeUnits":
+        if time_units is None:
+            raise ValueError("time_units cannot be None")
+        for key, values in valid_time_map.items():
+            if time_units.lower() in values:
+                return cls[key]
+        raise ValueError(f"Invalid time units: {time_units}")
 
 
 def parse_timeseries(timeseries_str):
@@ -273,20 +297,7 @@ class TimeUnitsValidCheck(BaseCheck):
     """Check that an empty timeseries has not been provided."""
 
     def get_invalid(self, session):
-        valid_units = [
-            "second",
-            "seconds",
-            "sec",
-            "s",
-            "minute",
-            "minutes",
-            "min",
-            "m",
-            "hour",
-            "hours",
-            "hr",
-            "h",
-        ]
+        valid_units = list(chain.from_iterable(valid_time_map.values()))
         return (
             self.to_check(session)
             .filter(func.lower(self.column).not_in(valid_units))
@@ -309,22 +320,18 @@ class TimeUnitsEqualCheck(BaseCheck):
 
     def get_invalid(self, session):
         invalid_records = []
-
         first_time_units = None
-
         for row in self.to_check(session).all():
-            time_units = row.time_units
-
-            if not time_units:
+            try:
+                time_units = TimeUnits.from_string(row.time_units)
+            except ValueError:
+                # invalid values are handled by another check
                 continue
-
             if not first_time_units:
                 first_time_units = time_units
                 continue  # don't compare first record with itself
-
-            if time_units.lower() != first_time_units.lower():
+            if time_units != first_time_units:
                 invalid_records.append(row)
-
         return invalid_records
 
     def description(self):
@@ -359,9 +366,14 @@ class FirstTimeUnitsEqualCheck(BaseCheck):
             .first()
         )
         if first_1d and first_2d:
-            if first_1d.time_units.lower() != first_2d.time_units.lower():
-                return [first_1d]
-
+            try:
+                first_1d_time_units = TimeUnits.from_string(first_1d.time_units)
+                first_2d_time_units = TimeUnits.from_string(first_2d.time_units)
+                if first_1d_time_units != first_2d_time_units:
+                    return [first_1d]
+            except ValueError:
+                # invalid values are handled by another check
+                pass
         return []
 
     def description(self):

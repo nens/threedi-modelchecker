@@ -302,10 +302,10 @@ def test_time_units_equal_check(
             1,
         ),  # 1d and 2d don't match (2d is invalid)
         (
-            ("SECONDS",),
+            ("sec",),
             ("seconds",),
             0,
-        ),  # 1d and 2d match (case-insensitive)
+        ),  # 1d and 2d match
     ],
 )
 def test_first_time_units_equal_check(
