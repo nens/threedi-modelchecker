@@ -5,6 +5,7 @@ Changelog of threedi-modelchecker
 --------------------
 
 - Add check that warns when the total percentage mapped to the same surface via SurfaceMap is greater than 100% (nens/rana#3863)
+- Add check for matching time units for boundary conditions (nens/rana#3619)
 
 
 2.18.18 (2026-04-10)
