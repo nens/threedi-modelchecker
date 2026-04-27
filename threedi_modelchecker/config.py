@@ -100,6 +100,7 @@ from .checks.raster import (
 )
 from .checks.timeseries import (
     FirstTimeSeriesEqualTimestepsCheck,
+    FirstTimeUnitsEqualCheck,
     TimeSeriesEqualTimestepsCheck,
     TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
@@ -107,6 +108,7 @@ from .checks.timeseries import (
     TimeseriesStartsAtZeroCheck,
     TimeseriesTimestepCheck,
     TimeseriesValueCheck,
+    TimeUnitsEqualCheck,
     TimeUnitsValidCheck,
 )
 
@@ -2998,6 +3000,15 @@ CHECKS += [
         models.Lateral2D.time_units,
     ]
 ]
+CHECKS += [
+    TimeUnitsEqualCheck(col, error_code=1208)
+    for col in [
+        models.BoundaryCondition1D.time_units,
+        models.BoundaryConditions2D.time_units,
+    ]
+]
+CHECKS += [FirstTimeUnitsEqualCheck(error_code=1209)]
+
 
 CHECKS += [
     QueryCheck(

@@ -295,3 +295,77 @@ class TimeUnitsValidCheck(BaseCheck):
 
     def description(self):
         return f"{self.column_name} is not recognized as a valid unit of time."
+
+
+class TimeUnitsEqualCheck(BaseCheck):
+    """
+    Check that all time_units values within a single table are identical.
+
+    This checks the time_units for all records in a column against the time_units in the first
+    record in that column. Consequently, all records in that column must have the same time_units.
+    This check does not compare time_units between different tables; for that, FirstTimeUnitsEqualCheck
+    is used.
+    """
+
+    def get_invalid(self, session):
+        invalid_records = []
+
+        first_time_units = None
+
+        for row in self.to_check(session).all():
+            time_units = row.time_units
+
+            if not time_units:
+                continue
+
+            if not first_time_units:
+                first_time_units = time_units
+                continue  # don't compare first record with itself
+
+            if time_units.lower() != first_time_units.lower():
+                invalid_records.append(row)
+
+        return invalid_records
+
+    def description(self):
+        return (
+            f"One or more records in {self.column_name} have a different time_units than the first record. "
+            + "All time_units within this table must be identical."
+        )
+
+
+class FirstTimeUnitsEqualCheck(BaseCheck):
+    """
+    Check that the first time_units value is identical across all boundary condition tables.
+
+    This is used in conjunction with TimeUnitsEqualCheck to confirm that all time_units across
+    all boundary condition tables are identical. If each time_units within each table is identical,
+    and the first time_units of each table matches with the first time_units of each other table,
+    then all time_units must be identical across all tables.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(column=models.BoundaryCondition1D.time_units, *args, **kwargs)
+
+    def get_invalid(self, session):
+        first_1d = (
+            session.query(models.BoundaryCondition1D)
+            .order_by(models.BoundaryCondition1D.id)
+            .first()
+        )
+        first_2d = (
+            session.query(models.BoundaryConditions2D)
+            .order_by(models.BoundaryConditions2D.id)
+            .first()
+        )
+        if first_1d and first_2d:
+            if first_1d.time_units.lower() != first_2d.time_units.lower():
+                return [first_1d]
+
+        return []
+
+    def description(self):
+        return (
+            "The value for the first boundary_condition_1d.time_units did not match the value for the first boundary_condition_2d.time_units. "
+            + "All boundary conditions must have the same time units."
+        )

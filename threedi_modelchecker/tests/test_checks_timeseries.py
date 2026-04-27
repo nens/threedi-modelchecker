@@ -3,6 +3,7 @@ from threedi_schema import models
 
 from threedi_modelchecker.checks.timeseries import (
     FirstTimeSeriesEqualTimestepsCheck,
+    FirstTimeUnitsEqualCheck,
     TimeSeriesEqualTimestepsCheck,
     TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
@@ -10,10 +11,14 @@ from threedi_modelchecker.checks.timeseries import (
     TimeseriesStartsAtZeroCheck,
     TimeseriesTimestepCheck,
     TimeseriesValueCheck,
+    TimeUnitsEqualCheck,
     TimeUnitsValidCheck,
 )
 
-from .factories import BoundaryConditions1DFactory, BoundaryConditions2DFactory
+from .factories import (
+    BoundaryConditions1DFactory,
+    BoundaryConditions2DFactory,
+)
 
 
 @pytest.mark.parametrize("check_type", ["1d", "2d"])
@@ -248,3 +253,71 @@ def test_time_units_valid_check(session, time_units, valid):
     check = TimeUnitsValidCheck(models.BoundaryConditions2D.time_units)
     invalid = check.get_invalid(session)
     assert (len(invalid) == 0) == valid
+
+
+@pytest.mark.parametrize("check_type", ["1d", "2d"])
+@pytest.mark.parametrize(
+    "time_units_tuple,expected_invalid",
+    [
+        ((), 0),  # no time_units
+        (("seconds", "seconds"), 0),  # same time_units
+        (("seconds", "SECONDS"), 0),  # same time_units, different case
+        (("minutes", "minutes"), 0),  # same time_units
+        (("seconds", "minutes"), 1),  # differing time_units
+        (
+            ("seconds", "minutes", "hours"),
+            2,
+        ),  # all different time_units
+    ],
+)
+def test_time_units_equal_check(
+    session, time_units_tuple, check_type, expected_invalid
+):
+    if check_type == "1d":
+        for time_units in time_units_tuple:
+            BoundaryConditions1DFactory(time_units=time_units)
+        check = TimeUnitsEqualCheck(models.BoundaryCondition1D.time_units)
+    elif check_type == "2d":
+        for time_units in time_units_tuple:
+            BoundaryConditions2DFactory(time_units=time_units)
+        check = TimeUnitsEqualCheck(models.BoundaryConditions2D.time_units)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_invalid
+
+
+@pytest.mark.parametrize(
+    "one_d_time_units_tuple,two_d_time_units_tuple,expected_invalid",
+    [
+        ((), (), 0),  # no time_units
+        (("seconds",), (), 0),  # only 1d time_units
+        ((), ("seconds",), 0),  # only 2d time_units
+        (
+            ("seconds",),
+            ("seconds",),
+            0,
+        ),  # 1d and 2d match
+        (
+            ("seconds",),
+            ("minutes",),
+            1,
+        ),  # 1d and 2d don't match (2d is invalid)
+        (
+            ("SECONDS",),
+            ("seconds",),
+            0,
+        ),  # 1d and 2d match (case-insensitive)
+    ],
+)
+def test_first_time_units_equal_check(
+    session,
+    one_d_time_units_tuple,
+    two_d_time_units_tuple,
+    expected_invalid,
+):
+    for time_units in one_d_time_units_tuple:
+        BoundaryConditions1DFactory(time_units=time_units)
+    for time_units in two_d_time_units_tuple:
+        BoundaryConditions2DFactory(time_units=time_units)
+    check = FirstTimeUnitsEqualCheck()
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_invalid
