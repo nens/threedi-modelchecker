@@ -20,6 +20,7 @@ from threedi_modelchecker.checks.other import (
     DWFDistributionLengthCheck,
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
+    FeatureClosedCrossSectionWithInvalidExchangeCheck,
     GridRefinementPartialOverlap2DBoundaryCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
@@ -1096,3 +1097,32 @@ def test_grid_refinement_area_2d_boundary_condition_overlap(session, linestring,
     check = GridRefinementPartialOverlap2DBoundaryCheck(models.BoundaryConditions2D.id)
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize("closed", [True, False])
+@pytest.mark.parametrize("embedded", [True, False])
+def test_feature_closed_cross_cross_section_with_invalid_exchange_check(
+    session, closed, embedded
+):
+    shape = (
+        constants.CrossSectionShape.CLOSED_RECTANGLE
+        if closed
+        else constants.CrossSectionShape.RECTANGLE
+    )
+    exchange_type = (
+        constants.CalculationTypeCulvert.EMBEDDED_NODE
+        if embedded
+        else constants.CalculationTypeCulvert.ISOLATED_NODE
+    )
+    nof_invalid = 1 if closed and embedded else 0
+    factories.CulvertFactory(
+        cross_section_shape=shape,
+        exchange_type=constants.CalculationTypeCulvert.EMBEDDED_NODE,
+        cross_section_width=1,
+        cross_section_height=1,
+    )
+    check = FeatureClosedCrossSectionWithInvalidExchangeCheck(
+        column=models.Culvert.id, invalid_exchange_type=exchange_type
+    )
+    invalid = check.get_invalid(session)
+    assert len(invalid) == nof_invalid
