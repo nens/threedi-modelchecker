@@ -1301,3 +1301,41 @@ class GridRefinementPartialOverlap2DBoundaryCheck(BaseCheck):
 
     def description(self):
         return "2D boundary condition overlaps with grid refinement area. Make sure it is either completely contained by (within) or disjoint from the grid refinement polygon."
+
+
+class MeasureMapWeightSumCheck(BaseCheck):
+    """Warns when MeasureMap weights for a (control_id, control_type) group don't sum to 1 ± 0.01."""
+
+    def __init__(self, **kwargs):
+        super().__init__(column=models.MeasureMap.weight, **kwargs)
+
+    def get_invalid(self, session: Session) -> List[NamedTuple]:
+        # Find all (control_id, control_type) groups with invalid weight sums
+        # Valid range: [0.99, 1.01] (1.0 ± 0.01) with small epsilon for floating-point comparison
+        # epsilon = 1e-7 handles floating-point rounding without being too lenient
+        bad_groups = (
+            session.query(
+                models.MeasureMap.control_id,
+                models.MeasureMap.control_type,
+            )
+            .group_by(models.MeasureMap.control_id, models.MeasureMap.control_type)
+            .having(func.abs(func.sum(models.MeasureMap.weight) - 1.0) > (0.01 + 1e-7))
+            .subquery()
+        )
+
+        # Return all MeasureMap rows in those groups
+        return (
+            session.query(models.MeasureMap)
+            .join(
+                bad_groups,
+                (models.MeasureMap.control_id == bad_groups.c.control_id)
+                & (models.MeasureMap.control_type == bad_groups.c.control_type),
+            )
+            .all()
+        )
+
+    def description(self) -> str:
+        return (
+            "The weights of MeasureMap rows sharing the same control_id "
+            "and control_type must sum to 1.0 (±0.01)."
+        )

@@ -74,6 +74,7 @@ from .checks.other import (
     GridRefinementPartialOverlap2DBoundaryCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
+    MeasureMapWeightSumCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
@@ -1237,6 +1238,14 @@ CHECKS += [
 CHECKS += [
     DefinedAreaCheck(
         error_code=208, column=models.Surface.area, level=CheckLevel.WARNING
+    )
+]
+
+## 022x: MeasureMap
+CHECKS += [
+    MeasureMapWeightSumCheck(
+        error_code=220,
+        level=CheckLevel.WARNING,
     )
 ]
 

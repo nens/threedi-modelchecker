@@ -24,6 +24,7 @@ from threedi_modelchecker.checks.other import (
     GridRefinementPartialOverlap2DBoundaryCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
+    MeasureMapWeightSumCheck,
     ModelEPSGCheckProjected,
     ModelEPSGCheckUnits,
     ModelEPSGCheckValid,
@@ -926,6 +927,58 @@ def test_control_has_single_measure_variable(session, measure_variables, valid):
     check = ControlHasSingleMeasureVariable(control_model=models.TableControl)
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "measure_map_data, expected_invalid_count",
+    [
+        ([{"control_type": "table", "control_id": 1, "weight": 1.0}], 0),
+        ([{"control_type": "table", "control_id": 1, "weight": 0.99}], 0),
+        ([{"control_type": "table", "control_id": 1, "weight": 1.01}], 0),
+        ([{"control_type": "table", "control_id": 1, "weight": 1.02}], 1),
+        ([{"control_type": "table", "control_id": 1, "weight": 0.5}], 1),
+        (
+            [
+                {"control_type": "table", "control_id": 1, "weight": 0.5},
+                {"control_type": "table", "control_id": 1, "weight": 0.5},
+            ],
+            0,
+        ),
+        (
+            [
+                {"control_type": "table", "control_id": 1, "weight": 0.5},
+                {"control_type": "memory", "control_id": 1, "weight": 0.49},
+            ],
+            2,
+        ),
+        (
+            [
+                {"control_type": "table", "control_id": 1, "weight": 0.5},
+                {"control_type": "table", "control_id": 2, "weight": 0.49},
+            ],
+            2,
+        ),
+    ],
+)
+def test_measure_map_weight_sum(session, measure_map_data, expected_invalid_count):
+    """Test MeasureMapWeightSumCheck with various weight combinations"""
+    factories.MeasureLocationFactory(id=1)
+    control_table = []
+    control_memory = []
+    for item in measure_map_data:
+        if item["control_type"] == "table":
+            control_table.append(item["control_id"])
+        else:
+            control_memory.append(item["control_id"])
+        item["measure_location_id"] = 1
+        factories.MeasureMapFactory(**item)
+    for control_id in set(control_table):
+        factories.TableControlFactory(id=control_id)
+    for control_id in set(control_memory):
+        factories.MemoryControlFactory(id=control_id)
+    check = MeasureMapWeightSumCheck()
+    invalids = check.get_invalid(session)
+    assert len(invalids) == expected_invalid_count
 
 
 @pytest.mark.parametrize("distribution, valid", [("1,2", True), ("1 2", False)])
