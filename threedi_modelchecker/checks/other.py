@@ -803,6 +803,33 @@ class FeatureClosedCrossSectionCheck(BaseCheck):
         return f"{self.column_name} has an open cross-section, which is unusual for this feature. Please make sure this is not a mistake."
 
 
+class FeatureClosedCrossSectionWithInvalidExchangeCheck(BaseCheck):
+    """
+    Check if feature has a closed cross-section
+    """
+
+    def __init__(self, *args, invalid_exchange_type, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.invalid_exchange_type = invalid_exchange_type
+
+    def get_invalid(self, session):
+        invalids = []
+        for record in self.to_check(session):
+            _, _, configuration = cross_section_configuration_for_record(record)
+
+            # Pipes and culverts should generally have a closed cross-section
+            if (
+                configuration == "closed"
+                and record.exchange_type == self.invalid_exchange_type
+            ):
+                invalids.append(record)
+
+        return invalids
+
+    def description(self):
+        return f"{self.column_name} has a closed cross-section and exchange type {str(self.invalid_exchange_type)}"
+
+
 class DefinedAreaCheck(BaseCheck):
     """Check if the value in the 'area' column matches the surface area of 'geom'"""
 

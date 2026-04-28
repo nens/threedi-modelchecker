@@ -70,6 +70,7 @@ from .checks.other import (
     DWFDistributionLengthCheck,
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
+    FeatureClosedCrossSectionWithInvalidExchangeCheck,
     GridRefinementPartialOverlap2DBoundaryCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
@@ -676,6 +677,22 @@ CHECKS += [
         error_code=57, level=CheckLevel.INFO, column=table.id
     )
     for table in [models.Pipe, models.Culvert]
+]
+
+
+CHECKS += [
+    FeatureClosedCrossSectionWithInvalidExchangeCheck(
+        error_code=58,
+        level=CheckLevel.INFO,
+        column=models.Culvert.id,
+        invalid_exchange_type=constants.CalculationTypeCulvert.EMBEDDED_NODE,
+    ),
+    FeatureClosedCrossSectionWithInvalidExchangeCheck(
+        error_code=58,
+        level=CheckLevel.INFO,
+        column=models.Pipe.id,
+        invalid_exchange_type=constants.PipeCalculationType.EMBEDDED,
+    ),
 ]
 
 ## 006x: PUMPSTATIONS
