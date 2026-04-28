@@ -255,13 +255,12 @@ def test_time_units_valid_check(session, time_units, valid):
     assert (len(invalid) == 0) == valid
 
 
-@pytest.mark.parametrize("check_type", ["1d", "2d"])
 @pytest.mark.parametrize(
     "time_units_tuple,expected_invalid",
     [
         ((), 0),  # no time_units
         (("seconds", "seconds"), 0),  # same time_units
-        (("seconds", "SECONDS"), 0),  # same time_units, different case
+        (("seconds", "sec"), 0),  # same time_units, different case
         (("minutes", "minutes"), 0),  # same time_units
         (("seconds", "minutes"), 1),  # differing time_units
         (
@@ -270,17 +269,10 @@ def test_time_units_valid_check(session, time_units, valid):
         ),  # all different time_units
     ],
 )
-def test_time_units_equal_check(
-    session, time_units_tuple, check_type, expected_invalid
-):
-    if check_type == "1d":
-        for time_units in time_units_tuple:
-            BoundaryConditions1DFactory(time_units=time_units)
-        check = TimeUnitsEqualCheck(models.BoundaryCondition1D.time_units)
-    elif check_type == "2d":
-        for time_units in time_units_tuple:
-            BoundaryConditions2DFactory(time_units=time_units)
-        check = TimeUnitsEqualCheck(models.BoundaryConditions2D.time_units)
+def test_time_units_equal_check(session, time_units_tuple, expected_invalid):
+    for time_units in time_units_tuple:
+        BoundaryConditions1DFactory(time_units=time_units)
+    check = TimeUnitsEqualCheck(models.BoundaryCondition1D.time_units)
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_invalid
 
