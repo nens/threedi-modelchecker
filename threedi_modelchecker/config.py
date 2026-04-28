@@ -3005,6 +3005,8 @@ CHECKS += [
     for col in [
         models.BoundaryCondition1D.time_units,
         models.BoundaryConditions2D.time_units,
+        models.Lateral1D.time_units,
+        models.Lateral2D.time_units,
     ]
 ]
 CHECKS += [FirstTimeUnitsEqualCheck(error_code=1209)]

@@ -352,32 +352,35 @@ class FirstTimeUnitsEqualCheck(BaseCheck):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(column=models.BoundaryCondition1D.time_units, *args, **kwargs)
+        self.time_models = [
+            models.BoundaryCondition1D,
+            models.BoundaryConditions2D,
+            models.Lateral1D,
+            models.Lateral2D,
+        ]
+        super().__init__(column=self.time_models[0].time_units, *args, **kwargs)
 
     def get_invalid(self, session):
-        first_1d = (
-            session.query(models.BoundaryCondition1D)
-            .order_by(models.BoundaryCondition1D.id)
-            .first()
-        )
-        first_2d = (
-            session.query(models.BoundaryConditions2D)
-            .order_by(models.BoundaryConditions2D.id)
-            .first()
-        )
-        if first_1d and first_2d:
+        first_items = [
+            item
+            for item in (
+                session.query(model).order_by(model.id).first()
+                for model in self.time_models
+            )
+            if item is not None
+        ]
+        first_time_unit = None
+        for item in first_items:
             try:
-                first_1d_time_units = TimeUnits.from_string(first_1d.time_units)
-                first_2d_time_units = TimeUnits.from_string(first_2d.time_units)
-                if first_1d_time_units != first_2d_time_units:
-                    return [first_1d]
+                time_unit = TimeUnits.from_string(item.time_units)
             except ValueError:
                 # invalid values are handled by another check
-                pass
+                continue
+            if first_time_unit is None:
+                first_time_unit = time_unit
+            elif time_unit != first_time_unit:
+                return first_items
         return []
 
     def description(self):
-        return (
-            "The value for the first boundary_condition_1d.time_units did not match the value for the first boundary_condition_2d.time_units. "
-            + "All boundary conditions must have the same time units."
-        )
+        return "Time units should be identical across all boundary condition and lateral tables."

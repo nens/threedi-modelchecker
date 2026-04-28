@@ -18,6 +18,8 @@ from threedi_modelchecker.checks.timeseries import (
 from .factories import (
     BoundaryConditions1DFactory,
     BoundaryConditions2DFactory,
+    Lateral1DFactory,
+    Lateral2DFactory,
 )
 
 
@@ -278,38 +280,31 @@ def test_time_units_equal_check(session, time_units_tuple, expected_invalid):
 
 
 @pytest.mark.parametrize(
-    "one_d_time_units_tuple,two_d_time_units_tuple,expected_invalid",
+    "units_1d_bc, units_2d_bc, units_1d_lat, units_2d_lat, expected_invalid",
     [
-        ((), (), 0),  # no time_units
-        (("seconds",), (), 0),  # only 1d time_units
-        ((), ("seconds",), 0),  # only 2d time_units
-        (
-            ("seconds",),
-            ("seconds",),
-            0,
-        ),  # 1d and 2d match
-        (
-            ("seconds",),
-            ("minutes",),
-            1,
-        ),  # 1d and 2d don't match (2d is invalid)
-        (
-            ("sec",),
-            ("seconds",),
-            0,
-        ),  # 1d and 2d match
+        (None, None, None, None, 0),
+        ("seconds", None, None, None, 0),
+        ("seconds", "seconds", "seconds", "seconds", 0),
+        ("seconds", "minutes", "seconds", "seconds", 4),
+        ("seconds", None, None, "minutes", 2),
     ],
 )
 def test_first_time_units_equal_check(
     session,
-    one_d_time_units_tuple,
-    two_d_time_units_tuple,
+    units_1d_bc,
+    units_2d_bc,
+    units_1d_lat,
+    units_2d_lat,
     expected_invalid,
 ):
-    for time_units in one_d_time_units_tuple:
-        BoundaryConditions1DFactory(time_units=time_units)
-    for time_units in two_d_time_units_tuple:
-        BoundaryConditions2DFactory(time_units=time_units)
+    if units_1d_bc:
+        BoundaryConditions1DFactory(time_units=units_1d_bc)
+    if units_2d_bc:
+        BoundaryConditions2DFactory(time_units=units_2d_bc)
+    if units_1d_lat:
+        Lateral1DFactory(time_units=units_1d_lat)
+    if units_2d_lat:
+        Lateral2DFactory(time_units=units_2d_lat)
     check = FirstTimeUnitsEqualCheck()
     invalid = check.get_invalid(session)
     assert len(invalid) == expected_invalid
