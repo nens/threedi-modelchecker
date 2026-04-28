@@ -73,6 +73,7 @@ from .checks.other import (
     GridRefinementPartialOverlap2DBoundaryCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
+    MeasureMapWeightSumCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
@@ -1224,7 +1225,12 @@ CHECKS += [
 ]
 
 ## 022x: MeasureMap
-CHECKS += []
+CHECKS += [
+    MeasureMapWeightSumCheck(
+        error_code=220,
+        level=CheckLevel.WARNING,
+    )
+]
 
 
 ## 025x: Connectivity
