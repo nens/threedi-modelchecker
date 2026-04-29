@@ -3,6 +3,7 @@ from threedi_schema import models
 
 from threedi_modelchecker.checks.timeseries import (
     FirstTimeSeriesEqualTimestepsCheck,
+    FirstTimeUnitsEqualCheck,
     TimeSeriesEqualTimestepsCheck,
     TimeseriesExistenceCheck,
     TimeseriesIncreasingCheck,
@@ -10,10 +11,16 @@ from threedi_modelchecker.checks.timeseries import (
     TimeseriesStartsAtZeroCheck,
     TimeseriesTimestepCheck,
     TimeseriesValueCheck,
+    TimeUnitsEqualCheck,
     TimeUnitsValidCheck,
 )
 
-from .factories import BoundaryConditions1DFactory, BoundaryConditions2DFactory
+from .factories import (
+    BoundaryConditions1DFactory,
+    BoundaryConditions2DFactory,
+    Lateral1DFactory,
+    Lateral2DFactory,
+)
 
 
 @pytest.mark.parametrize("check_type", ["1d", "2d"])
@@ -248,3 +255,56 @@ def test_time_units_valid_check(session, time_units, valid):
     check = TimeUnitsValidCheck(models.BoundaryConditions2D.time_units)
     invalid = check.get_invalid(session)
     assert (len(invalid) == 0) == valid
+
+
+@pytest.mark.parametrize(
+    "time_units_tuple,expected_invalid",
+    [
+        ((), 0),  # no time_units
+        (("seconds", "seconds"), 0),  # same time_units
+        (("seconds", "sec"), 0),  # same time_units, different case
+        (("minutes", "minutes"), 0),  # same time_units
+        (("seconds", "minutes"), 1),  # differing time_units
+        (
+            ("seconds", "minutes", "hours"),
+            2,
+        ),  # all different time_units
+    ],
+)
+def test_time_units_equal_check(session, time_units_tuple, expected_invalid):
+    for time_units in time_units_tuple:
+        BoundaryConditions1DFactory(time_units=time_units)
+    check = TimeUnitsEqualCheck(models.BoundaryCondition1D.time_units)
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_invalid
+
+
+@pytest.mark.parametrize(
+    "units_1d_bc, units_2d_bc, units_1d_lat, units_2d_lat, expected_invalid",
+    [
+        (None, None, None, None, 0),
+        ("seconds", None, None, None, 0),
+        ("seconds", "seconds", "seconds", "seconds", 0),
+        ("seconds", "minutes", "seconds", "seconds", 4),
+        ("seconds", None, None, "minutes", 2),
+    ],
+)
+def test_first_time_units_equal_check(
+    session,
+    units_1d_bc,
+    units_2d_bc,
+    units_1d_lat,
+    units_2d_lat,
+    expected_invalid,
+):
+    if units_1d_bc:
+        BoundaryConditions1DFactory(time_units=units_1d_bc)
+    if units_2d_bc:
+        BoundaryConditions2DFactory(time_units=units_2d_bc)
+    if units_1d_lat:
+        Lateral1DFactory(time_units=units_1d_lat)
+    if units_2d_lat:
+        Lateral2DFactory(time_units=units_2d_lat)
+    check = FirstTimeUnitsEqualCheck()
+    invalid = check.get_invalid(session)
+    assert len(invalid) == expected_invalid

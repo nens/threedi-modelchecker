@@ -1,7 +1,31 @@
+from enum import Enum
+from itertools import chain
+
 from sqlalchemy import func
 from threedi_schema import models
 
 from .base import BaseCheck
+
+valid_time_map = {
+    "seconds": ["seconds", "second", "sec", "s"],
+    "minutes": ["minutes", "minute", "min", "m"],
+    "hours": ["hours", "hour", "hr", "h"],
+}
+
+
+class TimeUnits(Enum):
+    seconds = "seconds"
+    minutes = "minutes"
+    hours = "hours"
+
+    @classmethod
+    def from_string(cls, time_units: str) -> "TimeUnits":
+        if time_units is None:
+            raise ValueError("time_units cannot be None")
+        for key, values in valid_time_map.items():
+            if time_units.lower() in values:
+                return cls[key]
+        raise ValueError(f"Invalid time units: {time_units}")
 
 
 def parse_timeseries(timeseries_str):
@@ -273,20 +297,7 @@ class TimeUnitsValidCheck(BaseCheck):
     """Check that an empty timeseries has not been provided."""
 
     def get_invalid(self, session):
-        valid_units = [
-            "second",
-            "seconds",
-            "sec",
-            "s",
-            "minute",
-            "minutes",
-            "min",
-            "m",
-            "hour",
-            "hours",
-            "hr",
-            "h",
-        ]
+        valid_units = list(chain.from_iterable(valid_time_map.values()))
         return (
             self.to_check(session)
             .filter(func.lower(self.column).not_in(valid_units))
@@ -295,3 +306,81 @@ class TimeUnitsValidCheck(BaseCheck):
 
     def description(self):
         return f"{self.column_name} is not recognized as a valid unit of time."
+
+
+class TimeUnitsEqualCheck(BaseCheck):
+    """
+    Check that all time_units values within a single table are identical.
+
+    This checks the time_units for all records in a column against the time_units in the first
+    record in that column. Consequently, all records in that column must have the same time_units.
+    This check does not compare time_units between different tables; for that, FirstTimeUnitsEqualCheck
+    is used.
+    """
+
+    def get_invalid(self, session):
+        invalid_records = []
+        first_time_units = None
+        for row in self.to_check(session).all():
+            try:
+                time_units = TimeUnits.from_string(row.time_units)
+            except ValueError:
+                # invalid values are handled by another check
+                continue
+            if not first_time_units:
+                first_time_units = time_units
+                continue  # don't compare first record with itself
+            if time_units != first_time_units:
+                invalid_records.append(row)
+        return invalid_records
+
+    def description(self):
+        return (
+            f"One or more records in {self.column_name} have a different time_units than the first record. "
+            + "All time_units within this table must be identical."
+        )
+
+
+class FirstTimeUnitsEqualCheck(BaseCheck):
+    """
+    Check that the first time_units value is identical across all boundary condition tables.
+
+    This is used in conjunction with TimeUnitsEqualCheck to confirm that all time_units across
+    all boundary condition tables are identical. If each time_units within each table is identical,
+    and the first time_units of each table matches with the first time_units of each other table,
+    then all time_units must be identical across all tables.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.time_models = [
+            models.BoundaryCondition1D,
+            models.BoundaryConditions2D,
+            models.Lateral1D,
+            models.Lateral2D,
+        ]
+        super().__init__(column=self.time_models[0].time_units, *args, **kwargs)
+
+    def get_invalid(self, session):
+        first_items = [
+            item
+            for item in (
+                session.query(model).order_by(model.id).first()
+                for model in self.time_models
+            )
+            if item is not None
+        ]
+        first_time_unit = None
+        for item in first_items:
+            try:
+                time_unit = TimeUnits.from_string(item.time_units)
+            except ValueError:
+                # invalid values are handled by another check
+                continue
+            if first_time_unit is None:
+                first_time_unit = time_unit
+            elif time_unit != first_time_unit:
+                return first_items
+        return []
+
+    def description(self):
+        return "Time units should be identical across all boundary condition and lateral tables."
