@@ -70,9 +70,11 @@ from .checks.other import (
     DWFDistributionLengthCheck,
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
+    FeatureClosedCrossSectionWithInvalidExchangeCheck,
     GridRefinementPartialOverlap2DBoundaryCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
+    MeasureMapWeightSumCheck,
     NodeSurfaceConnectionsCheck,
     OpenChannelsWithNestedNewton,
     PotentialBreachInterdistanceCheck,
@@ -680,6 +682,22 @@ CHECKS += [
     for table in [models.Pipe, models.Culvert]
 ]
 
+
+CHECKS += [
+    FeatureClosedCrossSectionWithInvalidExchangeCheck(
+        error_code=58,
+        level=CheckLevel.INFO,
+        column=models.Culvert.id,
+        invalid_exchange_type=constants.CalculationTypeCulvert.EMBEDDED_NODE,
+    ),
+    FeatureClosedCrossSectionWithInvalidExchangeCheck(
+        error_code=58,
+        level=CheckLevel.INFO,
+        column=models.Pipe.id,
+        invalid_exchange_type=constants.PipeCalculationType.EMBEDDED,
+    ),
+]
+
 ## 006x: PUMPSTATIONS
 CHECKS += [
     QueryCheck(
@@ -1222,6 +1240,14 @@ CHECKS += [
 CHECKS += [
     DefinedAreaCheck(
         error_code=208, column=models.Surface.area, level=CheckLevel.WARNING
+    )
+]
+
+## 022x: MeasureMap
+CHECKS += [
+    MeasureMapWeightSumCheck(
+        error_code=220,
+        level=CheckLevel.WARNING,
     )
 ]
 

@@ -20,9 +20,11 @@ from threedi_modelchecker.checks.other import (
     DWFDistributionLengthCheck,
     DWFDistributionSumCheck,
     FeatureClosedCrossSectionCheck,
+    FeatureClosedCrossSectionWithInvalidExchangeCheck,
     GridRefinementPartialOverlap2DBoundaryCheck,
     InflowNoFeaturesCheck,
     MaxOneRecordCheck,
+    MeasureMapWeightSumCheck,
     ModelEPSGCheckProjected,
     ModelEPSGCheckUnits,
     ModelEPSGCheckValid,
@@ -927,6 +929,58 @@ def test_control_has_single_measure_variable(session, measure_variables, valid):
     assert (len(invalids) == 0) == valid
 
 
+@pytest.mark.parametrize(
+    "measure_map_data, expected_invalid_count",
+    [
+        ([{"control_type": "table", "control_id": 1, "weight": 1.0}], 0),
+        ([{"control_type": "table", "control_id": 1, "weight": 0.99}], 0),
+        ([{"control_type": "table", "control_id": 1, "weight": 1.01}], 0),
+        ([{"control_type": "table", "control_id": 1, "weight": 1.02}], 1),
+        ([{"control_type": "table", "control_id": 1, "weight": 0.5}], 1),
+        (
+            [
+                {"control_type": "table", "control_id": 1, "weight": 0.5},
+                {"control_type": "table", "control_id": 1, "weight": 0.5},
+            ],
+            0,
+        ),
+        (
+            [
+                {"control_type": "table", "control_id": 1, "weight": 0.5},
+                {"control_type": "memory", "control_id": 1, "weight": 0.49},
+            ],
+            2,
+        ),
+        (
+            [
+                {"control_type": "table", "control_id": 1, "weight": 0.5},
+                {"control_type": "table", "control_id": 2, "weight": 0.49},
+            ],
+            2,
+        ),
+    ],
+)
+def test_measure_map_weight_sum(session, measure_map_data, expected_invalid_count):
+    """Test MeasureMapWeightSumCheck with various weight combinations"""
+    factories.MeasureLocationFactory(id=1)
+    control_table = []
+    control_memory = []
+    for item in measure_map_data:
+        if item["control_type"] == "table":
+            control_table.append(item["control_id"])
+        else:
+            control_memory.append(item["control_id"])
+        item["measure_location_id"] = 1
+        factories.MeasureMapFactory(**item)
+    for control_id in set(control_table):
+        factories.TableControlFactory(id=control_id)
+    for control_id in set(control_memory):
+        factories.MemoryControlFactory(id=control_id)
+    check = MeasureMapWeightSumCheck()
+    invalids = check.get_invalid(session)
+    assert len(invalids) == expected_invalid_count
+
+
 @pytest.mark.parametrize("distribution, valid", [("1,2", True), ("1 2", False)])
 def test_dwf_distribution_csv_format_check(session, distribution, valid):
     factories.DryWeatherFlowDistributionFactory(distribution=distribution)
@@ -1043,3 +1097,32 @@ def test_grid_refinement_area_2d_boundary_condition_overlap(session, linestring,
     check = GridRefinementPartialOverlap2DBoundaryCheck(models.BoundaryConditions2D.id)
     invalids = check.get_invalid(session)
     assert (len(invalids) == 0) == valid
+
+
+@pytest.mark.parametrize("closed", [True, False])
+@pytest.mark.parametrize("embedded", [True, False])
+def test_feature_closed_cross_cross_section_with_invalid_exchange_check(
+    session, closed, embedded
+):
+    shape = (
+        constants.CrossSectionShape.CLOSED_RECTANGLE
+        if closed
+        else constants.CrossSectionShape.RECTANGLE
+    )
+    exchange_type = (
+        constants.CalculationTypeCulvert.EMBEDDED_NODE
+        if embedded
+        else constants.CalculationTypeCulvert.ISOLATED_NODE
+    )
+    nof_invalid = 1 if closed and embedded else 0
+    factories.CulvertFactory(
+        cross_section_shape=shape,
+        exchange_type=constants.CalculationTypeCulvert.EMBEDDED_NODE,
+        cross_section_width=1,
+        cross_section_height=1,
+    )
+    check = FeatureClosedCrossSectionWithInvalidExchangeCheck(
+        column=models.Culvert.id, invalid_exchange_type=exchange_type
+    )
+    invalid = check.get_invalid(session)
+    assert len(invalid) == nof_invalid
