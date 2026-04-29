@@ -4,6 +4,7 @@ Changelog of threedi-modelchecker
 2.18.19 (unreleased)
 --------------------
 
+- Add check (W4001) that warns when discharge_capacity is set on broad-crested orifices (nens/rana#4143)
 - Add check (W0615) that warns when the total percentage mapped to the same surface via SurfaceMap is greater than 100% (nens/rana#3863)
 - Add check (E1028 and E1209) for matching time units for boundary conditions (nens/rana#3619)
 - Add check (W0220) that warns when the sum of the weights in MeasureMap for a single control are not 1+/-0.01 (nens/rana#3597)

@@ -3433,6 +3433,22 @@ CHECKS += [
 ]
 
 
+# 4xxx various checks
+
+CHECKS += [
+    QueryCheck(
+        error_code=4001,
+        level=CheckLevel.WARNING,
+        column=models.Orifice.discharge_capacity,
+        invalid=Query(models.Orifice).filter(
+            models.Orifice.discharge_capacity.isnot(None),
+            models.Orifice.crest_type == constants.CrestType.BROAD_CRESTED,
+        ),
+        message="discharge_capacity is not supported for broad-crested orifices",
+    )
+]
+
+
 # These checks are optional, depending on a command line argument
 beta_features_check = []
 beta_features_check += [
