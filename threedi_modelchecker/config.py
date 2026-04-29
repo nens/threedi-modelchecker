@@ -686,13 +686,13 @@ CHECKS += [
 CHECKS += [
     FeatureClosedCrossSectionWithInvalidExchangeCheck(
         error_code=58,
-        level=CheckLevel.INFO,
+        level=CheckLevel.WARNING,
         column=models.Culvert.id,
         invalid_exchange_type=constants.CalculationTypeCulvert.EMBEDDED_NODE,
     ),
     FeatureClosedCrossSectionWithInvalidExchangeCheck(
         error_code=58,
-        level=CheckLevel.INFO,
+        level=CheckLevel.WARNING,
         column=models.Pipe.id,
         invalid_exchange_type=constants.PipeCalculationType.EMBEDDED,
     ),

@@ -4,10 +4,10 @@ Changelog of threedi-modelchecker
 2.18.19 (unreleased)
 --------------------
 
-- Add check that warns when the total percentage mapped to the same surface via SurfaceMap is greater than 100% (nens/rana#3863)
+- Add check (W0615) that warns when the total percentage mapped to the same surface via SurfaceMap is greater than 100% (nens/rana#3863)
 - Add check (E1028 and E1209) for matching time units for boundary conditions (nens/rana#3619)
-- Add check that warns when the sum of the weights in MeasureMap for a single control are not 1+/-0.01 (nens/rana#3597)
-- Add check that warns when a closed culvert or pipe is embedded (nens/threedi-modelchecker#408)
+- Add check (W0220) that warns when the sum of the weights in MeasureMap for a single control are not 1+/-0.01 (nens/rana#3597)
+- Add check (W0058) that warns when a closed culvert or pipe is embedded (nens/threedi-modelchecker#408)
 
 
 2.18.18 (2026-04-10)
