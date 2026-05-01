@@ -309,7 +309,10 @@ class CrossSectionYZIncreasingWidthIfOpenCheck(CrossSectionBaseCheck):
 
 
 def get_widths_heights_for_tabulated_record(record):
-    if not record.cross_section_shape.is_tabulated:
+    if (
+        record.cross_section_shape is None
+        or not record.cross_section_shape.is_tabulated
+    ):
         raise ValueError(
             "get_widths_heighs_for_tabulated_record cannot handle tabulated shaptes"
         )
@@ -331,6 +334,8 @@ def get_widths_heights_for_tabulated_record(record):
 
 
 def cross_section_configuration_for_record(record):
+    if record.cross_section_shape is None:
+        return None, None, None
     if record.cross_section_shape.is_tabulated:
         # Handle empty cross section table by returning all None to prevent issues in parsing
         # Note that CrossSectionNullCheck already checks for this

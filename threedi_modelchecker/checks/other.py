@@ -468,6 +468,13 @@ class OpenChannelsWithNestedNewton(BaseCheck):
                 invalids.append(record)
         return invalids
 
+    def to_check(self, session: Session):
+        return (
+            super()
+            .to_check(session)
+            .where(self.table.c.cross_section_shape.isnot(None))
+        )
+
     def description(self) -> str:
         return (
             f"{self.column_name} has a closed cross section definition while "

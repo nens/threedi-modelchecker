@@ -9,6 +9,7 @@ Changelog of threedi-modelchecker
 - Add check (E1028 and E1209) for matching time units for boundary conditions (nens/rana#3619)
 - Add check (W0220) that warns when the sum of the weights in MeasureMap for a single control are not 1+/-0.01 (nens/rana#3597)
 - Add check (W0058) that warns when a closed culvert or pipe is embedded (nens/threedi-modelchecker#408)
+- Fix bugs that could cause checks W0053, I0057, W0058 and W0098 to crash (nens/rana#3933)- 
 
 
 2.18.18 (2026-04-10)

@@ -642,6 +642,11 @@ def test_cross_section_configuration_not_tabulated_raise():
             {"cross_section_table": ""},
             (None, None, None),
         ),
+        (
+            None,
+            {},
+            (None, None, None),
+        ),
     ],
 )
 def test_cross_section_configuration_for_record(session, shape, kwargs, expected):
