@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.19 (unreleased)
+2.18.19 (2026-05-05)
 --------------------
 
 - Add check (W4001) that warns when discharge_capacity is set on broad-crested orifices (nens/rana#4143)
