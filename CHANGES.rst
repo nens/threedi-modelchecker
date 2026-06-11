@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.20 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Add check (E0254) for standalone pumps connected to isolated notes that are not embedded (nens/rana#4282)
 
 
 2.18.19 (2026-05-05)
