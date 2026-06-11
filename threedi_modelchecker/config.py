@@ -2719,9 +2719,9 @@ CHECKS += [
         invalid=(
             Query(models.Obstacle).filter(
                 and_(
-                    models.Obstacle.affects_2d != True,
-                    models.Obstacle.affects_1d2d_open_water != True,
-                    models.Obstacle.affects_1d2d_closed != True,
+                    models.Obstacle.affects_2d.is_not(True),
+                    models.Obstacle.affects_1d2d_open_water.is_not(True),
+                    models.Obstacle.affects_1d2d_closed.is_not(True),
                 )
             )
         ),
