@@ -1358,6 +1358,43 @@ CHECKS += [
 ]
 CHECKS += [
     QueryCheck(
+        error_code=254,
+        level=CheckLevel.ERROR,
+        column=models.Pump.connection_node_id,
+        invalid=Query(models.Pump)
+        .join(
+            models.ConnectionNode,
+            models.Pump.connection_node_id == models.ConnectionNode.id,
+        )
+        .filter(
+            models.ConnectionNode.exchange_type.isnot(
+                constants.CalculationTypeNode.EMBEDDED
+            )
+        )
+        .filter(
+            models.Pump.connection_node_id.notin_(
+                Query(models.Channel.connection_node_id_start).union_all(
+                    Query(models.Channel.connection_node_id_end),
+                    Query(models.Culvert.connection_node_id_start),
+                    Query(models.Culvert.connection_node_id_end),
+                    Query(models.Pipe.connection_node_id_start),
+                    Query(models.Pipe.connection_node_id_end),
+                    Query(models.Weir.connection_node_id_start),
+                    Query(models.Weir.connection_node_id_end),
+                    Query(models.Orifice.connection_node_id_start),
+                    Query(models.Orifice.connection_node_id_end),
+                )
+            )
+        ),
+        message=(
+            "pump.connection_node_id refers to a connection node that is not "
+            "embedded but is not connected to any 1D element "
+            "(channel, culvert, pipe, weir, or orifice)"
+        ),
+    )
+]
+CHECKS += [
+    QueryCheck(
         error_code=255,
         column=models.Pump.connection_node_id,
         invalid=Query(models.Pump)
