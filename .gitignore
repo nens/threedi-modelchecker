@@ -84,6 +84,7 @@ celerybeat-schedule
 # Environments
 .env
 .venv
+.envrc
 env/
 venv/
 ENV/
@@ -106,6 +107,12 @@ venv.bak/
 docker-compose.override.yml
 
 
-# VS Code
+# IDE
 .vscode
 .devcontainer
+.idea
+
+# AI
+.minispec
+.opencode
+AGENTS.md
