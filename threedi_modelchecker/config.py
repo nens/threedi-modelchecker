@@ -1367,9 +1367,8 @@ CHECKS += [
             models.Pump.connection_node_id == models.ConnectionNode.id,
         )
         .filter(
-            models.ConnectionNode.exchange_type.isnot(
-                constants.CalculationTypeNode.EMBEDDED
-            )
+            models.ConnectionNode.exchange_type
+            == constants.CalculationTypeNode.CONNECTED
         )
         .filter(
             models.Pump.connection_node_id.notin_(
