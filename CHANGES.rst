@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.21 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Limit standalone pumps (E0254) to only connection nodes with exchange type connected
 
 
 2.18.20 (2026-06-11)

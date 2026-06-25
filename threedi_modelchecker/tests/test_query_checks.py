@@ -17,8 +17,10 @@ def run_query_check_by_number(session, check_number):
     [
         (constants.CalculationTypeNode.EMBEDDED, False, 0),
         (constants.CalculationTypeNode.EMBEDDED, True, 0),
-        (constants.CalculationTypeNode.ISOLATED, False, 1),
+        (constants.CalculationTypeNode.ISOLATED, False, 0),
         (constants.CalculationTypeNode.ISOLATED, True, 0),
+        (constants.CalculationTypeNode.CONNECTED, False, 1),
+        (constants.CalculationTypeNode.CONNECTED, True, 0),
     ],
 )
 def test_standalone_pump_connection_node_not_embedded_needs_1d_element(
