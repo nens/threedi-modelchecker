@@ -425,7 +425,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=45,
-        level=CheckLevel.FUTURE_ERROR,
+        level=CheckLevel.ERROR,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
         .filter(
@@ -451,15 +451,14 @@ CHECKS += [
             ),
         ),
         message="connection_node.storage_area should be defined and greater than 0 if the connection node "
-        "has no connections to channels, culverts, pipes, weirs, or orifices. "
-        "From September 2025 onwards, this will be an ERROR.",
+        "has no connections to channels, culverts, pipes, weirs, or orifices.",
     )
 ]
 
 CHECKS += [
     QueryCheck(
         error_code=46,
-        level=CheckLevel.FUTURE_ERROR,
+        level=CheckLevel.ERROR,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
         .filter(models.ConnectionNode.bottom_level.is_(None))
@@ -485,7 +484,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=47,
-        level=CheckLevel.FUTURE_ERROR,
+        level=CheckLevel.ERROR,
         column=models.ConnectionNode.id,
         invalid=Query(models.ConnectionNode)
         .filter(
@@ -524,8 +523,7 @@ CHECKS += [
         ),
         message=(
             "connection_node.storage_area for a node that is connected to a weir or an orifice, "
-            "and that has exchange type CONNECTED or ISOLATED should be defined and greater than 0. "
-            "From September 2025 onwards, this will be an ERROR."
+            "and that has exchange type CONNECTED or ISOLATED should be defined and greater than 0."
         ),
     )
 ]
@@ -763,7 +761,7 @@ CHECKS += [
     QueryCheck(
         error_code=71,
         column=models.BoundaryCondition1D.connection_node_id,
-        level=CheckLevel.FUTURE_ERROR,
+        level=CheckLevel.ERROR,
         invalid=Query(models.BoundaryCondition1D).filter(
             models.BoundaryCondition1D.connection_node_id
             == models.Pump.connection_node_id
@@ -898,7 +896,7 @@ for table in cross_section_tables:
         ),
         CrossSectionFirstElementNonZeroCheck(
             error_code=91,
-            level=CheckLevel.FUTURE_ERROR,
+            level=CheckLevel.ERROR,
             column=table.cross_section_table,
             shapes=(constants.CrossSectionShape.TABULATED_RECTANGLE,),
         ),
@@ -1325,7 +1323,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=253,
-        level=CheckLevel.FUTURE_ERROR,
+        level=CheckLevel.ERROR,
         column=table.connection_node_id_end,
         invalid=Query(table).filter(
             table.connection_node_id_start == table.connection_node_id_end
@@ -1344,7 +1342,7 @@ CHECKS += [
     QueryCheck(
         error_code=253,
         column=models.Pump.connection_node_id,
-        level=CheckLevel.FUTURE_ERROR,
+        level=CheckLevel.ERROR,
         invalid=(
             Query(models.Pump)
             .join(models.PumpMap, models.PumpMap.id == models.Pump.id)
@@ -1791,7 +1789,7 @@ CHECKS += [
 CHECKS += [
     UsedSettingsPresentCheck(
         error_code=329,
-        level=CheckLevel.FUTURE_ERROR,
+        level=CheckLevel.ERROR,
         column=use_col,
         settings_tables=tables,
     )
@@ -2681,7 +2679,7 @@ CHECKS += [
 CHECKS += [
     QueryCheck(
         error_code=800,
-        level=CheckLevel.FUTURE_ERROR,
+        level=CheckLevel.ERROR,
         column=model.grid_level,
         invalid=Query(model).filter(model.grid_level > nr_grid_levels),
         message=f"{model.__table__.name}.refinement_level must not be greater than model_settings.nr_grid_levels",

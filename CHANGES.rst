@@ -5,6 +5,7 @@ Changelog of threedi-modelchecker
 --------------------
 
 - Removed minimum length check for orifices (W203) (nens/rana#4548)
+- Reclassified checks 0045, 0046, 0047, 0071, 0091, 0253 (two checks), 0329 and 0800 from FUTURE_ERROR to ERROR (nens/rana#4522)
 
 
 2.18.21 (2026-06-25)
