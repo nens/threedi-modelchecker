@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.22 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Removed minimum length check for orifices (W203) (nens/rana#4548)
 
 
 2.18.21 (2026-06-25)
