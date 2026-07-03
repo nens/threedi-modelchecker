@@ -1119,14 +1119,13 @@ CHECKS += [
     ConnectionNodesLength(
         error_code=204,
         level=CheckLevel.WARNING,
-        column=table.id,
-        filters=table.crest_type == constants.CrestType.BROAD_CRESTED,
-        start_node=table.connection_node_id_start,
-        end_node=table.connection_node_id_end,
+        column=models.Weir.id,
+        filters=models.Weir.crest_type == constants.CrestType.BROAD_CRESTED,
+        start_node=models.Weir.connection_node_id_start,
+        end_node=models.Weir.connection_node_id_end,
         min_distance=5.0,
         recommended_distance=5.0,
     )
-    for table in [models.Orifice, models.Weir]
 ]
 
 
