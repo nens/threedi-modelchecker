@@ -9,13 +9,13 @@ threedi-modelchecker
 	:target: https://github.com/nens/threedi-modelchecker/actions/workflows/test.yml
 
 
-A tool to verify the correctness of a 3Di schematisation.
+A tool to verify the correctness of a Rana HCC schematisation.
 
-It asserts the correctness of a 3Di schematisation and provides detailed 
+It asserts the correctness of a HCC schematisation and provides detailed 
 information about any potential errors in it.
 
-This package only work against a specific schematisation version. Use https://pypi.org/project/threedi-schema/ to upgrade
-a schematisation version. See also the 3Di documentation at https://docs.3di.lizard.net/en/stable/d_before_you_begin.html#database-overview
+This package only works against a specific schematisation version. Use https://pypi.org/project/threedi-schema/ to upgrade
+a schematisation version. See also the Rana documentation at https://docs.ranawaterintelligence.com/b_modelling_workflow.html.
 
 Note that the name "modelchecker" might be slightly confusing: the thing that is checked is a schematisation, and not
 a threedimodel. A schematisation is built interactively by the user and this schematisation will be converted to a
@@ -27,7 +27,7 @@ Installation
     pip install threedi-modelchecker
 
 Note that raster checks will be skipped unless GDAL is available.
-``threedi-modelchecker`` is also integrated into the ThreediToolbox Qgis plugin: https://github.com/nens/ThreeDiToolbox
+``threedi-modelchecker`` is also integrated into the Rana Results Analysis Qgis plugin: https://github.com/nens/threedi-results-analysis.
 
 Example
 -------
@@ -61,7 +61,28 @@ add the --allow-beta flag.
 Development
 -----------
 
-A docker image has been created for easy development. It contains an postgis 
+Virtual environment
+~~~~~~~~~~~~~~~~~~~~
+Create a virtual environment. First install the native system GDAL library:
+
+    sudo apt install libgdal-dev
+
+Then set up a virtual environment.
+
+    python -m venv venv
+    source venv/bin/activate
+    pip install -e ".[test,rasterio]"
+    pip install GDAL==$(gdal-config --version) --no-build-isolation --no-cache-dir --force-reinstall
+
+Test your virtual environment by running the tests:
+
+    pytest
+
+
+Container
+~~~~~~~~~~
+
+A docker image has been created for easy development. It contains a PostGIS 
 server with an empty 3Di database to allow for easy testing.
 
 Build the image:
@@ -73,7 +94,7 @@ Run the tests:
     docker-compose run modelchecker pytest
 
 See `Creating revisions <https://github.com/nens/threedi-schema/blob/master/threedi_schema/migrations/README.rst>`_ for 
-instructions on how to change the 3Di model schematisation.
+instructions on how to change the HCC model schematisation.
 
 Release
 -------

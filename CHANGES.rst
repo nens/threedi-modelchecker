@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.23 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Add check (W4001) that warns when orifice discharge coefficient are NULL (default discharge coefficient will be used) (nens/rana#4590)
 
 
 2.18.22 (2026-07-09)

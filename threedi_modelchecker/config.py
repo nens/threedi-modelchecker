@@ -3481,6 +3481,25 @@ CHECKS += [
     )
 ]
 
+CHECKS += [
+    QueryCheck(
+        error_code=4002,
+        level=CheckLevel.WARNING,
+        column=models.Orifice.id,
+        invalid=Query(models.Orifice).filter(
+            or_(
+                models.Orifice.discharge_coefficient_positive.is_(None),
+                models.Orifice.discharge_coefficient_negative.is_(None),
+            )
+        ),
+        message=(
+            "orifice.discharge_coefficient_positive or "
+            "orifice.discharge_coefficient_negative is null: the orifice is open "
+            "and will be computed with a default discharge coefficient of 0.8"
+        ),
+    )
+]
+
 
 # These checks are optional, depending on a command line argument
 beta_features_check = []
