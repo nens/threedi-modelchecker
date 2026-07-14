@@ -18,8 +18,8 @@ This package only works against a specific schematisation version. Use https://p
 a schematisation version. See also the Rana documentation at https://docs.ranawaterintelligence.com/b_modelling_workflow.html.
 
 Note that the name "modelchecker" might be slightly confusing: the thing that is checked is a schematisation, and not
-a threedimodel. A schematisation is built interactively by the user and this schematisation will be converted to a
-3Di-Model which can be used in simulations.
+a (computational) model. A schematisation is built interactively by the user and this schematisation will later be converted to a
+model which can be used in simulations.
 
 Installation
 ------------
