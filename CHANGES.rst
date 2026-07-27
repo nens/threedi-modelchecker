@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.25 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Moved setuptools to build-system section.
 
 
 2.18.24 (2026-07-27)
