@@ -1,10 +1,14 @@
 import pytest
-from threedi_schema import constants
+from threedi_schema import constants, models
 
 # Import all checks created in the config
 from threedi_modelchecker.config import CHECKS
 
 from . import factories
+
+
+def get_checks_by_number(check_number):
+    return [c for c in CHECKS if c.error_code == check_number]
 
 
 def run_query_check_by_number(session, check_number):
@@ -37,4 +41,30 @@ def test_standalone_pump_connection_node_not_embedded_needs_1d_element(
         )
 
     result = run_query_check_by_number(session, 254)
+    assert len(result) == expected_invalid_count
+
+
+@pytest.mark.parametrize(
+    "pump_connection_node_id,pump_map_connection_node_id_end,expected_invalid_count",
+    [
+        (1, 1, 1),
+        (1, 2, 0),
+    ],
+)
+def test_pump_cannot_be_connected_to_itself_check_253(
+    session,
+    pump_connection_node_id,
+    pump_map_connection_node_id_end,
+    expected_invalid_count,
+):
+    factories.PumpFactory(id=10, connection_node_id=pump_connection_node_id)
+    factories.PumpMapFactory(
+        pump_id=10,
+        connection_node_id_end=pump_map_connection_node_id_end,
+    )
+    all_checks = get_checks_by_number(253)
+    pump_check = next(
+        c for c in all_checks if c.column == models.Pump.connection_node_id
+    )
+    result = pump_check.get_invalid(session)
     assert len(result) == expected_invalid_count
