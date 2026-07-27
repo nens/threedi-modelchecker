@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.24 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Fix incorrect query in check W253 that caused errors for valid pumps (nens/threedi-modelchecker#531)
 
 
 2.18.23 (2026-07-14)

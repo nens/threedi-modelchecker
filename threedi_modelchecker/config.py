@@ -1345,7 +1345,7 @@ CHECKS += [
         level=CheckLevel.ERROR,
         invalid=(
             Query(models.Pump)
-            .join(models.PumpMap, models.PumpMap.id == models.Pump.id)
+            .join(models.PumpMap, models.PumpMap.pump_id == models.Pump.id)
             .filter(
                 models.PumpMap.connection_node_id_end == models.Pump.connection_node_id
             )
