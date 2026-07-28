@@ -763,10 +763,14 @@ CHECKS += [
         column=models.BoundaryCondition1D.connection_node_id,
         level=CheckLevel.ERROR,
         invalid=Query(models.BoundaryCondition1D).filter(
-            models.BoundaryCondition1D.connection_node_id
-            == models.Pump.connection_node_id
-            | models.BoundaryCondition1D.connection_node_id
-            == models.PumpMap.connection_node_id_end
+            (
+                models.BoundaryCondition1D.connection_node_id
+                == models.Pump.connection_node_id
+            )
+            | (
+                models.BoundaryCondition1D.connection_node_id
+                == models.PumpMap.connection_node_id_end
+            )
         ),
         message="boundary_condition_1d cannot be connected to a pump",
     ),

@@ -863,6 +863,7 @@ def test_tags_valid(session):
         ("1;2", False),
         ("1,2 3", False),
         ("1,2,3", False),
+        ("1,2,", False),
     ],
 )
 def test_control_table_action_table_check_default(session, action_table, valid):
