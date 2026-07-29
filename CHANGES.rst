@@ -1,7 +1,7 @@
 Changelog of threedi-modelchecker
 =================================
 
-2.18.25 (unreleased)
+2.18.25 (2026-07-29)
 --------------------
 
 - Fix check 71 where operator precendence caused incorrect behaviour
