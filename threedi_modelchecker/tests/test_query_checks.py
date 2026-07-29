@@ -68,3 +68,17 @@ def test_pump_cannot_be_connected_to_itself_check_253(
     )
     result = pump_check.get_invalid(session)
     assert len(result) == expected_invalid_count
+
+
+@pytest.mark.parametrize(
+    "pump_cn_id, pump_map_cn_id, expected_invalid_count",
+    [(1, 1, 0), (10, 1, 1), (1, 10, 1)],
+)
+def test_boundary_condition_cannot_be_connected_to_a_pump(
+    session, pump_cn_id, pump_map_cn_id, expected_invalid_count
+):
+    factories.BoundaryConditions1DFactory(connection_node_id=10)
+    factories.PumpFactory(connection_node_id=pump_cn_id)
+    factories.PumpMapFactory(connection_node_id_end=pump_map_cn_id)
+    result = run_query_check_by_number(session, 71)
+    assert len(result) == expected_invalid_count
