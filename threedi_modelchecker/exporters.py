@@ -54,7 +54,7 @@ def export_with_geom(
         geom = None
         if hasattr(error_row, "geom") and isinstance(error_row.geom, WKBElement):
             geom = error_row.geom
-        value = getattr(error_row, check.column.name)
+        value = getattr(error_row, check.column.key)
         if isinstance(value, WKBElement):
             try:
                 value = to_shape(value).wkt
