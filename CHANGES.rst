@@ -4,8 +4,9 @@ Changelog of threedi-modelchecker
 2.18.26 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Fix geometry export where Pump.type is involved (nens/threedi-modelchecker#530)
 
+ 
 
 2.18.25 (2026-07-29)
 --------------------

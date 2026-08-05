@@ -2,14 +2,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from geoalchemy2.elements import WKBElement
+from threedi_schema import models
 from threedi_schema.domain.constants import InflowType
 
-from threedi_modelchecker.checks.base import CheckLevel
+from threedi_modelchecker.checks.base import CheckLevel, NotNullCheck
 from threedi_modelchecker.exporters import (
     export_with_geom,
     generate_csv_table,
     generate_rst_table,
 )
+
+from . import factories
 
 
 @pytest.fixture
@@ -84,6 +87,7 @@ def test_generate_csv_table(fake_checks):
 
 def test_export_with_geom(fake_check_error):
     fake_check_error.column.name = "foo"
+    fake_check_error.column.key = "foo"
 
     # First test case - no geom
     error_row_no_geom = MagicMock()
@@ -136,3 +140,15 @@ def test_export_with_geom(fake_check_error):
     assert result[1].geom == error_row_geom.geom
     assert result[2].value == "wkt"
     assert result[3].value == "No inflow"
+
+
+def test_export_with_geom_uses_orm_column_key(session):
+    pump = factories.PumpFactory(type_=None)
+    check = NotNullCheck(models.Pump.type_)
+
+    invalid_rows = check.get_invalid(session)
+    result = export_with_geom([(check, invalid_rows[0])])
+
+    assert result[0].id == pump.id
+    assert result[0].column == "type"
+    assert result[0].value is None
