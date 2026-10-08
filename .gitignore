@@ -113,6 +113,4 @@ docker-compose.override.yml
 .idea
 
 # AI
-.minispec
 .opencode
-AGENTS.md
