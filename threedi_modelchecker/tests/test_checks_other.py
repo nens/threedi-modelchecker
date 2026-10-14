@@ -492,13 +492,17 @@ def test_pumpstation_storage_timestep(
 
 
 @pytest.mark.parametrize(
-    "value,expected_result",
+    "value,percentage,expected_result",
     [
-        (1000, 0),  # total area = 1000 + 9000 = 10000 <= 10000; no error
-        (1001, 1),  # total area = 1001 + 9000 = 10001 > 10000; error
+        (1000, 100.0, 0),  # total area = 1000 + 9000 = 10000; no error
+        (1001, 100.0, 1),  # total area = 1001 + 9000 = 10001; error
+        (3000, 25.0, 0),  # weighted area = 750 + 9000 = 9750; no error
+        (3000, 50.0, 1),  # weighted area = 1500 + 9000 = 10500; error
     ],
 )
-def test_surface_connection_node_inflow_area(session, value, expected_result):
+def test_surface_connection_node_inflow_area(
+    session, value, percentage, expected_result
+):
     connection_node = factories.ConnectionNodeFactory(id=1)
     first_surface = factories.SurfaceFactory(id=1, area=9000)
     second_surface = factories.SurfaceFactory(id=2, area=value)
@@ -506,7 +510,9 @@ def test_surface_connection_node_inflow_area(session, value, expected_result):
         surface_id=first_surface.id, connection_node_id=connection_node.id
     )
     factories.SurfaceMapFactory(
-        surface_id=second_surface.id, connection_node_id=connection_node.id
+        surface_id=second_surface.id,
+        connection_node_id=connection_node.id,
+        percentage=percentage,
     )
     check = SurfaceNodeInflowAreaCheck()
     invalid = check.get_invalid(session)

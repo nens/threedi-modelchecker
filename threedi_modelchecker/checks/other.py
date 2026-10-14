@@ -677,40 +677,17 @@ class SurfaceNodeInflowAreaCheck(BaseCheck):
                 models.SurfaceMap.surface_id == models.Surface.id,
             )
             .group_by(models.SurfaceMap.connection_node_id)
-            .having(func.sum(models.Surface.area) > 10000)
+            .having(
+                # Inflow area to this connection node depends on the surface area and
+                # the percentage of it connected to this node.
+                func.sum(models.Surface.area * models.SurfaceMap.percentage / 100.0)
+                > 10000
+            )
         ).subquery()
 
         return (
             session.query(models.ConnectionNode)
             .filter(models.ConnectionNode.id == surfaces.c.connection_node_id)
-            .all()
-        )
-
-    def description(self) -> str:
-        return f"{self.column_name} has a an associated inflow area larger than 10000 m2; this might be an error."
-
-
-class PerviousNodeInflowAreaCheck(BaseCheck):
-    """Check that total inflow area per connection node is no larger than 10000 square metres"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(column=models.ConnectionNode.id, *args, **kwargs)
-
-    def get_invalid(self, session: Session) -> List[NamedTuple]:
-        pervious_surfaces = (
-            select(models.SurfaceMap.connection_node_id)
-            .select_from(models.SurfaceMap)
-            .join(
-                models.Surface,
-                models.SurfaceMap.surface_id == models.Surface.id,
-            )
-            .group_by(models.SurfaceMap.connection_node_id)
-            .having(func.sum(models.Surface.area) > 10000)
-        ).subquery()
-
-        return (
-            session.query(models.ConnectionNode)
-            .filter(models.ConnectionNode.id == pervious_surfaces.c.connection_node_id)
             .all()
         )
 
