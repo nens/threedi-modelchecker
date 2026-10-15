@@ -5,10 +5,10 @@ Changelog of threedi-modelchecker
 --------------------
 
 - Fix geometry export where Pump.type is involved (nens/threedi-modelchecker#530)
-
 - Fix SurfaceNodeInflowAreaCheck so that it takes the SurfaceMap's percentage into account (nens/rana#4847)
-
 - Fix the exchange level check that was erroneously giving errors when a DEM was present (nens/rana#5186)
+- The checks of the presence of water balance settings are now INFO, because user may
+  not be interested in using the water balance tool at all (nens/rana#4976).
 
 
 2.18.25 (2026-07-29)
