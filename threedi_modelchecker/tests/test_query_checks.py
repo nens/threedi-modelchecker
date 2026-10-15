@@ -82,3 +82,45 @@ def test_boundary_condition_cannot_be_connected_to_a_pump(
     factories.PumpMapFactory(connection_node_id_end=pump_map_cn_id)
     result = run_query_check_by_number(session, 71)
     assert len(result) == expected_invalid_count
+
+
+@pytest.mark.parametrize(
+    "exchange_type, dem_file, manhole_aboveground_storage_area, exchange_level, expected_invalid_count",
+    [
+        (constants.CalculationTypeNode.EMBEDDED, None, 1, None, 0),
+        (constants.CalculationTypeNode.ISOLATED, None, 1, None, 0),
+        (constants.CalculationTypeNode.CONNECTED, "dem.tif", None, None, 0),
+        (constants.CalculationTypeNode.CONNECTED, None, None, None, 0),
+        (constants.CalculationTypeNode.CONNECTED, None, 0, None, 0),
+        (constants.CalculationTypeNode.CONNECTED, None, 1, None, 1),
+        (constants.CalculationTypeNode.CONNECTED, None, 1, 1, 0),
+    ],
+    ids=[
+        "embedded",
+        "isolated",
+        "connected-with-dem",
+        "connected-without-storage-area",
+        "connected-with-zero-storage-area",
+        "connected-with-storage-area",
+        "connected-with-exchange-level",
+    ],
+)
+def test_exchange_level_check_107(
+    session,
+    exchange_type,
+    dem_file,
+    manhole_aboveground_storage_area,
+    exchange_level,
+    expected_invalid_count,
+):
+    factories.ModelSettingsFactory(
+        dem_file=dem_file,
+        manhole_aboveground_storage_area=manhole_aboveground_storage_area,
+    )
+    factories.ConnectionNodeFactory(
+        exchange_type=exchange_type, exchange_level=exchange_level
+    )
+
+    result = run_query_check_by_number(session, 107)
+
+    assert len(result) == expected_invalid_count
