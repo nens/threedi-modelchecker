@@ -2957,7 +2957,9 @@ CHECKS += [
 CHECKS += [
     CorrectAggregationSettingsExist(
         error_code=1154,
-        level=CheckLevel.WARNING,
+        # INFO rather than WARNING, because user may not be interested in using the
+        # water balance tool and then a warning would be irrelevant.
+        level=CheckLevel.INFO,
         aggregation_method=aggregation_method,
         flow_variable=flow_variable,
     )
