@@ -4,7 +4,7 @@ Changelog of threedi-modelchecker
 2.18.27 (unreleased)
 --------------------
 
-- Nothing changed yet.
+- Fix check for nonexistent tags so that it can handle invalid integer strings (nens/rana#5291)
 
 
 2.18.26 (2026-10-15)
