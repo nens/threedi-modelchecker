@@ -1018,22 +1018,28 @@ class MaxOneRecordCheck(BaseCheck):
 
 
 class TagsValidCheck(BaseCheck):
+    """Check that all tags actually exist as id in the Tags model.
+
+    Ignore rows with non-integer tags, they get errors from ListOfIntsCheck."""
+
     def get_invalid(self, session):
         invalids = []
-        try:
-            for record in self.to_check(session).filter(
-                (self.column != None) & (self.column != "")
-            ):
-                query = f"SELECT id FROM tags WHERE id IN ({getattr(record, self.column.name)})"
-                match_rows = session.connection().execute(text(query)).fetchall()
-                found_idx = {row[0] for row in match_rows}
-                req_idx = {int(x) for x in getattr(record, self.column.name).split(",")}
-                if found_idx != req_idx:
-                    invalids.append(record)
-        except (
-            ValueError
-        ):  # in case of badly formatted tags; handled by ListOfIntsCheck
-            pass
+        existing_ids = {row[0] for row in session.query(models.Tags.id).all()}
+
+        for record in self.to_check(session).filter(
+            (self.column != None) & (self.column != "")
+        ):
+            try:
+                requested_ids = {
+                    int(tag_id)
+                    for tag_id in getattr(record, self.column.name).split(",")
+                }
+            except ValueError:  # handled by ListOfIntsCheck
+                continue
+
+            if not requested_ids.issubset(existing_ids):
+                invalids.append(record)
+
         return invalids
 
     def description(self) -> str:

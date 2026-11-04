@@ -857,6 +857,11 @@ def test_tags_valid(session):
     factories.TagsFactory(id=2, description="bar")
     assert len(check.get_invalid(session)) == 0
 
+    # Tags with invalid values (like strings) are ignored because they
+    # will get errors from ListOfIntsCheck. But they do not crash.
+    factories.DryWeatherFlowFactory(tags="3,4,5,this_is_not_really_a_valid_id")
+    assert len(check.get_invalid(session)) == 0
+
 
 @pytest.mark.parametrize(
     "action_table, valid",
